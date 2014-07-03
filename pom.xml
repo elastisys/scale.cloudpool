@@ -10,7 +10,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.elastisys.scale</groupId>
   <artifactId>cloudadapters.root</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1-SNAPSHOT</version>
   <name>elastisys:scale :: cloudadapters :: root</name>
   <description>Java-based elastisys:scale cloud adapter implementations.</description>
   <packaging>pom</packaging>
@@ -40,7 +40,7 @@
   <!-- Location of Git repository. Used to tag releases. -->
   <scm>
     <developerConnection>scm:git:https://github.com/elastisys/scale.cloudadapters.git</developerConnection>
-    <tag>1.0.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <properties>
