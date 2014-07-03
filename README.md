@@ -5,7 +5,7 @@ scale.cloudadapters
 
 The ``scale.cloudadapters`` project contains Java-based 
 [elastisys:scale](http://elastisys.com/scale) 
-[cloud adapters](http://cloudadapterapi.readthedocs.org/en/latest) implementations 
+[cloud adapter](http://cloudadapterapi.readthedocs.org/en/latest) implementations 
 for different cloud providers:
 
   - ``cloudadapers.openstack``: a [cloud adapter](http://cloudadapterapi.readthedocs.org/en/latest) 
@@ -59,7 +59,6 @@ can typically be found under ``src/test/resources``.
 
 Below is a sample configuration document for the ``cloudadapers.aws.ec2``:
 
-.. code-block:: python
 
   {
     "scalingGroup": {
