@@ -161,9 +161,9 @@
         <dependencies>
           <!-- make sure project-specific checkstyle rules are picked up -->
           <dependency>
-            <groupId>com.elastisys</groupId>
-            <artifactId>buildtools</artifactId>
-            <version>${project.version}</version>
+            <groupId>com.elastisys.scale</groupId>
+            <artifactId>commons.buildtools</artifactId>
+            <version>${commons.version}</version>
           </dependency>
         </dependencies>
         <configuration>
