@@ -1,0 +1,33 @@
+{
+  "id": "http://elastisys.com/openstack-scaling-group-schema#",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "configuration schema for the OpenStackScalingGroup",
+  "type": "object",
+  "properties": {
+    "keystoneEndpoint": { 
+      "description": "Endpoint URL of the OpenStack authentication service (Keystone). For example, http://172.16.0.1:5000/v2.0.", 
+      "type": "string" 
+    },        
+    "region": {
+      "description": "The particular OpenStack region (out of the ones available in Keystone's service catalog) to connect to. For example, RegionOne.", 
+      "type":  "string" 
+    },      
+    "tenantName": {
+      "description": "OpenStack account tenant name.", 
+      "type": "string" 
+    },
+    "userName": {  
+      "description": "OpenStack account user.", 
+      "type": "string"
+    },
+    "password": {  
+      "description": "OpenStack account password.", 
+      "type": "string"
+    },
+    "assignFloatingIp": {
+       "description": "Set to true if a floating IP address should be allocated to launched servers. Default: true.", 
+       "type": "boolean"
+    }
+  },
+  "required": ["keystoneEndpoint","region","tenantName", "userName", "password"]
+}

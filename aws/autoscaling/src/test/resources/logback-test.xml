@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level [%class{0}:%method:%line] - %msg%n
+      </pattern>
+    </encoder>
+  </appender>
+
+  <root>
+    <level value="ERROR" />
+    <appender-ref ref="STDOUT" />
+    <!-- <appender-ref ref="FILE" /> -->
+  </root>
+  <logger name="com.elastisys">
+    <level value="debug" />
+  </logger>
+  <logger name="com.amazonaws">
+    <level value="debug" />
+  </logger>
+  <!-- a summary of requests/responses with AWS request IDs -->
+  <logger name="com.amazonaws.request">
+    <level value="debug" />
+  </logger>
+  <!-- Log all HTTP content (headers, parameters, content, etc) for -->
+  <!-- all requests and responses. Very verbose! -->
+  <logger name="httpclient.wire">
+    <level value="debug" />
+  </logger>
+
+</configuration>

@@ -1,0 +1,35 @@
+This file describes the necessary steps to generate a self-signed server SSL 
+certificate and how to place it in a PKCS12 key store for later use by a HTTPS 
+server. These instructions also include steps to create a trust store where
+certificates of trusted clients are stored.
+
+''For more details, visit http://bryansaunders.net/blog/2012/07/03/generating-self-signed-certificates-for-mutual-authentication-in-java/.''
+
+The following files need to be generated:
+  - {{{server_private.pem}}}: the server's private key.
+  - {{{server_certificate.pem}}}: the server's certificate, which the server must trust.
+  - {{{server_keystore.p12}}} -- a PKCS12 key store (used to store a set of private key-certificate pairs). 
+    - password: "pkcs12password"
+  - {{{server_truststore.jks}}} -- a JKS (Java Key Store) key store used to store trusted client certificates. 
+    - password: "truststorepassword"    
+
+
+  1. Create a private key for the server:
+     {{{
+openssl genrsa -out server_private.pem 2048
+     }}}
+  2. Create the server's self-signed X.509 certificate:
+     {{{
+openssl req -new -x509 -key server_private.pem -out server_certificate.pem -days 365 -subj "/C=SE/ST=AC/L=Umea/O=Elastisys/OU=TechTeam/CN=Server"
+     }}}
+  3. Create a PKCS12 key store and import the key and certificate. Set password
+     to "pkcs12password". This password becomes the "key password":
+     {{{
+openssl pkcs12 -export -inkey server_private.pem -in server_certificate.pem -out server_keystore.p12
+     }}}
+  4. Create a JKS trust store that includes the client certificates that need to
+     be trusted by the server. Enter a password "truststorepassword" for the
+     trust store:
+     {{{
+keytool -importcert -trustcacerts -keystore  server_truststore.jks -storetype jks -file client_certificate.pem
+     }}}

@@ -1,0 +1,28 @@
+{
+    "scalingGroup": {
+      "name": "my-scaling-group",
+      "config": { 
+        "keystoneEndpoint": "http://nova.host.com:5000/v2.0",
+        "region": "RegionOne",
+        
+        "userName": "clouduser",
+        "password": "cloudpass"      
+      }      
+    },
+    "scaleUpConfig": {
+      "size": "m1.small", 
+      "image": "Ubuntu Server 12.04",
+      "keyPair": "openstack_p11",
+      "securityGroups": ["web"],               
+      "bootScript": [
+        "sudo apt-get update",
+        "sudo apt-get install -y --force-yes apache2"
+      ]
+    },
+    "scaleDownConfig": {
+      "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
+      "instanceHourMargin": 0
+    }
+}  
+
+

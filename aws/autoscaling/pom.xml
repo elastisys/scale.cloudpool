@@ -1,0 +1,103 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.elastisys.scale</groupId>
+    <artifactId>cloudadapters.aws</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>cloudadapters.aws.autoscaling</artifactId>
+  <packaging>jar</packaging>
+  <name>elastisys:scale :: cloudadapters :: AWS :: Auto Scaling Group adapter</name>
+  <description>
+    A cloud adapter capable of managing the capacity of AWS Auto Scaling Groups.
+    This build module produces an all-in-one "server and application" executable
+    jar file. When executed, it starts an embedded web server that publishes 
+    the cloud adapter REST API endpoint.
+  </description>
+
+  <properties>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>cloudadapters.api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>cloudadapters.aws.commons</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <!-- Access to GenericCloudAdapter and the CloudClient interface -->
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>cloudadapters.commons</artifactId>
+      <version>${project.version}</version>
+    </dependency>    
+    <!-- Logging -->
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+
+    <!-- ================= -->
+    <!-- Test dependencies -->
+    <!-- ================= -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+
+      <!-- Build a standalone executable jar file that embeds all classpath dependencies. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+          <transformers>
+            <!-- Make jar file executable (add Main-Class header to jar manifest) -->
+            <transformer
+              implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+              <mainClass>com.elastisys.scale.cloudadapters.aws.autoscaling.server.Main</mainClass>
+            </transformer>
+          </transformers>
+          <!-- Make shaded jar file the main artifact output by the build. -->
+          <shadedArtifactAttached>false</shadedArtifactAttached>
+          <createDependencyReducedPom>false</createDependencyReducedPom>
+          <filters>
+            <filter>
+              <artifact>*:*</artifact>
+              <excludes>
+                <exclude>META-INF/*.SF</exclude>
+                <exclude>META-INF/*.DSA</exclude>
+                <exclude>META-INF/*.RSA</exclude>
+              </excludes>
+            </filter>
+          </filters>        
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      
+    </plugins>      
+  </build>
+
+</project>

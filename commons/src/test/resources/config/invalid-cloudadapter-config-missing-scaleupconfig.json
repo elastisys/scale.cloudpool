@@ -1,0 +1,17 @@
+{
+    "scalingGroup": {
+      "name": "my-scaling-group",
+      "config": { 
+        "keystoneEndpoint": "http://openstack.nova.com:5000/v2.0",
+        "region": "RegionOne",
+        "tenantName": "tenant",
+        "userName": "clouduser",
+        "password": "cloudpass"
+      }      
+    },
+
+    "scaleDownConfig": {
+      "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
+      "instanceHourMargin": 0
+    }
+}  

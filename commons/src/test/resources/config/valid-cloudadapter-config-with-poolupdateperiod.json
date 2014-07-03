@@ -1,0 +1,42 @@
+{
+    "scalingGroup": {
+      "name": "my-scaling-group",
+      "config": { 
+        "keystoneEndpoint": "http://openstack.nova.com:5000/v2.0",
+        "region": "RegionOne",
+        "tenantName": "tenant",
+        "userName": "clouduser",
+        "password": "cloudpass"
+      }      
+    },
+    "scaleUpConfig": {
+      "size": "m1.small", 
+      "image": "Ubuntu Server 12.04",
+      "keyPair": "openstack_p11",
+      "securityGroups": ["web"],               
+      "bootScript": [
+        "sudo apt-get update",
+        "sudo apt-get install -y --force-yes apache2"
+      ]
+    },
+    "scaleDownConfig": {
+      "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
+      "instanceHourMargin": 0
+    },
+    "liveness": {
+      "loginUser": "ubuntu",
+      "loginKey": "src/test/resources/security/clientkey.pem",
+      "bootTimeCheck": {
+        "command": "sudo service apache2 status | grep 'is running'",
+        "retryDelay": 20,
+        "maxRetries": 15
+      },
+      "runTimeCheck": {      
+        "command": "sudo service apache2 status | grep 'is running'",
+        "period": 60,
+        "maxRetries": 10,
+        "retryDelay": 10
+      }    
+    },
+    "poolUpdatePeriod": 180
+}  

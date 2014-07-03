@@ -1,0 +1,75 @@
+package com.elastisys.scale.cloudadapters.aws.ec2.scalinggroup.client;
+
+import java.util.List;
+
+import com.amazonaws.services.ec2.model.Filter;
+import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.Tag;
+import com.elastisys.scale.cloudadapters.aws.ec2.scalinggroup.Ec2ScalingGroup;
+import com.elastisys.scale.cloudadapters.aws.ec2.scalinggroup.Ec2ScalingGroupConfig;
+import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.ScaleUpConfig;
+
+/**
+ * A simplified client interface towards the AWS EC2 API that only provides the
+ * functionality needed by the {@link Ec2ScalingGroup}.
+ * <p/>
+ * The {@link #configure} method must be called before calling any other
+ * methods.
+ */
+public interface Ec2Client {
+
+	/**
+	 * Configures this {@link Ec2Client} with credentials to allow it to access
+	 * the AWS EC2 API.
+	 *
+	 * @param configuration
+	 *            A client configuration.
+	 */
+	void configure(Ec2ScalingGroupConfig configuration);
+
+	/**
+	 * Retrieves all instances that match the given filters.
+	 *
+	 * @param filters
+	 *            The query {@link Filter}s that returned instances must match.
+	 * @return All {@link Instance}s matching the filters.
+	 */
+	List<Instance> getInstances(List<Filter> filters);
+
+	/**
+	 * Retrieves instance meta data about a particular EC2 {@link Instance}.
+	 *
+	 * @param instanceId
+	 *            An instance identifier.
+	 * @return The requested {@link Instance} meta data.
+	 */
+	Instance getInstanceMetadata(String instanceId);
+
+	/**
+	 * Launches a new EC2 {@link Instance}.
+	 *
+	 * @param provisioningDetails
+	 *            The provisioning details on how to launch the new machine
+	 *            {@link Instance}.
+	 * @return The launched {@link Instance}.
+	 */
+	Instance launchInstance(ScaleUpConfig provisioningDetails);
+
+	/**
+	 * Sets a collection of tags on an EC2 instance.
+	 *
+	 * @param instanceId
+	 *            An instance identifier.
+	 * @param tags
+	 *            The {@link Tag}s to set on the {@link Instance}.
+	 */
+	void tagInstance(String instanceId, List<Tag> tags);
+
+	/**
+	 * Terminates a particular EC2 {@link Instance}.
+	 *
+	 * @param instanceId
+	 *            Identifier of the {@link Instance} to be terminated.
+	 */
+	void terminateInstance(String instanceId);
+}

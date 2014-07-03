@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+<!--       <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level [%logger{0}:%class{0}:%method:%line] - %msg%n</pattern> -->
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level [%class{0}:%method:%line] - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!--Daily rolling file appender -->
+<!--   <appender name="FILE" -->
+<!--     class="ch.qos.logback.core.rolling.RollingFileAppender"> -->
+<!--     <file>logFile.log</file> -->
+<!--     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy"> -->
+<!--       <fileNamePattern>logFile.%d{yyyy-MM-dd}.log</fileNamePattern> -->
+<!--       <maxHistory>30</maxHistory> -->
+<!--     </rollingPolicy> -->
+<!--     <encoder> -->
+<!--       <pattern>%-4relative [%thread] %-5level %logger{36} - %msg%n -->
+<!--       </pattern> -->
+<!--     </encoder> -->
+<!--   </appender> -->
+
+
+  <root>
+    <level value="ERROR" />
+    <appender-ref ref="STDOUT" />
+    <!-- <appender-ref ref="FILE" /> -->
+  </root>
+  <logger name="com.elastisys">
+    <level value="debug" />
+  </logger>
+  <logger name="jclouds.wire">
+    <level value="warn" />
+  </logger>
+</configuration>

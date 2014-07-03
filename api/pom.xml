@@ -1,0 +1,83 @@
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.elastisys.scale</groupId>
+    <artifactId>cloudadapters.root</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>cloudadapters.api</artifactId>
+  <name>elastisys:scale :: cloudadapters :: api</name>
+  <description>cloudadapter API</description>
+  <packaging>jar</packaging>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>commons.json</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>commons.util</artifactId>
+    </dependency>    
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>commons.rest</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>commons.server</artifactId>
+    </dependency>    
+    <!-- Jersey and JAX-RS API -->
+    <dependency>
+      <groupId>org.glassfish.jersey.containers</groupId>
+      <artifactId>jersey-container-servlet-core</artifactId>
+    </dependency>
+    <!-- Jersey JSON JAXB (de)serialization support -->
+    <dependency>
+      <groupId>org.glassfish.jersey.media</groupId>
+      <artifactId>jersey-media-json-jackson</artifactId>
+    </dependency>
+    <!-- Embedded jetty server -->
+    <dependency>
+      <groupId>org.eclipse.jetty.aggregate</groupId>
+      <artifactId>jetty-all</artifactId>
+    </dependency>
+    <!-- command-line parsing -->
+    <dependency>
+      <groupId>args4j</groupId>
+      <artifactId>args4j</artifactId>
+    </dependency>
+
+
+    <!-- Logging -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+
+    <!-- Test dependencies -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <scope>test</scope>
+    </dependency>
+    
+  </dependencies>
+</project>
