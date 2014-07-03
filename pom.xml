@@ -40,7 +40,7 @@
 
   <!-- Location of Git repository. Used to tag releases. -->
   <scm>
-    <developerConnection>scm:git:scm:git:https://github.com/elastisys/scale.cloudadapters.git</developerConnection>
+    <developerConnection>scm:git:https://github.com/elastisys/scale.cloudadapters.git</developerConnection>
   </scm>
 
   <properties>
