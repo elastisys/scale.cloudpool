@@ -59,7 +59,7 @@ can typically be found under ``src/test/resources``.
 
 Below is a sample configuration document for the ``cloudadapers.aws.ec2``:
 
-
+```javascript
   {
     "scalingGroup": {
       "name": "MyEc2InstanceScalingGroup",
@@ -113,7 +113,7 @@ Below is a sample configuration document for the ``cloudadapers.aws.ec2``:
     },
     "poolUpdatePeriod": 120
   }
-
+```
 
 The configuration document declares how the cloud adapter:
 
