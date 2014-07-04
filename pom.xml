@@ -41,6 +41,7 @@
   <scm>
     <developerConnection>scm:git:https://github.com/elastisys/scale.cloudadapters.git</developerConnection>
     <tag>HEAD</tag>
+    <url>https://github.com/elastisys/scale.cloudadapters</url>
   </scm>
 
   <properties>
