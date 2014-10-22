@@ -62,6 +62,8 @@ public class AwsAsScalingGroup implements ScalingGroup {
 	private static final JsonObject CONFIG_SCHEMA = JsonUtils
 			.parseJsonResource("awsas-scaling-group-schema.json");
 
+	public static final String REQUESTED_ID_PREFIX = "i-requested";
+
 	/** AWS AutoScaling client API configuration. */
 	private final AtomicReference<AwsAsScalingGroupConfig> config;
 	/** Name of the managed scaling group. */
@@ -131,7 +133,8 @@ public class AwsAsScalingGroup implements ScalingGroup {
 			int missingInstances = desiredCapacity - actualCapacity;
 			if (missingInstances > 0) {
 				for (int i = 1; i <= missingInstances; i++) {
-					String pseudoId = String.format("i-requested%d", i);
+					String pseudoId = String.format("%s%d",
+							REQUESTED_ID_PREFIX, i);
 					requestedInstances.add(new Machine(pseudoId,
 							MachineState.REQUESTED, null, null, null, null));
 				}
@@ -205,12 +208,19 @@ public class AwsAsScalingGroup implements ScalingGroup {
 		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
 
 		try {
-			if (instanceInGroup(machineId)) {
+			if (machineId.startsWith(REQUESTED_ID_PREFIX)) {
+				AutoScalingGroup group = this.client
+						.getAutoScalingGroup(getScalingGroupName());
+				int currentDesiredSize = group.getDesiredCapacity();
+				int futureDesiredSize = currentDesiredSize - 1;
+				LOG.info(
+						"asked to terminate fake instance, decrementing desired size from {} to {} instead",
+						currentDesiredSize, futureDesiredSize);
+				this.client.setDesiredSize(getScalingGroupName(),
+						futureDesiredSize);
+			} else {
 				LOG.info("terminating instance {}", machineId);
 				this.client.terminateInstance(getScalingGroupName(), machineId);
-			} else {
-				LOG.info("Instance {} not in group, ignoring termination",
-						machineId);
 			}
 		} catch (Exception e) {
 			String message = format("failed to terminate instance \"%s\": %s",
@@ -222,7 +232,7 @@ public class AwsAsScalingGroup implements ScalingGroup {
 	/**
 	 * Determines whether there is a machine with a given identifier in the auto
 	 * scaling group.
-	 * 
+	 *
 	 * @param machineId
 	 *            The sought identifier.
 	 * @return true if there is a machine with the given identifier, false
@@ -310,7 +320,7 @@ public class AwsAsScalingGroup implements ScalingGroup {
 			throw new ScalingGroupException(format(
 					"gave up waiting for instance \"%s\" to be "
 							+ "assigned a public IP address: %s", instanceId,
-							e.getMessage()), e);
+					e.getMessage()), e);
 		}
 	}
 

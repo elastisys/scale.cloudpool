@@ -11,17 +11,18 @@ import com.elastisys.scale.cloudadapters.aws.autoscaling.scalinggroup.client.Aut
 import com.google.common.collect.Lists;
 
 /**
- * Fake {@link AutoScalingClient} that manages an Auto Scaling Group for a phony AWS account.
+ * Fake {@link AutoScalingClient} that manages an Auto Scaling Group for a phony
+ * AWS account.
  *
- * 
+ *
  *
  */
 public class FakeAutoScalingClient implements AutoScalingClient {
-	private int idSequencer = 0;
+	protected int idSequencer = 0;
 
-	private String autoScalingGroupName;
-	private int desiredCapacity;
-	private List<Instance> instances;
+	protected String autoScalingGroupName;
+	protected int desiredCapacity;
+	protected List<Instance> instances;
 
 	public FakeAutoScalingClient(String autoScalingGroupName,
 			int desiredCapacity, List<Instance> instances) {

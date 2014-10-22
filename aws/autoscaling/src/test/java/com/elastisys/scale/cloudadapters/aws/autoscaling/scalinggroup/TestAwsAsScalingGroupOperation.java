@@ -39,7 +39,7 @@ import com.google.common.collect.Lists;
 /**
  * Verifies the operational behavior of the {@link AwsAsScalingGroup}.
  *
- * 
+ *
  *
  */
 public class TestAwsAsScalingGroupOperation {
@@ -185,6 +185,74 @@ public class TestAwsAsScalingGroupOperation {
 
 		this.scalingGroup.terminateMachine("i-2");
 		assertThat(this.scalingGroup.listMachines(), is(machines()));
+	}
+
+	@Test
+	public void removeFakeInstances() {
+		class UnsatisfyingAutoScalingClient extends FakeAutoScalingClient {
+			public UnsatisfyingAutoScalingClient(String autoScalingGroupName,
+					int desiredCapacity, List<Instance> instances) {
+				super(autoScalingGroupName, desiredCapacity, instances);
+			}
+
+			@Override
+			public void setDesiredSize(String autoScalingGroupName,
+					int desiredSize) {
+				if (desiredSize > this.instances.size()) {
+					this.desiredCapacity = desiredSize;
+					LOG.debug(
+							"not scaling up, desired size now {}, actual machine count {}",
+							desiredSize, this.instances.size());
+				} else {
+					LOG.debug(
+							"asked to scale down, requested size {}, actual desired size {}, actual machine count {}",
+							desiredSize, this.desiredCapacity,
+							this.instances.size());
+					if (desiredSize < this.instances.size()) {
+						super.setDesiredSize(autoScalingGroupName, desiredSize);
+					} else {
+						this.desiredCapacity = desiredSize;
+					}
+				}
+			}
+		}
+
+		int desiredCapacity = 2;
+		UnsatisfyingAutoScalingClient unsatisfyingClient = new UnsatisfyingAutoScalingClient(
+				GROUP_NAME, desiredCapacity, ec2Instances(
+						ec2Instance("i-1", "running"),
+						ec2Instance("i-2", "pending")));
+
+		BaseCloudAdapterConfig config = config(GROUP_NAME);
+
+		this.scalingGroup = new AwsAsScalingGroup(unsatisfyingClient);
+		this.scalingGroup.configure(config);
+
+		ScaleUpConfig scaleUpConfig = config.getScaleUpConfig();
+
+		assertThat(unsatisfyingClient.getAutoScalingGroup(GROUP_NAME)
+				.getDesiredCapacity(), is(2));
+
+		this.scalingGroup.startMachines(1, scaleUpConfig);
+		final String fakeMachineId = AwsAsScalingGroup.REQUESTED_ID_PREFIX
+				+ "1";
+		// we should now have one machine that is faked by the group
+		assertThat(this.scalingGroup.listMachines(),
+				is(machines("i-1", "i-2", fakeMachineId)));
+
+		assertThat(unsatisfyingClient.getAutoScalingGroup(GROUP_NAME)
+				.getDesiredCapacity(), is(3));
+
+		this.scalingGroup.terminateMachine(fakeMachineId);
+
+		assertThat(unsatisfyingClient.getAutoScalingGroup(GROUP_NAME)
+				.getDesiredCapacity(), is(2));
+		assertThat(this.scalingGroup.listMachines(), is(machines("i-1", "i-2")));
+
+		this.scalingGroup.terminateMachine("i-1");
+		assertThat(unsatisfyingClient.getAutoScalingGroup(GROUP_NAME)
+				.getDesiredCapacity(), is(1));
+		assertThat(this.scalingGroup.listMachines(), is(machines("i-2")));
 	}
 
 	@Test(expected = ScalingGroupException.class)
