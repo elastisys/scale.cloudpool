@@ -50,7 +50,7 @@ import com.google.gson.JsonObject;
  *
  * @see BaseCloudAdapter
  *
- * 
+ *
  *
  */
 public class AwsAsScalingGroup implements ScalingGroup {
@@ -205,13 +205,39 @@ public class AwsAsScalingGroup implements ScalingGroup {
 		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
 
 		try {
-			LOG.info("terminating instance {}", machineId);
-			this.client.terminateInstance(getScalingGroupName(), machineId);
+			if (instanceInGroup(machineId)) {
+				LOG.info("terminating instance {}", machineId);
+				this.client.terminateInstance(getScalingGroupName(), machineId);
+			} else {
+				LOG.info("Instance {} not in group, ignoring termination",
+						machineId);
+			}
 		} catch (Exception e) {
 			String message = format("failed to terminate instance \"%s\": %s",
 					machineId, e.getMessage());
 			throw new ScalingGroupException(message);
 		}
+	}
+
+	/**
+	 * Determines whether there is a machine with a given identifier in the auto
+	 * scaling group.
+	 * 
+	 * @param machineId
+	 *            The sought identifier.
+	 * @return true if there is a machine with the given identifier, false
+	 *         otherwise.
+	 */
+	private boolean instanceInGroup(final String machineId) {
+		AutoScalingGroup group = this.client
+				.getAutoScalingGroup(getScalingGroupName());
+		for (com.amazonaws.services.autoscaling.model.Instance instance : group
+				.getInstances()) {
+			if (instance.getInstanceId().equals(machineId)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -284,7 +310,7 @@ public class AwsAsScalingGroup implements ScalingGroup {
 			throw new ScalingGroupException(format(
 					"gave up waiting for instance \"%s\" to be "
 							+ "assigned a public IP address: %s", instanceId,
-					e.getMessage()), e);
+							e.getMessage()), e);
 		}
 	}
 
@@ -293,7 +319,7 @@ public class AwsAsScalingGroup implements ScalingGroup {
 	 * instance if one has been assigned. If the instance doesn't have a public
 	 * IP address, a {@link IllegalStateException} is thrown.
 	 *
-	 * 
+	 *
 	 *
 	 */
 	public static class InstanceIpGetter implements Requester<String> {
