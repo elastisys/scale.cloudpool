@@ -28,11 +28,11 @@ import com.google.gson.JsonObject;
 /**
  * Represents a machine that is a member of a {@link MachinePool} managed by a
  * {@link CloudAdapter}.
- * 
- * 
+ *
+ *
  * @see MachinePool
- * 
- * 
+ *
+ *
  */
 public class Machine {
 
@@ -75,7 +75,7 @@ public class Machine {
 	/**
 	 * Constructs a new {@link Machine} with {@link LivenessState#UNKNOWN}
 	 * liveness state.
-	 * 
+	 *
 	 * @param id
 	 *            The identifier of the {@link Machine} .
 	 * @param state
@@ -108,7 +108,7 @@ public class Machine {
 
 	/**
 	 * Constructs a new {@link Machine}.
-	 * 
+	 *
 	 * @param id
 	 *            The identifier of the {@link Machine}.
 	 * @param state
@@ -157,7 +157,7 @@ public class Machine {
 
 	/**
 	 * Returns the identifier of the {@link Machine}.
-	 * 
+	 *
 	 * @return
 	 */
 	public String getId() {
@@ -166,7 +166,7 @@ public class Machine {
 
 	/**
 	 * Returns the state of the {@link Machine}.
-	 * 
+	 *
 	 * @return
 	 */
 	public MachineState getState() {
@@ -175,7 +175,7 @@ public class Machine {
 
 	/**
 	 * Sets the state of the {@link Machine}.
-	 * 
+	 *
 	 * @return
 	 */
 	public void setState(MachineState state) {
@@ -184,7 +184,7 @@ public class Machine {
 
 	/**
 	 * Returns the liveness state of the {@link Machine}.
-	 * 
+	 *
 	 * @return
 	 */
 	public LivenessState getLiveness() {
@@ -193,7 +193,7 @@ public class Machine {
 
 	/**
 	 * Sets the liveness state of the {@link Machine}.
-	 * 
+	 *
 	 * @param liveness
 	 */
 	public void setLiveness(LivenessState liveness) {
@@ -204,7 +204,7 @@ public class Machine {
 	 * Returns the launch time of the {@link Machine} if it has been launched.
 	 * This attribute may be <code>null</code>, depending on the state of the
 	 * {@link Machine}.
-	 * 
+	 *
 	 * @return
 	 */
 	public DateTime getLaunchtime() {
@@ -215,7 +215,7 @@ public class Machine {
 	 * Returns the list of public IP addresses associated with this
 	 * {@link Machine}. Depending on the state of the {@link Machine}, this list
 	 * may be empty.
-	 * 
+	 *
 	 * @return
 	 */
 	public List<String> getPublicIps() {
@@ -226,7 +226,7 @@ public class Machine {
 	 * Returns the list of private IP addresses associated with this
 	 * {@link Machine}. Depending on the state of the {@link Machine}, this list
 	 * may be empty.
-	 * 
+	 *
 	 * @return
 	 */
 	public List<String> getPrivateIps() {
@@ -236,7 +236,7 @@ public class Machine {
 	/**
 	 * Returns additional meta-data about the {@link Machine} (as a JSON
 	 * document).
-	 * 
+	 *
 	 * @return
 	 */
 	public JsonElement getMetadata() {
@@ -254,10 +254,19 @@ public class Machine {
 	public boolean equals(Object obj) {
 		if (obj instanceof Machine) {
 			Machine that = (Machine) obj;
+			final boolean launchtimesEqual;
+			if (this.launchtime != null && that.launchtime != null) {
+				launchtimesEqual = this.launchtime.getMillis() == that.launchtime
+						.getMillis();
+			} else if (this.launchtime == null && that.launchtime == null) {
+				launchtimesEqual = true;
+			} else {
+				launchtimesEqual = false;
+			}
 			return Objects.equal(this.id, that.id)
 					&& Objects.equal(this.state, that.state)
 					&& Objects.equal(this.liveness, that.liveness)
-					&& Objects.equal(this.launchtime, that.launchtime)
+					&& launchtimesEqual
 					&& Objects.equal(this.publicIps, that.publicIps)
 					&& Objects.equal(this.privateIps, that.privateIps)
 					&& Objects.equal(this.metadata, that.metadata);
@@ -278,7 +287,7 @@ public class Machine {
 	/**
 	 * Returns a transformation {@link Function} that given a {@link Machine}
 	 * extracts its {@link MachineState}.
-	 * 
+	 *
 	 * @return
 	 */
 	public static Function<? super Machine, MachineState> toState() {
@@ -288,7 +297,7 @@ public class Machine {
 	/**
 	 * Returns a transformation {@link Function} that given a {@link Machine}
 	 * extracts its identifier.
-	 * 
+	 *
 	 * @return
 	 */
 	public static Function<? super Machine, String> toId() {
@@ -298,7 +307,7 @@ public class Machine {
 	/**
 	 * Returns a {@link Function} that given a {@link Machine} returns the
 	 * remaining time (in seconds) to the start of its next hour.
-	 * 
+	 *
 	 * @return
 	 */
 	public static Function<? super Machine, Long> remainingInstanceHourTime() {
@@ -309,7 +318,7 @@ public class Machine {
 	 * Returns a {@link Function} that given a {@link Machine} (with a launch
 	 * time set) returns the starting point of the {@link Machine}'s most
 	 * recently started hour.
-	 * 
+	 *
 	 * @return
 	 */
 	public static Function<? super Machine, DateTime> instanceHourStart() {
@@ -319,7 +328,7 @@ public class Machine {
 	/**
 	 * Returns a {@link Predicate} that returns <code>true</code> when passed a
 	 * {@link Machine} in a given {@link MachineState}.
-	 * 
+	 *
 	 * @param state
 	 *            The {@link MachineState} for which this {@link Predicate} will
 	 *            return <code>true</code>.
@@ -332,7 +341,7 @@ public class Machine {
 	/**
 	 * Returns a {@link Predicate} that returns <code>true</code> when passed a
 	 * {@link Machine} in a given {@link LivenessState}.
-	 * 
+	 *
 	 * @param livenessState
 	 *            The {@link LivenessState} for which this {@link Predicate}
 	 *            will return <code>true</code>.
@@ -346,9 +355,9 @@ public class Machine {
 	/**
 	 * A {@link Predicate} that returns <code>true</code> when passed a
 	 * {@link Machine} in a given {@link MachineState}.
-	 * 
-	 * 
-	 * 
+	 *
+	 *
+	 *
 	 */
 	public static class MachineWithState implements Predicate<Machine> {
 		private final MachineState state;
@@ -367,9 +376,9 @@ public class Machine {
 	/**
 	 * A {@link Predicate} that returns <code>true</code> when passed a
 	 * {@link Machine} in a given {@link MachineState}.
-	 * 
-	 * 
-	 * 
+	 *
+	 *
+	 *
 	 */
 	public static class MachineWithLivenessState implements Predicate<Machine> {
 		private final LivenessState livenessState;
@@ -392,16 +401,16 @@ public class Machine {
 	 * Can be used to transform a collection of {@link Machine}s to a collection
 	 * of {@link MachineState}. See
 	 * {@link Iterables#transform(Iterable, Function)}.
-	 * 
+	 *
 	 * @see http://code.google.com/p/guava-libraries/wiki/FunctionalExplained
-	 * 
-	 * 
+	 *
+	 *
 	 */
 	public static class MachineStateExtractor implements
 			Function<Machine, MachineState> {
 		/**
 		 * Extracts the state of a {@link Machine}.
-		 * 
+		 *
 		 * @see Function#apply(Object)
 		 */
 		@Override
@@ -416,15 +425,15 @@ public class Machine {
 	 * <p/>
 	 * Can be used to transform a collection of {@link Machine}s to a collection
 	 * of {@link String}. See {@link Iterables#transform(Iterable, Function)}.
-	 * 
+	 *
 	 * @see http://code.google.com/p/guava-libraries/wiki/FunctionalExplained
-	 * 
-	 * 
+	 *
+	 *
 	 */
 	public static class MachineIdExtractor implements Function<Machine, String> {
 		/**
 		 * Extracts the id of a {@link Machine}.
-		 * 
+		 *
 		 * @see Function#apply(Object)
 		 */
 		@Override
@@ -439,7 +448,7 @@ public class Machine {
 	 * infrastructure and is in a non-terminal state, as indicated by it being
 	 * in one of the states: {@link MachineState#REQUESTED},
 	 * {@link MachineState#PENDING} or {@link MachineState#RUNNING}.
-	 * 
+	 *
 	 * @return
 	 */
 	public static Predicate<? super Machine> isAllocated() {
@@ -450,7 +459,7 @@ public class Machine {
 	 * Returns a {@link Predicate} that returns <code>true</code> when passed a
 	 * {@link Machine} that is active, as indicated by it being in one of the
 	 * states: {@link MachineState#PENDING} or {@link MachineState#RUNNING}.
-	 * 
+	 *
 	 * @return
 	 */
 	public static Predicate<? super Machine> isActive() {
@@ -463,8 +472,8 @@ public class Machine {
 	 * infrastructure and is in a non-terminal state, as indicated by it being
 	 * in one of the states: {@link MachineState#REQUESTED},
 	 * {@link MachineState#PENDING} or {@link MachineState#RUNNING}.
-	 * 
-	 * 
+	 *
+	 *
 	 */
 	public static class MachineAllocatedPredicate implements Predicate<Machine> {
 		private static final Set<MachineState> allocatedStates = Sets
@@ -481,8 +490,8 @@ public class Machine {
 	 * A {@link Predicate} that returns <code>true</code> when passed a
 	 * {@link Machine} that is active, as indicated by it being in one of the
 	 * states: {@link MachineState#PENDING} or {@link MachineState#RUNNING}.
-	 * 
-	 * 
+	 *
+	 *
 	 */
 	public static class MachineActivePredicate implements Predicate<Machine> {
 		private static final Set<MachineState> activeStates = Sets.newHashSet(
@@ -490,8 +499,8 @@ public class Machine {
 
 		@Override
 		public boolean apply(Machine machine) {
-			return (machine.getLaunchtime() != null)
-					&& (activeStates.contains(machine.getState()));
+			return machine.getLaunchtime() != null
+					&& activeStates.contains(machine.getState());
 		}
 	}
 
@@ -500,15 +509,15 @@ public class Machine {
 	 * started its most recent hour.
 	 * <p/>
 	 * The {@link Machine} must have its launch time set.
-	 * 
-	 * 
+	 *
+	 *
 	 */
 	public static class InstanceHourStart implements
 			Function<Machine, DateTime> {
 
 		/**
 		 * Calculates the starting point of the machine's current hour.
-		 * 
+		 *
 		 * @param machine
 		 * @return
 		 */
@@ -545,8 +554,8 @@ public class Machine {
 	/**
 	 * A {@link Function} that for a given {@link Machine} calculates the
 	 * remaining time (in seconds) of the machine's current hour.
-	 * 
-	 * 
+	 *
+	 *
 	 */
 	public static class RemainingInstanceHourTime implements
 			Function<Machine, Long> {
@@ -554,7 +563,7 @@ public class Machine {
 		/**
 		 * Calculates the remaining time (in seconds) of the machine's last
 		 * started billing hour.
-		 * 
+		 *
 		 * @param machine
 		 * @return
 		 */
@@ -576,7 +585,7 @@ public class Machine {
 	/**
 	 * Sorts a collection of {@link Machine}s according to the order prescribed
 	 * by a certain {@link Comparator}.
-	 * 
+	 *
 	 * @param machines
 	 * @param comparator
 	 * @return

@@ -20,11 +20,11 @@ import com.google.gson.JsonObject;
 
 /**
  * Represents a snapshot of the machine pool managed by a {@link CloudAdapter}.
- * 
+ *
  * @see CloudAdapter
- * 
- * 
- * 
+ *
+ *
+ *
  */
 public class MachinePool {
 
@@ -38,7 +38,7 @@ public class MachinePool {
 
 	/**
 	 * Constructs a new {@link MachinePool} snapshot.
-	 * 
+	 *
 	 * @param machines
 	 *            The machine instances that were part of the machine pool at
 	 *            the time of the snapshot.
@@ -61,7 +61,7 @@ public class MachinePool {
 	 * {@link MachineState#RUNNING}) as well as machines in terminal states (
 	 * {@link MachineState#REJECTED}, {@link MachineState#TERMINATING},
 	 * {@link MachineState#TERMINATED}).
-	 * 
+	 *
 	 * @return
 	 */
 	public List<Machine> getMachines() {
@@ -76,7 +76,7 @@ public class MachinePool {
 	 * <p/>
 	 * The effective size of a machine pool is considered to be the set of
 	 * allocated machines.
-	 * 
+	 *
 	 * @return
 	 */
 	public List<Machine> getAllocatedMachines() {
@@ -89,7 +89,7 @@ public class MachinePool {
 	 * Returns all {@link Machine}s in the pool that are in one of the <i>active
 	 * states</i>: {@link MachineState#PENDING} or {@link MachineState#RUNNING}
 	 * ). See {@link Machine#isActive()}.
-	 * 
+	 *
 	 * @return
 	 */
 	public List<Machine> getActiveMachines() {
@@ -99,7 +99,7 @@ public class MachinePool {
 
 	/**
 	 * Returns the time when this snapshot of the resource pool was taken.
-	 * 
+	 *
 	 * @return
 	 */
 	public DateTime getTimestamp() {
@@ -108,7 +108,7 @@ public class MachinePool {
 
 	/**
 	 * Factory method for creating an empty machine pool.
-	 * 
+	 *
 	 * @param timestamp
 	 *            The timestamp of the machine pool.
 	 * @return
@@ -126,7 +126,16 @@ public class MachinePool {
 	public boolean equals(Object obj) {
 		if (obj instanceof MachinePool) {
 			MachinePool that = (MachinePool) obj;
-			return Objects.equal(this.timestamp, that.timestamp)
+			final boolean timestampsEqual;
+			if (this.timestamp != null && that.timestamp != null) {
+				timestampsEqual = this.timestamp.getMillis() == that.timestamp
+						.getMillis();
+			} else if (this.timestamp == null && that.timestamp == null) {
+				timestampsEqual = true;
+			} else {
+				timestampsEqual = false;
+			}
+			return timestampsEqual
 					&& Objects.equal(this.machines, that.machines);
 		}
 		return false;
@@ -142,7 +151,7 @@ public class MachinePool {
 	 * Parses a JSON representation of a {@link MachinePool} to its Java
 	 * counterpart. Any failure to parse the JSON representation into a valid
 	 * {@link MachinePool} instance results in an exception being thrown.
-	 * 
+	 *
 	 * @param machinePoolAsJson
 	 * @return
 	 * @throws IOException
@@ -164,7 +173,7 @@ public class MachinePool {
 
 	/**
 	 * Returns the JSON representation for this {@link MachinePool}.
-	 * 
+	 *
 	 * @return A {@link JsonObject} representation of this {@link MachinePool}.
 	 */
 	public JsonObject toJson() {
