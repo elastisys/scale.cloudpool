@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.elastisys.scale</groupId>
     <artifactId>cloudadapters.aws</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.1</version>
   </parent>
   <artifactId>cloudadapters.aws.commons</artifactId>
   <packaging>jar</packaging>
