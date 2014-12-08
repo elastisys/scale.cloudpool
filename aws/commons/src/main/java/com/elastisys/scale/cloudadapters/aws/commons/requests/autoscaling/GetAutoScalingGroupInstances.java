@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudadapters.aws.commons.requests.autoscaling;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -16,7 +17,7 @@ import com.google.common.collect.Lists;
  * instances belonging to a particular AWS Auto Scaling Group in a region.
  *
  * @see AutoScalingInstance
- * 
+ *
  */
 public class GetAutoScalingGroupInstances extends
 		AmazonAutoScalingRequest<List<Instance>> {
@@ -49,8 +50,10 @@ public class GetAutoScalingGroupInstances extends
 		List<String> instanceIds = Lists.transform(
 				autoScalingGroup.getInstances(),
 				AwsAutoScalingFunctions.toAutoScalingInstanceId());
+
 		GetInstances listInstances = new GetInstances(getAwsCredentials(),
-				getRegion(), new Filter("instance-id", instanceIds));
+				getRegion(), instanceIds, Collections.<Filter> emptyList());
+
 		return listInstances.call();
 	}
 }
