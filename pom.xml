@@ -35,7 +35,7 @@
     <module>commons</module>
     <module>aws</module>
     <module>openstack</module>
-    <module>splitter</module>
+    <!-- <module>splitter</module> WIP! -->
   </modules>
 
   <!-- Location of Git repository. Used to tag releases. -->
