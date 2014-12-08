@@ -11,7 +11,7 @@ import com.elastisys.scale.cloudadapters.aws.commons.requests.ec2.GetInstances;
 public class ListInstancesMain extends AbstractClient {
 
 	/** TODO: set to the AWS region to connect to. */
-	private static final String region = "us-east-1";
+	private static final String region = "eu-west-1";
 
 	public static void main(String[] args) throws Exception {
 		logger.info(format("Listing all instances in region %s", region));

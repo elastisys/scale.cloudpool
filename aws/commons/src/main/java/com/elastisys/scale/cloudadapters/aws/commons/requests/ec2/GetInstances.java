@@ -107,11 +107,19 @@ public class GetInstances extends AmazonEc2Request<List<Instance>> {
 		DescribeInstancesResult result = getClient().getApi()
 				.describeInstances(request);
 
-		for (Reservation reservation : result.getReservations()) {
-			for (Instance instance : reservation.getInstances()) {
-				instances.add(instance);
+		String nextToken = "";
+
+		do {
+			for (Reservation reservation : result.getReservations()) {
+				for (Instance instance : reservation.getInstances()) {
+					instances.add(instance);
+				}
 			}
-		}
+
+			nextToken = result.getNextToken();
+			request.setNextToken(nextToken);
+		} while (nextToken != null);
+
 		return instances;
 	}
 
