@@ -14,6 +14,8 @@ for different cloud providers:
     that manages a group of [AWS EC2](http://aws.amazon.com/ec2/) instances.
   - ``cloudadapers.aws.autoscaling``: a [cloud adapter](http://cloudadapterapi.readthedocs.org/en/latest) 
     that manages the size of an [AWS Auto Scaling Group](http://docs.aws.amazon.com/AutoScaling/latest/DeveloperGuide/WorkingWithASG.html).
+  - ``cloudadapers.splitter``: a [cloud adapter](http://cloudadapterapi.readthedocs.org/en/latest) 
+    that manages the size of several backend cloud adapters.
 
 
 Getting started
@@ -21,7 +23,7 @@ Getting started
 
 Clone the repository and build it with:
 
-    `mvn clean install`
+  `mvn clean install`
 
 
 For each of the cloud adapter implementation modules, the build produces an 
