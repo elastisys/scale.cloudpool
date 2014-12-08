@@ -1,0 +1,9 @@
+{
+	"priority": 40,
+	"cloudAdapterHost": "localhost0",
+	"cloudAdapterPort": 10,
+	"basicCredentials": {
+		"username": "testuser0",
+		"password": "testpassword0"
+	}
+}

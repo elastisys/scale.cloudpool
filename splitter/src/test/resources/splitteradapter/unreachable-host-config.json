@@ -1,0 +1,42 @@
+{
+	"poolSizeCalculator": "STRICT",
+	"adapters": [
+		{
+			"priority": 40,
+			"cloudAdapterHost": "localhost",
+			"cloudAdapterPort": 1336,
+			"basicCredentials": {
+				"username": "admin",
+				"password": "adminpassword"
+			}
+			
+		},
+		{
+			"priority": 20,
+			"cloudAdapterHost": "localhost",
+			"cloudAdapterPort": 1337,
+			"basicCredentials": {
+				"username": "admin",
+				"password": "adminpassword"
+			}
+		},
+		{
+			"priority": 20,
+			"cloudAdapterHost": "localhost",
+			"cloudAdapterPort": 1338,
+			"basicCredentials": {
+				"username": "admin",
+				"password": "adminpassword"
+			}
+		},
+		{
+			"priority": 20,
+			"cloudAdapterHost": "localhost-UNREACHABLE",
+			"cloudAdapterPort": 1339,
+			"basicCredentials": {
+				"username": "admin",
+				"password": "adminpassword"
+			}
+		}
+	]
+}
