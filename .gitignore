@@ -26,6 +26,9 @@ target
 *~
 **/*~
 
+# vim
+**/*.swp
+
 # Log files
 **/*.log
 
