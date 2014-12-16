@@ -7,7 +7,6 @@ import com.elastisys.scale.commons.net.retryable.Action;
 import com.elastisys.scale.commons.net.retryable.RetryHandler;
 import com.elastisys.scale.commons.net.retryable.RetryLimitExceededException;
 import com.elastisys.scale.commons.net.retryable.RetryableRequest;
-import com.elastisys.scale.commons.net.retryable.retryhandlers.AbstractLimitedRetryHandler;
 
 /**
  * A {@link RetryHandler} that waits for a Amazon Auto Scaling group to reach a
@@ -16,10 +15,10 @@ import com.elastisys.scale.commons.net.retryable.retryhandlers.AbstractLimitedRe
  *
  * @see RetryableRequest
  *
- * 
+ *
  */
 public class RetryUntilScalingGroupSizeReached extends
-		AbstractLimitedRetryHandler<AutoScalingGroup> {
+AbstractAmazonLimitedRetryHandler<AutoScalingGroup> {
 
 	/** The target Auto Scaling group size to wait for. */
 	private final int targetGroupSize;
@@ -36,9 +35,8 @@ public class RetryUntilScalingGroupSizeReached extends
 	 * @param delay
 	 *            Delay (in ms) between poll attempts.
 	 */
-	public RetryUntilScalingGroupSizeReached(int targetGroupSize,
-			int maxRetries, long delay) {
-		super(maxRetries, delay);
+	public RetryUntilScalingGroupSizeReached(int targetGroupSize, int maxRetries) {
+		super(maxRetries);
 		this.targetGroupSize = targetGroupSize;
 	}
 

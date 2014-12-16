@@ -143,6 +143,7 @@ public class AwsAsScalingGroup implements ScalingGroup {
 			// retrieve all scaling group members
 			List<Instance> groupInstances = this.client
 					.getAutoScalingGroupMembers(getScalingGroupName());
+
 			List<Machine> acquiredInstances = Lists.newArrayList(transform(
 					groupInstances, new InstanceToMachine()));
 
@@ -225,6 +226,7 @@ public class AwsAsScalingGroup implements ScalingGroup {
 		} catch (Exception e) {
 			String message = format("failed to terminate instance \"%s\": %s",
 					machineId, e.getMessage());
+			LOG.error(message);
 			throw new ScalingGroupException(message);
 		}
 	}

@@ -12,7 +12,7 @@ import com.elastisys.scale.commons.net.retryable.RetryableRequest;
  * A {@link Callable} task that, when executed, waits for an EC2 machine
  * instance to reach {@code running} state.
  *
- * 
+ *
  */
 public class AwaitInstanceRunning extends AmazonEc2Request<InstanceState> {
 
@@ -20,8 +20,6 @@ public class AwaitInstanceRunning extends AmazonEc2Request<InstanceState> {
 	private final String instanceId;
 	/** Maximum number of times to poll machine instance for state. */
 	private final int maxRetries;
-	/** Delay (in ms) between each machine instance state poll. */
-	private final int retryDelay;
 
 	/**
 	 * Constructs a new {@link AwaitInstanceRunning} task.
@@ -38,11 +36,10 @@ public class AwaitInstanceRunning extends AmazonEc2Request<InstanceState> {
 	 *            Delay (in ms) between each machine instance state poll.
 	 */
 	public AwaitInstanceRunning(AWSCredentials awsCredentials, String region,
-			String instanceId, int maxRetries, int retryDelay) {
+			String instanceId, int maxRetries) {
 		super(awsCredentials, region);
 		this.instanceId = instanceId;
 		this.maxRetries = maxRetries;
-		this.retryDelay = retryDelay;
 	}
 
 	@Override
@@ -54,8 +51,8 @@ public class AwaitInstanceRunning extends AmazonEc2Request<InstanceState> {
 		String taskName = "await-running{" + this.instanceId + "}";
 		Callable<InstanceState> runningStateWaiter = new RetryableRequest<InstanceState>(
 				new InstanceStateRequester(getClient().getApi(),
-						this.instanceId), new RetryUntilRunning(
-						this.maxRetries, this.retryDelay), taskName);
+						this.instanceId),
+				new RetryUntilRunning(this.maxRetries), taskName);
 		return runningStateWaiter.call();
 	}
 

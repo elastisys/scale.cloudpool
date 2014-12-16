@@ -7,7 +7,6 @@ import com.elastisys.scale.commons.net.retryable.Action;
 import com.elastisys.scale.commons.net.retryable.RetryHandler;
 import com.elastisys.scale.commons.net.retryable.RetryLimitExceededException;
 import com.elastisys.scale.commons.net.retryable.RetryableRequest;
-import com.elastisys.scale.commons.net.retryable.retryhandlers.AbstractLimitedRetryHandler;
 
 /**
  * A {@link RetryHandler} that waits for a Amazon EC2 machine instance to reach
@@ -17,13 +16,13 @@ import com.elastisys.scale.commons.net.retryable.retryhandlers.AbstractLimitedRe
  * @see RetryableRequest
  * @see InstanceStateRequester
  *
- * 
+ *
  */
 public class RetryUntilRunning extends
-		AbstractLimitedRetryHandler<InstanceState> {
+AbstractAmazonLimitedRetryHandler<InstanceState> {
 
-	public RetryUntilRunning(int maxRetries, long delay) {
-		super(maxRetries, delay);
+	public RetryUntilRunning(int maxRetries) {
+		super(maxRetries);
 	}
 
 	@Override

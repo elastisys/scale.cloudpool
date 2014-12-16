@@ -12,7 +12,7 @@ import com.elastisys.scale.commons.net.retryable.RetryableRequest;
  * A {@link Callable} task that, when executed, waits for an EC2 machine
  * instance to pass the system reachability tests.
  *
- * 
+ *
  *
  */
 public class AwaitInstanceReachable extends AmazonEc2Request<Void> {
@@ -21,8 +21,6 @@ public class AwaitInstanceReachable extends AmazonEc2Request<Void> {
 	private final String instanceId;
 	/** Maximum number of times to poll machine instance for state. */
 	private final int maxRetries;
-	/** Delay (in ms) between each machine instance state poll. */
-	private final int retryDelay;
 
 	/**
 	 * Constructs a new {@link AwaitInstanceRunning} task.
@@ -39,11 +37,10 @@ public class AwaitInstanceReachable extends AmazonEc2Request<Void> {
 	 *            Delay (in ms) between each machine instance state poll.
 	 */
 	public AwaitInstanceReachable(AWSCredentials awsCredentials, String region,
-			String instanceId, int maxRetries, int retryDelay) {
+			String instanceId, int maxRetries) {
 		super(awsCredentials, region);
 		this.instanceId = instanceId;
 		this.maxRetries = maxRetries;
-		this.retryDelay = retryDelay;
 	}
 
 	@Override
@@ -56,8 +53,7 @@ public class AwaitInstanceReachable extends AmazonEc2Request<Void> {
 		String taskName = "await-reachable{" + instanceId + "}";
 		Callable<InstanceStatus> reachabilityWaiter = new RetryableRequest<InstanceStatus>(
 				new InstanceStatusRequester(getClient().getApi(), instanceId),
-				new RetryUntilReachable(this.maxRetries, this.retryDelay),
-				taskName);
+				new RetryUntilReachable(this.maxRetries), taskName);
 		reachabilityWaiter.call();
 	}
 

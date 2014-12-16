@@ -7,7 +7,6 @@ import com.elastisys.scale.commons.net.retryable.Action;
 import com.elastisys.scale.commons.net.retryable.RetryHandler;
 import com.elastisys.scale.commons.net.retryable.RetryLimitExceededException;
 import com.elastisys.scale.commons.net.retryable.RetryableRequest;
-import com.elastisys.scale.commons.net.retryable.retryhandlers.AbstractLimitedRetryHandler;
 
 /**
  * A {@link RetryHandler} that waits for a Amazon EC2 machine instance to become
@@ -20,14 +19,14 @@ import com.elastisys.scale.commons.net.retryable.retryhandlers.AbstractLimitedRe
  * @see RetryableRequest
  * @see InstanceStatusRequester
  *
- * 
+ *
  *
  */
 public class RetryUntilReachable extends
-		AbstractLimitedRetryHandler<InstanceStatus> {
+AbstractAmazonLimitedRetryHandler<InstanceStatus> {
 
-	public RetryUntilReachable(int maxRetries, long delay) {
-		super(maxRetries, delay);
+	public RetryUntilReachable(int maxRetries) {
+		super(maxRetries);
 	}
 
 	@Override
@@ -35,7 +34,7 @@ public class RetryUntilReachable extends
 		return instanceStatus.getInstanceStatus().getStatus()
 				.equalsIgnoreCase("ok")
 				&& instanceStatus.getSystemStatus().getStatus()
-						.equalsIgnoreCase("ok");
+				.equalsIgnoreCase("ok");
 	}
 
 	@Override

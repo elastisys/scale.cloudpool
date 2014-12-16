@@ -21,7 +21,7 @@ import com.google.common.collect.Iterables;
  * The termination is a long-running {@link Activity} which can be tracked
  * through the returned object.
  *
- * 
+ *
  *
  */
 public class CreateInstance extends AmazonEc2Request<Instance> {
@@ -58,7 +58,7 @@ public class CreateInstance extends AmazonEc2Request<Instance> {
 	@Override
 	public Instance call() {
 		Placement placement = new Placement()
-				.withAvailabilityZone(this.availabilityZone);
+		.withAvailabilityZone(this.availabilityZone);
 		RunInstancesRequest request = new RunInstancesRequest().withMinCount(1)
 				.withMaxCount(1).withImageId(this.imageId)
 				.withInstanceType(this.instanceType)
@@ -80,11 +80,11 @@ public class CreateInstance extends AmazonEc2Request<Instance> {
 
 	private InstanceState awaitRunningState(Instance instance) throws Exception {
 		return new AwaitInstanceRunning(getAwsCredentials(), getRegion(),
-				instance.getInstanceId(), 30, 15000).call();
+				instance.getInstanceId(), 30).call();
 	}
 
 	private void awaitReachability(Instance instance) throws Exception {
 		new AwaitInstanceReachable(getAwsCredentials(), getRegion(),
-				instance.getInstanceId(), 30, 15000).call();
+				instance.getInstanceId(), 30).call();
 	}
 }

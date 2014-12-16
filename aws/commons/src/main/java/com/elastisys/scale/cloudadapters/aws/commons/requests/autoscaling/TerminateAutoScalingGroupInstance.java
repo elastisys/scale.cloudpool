@@ -23,11 +23,11 @@ import com.elastisys.scale.commons.net.retryable.RetryableRequest;
  * <p/>
  * The termination is a long-running {@link Activity} which can be tracked
  * through the returned object.
- * 
- * 
+ *
+ *
  */
 public class TerminateAutoScalingGroupInstance extends
-		AmazonAutoScalingRequest<Void> {
+AmazonAutoScalingRequest<Void> {
 
 	/** The name of the Auto Scaling Group from which to remove an instance. */
 	private final String autoScalingGroup;
@@ -48,8 +48,8 @@ public class TerminateAutoScalingGroupInstance extends
 		int currentSize = scalingGroup.getDesiredCapacity();
 
 		TerminateInstanceInAutoScalingGroupRequest request = new TerminateInstanceInAutoScalingGroupRequest()
-				.withInstanceId(this.instanceId)
-				.withShouldDecrementDesiredCapacity(true);
+		.withInstanceId(this.instanceId)
+		.withShouldDecrementDesiredCapacity(true);
 		TerminateInstanceInAutoScalingGroupResult result = getClient().getApi()
 				.terminateInstanceInAutoScalingGroup(request);
 
@@ -59,16 +59,16 @@ public class TerminateAutoScalingGroupInstance extends
 
 	/**
 	 * Waits for the Auto Scaling group to reach the desired size.
-	 * 
+	 *
 	 * @param desiredSize
-	 * 
+	 *
 	 * @throws RuntimeException
 	 */
 	private void awaitGroupSize(int desiredSize) throws RuntimeException {
 		Requester<AutoScalingGroup> requester = new AutoScalingGroupRequester(
 				getClient(), this.autoScalingGroup);
 		RetryHandler<AutoScalingGroup> retryHandler = new RetryUntilScalingGroupSizeReached(
-				desiredSize, 30, 15000);
+				desiredSize, 30);
 		String taskName = String.format("await-group-size{%d}", desiredSize);
 		Callable<AutoScalingGroup> retryableRequest = new RetryableRequest<AutoScalingGroup>(
 				requester, retryHandler, taskName);
@@ -82,7 +82,7 @@ public class TerminateAutoScalingGroupInstance extends
 							+ "capacity %d. You may want to consult the "
 							+ "'as-describe-scaling-activities' command "
 							+ "for troubleshooting. Failure message: %s",
-					desiredSize, e.getMessage()), e);
+							desiredSize, e.getMessage()), e);
 		}
 	}
 }

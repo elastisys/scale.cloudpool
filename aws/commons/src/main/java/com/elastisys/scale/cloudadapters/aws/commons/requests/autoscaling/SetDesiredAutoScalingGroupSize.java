@@ -25,12 +25,12 @@ import com.elastisys.scale.commons.net.retryable.RetryableRequest;
  * instance is terminated immediately; nothing is done to keep it until the end
  * of its billing hour. To pick a particular instance for termination, use
  * {@link TerminateAutoScalingGroupInstance}.
- * 
- * 
- * 
+ *
+ *
+ *
  */
 public class SetDesiredAutoScalingGroupSize extends
-		AmazonAutoScalingRequest<Void> {
+AmazonAutoScalingRequest<Void> {
 
 	/** The name of the Auto Scaling Group whose size is to be changed. */
 	private final String autoScalingGroup;
@@ -57,22 +57,22 @@ public class SetDesiredAutoScalingGroupSize extends
 	 */
 	private void setDesiredSize() {
 		SetDesiredCapacityRequest request = new SetDesiredCapacityRequest()
-				.withAutoScalingGroupName(this.autoScalingGroup)
-				.withDesiredCapacity(this.desiredCapacity)
-				.withHonorCooldown(false);
+		.withAutoScalingGroupName(this.autoScalingGroup)
+		.withDesiredCapacity(this.desiredCapacity)
+		.withHonorCooldown(false);
 		getClient().getApi().setDesiredCapacity(request);
 	}
 
 	/**
 	 * Waits for the Auto Scaling group to reach the desired size.
-	 * 
+	 *
 	 * @throws RuntimeException
 	 */
 	private void awaitGroupSize() throws RuntimeException {
 		Requester<AutoScalingGroup> requester = new AutoScalingGroupRequester(
 				getClient(), this.autoScalingGroup);
 		RetryHandler<AutoScalingGroup> retryHandler = new RetryUntilScalingGroupSizeReached(
-				this.desiredCapacity, 30, 15000);
+				this.desiredCapacity, 30);
 		String taskName = String.format("await-group-size{%d}",
 				this.desiredCapacity);
 		Callable<AutoScalingGroup> retryableRequest = new RetryableRequest<AutoScalingGroup>(
@@ -87,7 +87,7 @@ public class SetDesiredAutoScalingGroupSize extends
 							+ "capacity %d. You may want to consult the "
 							+ "scaling activities history of you Auto Scaling "
 							+ "Group for troubleshooting. Failure message: %s",
-					this.desiredCapacity, e.getMessage()), e);
+							this.desiredCapacity, e.getMessage()), e);
 		}
 	}
 }

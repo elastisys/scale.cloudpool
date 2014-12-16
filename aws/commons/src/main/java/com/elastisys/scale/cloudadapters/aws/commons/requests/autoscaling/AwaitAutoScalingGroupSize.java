@@ -13,11 +13,11 @@ import com.elastisys.scale.commons.net.retryable.RetryableRequest;
 /**
  * A {@link Callable} task that, when executed, waits for an AWS Auto Scaling
  * Group to reach a certain size.
- * 
- * 
+ *
+ *
  */
 public class AwaitAutoScalingGroupSize extends
-		AmazonAutoScalingRequest<AutoScalingGroup> {
+AmazonAutoScalingRequest<AutoScalingGroup> {
 
 	/** The Auto Scaling Group of interest. */
 	private final String autoScalingGroupName;
@@ -29,12 +29,10 @@ public class AwaitAutoScalingGroupSize extends
 
 	/** Maximum number of times to poll for group size. */
 	private final int maxRetries;
-	/** Delay (in ms) between each group size poll. */
-	private final int retryDelay;
 
 	/**
 	 * Constructs a new {@link AwaitAutoScalingGroupSize} task.
-	 * 
+	 *
 	 * @param awsCredentials
 	 *            AWS security credentials for the account to be used.
 	 * @param region
@@ -51,12 +49,11 @@ public class AwaitAutoScalingGroupSize extends
 	 */
 	public AwaitAutoScalingGroupSize(AWSCredentials awsCredentials,
 			String region, String autoScalingGroupName, int targetSize,
-			int maxRetries, int retryDelay) {
+			int maxRetries) {
 		super(awsCredentials, region);
 		this.autoScalingGroupName = autoScalingGroupName;
 		this.targetSize = targetSize;
 		this.maxRetries = maxRetries;
-		this.retryDelay = retryDelay;
 	}
 
 	@Override
@@ -69,7 +66,7 @@ public class AwaitAutoScalingGroupSize extends
 
 	/**
 	 * Waits for the Auto Scaling group to reach a given size.
-	 * 
+	 *
 	 * @param autoScalingGroup
 	 * @param targetSize
 	 * @return
@@ -81,7 +78,7 @@ public class AwaitAutoScalingGroupSize extends
 		Requester<AutoScalingGroup> requester = new AutoScalingGroupRequester(
 				getClient(), groupName);
 		RetryHandler<AutoScalingGroup> retryHandler = new RetryUntilScalingGroupSizeReached(
-				targetSize, this.maxRetries, this.retryDelay);
+				targetSize, this.maxRetries);
 		Callable<AutoScalingGroup> retryableRequest = new RetryableRequest<AutoScalingGroup>(
 				requester, retryHandler, "await group size");
 		try {

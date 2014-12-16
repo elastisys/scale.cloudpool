@@ -1,5 +1,7 @@
 package com.elastisys.scale.cloudadapters.aws.commons.requests.ec2;
 
+import static java.lang.String.format;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -7,10 +9,12 @@ import java.util.concurrent.Callable;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
-import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Reservation;
+import com.elastisys.scale.cloudadapters.aws.commons.tasks.InstanceListingRequester;
+import com.elastisys.scale.cloudadapters.aws.commons.tasks.RetryUntilInstancesPresent;
+import com.elastisys.scale.commons.net.retryable.RetryHandler;
+import com.elastisys.scale.commons.net.retryable.RetryableRequest;
 import com.google.common.collect.Lists;
 
 /**
@@ -34,6 +38,7 @@ import com.google.common.collect.Lists;
  */
 public class GetInstances extends AmazonEc2Request<List<Instance>> {
 
+	private static final int MAX_NUMBER_OF_RETRIES = 30;
 	private final List<Filter> filters;
 	private final List<String> instanceIds;
 
@@ -92,35 +97,23 @@ public class GetInstances extends AmazonEc2Request<List<Instance>> {
 
 	@Override
 	public List<Instance> call() {
-		List<Instance> instances = Lists.newLinkedList();
+		RetryHandler<List<Instance>> retryHandler = new RetryUntilInstancesPresent(
+				this.instanceIds, MAX_NUMBER_OF_RETRIES);
 
-		DescribeInstancesRequest request = new DescribeInstancesRequest();
+		String taskName = String.format("await-identified-instances");
+		Callable<List<Instance>> retryableRequest = new RetryableRequest<List<Instance>>(
+				new InstanceListingRequester(getAwsCredentials(), getRegion(),
+						this.instanceIds, this.filters), retryHandler, taskName);
 
-		if (this.filters.size() > 0) {
-			request.withFilters(this.filters);
+		try {
+			return retryableRequest.call();
+		} catch (Exception e) {
+			String message = format(
+					"Gave up waiting for instance listing to include all "
+							+ "members that were sought due to %s",
+							e.getMessage());
+			throw new RuntimeException(message, e);
 		}
-
-		if (this.instanceIds.size() > 0) {
-			request.setInstanceIds(this.instanceIds);
-		}
-
-		DescribeInstancesResult result = getClient().getApi()
-				.describeInstances(request);
-
-		String nextToken = "";
-
-		do {
-			for (Reservation reservation : result.getReservations()) {
-				for (Instance instance : reservation.getInstances()) {
-					instances.add(instance);
-				}
-			}
-
-			nextToken = result.getNextToken();
-			request.setNextToken(nextToken);
-		} while (nextToken != null);
-
-		return instances;
 	}
 
 }
