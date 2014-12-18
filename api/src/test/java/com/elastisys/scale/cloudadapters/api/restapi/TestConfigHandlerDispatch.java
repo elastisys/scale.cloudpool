@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudadapters.api.restapi;
 
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
@@ -29,9 +29,9 @@ import com.google.gson.JsonObject;
 /**
  * Verifies that the {@link ConfigHandler} endpoint correctly dispatches
  * incoming calls to the backing {@link CloudAdapter} implementation.
- * 
- * 
- * 
+ *
+ *
+ *
  */
 public class TestConfigHandlerDispatch {
 	/** The object under test. */
@@ -80,7 +80,7 @@ public class TestConfigHandlerDispatch {
 		Response response = this.restEndpoint.getConfig();
 		assertEquals(response.getStatus(),
 				Status.INTERNAL_SERVER_ERROR.getStatusCode());
-		assertThat(response.getEntity(), is(ErrorType.class));
+		assertThat(response.getEntity(), instanceOf(ErrorType.class));
 	}
 
 	/**
@@ -102,21 +102,21 @@ public class TestConfigHandlerDispatch {
 	/**
 	 * Verify proper handling of {@code psotConfig} calls when a cloud provider
 	 * error is thrown from the backing {@link CloudAdapter}.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
 	public void testPostConfigOnCloudAdapterError() throws Exception {
 		// set up mock response: should throw error
 		doThrow(CloudAdapterException.class).when(this.cloudAdapterMock)
-				.configure(any(JsonObject.class));
+		.configure(any(JsonObject.class));
 
 		// call rest endpoint and verify proper dispatching to mock
 		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}");
 		Response response = this.restEndpoint.setConfig(config);
 		assertEquals(response.getStatus(),
 				Status.INTERNAL_SERVER_ERROR.getStatusCode());
-		assertThat(response.getEntity(), is(ErrorType.class));
+		assertThat(response.getEntity(), instanceOf(ErrorType.class));
 	}
 
 	/**
@@ -127,14 +127,14 @@ public class TestConfigHandlerDispatch {
 	public void testPostConfigOnIllegalInputError() throws Exception {
 		// set up mock response: should throw error
 		doThrow(IllegalArgumentException.class).when(this.cloudAdapterMock)
-				.configure(any(JsonObject.class));
+		.configure(any(JsonObject.class));
 
 		// call rest endpoint and verify proper dispatching to mock
 		JsonObject config = JsonUtils
 				.parseJsonString("{\"key\": \"illegal-value\"}");
 		Response response = this.restEndpoint.setConfig(config);
 		assertEquals(response.getStatus(), Status.BAD_REQUEST.getStatusCode());
-		assertThat(response.getEntity(), is(ErrorType.class));
+		assertThat(response.getEntity(), instanceOf(ErrorType.class));
 	}
 
 }

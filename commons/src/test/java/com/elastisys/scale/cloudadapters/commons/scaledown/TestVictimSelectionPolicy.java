@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudadapters.commons.scaledown;
 
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertThat;
 
 import org.junit.Test;
@@ -11,9 +11,9 @@ import com.elastisys.scale.cloudadapters.commons.scaledown.strategies.OldestInst
 
 /**
  * Exercises the {@link VictimSelectionPolicy} class.
- * 
- * 
- * 
+ *
+ *
+ *
  */
 public class TestVictimSelectionPolicy {
 
@@ -22,17 +22,17 @@ public class TestVictimSelectionPolicy {
 		assertThat(
 				VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR
 						.getVictimSelectionStrategy(),
-				is(ClosestToInstanceHourVictimSelectionStrategy.class));
+				instanceOf(ClosestToInstanceHourVictimSelectionStrategy.class));
 
 		assertThat(
 				VictimSelectionPolicy.NEWEST_INSTANCE
-						.getVictimSelectionStrategy(),
-				is(NewestInstanceVictimSelectionStrategy.class));
+				.getVictimSelectionStrategy(),
+				instanceOf(NewestInstanceVictimSelectionStrategy.class));
 
 		assertThat(
 				VictimSelectionPolicy.OLDEST_INSTANCE
-						.getVictimSelectionStrategy(),
-				is(OldestInstanceVictimSelectionStrategy.class));
+				.getVictimSelectionStrategy(),
+				instanceOf(OldestInstanceVictimSelectionStrategy.class));
 
 	}
 }

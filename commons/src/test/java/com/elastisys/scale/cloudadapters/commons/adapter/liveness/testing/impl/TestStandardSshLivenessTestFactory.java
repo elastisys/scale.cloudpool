@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudadapters.commons.adapter.liveness.testing.impl;
 
 import static com.elastisys.scale.cloudadapters.commons.adapter.BaseAdapterTestUtils.machine;
 import static com.elastisys.scale.cloudadapters.commons.adapter.BaseAdapterTestUtils.validLivenessConfig;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -15,9 +16,9 @@ import com.elastisys.scale.cloudadapters.commons.adapter.liveness.testing.SshLiv
 
 /**
  * Exercises the {@link StandardSshLivenessTestFactory}.
- * 
- * 
- * 
+ *
+ *
+ *
  */
 public class TestStandardSshLivenessTestFactory {
 
@@ -35,7 +36,7 @@ public class TestStandardSshLivenessTestFactory {
 		SshLivenessTest livenessTest = this.factory.createBootTimeCheck(
 				machine, validLivenessConfig());
 
-		assertThat(livenessTest, is(StandardSshLivenessTest.class));
+		assertThat(livenessTest, instanceOf(StandardSshLivenessTest.class));
 		assertThat(livenessTest.getMachine(), is(machine));
 	}
 
@@ -45,7 +46,7 @@ public class TestStandardSshLivenessTestFactory {
 		SshLivenessTest livenessTest = this.factory.createRunTimeCheck(machine,
 				validLivenessConfig());
 
-		assertThat(livenessTest, is(StandardSshLivenessTest.class));
+		assertThat(livenessTest, instanceOf(StandardSshLivenessTest.class));
 		assertThat(livenessTest.getMachine(), is(machine));
 	}
 

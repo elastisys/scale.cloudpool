@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudadapters.api.restapi;
 
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyInt;
@@ -31,9 +31,9 @@ import com.google.gson.JsonObject;
 /**
  * Verifies that the {@link PoolHandler} endpoint correctly dispatches incoming
  * calls to the backing {@link CloudAdapter} implementation.
- * 
- * 
- * 
+ *
+ *
+ *
  */
 public class TestPoolHandlerDispatch {
 
@@ -59,8 +59,8 @@ public class TestPoolHandlerDispatch {
 		// set up mock response
 		MachinePool pool = TestUtils.pool(DateTime
 				.parse("2014-01-13T12:00:00.000Z"), TestUtils.machineNoIp("m1",
-				MachineState.PENDING,
-				UtcTime.parse("2014-01-13T11:00:00.000Z"), new JsonObject()));
+						MachineState.PENDING,
+						UtcTime.parse("2014-01-13T11:00:00.000Z"), new JsonObject()));
 		when(this.cloudAdapterMock.getMachinePool()).thenReturn(pool);
 
 		// call rest endpoint and verify proper dispatching to mock
@@ -84,7 +84,7 @@ public class TestPoolHandlerDispatch {
 		Response response = this.restEndpoint.getPool();
 		assertEquals(response.getStatus(),
 				Status.INTERNAL_SERVER_ERROR.getStatusCode());
-		assertThat(response.getEntity(), is(ErrorType.class));
+		assertThat(response.getEntity(), instanceOf(ErrorType.class));
 	}
 
 	/**
@@ -111,15 +111,15 @@ public class TestPoolHandlerDispatch {
 	public void testResizePoolDispatchOnCloudAdapterError()
 			throws CloudAdapterException {
 		// set up mock response: should throw error
-		doThrow(CloudAdapterException.class).when(this.cloudAdapterMock).resizeMachinePool(
-				anyInt());
+		doThrow(CloudAdapterException.class).when(this.cloudAdapterMock)
+				.resizeMachinePool(anyInt());
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.resizePool(new PoolResizeRequest(
 				2));
 		assertEquals(response.getStatus(),
 				Status.INTERNAL_SERVER_ERROR.getStatusCode());
-		assertThat(response.getEntity(), is(ErrorType.class));
+		assertThat(response.getEntity(), instanceOf(ErrorType.class));
 	}
 
 	/**
@@ -137,7 +137,6 @@ public class TestPoolHandlerDispatch {
 		Response response = this.restEndpoint.resizePool(new PoolResizeRequest(
 				-2));
 		assertEquals(response.getStatus(), Status.BAD_REQUEST.getStatusCode());
-		assertThat(response.getEntity(), is(ErrorType.class));
+		assertThat(response.getEntity(), instanceOf(ErrorType.class));
 	}
-
 }
