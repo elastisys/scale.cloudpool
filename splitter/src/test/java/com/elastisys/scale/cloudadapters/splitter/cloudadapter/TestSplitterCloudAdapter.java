@@ -1,6 +1,8 @@
 package com.elastisys.scale.cloudadapters.splitter.cloudadapter;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -8,10 +10,12 @@ import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.server.Server;
+import org.joda.time.DateTimeZone;
 import org.junit.After;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudadapers.api.CloudAdapterException;
+import com.elastisys.scale.cloudadapers.api.types.MachinePool;
 import com.elastisys.scale.cloudadapters.splitter.cloudadapter.client.config.PrioritizedRemoteCloudAdapterConfig;
 import com.elastisys.scale.cloudadapters.splitter.cloudadapter.config.SplitterCloudAdapterConfig;
 import com.elastisys.scale.cloudadapters.splitter.cloudadapter.testutils.CloudAdapterServlet;
@@ -59,6 +63,13 @@ public class TestSplitterCloudAdapter {
 	@Test
 	public void testCorrectGetMachinePools() throws Exception {
 		getMachinePoolsFromConfiguredBackend("splitteradapter/correct-config.json");
+	}
+
+	@Test
+	public void testMachinePoolUtcTimezone() throws Exception {
+		getMachinePoolsFromConfiguredBackend("splitteradapter/correct-config.json");
+		MachinePool pool = this.splitterAdapter.getMachinePool();
+		assertThat(pool.getTimestamp().getZone(), equalTo(DateTimeZone.UTC));
 	}
 
 	@Test(expected = CloudAdapterException.class)

@@ -13,7 +13,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +29,7 @@ import com.elastisys.scale.cloudadapters.splitter.cloudadapter.config.SplitterCl
 import com.elastisys.scale.cloudadapters.splitter.cloudadapter.poolcalculators.PoolSizeCalculationStrategy;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.schema.JsonValidator;
+import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -196,13 +196,12 @@ public class SplitterCloudAdapter implements CloudAdapter {
 			machines.addAll(machinePool.getMachines());
 		}
 
-		final MachinePool machinePool = new MachinePool(machines,
-				new DateTime());
+		final MachinePool machinePool = new MachinePool(machines, UtcTime.now());
 
 		logger.debug(
 				"Done querying machine pools: {} allocated machines ({} of which are active)",
 				machinePool.getAllocatedMachines().size(), machinePool
-						.getActiveMachines().size());
+				.getActiveMachines().size());
 
 		return machinePool;
 	}
@@ -247,7 +246,7 @@ public class SplitterCloudAdapter implements CloudAdapter {
 	 */
 	private void performPoolResizes(
 			Map<PrioritizedRemoteCloudAdapter, Long> adapterToDesiredSize)
-					throws CloudAdapterException {
+			throws CloudAdapterException {
 		Map<PrioritizedRemoteCloudAdapter, Future<Void>> adapterToResult = new HashMap<PrioritizedRemoteCloudAdapter, Future<Void>>();
 
 		for (PrioritizedRemoteCloudAdapter adapter : adapterToDesiredSize
@@ -281,7 +280,7 @@ public class SplitterCloudAdapter implements CloudAdapter {
 
 	private Map<PrioritizedRemoteCloudAdapter, MachinePool> queryMachinePools(
 			ImmutableList<PrioritizedRemoteCloudAdapter> adapters)
-			throws CloudAdapterException {
+					throws CloudAdapterException {
 
 		final Map<PrioritizedRemoteCloudAdapter, Future<MachinePool>> adapterToFutureMachinePool = new HashMap<PrioritizedRemoteCloudAdapter, Future<MachinePool>>();
 
