@@ -280,6 +280,8 @@
         <version>2.5</version>
         <configuration>
           <autoVersionSubmodules>true</autoVersionSubmodules>
+          <!-- Git tag should only be project version, e.g. "1.0.1" -->
+          <tagNameFormat>@{project.version}</tagNameFormat>
           <useReleaseProfile>false</useReleaseProfile>
           <releaseProfiles>release</releaseProfiles>
           <goals>deploy</goals>
