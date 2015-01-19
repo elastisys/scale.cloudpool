@@ -19,6 +19,7 @@ import com.elastisys.scale.cloudadapters.splitter.cloudadapter.client.config.Con
 import com.elastisys.scale.cloudadapters.splitter.cloudadapter.client.config.PrioritizedRemoteCloudAdapterConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.http.HttpRequestResponse;
+import com.elastisys.scale.commons.net.http.client.AuthenticatedHttpClient;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Atomics;
 
@@ -38,7 +39,7 @@ public class StandardPrioritizedRemoteCloudAdapter implements
 	private static final int UNSET_PREVIOUS_POOL_SIZE = -1;
 
 	/** {@link Logger} instance. */
-	private static final Logger logger = LoggerFactory
+	private static final Logger LOG = LoggerFactory
 			.getLogger(StandardPrioritizedRemoteCloudAdapter.class);
 
 	/** The current configuration set. */
@@ -79,7 +80,7 @@ public class StandardPrioritizedRemoteCloudAdapter implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.elastisys.scale.cloudadapters.splitter.scalinggroup.client.
 	 * PrioritizedCloudAdapter
 	 * #configure(com.elastisys.scale.cloudadapters.splitter
@@ -94,7 +95,7 @@ public class StandardPrioritizedRemoteCloudAdapter implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.elastisys.scale.cloudadapters.splitter.scalinggroup.client.
 	 * PrioritizedCloudAdapter#getPriority()
 	 */
@@ -105,7 +106,7 @@ public class StandardPrioritizedRemoteCloudAdapter implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.elastisys.scale.cloudadapters.splitter.scalinggroup.client.
 	 * PrioritizedCloudAdapter#getMachinePool()
 	 */
@@ -141,7 +142,7 @@ public class StandardPrioritizedRemoteCloudAdapter implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.elastisys.scale.cloudadapters.splitter.scalinggroup.client.
 	 * PrioritizedCloudAdapter#resizeMachinePool(int)
 	 */
@@ -171,21 +172,21 @@ public class StandardPrioritizedRemoteCloudAdapter implements
 					ContentType.APPLICATION_JSON);
 			post.setEntity(entity);
 
-			this.logger.info("Requesting desired capacity {} at {}",
-					desiredCapacity, url);
+			LOG.info("Requesting desired capacity {} at {}", desiredCapacity,
+					url);
 
-			HttpRequestResponse response = client.execute(post);
+			client.execute(post);
 			this.lastKnownPoolSize.set(desiredCapacity);
 		} catch (Exception e) {
 			final String message = format(
 					"failed request to set machine pool size on remote "
 							+ "cloud adapter at %s: %s", url, e.getMessage());
-			logger.error(message);
+			LOG.error(message);
 			throw new CloudAdapterException(message, e);
 		}
 
-		this.logger.info("Done requesting desired capacity {} at {}.",
-				desiredCapacity, url);
+		LOG.info("Done requesting desired capacity {} at {}.", desiredCapacity,
+				url);
 	}
 
 	/**
@@ -222,7 +223,7 @@ public class StandardPrioritizedRemoteCloudAdapter implements
 
 	private static AuthenticatedHttpClient createClient(
 			PrioritizedRemoteCloudAdapterConfig config) {
-		AuthenticatedHttpClient client = new AuthenticatedHttpClient(logger,
+		AuthenticatedHttpClient client = new AuthenticatedHttpClient(
 				config.getBasicCredentials(),
 				config.getCertificateCredentials());
 		return client;

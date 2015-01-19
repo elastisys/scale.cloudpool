@@ -20,6 +20,11 @@
       <groupId>com.elastisys.scale</groupId>
       <artifactId>commons.util</artifactId>
     </dependency>
+    <!-- AuthenticatedHttpClient -->
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>commons.net</artifactId>
+    </dependency>
     <!-- Common cloud adapter API/server classes -->
     <dependency>
       <groupId>com.elastisys.scale</groupId>

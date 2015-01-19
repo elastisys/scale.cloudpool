@@ -8,6 +8,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.ParserProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,11 +17,11 @@ import com.elastisys.scale.cloudadapers.api.restapi.ConfigHandler;
 import com.elastisys.scale.cloudadapers.api.restapi.ConfigSchemaHandler;
 import com.elastisys.scale.cloudadapers.api.restapi.PoolHandler;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.net.ssl.KeyStoreType;
 import com.elastisys.scale.commons.rest.responsehandlers.ExitHandler;
 import com.elastisys.scale.commons.rest.server.JaxRsApplication;
 import com.elastisys.scale.commons.server.ServletDefinition;
 import com.elastisys.scale.commons.server.ServletServerBuilder;
+import com.elastisys.scale.commons.server.SslKeyStoreType;
 import com.google.gson.JsonObject;
 
 /**
@@ -30,9 +31,9 @@ import com.google.gson.JsonObject;
  * The REST API is fully covered in the <a
  * href="http://cloudadapterapi.readthedocs.org/en/latest/">elastisys:scale
  * cloud adapter REST API documentation</a>.
- * 
- * 
- * 
+ *
+ *
+ *
  */
 public class CloudAdapterServer {
 	static Logger log = LoggerFactory.getLogger(CloudAdapterServer.class);
@@ -44,7 +45,7 @@ public class CloudAdapterServer {
 	 * A failure to parse the command-line arguments will cause the program to
 	 * print a usage message and exit with an error code. The function blocks
 	 * until the started server is stopped.
-	 * 
+	 *
 	 * @param cloudAdapter
 	 *            The cloud adapter instance that the started server will
 	 *            publish.
@@ -55,8 +56,9 @@ public class CloudAdapterServer {
 	public static void main(CloudAdapter cloudAdapter, String[] args)
 			throws Exception {
 		CloudAdapterOptions arguments = new CloudAdapterOptions();
-		CmdLineParser parser = new CmdLineParser(arguments);
-		parser.setUsageWidth(80);
+		ParserProperties parserConfig = ParserProperties.defaults()
+				.withUsageWidth(80);
+		CmdLineParser parser = new CmdLineParser(arguments, parserConfig);
 
 		try {
 			parser.parseArgument(args);
@@ -95,7 +97,7 @@ public class CloudAdapterServer {
 	 * <p/>
 	 * The behavior of the HTTPS server is controlled via a set of
 	 * {@link CloudAdapterOptions}.
-	 * 
+	 *
 	 * @param cloudAdapter
 	 *            The cloud adapter instance that the {@link Server} will
 	 *            publish.
@@ -138,10 +140,10 @@ public class CloudAdapterServer {
 				restApiServlet).build();
 		Server server = ServletServerBuilder.create()
 				.httpsPort(options.httpsPort)
-				.sslKeyStoreType(KeyStoreType.PKCS12)
+				.sslKeyStoreType(SslKeyStoreType.PKCS12)
 				.sslKeyStorePath(options.sslKeyStore)
 				.sslKeyStorePassword(options.sslKeyStorePassword)
-				.sslTrustStoreType(KeyStoreType.JKS)
+				.sslTrustStoreType(SslKeyStoreType.JKS)
 				.sslTrustStorePath(options.sslTrustStore)
 				.sslTrustStorePassword(options.sslTrustStorePassword)
 				.sslRequireClientCert(options.requireClientCert)

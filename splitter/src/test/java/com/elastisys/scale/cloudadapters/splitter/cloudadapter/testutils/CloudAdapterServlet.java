@@ -17,14 +17,14 @@ import com.elastisys.scale.cloudadapters.splitter.cloudadapter.client.Prioritize
 import com.elastisys.scale.cloudadapters.splitter.cloudadapter.client.ResizeRequestMessage;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.ssl.CertificateCredentials;
-import com.elastisys.scale.commons.net.ssl.KeyStoreType;
 import com.elastisys.scale.commons.server.ServletDefinition;
 import com.elastisys.scale.commons.server.ServletServerBuilder;
+import com.elastisys.scale.commons.server.SslKeyStoreType;
 import com.google.common.base.Charsets;
 import com.google.gson.JsonElement;
 
 public class CloudAdapterServlet extends HttpServlet {
-	private static final Logger logger = LoggerFactory
+	private static final Logger LOG = LoggerFactory
 			.getLogger(CloudAdapterServlet.class);
 
 	public static final String SERVER_PATH = "src/test/resources/server/";
@@ -79,8 +79,7 @@ public class CloudAdapterServlet extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		this.logger.info("GET recevied and should result in "
-				+ this.nextGetResponse);
+		LOG.info("GET recevied and should result in " + this.nextGetResponse);
 
 		switch (this.nextGetResponse) {
 		case HttpServletResponse.SC_OK:
@@ -107,7 +106,7 @@ public class CloudAdapterServlet extends HttpServlet {
 					JsonUtils.toPrettyString(JsonUtils.toJson(error)));
 			break;
 		default:
-			this.logger.error("This should not be possible");
+			LOG.error("This should not be possible");
 			break;
 		}
 
@@ -126,8 +125,7 @@ public class CloudAdapterServlet extends HttpServlet {
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		this.logger.info("POST recevied and should result in "
-				+ this.nextPostResponse);
+		LOG.info("POST recevied and should result in " + this.nextPostResponse);
 
 		switch (this.nextPostResponse) {
 		case HttpServletResponse.SC_OK:
@@ -137,7 +135,7 @@ public class CloudAdapterServlet extends HttpServlet {
 					ResizeRequestMessage.class);
 			this.requestedSize = resizeRequest.getDesiredCapacity();
 			this.cloudAdapter.resizeMachinePool(this.requestedSize);
-			this.logger.debug("Requested size via: " + JsonUtils.toString(json)
+			LOG.debug("Requested size via: " + JsonUtils.toString(json)
 					+ " is=" + this.requestedSize);
 			// resp.getWriter().write("");
 			break;
@@ -154,7 +152,7 @@ public class CloudAdapterServlet extends HttpServlet {
 					JsonUtils.toPrettyString(JsonUtils.toJson(error)));
 			break;
 		default:
-			this.logger.error("This should not be possible");
+			LOG.error("This should not be possible");
 			break;
 		}
 
@@ -193,7 +191,7 @@ public class CloudAdapterServlet extends HttpServlet {
 				.servlet(servlet).servletPath("/pool").requireBasicAuth(true)
 				.realmFile(realmFile).requireRole(realmRole).build();
 		return ServletServerBuilder.create().httpsPort(serverPort)
-				.sslKeyStoreType(KeyStoreType.PKCS12)
+				.sslKeyStoreType(SslKeyStoreType.PKCS12)
 				.sslKeyStorePath(keystorePath)
 				.sslKeyStorePassword(keystorePassword)
 				.sslRequireClientCert(false).addServlet(servletDefinition)
