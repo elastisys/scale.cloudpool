@@ -22,6 +22,8 @@ import com.elastisys.scale.commons.rest.server.JaxRsApplication;
 import com.elastisys.scale.commons.server.ServletDefinition;
 import com.elastisys.scale.commons.server.ServletServerBuilder;
 import com.elastisys.scale.commons.server.SslKeyStoreType;
+import com.elastisys.scale.commons.util.io.IoUtils;
+import com.google.common.base.Charsets;
 import com.google.gson.JsonObject;
 
 /**
@@ -70,6 +72,11 @@ public class CloudAdapterServer {
 
 		if (arguments.help) {
 			parser.printUsage(System.err);
+			System.exit(0);
+		}
+
+		if (arguments.version) {
+			System.err.println(IoUtils.toString("VERSION.txt", Charsets.UTF_8));
 			System.exit(0);
 		}
 

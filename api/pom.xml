@@ -80,4 +80,26 @@
     </dependency>
     
   </dependencies>
+  
+  <build>
+    <resources>
+      <!-- No filtering on resource files, except for VERSION.txt, which 
+        we populate with the project version. -->
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>false</filtering>
+        <excludes>
+          <exclude>VERSION.txt</exclude>
+        </excludes>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>VERSION.txt</include>
+        </includes>
+      </resource>
+    </resources>
+  
+  </build>
 </project>

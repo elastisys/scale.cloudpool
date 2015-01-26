@@ -10,9 +10,9 @@ import com.google.common.io.Resources;
 
 /**
  * Captures (command-line) options accepted by a {@link CloudAdapterServer}.
- * 
- * 
- * 
+ *
+ *
+ *
  */
 public class CloudAdapterOptions {
 
@@ -66,6 +66,9 @@ public class CloudAdapterOptions {
 
 	@Option(name = "--help", usage = "Displays this help text.")
 	public boolean help = false; // default
+
+	@Option(name = "--version", usage = "Displays the version of the cloud adapter.")
+	public boolean version = false; // default
 
 	// receives command line arguments other than options
 	@Argument
