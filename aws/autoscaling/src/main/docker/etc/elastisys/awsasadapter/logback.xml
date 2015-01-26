@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+
+  <!-- captures the entire cloudadapter log -->
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>/var/log/elastisys/awsasadapter.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- daily rollover -->
+      <fileNamePattern>/var/log/elastisys/awsasadapter.log.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <!-- keep 7 days' worth of history -->
+      <maxHistory>7</maxHistory>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d [%thread] %-5level [%class{0}:%method:%line] - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!-- only output ERROR messages on console -->
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">    
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>ERROR</level>
+    </filter>
+    <encoder>
+      <pattern>%d [%thread] %-5level [%class{0}:%method:%line] - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+
+  <root>
+    <level value="ERROR" />
+    <appender-ref ref="CONSOLE" />
+    <appender-ref ref="FILE" />
+  </root>
+  <logger name="com.elastisys">
+    <level value="debug" />
+  </logger>
+  
+  <!-- jclouds logging -->
+  <logger name="org.jclouds">
+    <level value="warn" />
+  </logger>
+  <!-- Logs HTTP headers only for all requests with debug level set. -->
+  <logger name="jclouds.headers">
+    <level value="warn" />
+  </logger>
+  <!-- Logs all HTTP content with debug level set. Very verbose! -->
+  <logger name="jclouds.wire">
+    <level value="warn" />
+  </logger>
+
+</configuration>
