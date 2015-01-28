@@ -24,9 +24,9 @@ import com.google.gson.JsonObject;
  * and is provided as way for a {@link CloudAdapter} to publish its
  * configuration parameters, for the cases when remote configuration is enabled
  * (see {@link ConfigHandler}).</i>
- * 
- * 
- * 
+ *
+ *
+ *
  */
 @Path("/config/schema")
 public class ConfigSchemaHandler {
@@ -46,8 +46,8 @@ public class ConfigSchemaHandler {
 	 * <i>Note: this is an optional extension of the cloud adapter REST API
 	 * provided to facilitate remote re-configuration of a {@link CloudAdapter}.
 	 * A cloud adapter is not required to respond to this type of requests.</i>
-	 * 
-	 * 
+	 *
+	 *
 	 * @return A {@code 200} {@link Response} with the JSON Schema as content,
 	 *         if one is supplied by the {@link CloudAdapter}. Otherwise a
 	 *         {@code 404} {@link Response} is returned.
@@ -57,15 +57,25 @@ public class ConfigSchemaHandler {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getConfigurationSchema() {
 		log.info("GET /config/schema");
-		Optional<JsonObject> schema = this.cloudAdapter
-				.getConfigurationSchema();
-		if (!schema.isPresent()) {
-			ErrorType entity = new ErrorType(
-					"cloud adapter does not publish a configuration schema");
-			return Response.status(Status.NOT_FOUND).entity(entity).build();
+		try {
+			Optional<JsonObject> schema = this.cloudAdapter
+					.getConfigurationSchema();
 
+			if (!schema.isPresent()) {
+				ErrorType entity = new ErrorType(
+						"cloud adapter does not publish a configuration schema");
+				return Response.status(Status.NOT_FOUND).entity(entity).build();
+
+			}
+			return Response.ok(schema.get()).build();
+		} catch (Exception e) {
+			String message = "failure to process config schema get request: "
+					+ e.getMessage();
+			log.error(message, e);
+			return Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(new ErrorType(message, e)).build();
 		}
-		return Response.ok(schema.get()).build();
+
 	}
 
 }
