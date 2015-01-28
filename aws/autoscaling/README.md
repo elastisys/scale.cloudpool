@@ -241,27 +241,29 @@ below can be replaced with:
 Here are some examples illustrating basic interactions with the spot adapter:
 
  1. Retrieve configuration JSON schema (note: requires ``--config-handler`` to be turned on):
-
+    ```
     curl -v --insecure <authparams> -X GET https://localhost:8443/config/schema
-
+    ```
  2. Retrieve the currently set configuration document (note: requires ``--config-handler`` to be turned on):
-
+    ```
     curl -v --insecure <authparams> -X GET https://localhost:8443/config
-
+    ```
  3. Set configuration (note: requires ``--config-handler`` to be turned on).
-    This example assumes that the :ref:`configuration` file is named ``config.json``:
-
+    This example assumes that the configuration file is named ``config.json``:
+    ```
     curl -v --insecure <authparams> \
          -X POST -d @tests/config.json  --header "Content-Type:application/json" \
          https://localhost:8443/config
+    ```
 
  4. Retrieve the current machine pool (all open spot instance requests):
-
+    ```
     curl -v --insecure <authparams> -X GET https://localhost:8443/pool
-
+    ```
  5. Request the machine pool to be resized to size ``4``:
-
+    ```
     curl -v --insecure <authparams> \
          -X POST -d '{"desiredCapacity": 4}' --header "Content-Type:application/json" \
          https://localhost:8443/pool
+    ```
 
