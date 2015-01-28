@@ -1,5 +1,5 @@
 FROM dockerfile/java:openjdk-7-jre
-MAINTAINER Peter Gardfjäll <peter.gardfjall@elastisys.com>
+MAINTAINER Elastisys <techteam@elastisys.com>
 
 RUN apt-get update -y && apt-get install -y \
       authbind \
