@@ -79,23 +79,121 @@ The properties are:
       key in the keystore -- optional), and ``keystoreType`` (either PKCS12
       or JKS).
 
+
 ## Usage
+This module produces an executable jar file for the cloud adapter server.
+The simplest way of starting the server is to run
 
-This module produces an all-in-one "server and application" 
-executable jar that runs an embedded Jetty HTTP server that publishes 
-the cloud adapter REST API endpoint.
+    java -jar <jar-file>
 
-To run the server, simply issue the following command:
+which will start the server on HTTPS port ``8443``. 
 
-  java -jar <artifact>.jar [arguments ...]
-  
-This will start a server running listening on HTTPS port 8443.
-The port number can be changed (run with the "--help" flag to see the list of 
-available options).
+*Note: this will run the server on a built-in, self-signed SSL certificate, which is not recommended for production settings.*
 
-If you want to control java.util.logging output produced by embedded libraries,
-you can override the default (JRE-provided) log configuration with the 
-logging.properties file in this directory. This is done by running: 
- 
-   java -Djava.util.logging.config.file=./logging.properties -jar <artifact>.jar [arguments ...]
+For a complete list of options, including the available security options,
+run the server with the ``--help`` flag:
+
+    java -jar <jar-file> --help
+
+
+
+## Running the cloud adapter in a Docker container
+The cloud adapter can be executed inside a 
+[Docker](https://www.docker.com/) container. First, however, a docker image 
+needs to be built that includes the cloud adapter. The steps for building 
+the image and running a container from the image are outlined below.
+
+Before proceeding, make sure that your user is a member of the `docker` user group.
+Without being a member of that user group, you won't be able to use docker without
+ sudo/root privileges. 
+
+See the [docker documentation](https://docs.docker.com/installation/ubuntulinux/#giving-non-root-access) 
+for more details.
+
+
+
+### Building the docker image
+A `Dockerfile` is included under `src/main/docker` and can be used to generate 
+the docker image. The module's build file also contains a build goal that can
+be used to produce the image, once the project binary has been built in the `target`
+directory (for example, via `mvn package`). To build the image simply run:
+
+    mvn exec:exec -Dexec.executable=docker
+
+If you want to build the image yourself, issue the following commands:
+
+    cd target/
+    docker build --tag "elastisys/splitteradapter:<version>" .
+
+
+
+### Running a container from the image
+Once the docker image is built for the cloud adapter, it can be run with:
+
+    docker run -d -p 2222:22 -p 8443:443 elastisys/splitteradapter:<version>
+
+This will publish the container's SSH port on host port 2222 and the 
+cloud adapter's HTTPS port on host port 8443.
+
+*Note: the container includes a privileged user `elastisys` with login password `secret`.*
+
+
+
+### Debugging a running container
+The simplest way to debug a running container is to log into it over SSH
+and check out the log files under `/var/log/elastisys`. Configurations are
+located under `/etc/elastisys` and binaries under `/opt/elastisys`.
+
+
+
+## Interacting with the cloud adapter over its REST API
+The following examples, all using the [curl](http://en.wikipedia.org/wiki/CURL) 
+command-line tool, shows how to interact with the cloud adapter over its
+[REST API](http://cloudadapterapi.readthedocs.org/en/latest/).
+
+The exact command-line arguments to pass to curl depends on the security
+settings that the server was launched with. For example, if client-certificate
+authentication is enforced (`--cert-required`), the `<authparams>` parameter 
+below can be replaced with:
+
+    --key-type pem --key credentials/client_private.pem \
+    --cert-type pem --cert credentials/client_certificate.pem
+
+Here are some examples illustrating basic interactions with the spot adapter:
+
+ 1. Retrieve configuration JSON schema (note: requires ``--config-handler`` to be turned on):
+
+    ```
+    curl -v --insecure <authparams> -X GET https://localhost:8443/config/schema
+    ```
+
+ 2. Retrieve the currently set configuration document (note: requires ``--config-handler`` to be turned on):
+
+    ```
+    curl -v --insecure <authparams> -X GET https://localhost:8443/config
+    ```
+
+ 3. Set configuration (note: requires ``--config-handler`` to be turned on).
+    This example assumes that the configuration file is named ``config.json``:
+
+    ```
+    curl -v --insecure <authparams> \
+         -X POST -d @tests/config.json  --header "Content-Type:application/json" \
+         https://localhost:8443/config
+    ```
+
+ 4. Retrieve the current machine pool (all open spot instance requests):
+
+    ```
+    curl -v --insecure <authparams> -X GET https://localhost:8443/pool
+    ```
+
+ 5. Request the machine pool to be resized to size ``4``:
+
+    ```
+    curl -v --insecure <authparams> \
+         -X POST -d '{"desiredCapacity": 4}' --header "Content-Type:application/json" \
+         https://localhost:8443/pool
+    ```
+
 
