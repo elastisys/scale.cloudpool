@@ -1,8 +1,8 @@
-# AWS EC2 cloud adapter
+# AWS OpenStack cloud adapter
 
-The [elastisys:scale](http://elastisys.com/scale) AWS EC2 
+The [elastisys:scale](http://elastisys.com/scale) OpenStack 
 [cloud adapter](http://cloudadapterapi.readthedocs.org/en/latest/)
-manages a group of EC2 instances. Group members are identified by a 
+manages a group of OpenStack instances. Group members are identified by a 
 configurable tag and instances are continuously provisioned/decommissioned to 
 keep the group's actual size in sync with the desired size that the cloud 
 adapter has been instructed to maintain.
@@ -17,7 +17,7 @@ reference, the reader is referred to the
 
 
 ## Configuration
-The `ec2adapter` is configured with a JSON document such as the following:
+The `openstackadapter` is configured with a JSON document such as the following:
 
 ```javascript
 {
@@ -25,9 +25,11 @@ The `ec2adapter` is configured with a JSON document such as the following:
     "scalingGroup": {
       "name": "MyScalingGroup",
       "config": {
-        "awsAccessKeyId": "AXZ31...Q",
-        "awsSecretAccessKey": "afAC/3Dd...s",
-        "region": "eu-west-1"
+        "keystoneEndpoint": "http://nova.host.com:5000/v2.0",
+        "region": "RegionOne",
+        "tenantName": "tenant",
+        "userName": "clouduser",
+        "password": "cloudpass"      
       }
     },
     "scaleUpConfig": {
@@ -47,7 +49,7 @@ The `ec2adapter` is configured with a JSON document such as the following:
     },
     "liveness": {
       "loginUser": "ubuntu",
-      "loginKey": "/path/to/ec2/instancekey.pem",
+      "loginKey": "/path/to/instancekey.pem",
       "bootTimeCheck": {
         "command": "sudo service apache2 status | grep 'is running'",
         "retryDelay": 20,
@@ -80,22 +82,23 @@ The `ec2adapter` is configured with a JSON document such as the following:
 The configuration keys have the following meaning:
 
   - ``scalingGroup``: Describes how to identify/manage scaling group members 
-    and connect to the cloud provider.
-    - ``name``: The name of the managed scaling group. All EC2 instances with this 
-      [tag](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html)
-      are to be considered members of the scaling group.
-    - ``awsAccessKeyId``: Your [AWS Access Key ID](https://aws-portal.amazon.com/gp/aws/securityCredentials). 
-    - ``awsSecretAccessKey``: Your [AWS Secret Access Key](https://aws-portal.amazon.com/gp/aws/securityCredentials). 
-    - ``region``: The [AWS region](http://docs.aws.amazon.com/general/latest/gr/rande.html) to connect to.
+    and connect to the cloud provider.   
+    - ``name``: The name of the managed scaling group. All server instances with this 
+      tag are to be considered members of the scaling group.
+      - ``keystoneEndpoint``: Endpoint URL of the OpenStack authentication service (Keystone). 
+        For example, http://172.16.0.1:5000/v2.0."
+      - ``region``: The particular OpenStack region (out of the ones available in Keystone's 
+        service catalog) to connect to. For example, ``RegionOne``.
+      - ``tenantName``: OpenStack account tenant name.
+      - ``userName``: OpenStack account user
+      - ``password``: OpenStack account password
+      - ``assignFloatingIp``: Set to true if a floating IP address should be allocated 
+        to launched servers. Default: ``true``.
   - ``scaleUpConfig``: Describes how to provision additional servers (on scale-up).
-    - ``size``: The [instance type](http://aws.amazon.com/ec2/instance-types/instance-details/)
-      to use for new machine instances.
-    - ``image``: The [AMI](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html)
-      id to use for new machine instances.
-    - ``keyPair``: The AWS EC2 [key pair](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
-      used to launch new machine instances.
-    - ``securityGroups``: The list of [security groups](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html)
-      to apply to a new spot instance.
+    - ``size``: The name of the server type to launch. For example, ``m1.medium``.
+    - ``image``: The name of the machine image used to boot new servers.
+    - ``keyPair``: The name of the key pair to use for new machine instances.
+    - ``securityGroups``: The security group(s) to use for new machine instances.
     - ``bootScript``: The script to run after first boot of a new instance.
   - ``scaleDownConfig``: Describes how to decommission servers (on scale-down).
     - ``victimSelectionPolicy``: Policy for selecting which spot instance to 
@@ -202,14 +205,14 @@ directory (for example, via `mvn package`). To build the image simply run:
 If you want to build the image yourself, issue the following commands:
 
     cd target/
-    docker build --tag "elastisys/ec2adapter:<version>" .
+    docker build --tag "elastisys/openstackadapter:<version>" .
 
 
 
 ### Running a container from the image
 Once the docker image is built for the cloud adapter, it can be run with:
 
-    docker run -d -p 2222:22 -p 8443:443 elastisys/ec2adapter:<version>
+    docker run -d -p 2222:22 -p 8443:443 elastisys/openstackadapter:<version>
 
 This will publish the container's SSH port on host port 2222 and the 
 cloud adapter's HTTPS port on host port 8443.
