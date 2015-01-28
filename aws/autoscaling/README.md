@@ -1,7 +1,7 @@
 # AWS AutoScaling cloud adapter
 
-The (elastisys:scale)[http://elastisys.com/scale] AWS AutoScaling 
-(cloud adapter)[http://cloudadapterapi.readthedocs.org/en/latest/]
+The [elastisys:scale](http://elastisys.com/scale) AWS AutoScaling 
+[cloud adapter](http://cloudadapterapi.readthedocs.org/en/latest/)
 manages an AWS Auto Scaling Group. The size of the AWS Auto Scaling Group
 is adjusted over the AWS Auto Scaling API, according to the desired size 
 that the cloud adapter has been instructed to maintain.
@@ -14,12 +14,12 @@ needed, is also assumed to be taken care of, for example, via Elastic Load
 Balancer or with a custom-made load balancing solution.
 
 The cloud adapter publishes a REST API that follows the general contract of an
-(elastisys:scale)[http://elastisys.com/scale] cloud adapter, through which
+[elastisys:scale](http://elastisys.com/scale) cloud adapter, through which
 a client (for example, an autoscaler) can request changes to the scaling group 
 and retrieve the current members of the scaling group. 
 
 For the complete API reference, the reader is referred to the 
-(cloud adapter API documentation)[http://cloudadapterapi.readthedocs.org/en/latest/].
+[cloud adapter API documentation](http://cloudadapterapi.readthedocs.org/en/latest/).
 
 
 
@@ -86,12 +86,12 @@ The configuration keys have the following meaning:
   - ``scalingGroup``: Describes how to identify/manage scaling group members 
     and connect to the cloud provider.
     - ``name``: The name of the managed Auto Scaling Group.
-    - ``awsAccessKeyId``: Your (AWS Access Key ID)[https://aws-portal.amazon.com/gp/aws/securityCredentials]. 
-    - ``awsSecretAccessKey``: Your (AWS Secret Access Key)[https://aws-portal.amazon.com/gp/aws/securityCredentials]. 
-    - ``region``: The (AWS region)[http://docs.aws.amazon.com/general/latest/gr/rande.html] to connect to.
+    - ``awsAccessKeyId``: Your [AWS Access Key ID](https://aws-portal.amazon.com/gp/aws/securityCredentials). 
+    - ``awsSecretAccessKey``: Your [AWS Secret Access Key](https://aws-portal.amazon.com/gp/aws/securityCredentials). 
+    - ``region``: The [AWS region](http://docs.aws.amazon.com/general/latest/gr/rande.html) to connect to.
   - ``scaleUpConfig``: Describes how to provision additional servers (on scale-up).
     However, since this is already specified in the Auto Scaling Group's
-    (launch configuration)[http://docs.aws.amazon.com/AutoScaling/latest/DeveloperGuide/GettingStartedTutorial.html#gs-create-lc]
+    [launch configuration](http://docs.aws.amazon.com/AutoScaling/latest/DeveloperGuide/GettingStartedTutorial.html#gs-create-lc)
     none of these keys are actually used. 
     - ``size``: Not applicable.
     - ``image``: Not applicable.
@@ -179,7 +179,7 @@ run the server with the ``--help`` flag:
 
 ## Running the cloud adapter in a Docker container
 The cloud adapter can be executed inside a 
-(Docker)[https://www.docker.com/] container. First, however, a docker image 
+[Docker](https://www.docker.com/) container. First, however, a docker image 
 needs to be built that includes the cloud adapter. The steps for building 
 the image and running a container from the image are outlined below.
 
@@ -187,7 +187,7 @@ Before proceeding, make sure that your user is a member of the `docker` user gro
 Without being a member of that user group, you won't be able to use docker without
  sudo/root privileges. 
 
-See the (docker documentation)[https://docs.docker.com/installation/ubuntulinux/#giving-non-root-access] 
+See the [docker documentation](https://docs.docker.com/installation/ubuntulinux/#giving-non-root-access) 
 for more details.
 
 
@@ -227,42 +227,42 @@ located under `/etc/elastisys` and binaries under `/opt/elastisys`.
 
 
 ## Interacting with the cloud adapter over its REST API
-The following examples, all using the (curl)[http://en.wikipedia.org/wiki/CURL] 
+The following examples, all using the [curl](http://en.wikipedia.org/wiki/CURL) 
 command-line tool, shows how to interact with the cloud adapter over its
-(REST API)[http://cloudadapterapi.readthedocs.org/en/latest/].
+[REST API](http://cloudadapterapi.readthedocs.org/en/latest/).
 
 The exact command-line arguments to pass to curl depends on the security
 settings that the server was launched with. For example, if client-certificate
 authentication is enforced (`--cert-required`), the `<authparams>` parameter 
-below can be replaced with: ::
+below can be replaced with:
 
-        --key-type pem --key credentials/client_private.pem \
-        --cert-type pem --cert credentials/client_certificate.pem
+    --key-type pem --key credentials/client_private.pem \
+    --cert-type pem --cert credentials/client_certificate.pem
 
 Here are some examples illustrating basic interactions with the spot adapter:
 
- 1. Retrieve configuration JSON schema (note: requires ``--config-handler`` to be turned on): ::
+ 1. Retrieve configuration JSON schema (note: requires ``--config-handler`` to be turned on):
 
-      curl -v --insecure <authparams> -X GET https://localhost:8443/config/schema
+    curl -v --insecure <authparams> -X GET https://localhost:8443/config/schema
 
- 2. Retrieve the currently set configuration document (note: requires ``--config-handler`` to be turned on): ::
+ 2. Retrieve the currently set configuration document (note: requires ``--config-handler`` to be turned on):
 
-      curl -v --insecure <authparams> -X GET https://localhost:8443/config
+    curl -v --insecure <authparams> -X GET https://localhost:8443/config
 
  3. Set configuration (note: requires ``--config-handler`` to be turned on).
-    This example assumes that the :ref:`configuration` file is named ``config.json``: ::
+    This example assumes that the :ref:`configuration` file is named ``config.json``:
 
-      curl -v --insecure <authparams> \
-        -X POST -d @tests/config.json  --header "Content-Type:application/json" \
-        https://localhost:8443/config
+    curl -v --insecure <authparams> \
+         -X POST -d @tests/config.json  --header "Content-Type:application/json" \
+         https://localhost:8443/config
 
- 4. Retrieve the current machine pool (all open spot instance requests): ::
+ 4. Retrieve the current machine pool (all open spot instance requests):
 
-      curl -v --insecure <authparams> -X GET https://localhost:8443/pool
+    curl -v --insecure <authparams> -X GET https://localhost:8443/pool
 
- 5. Request the machine pool to be resized to size ``4``: ::
+ 5. Request the machine pool to be resized to size ``4``:
 
-       curl -v --insecure <authparams> \
+    curl -v --insecure <authparams> \
          -X POST -d '{"desiredCapacity": 4}' --header "Content-Type:application/json" \
          https://localhost:8443/pool
 
