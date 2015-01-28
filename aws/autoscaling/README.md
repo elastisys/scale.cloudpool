@@ -16,9 +16,8 @@ Balancer or with a custom-made load balancing solution.
 The cloud adapter publishes a REST API that follows the general contract of an
 [elastisys:scale](http://elastisys.com/scale) cloud adapter, through which
 a client (for example, an autoscaler) can request changes to the scaling group 
-and retrieve the current members of the scaling group. 
-
-For the complete API reference, the reader is referred to the 
+and retrieve the current members of the scaling group. For the complete API 
+reference, the reader is referred to the 
 [cloud adapter API documentation](http://cloudadapterapi.readthedocs.org/en/latest/).
 
 
