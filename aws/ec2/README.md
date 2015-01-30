@@ -212,9 +212,24 @@ Once the docker image is built for the cloud adapter, it can be run with:
     docker run -d -p 2222:22 -p 8443:443 elastisys/ec2adapter:<version>
 
 This will publish the container's SSH port on host port 2222 and the 
-cloud adapter's HTTPS port on host port 8443.
+cloud adapter's HTTPS port on host port 8443. The container includes a 
+privileged user named `elastisys`.
 
-*Note: the container includes a privileged user `elastisys` with login password `secret`.*
+However, password logins are diabled for that user, so if you want to be able to 
+log in over SSH some extra effort is needed. More specifically, an ${SSH_KEY} 
+environment variable needs to be passed to the container at run-time. The variable 
+should be set to the contain a public key (such as ~/.ssh/id_rsa.pub). The key 
+will be set in the container's /home/elastisys/.ssh/authorized_keys and therefore 
+allow ssh logins by the owner of the corresponding private key. As an example, 
+the container could be run as follows:
+
+    docker run -d -p 2222:22 -p 8443:443 \
+           -e "SSH_KEY=$(cat ~/.ssh/id_rsa.pub)" \
+           elastisys/ec2adapter:<version>
+
+You will then be able to log in to the started container with:
+
+    ssh -i ~/.ssh/id_rsa -p 2222 elastisys@localhost
 
 
 
