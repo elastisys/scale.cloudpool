@@ -216,7 +216,7 @@ Once the docker image is built for the cloud adapter, it can be run with:
 
 This will publish the container's SSH port on host port 2222 and the 
 cloud adapter's HTTPS port on host port 8443. The container includes a 
-privileged user named `elastisys`.
+privileged user named `elastisys` (password: `secret`).
 
 However, password logins are diabled for that user, so if you want to be able to 
 log in over SSH some extra effort is needed. More specifically, an ${SSH_KEY} 

@@ -30,6 +30,8 @@ RUN addgroup --system elastisys && \
              --shell=/bin/bash --disabled-password --disabled-login \
              elastisys && \
     usermod --append --groups sudo elastisys
+# set password for elastisys user
+RUN echo 'elastisys:secret' | chpasswd
       
 # install splitteradapter server
 COPY ${project.build.finalName}.jar /opt/elastisys/splitteradapter/splitteradapter.jar

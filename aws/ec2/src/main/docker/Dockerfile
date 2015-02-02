@@ -30,6 +30,8 @@ RUN addgroup --system elastisys && \
              --shell=/bin/bash --disabled-password --disabled-login \
              elastisys && \
     usermod --append --groups sudo elastisys
+# set password for elastisys user
+RUN echo 'elastisys:secret' | chpasswd
       
 # install ec2adapter server
 COPY ${project.build.finalName}.jar /opt/elastisys/ec2adapter/ec2adapter.jar
