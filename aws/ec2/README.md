@@ -199,6 +199,10 @@ directory (for example, via `mvn package`). To build the image simply run:
 
     mvn exec:exec -Dexec.executable=docker
 
+To specify a different version for the image tag than the default (the version 
+specified in the pom.xml), pass a `-Ddocker.image.version=<version>` option 
+with the desired version name.
+
 If you want to build the image yourself, issue the following commands:
 
     cd target/

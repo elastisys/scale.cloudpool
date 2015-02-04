@@ -12,6 +12,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Default version to use when tagging docker image. -->
+    <docker.image.version>${project.version}</docker.image.version>    
   </properties>
 
   <dependencies>
@@ -123,7 +125,7 @@
       <!-- Runs docker build to create a docker image for the server.
            Execute from command-line as follows:
            
-             mvn exec:exec -Dexec.executable=docker
+             mvn exec:exec -Dexec.executable=docker -D[docker.tag=<version>]
            
            NOTE: to be able to use docker without sudo/root privileges, you need
            to add yourself to the "docker" group. See:
@@ -146,7 +148,7 @@
           <arguments>
             <argument>build</argument>
             <argument>--tag</argument>
-            <argument>elastisys/splitteradapter:${project.version}</argument>
+            <argument>elastisys/splitteradapter:${docker.image.version}</argument>
             <argument>.</argument>
           </arguments>
         </configuration>
