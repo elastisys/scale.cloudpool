@@ -123,7 +123,7 @@
       <!-- Runs docker build to create a docker image for the server.
            Execute from command-line as follows:
            
-             mvn exec:exec -Dexec.executable=docker [-Ddocker.tag=<version>]
+             mvn exec:exec -Dexec.executable=docker [-Ddocker.image.version=<version>]
            
            NOTE: to be able to use docker without sudo/root privileges, you need
            to add yourself to the "docker" group. See:
