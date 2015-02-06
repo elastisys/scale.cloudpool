@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudadapters.aws.ec2.scalinggroup.client;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -27,7 +28,7 @@ import com.google.common.util.concurrent.Atomics;
 /**
  * Standard {@link Ec2Client} implementation that operates against the EC2 API.
  *
- * 
+ *
  *
  */
 public class AwsEc2Client implements Ec2Client {
@@ -52,8 +53,8 @@ public class AwsEc2Client implements Ec2Client {
 	public List<Instance> getInstances(List<Filter> filters) {
 		checkArgument(isConfigured(), "can't use client before it's configured");
 
-		List<Instance> instances = new GetInstances(awsCredentials(), region(),
-				filters).call();
+		List<Instance> instances = new GetInstances(awsCredentials(), region())
+				.withFilters(filters).call();
 		return instances;
 	}
 
@@ -61,11 +62,8 @@ public class AwsEc2Client implements Ec2Client {
 	public Instance getInstanceMetadata(String instanceId) {
 		checkArgument(isConfigured(), "can't use client before it's configured");
 
-		Filter filter = new Filter().withName("instance-id").withValues(
-				instanceId);
 		List<Instance> instances = new GetInstances(awsCredentials(), region(),
-				filter).call();
-
+				Arrays.asList(instanceId)).call();
 		if (instances.isEmpty()) {
 			throw new IllegalArgumentException(String.format(
 					"failed to get instance metadata: "

@@ -267,7 +267,7 @@ public class Ec2ScalingGroup implements ScalingGroup {
 			Instance instance = this.client
 					.getInstanceMetadata(this.instanceId);
 			checkState(instance.getPublicIpAddress() != null,
-					"instance has not been assigned a public IP address");
+					"instance has not yet been assigned a public IP address");
 			return instance.getPublicIpAddress();
 		}
 	}

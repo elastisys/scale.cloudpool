@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudadapters.aws.commons.tasks;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -12,58 +13,69 @@ import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.elastisys.scale.cloudadapters.aws.commons.requests.ec2.AmazonEc2Request;
-import com.google.common.collect.ImmutableList;
+import com.elastisys.scale.commons.net.retryable.Requester;
+import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 
 /**
- * Requester for a listing of instances that can be repeatedly invoked if need
- * be due to eventual consistency.
+ * {@link Requester} for retrieving meta data about a specific collection of
+ * instances. The {@link Requester} can be repeatedly invoked if need be due to
+ * eventual consistency.
  */
 public class InstanceListingRequester extends AmazonEc2Request<List<Instance>> {
 	static Logger logger = LoggerFactory
 			.getLogger(InstanceStateRequester.class);
 
-	private final ImmutableList<String> instanceIds;
-	private final ImmutableList<Filter> filters;
+	private final Optional<List<String>> instanceIds;
+	private final Optional<List<Filter>> filters;
 
 	public InstanceListingRequester(AWSCredentials awsCredentials,
-			String region, List<String> instanceIds, List<Filter> filters) {
+			String region, Optional<List<String>> instanceIds,
+			Optional<List<Filter>> filters) {
 		super(awsCredentials, region);
-		this.instanceIds = ImmutableList.copyOf(instanceIds);
-		this.filters = ImmutableList.copyOf(filters);
+		this.instanceIds = instanceIds;
+		this.filters = filters;
 	}
 
 	@Override
-	public List<Instance> call() throws Exception {
-		List<Instance> instances = Lists.newLinkedList();
+	public List<Instance> call() {
+		// NOTE: we've specified that we're interested in a particular group of
+		// instances (although empty). In this case, don't call
+		// DescribeInstances with an empty list of instance ids, since that
+		// would mean fetching meta data about *all* instances (in the region),
+		// which is *not* what we want.
+		if (this.instanceIds.isPresent() && this.instanceIds.get().isEmpty()) {
+			return Collections.emptyList();
+		}
 
+		List<Instance> instances = Lists.newArrayList();
 		DescribeInstancesRequest request = new DescribeInstancesRequest();
-
-		if (this.instanceIds.size() > 0) {
-			request.withInstanceIds(this.instanceIds);
+		if (this.instanceIds.isPresent()) {
+			request.withInstanceIds(this.instanceIds.get());
 		}
-
-		if (this.filters.size() > 0) {
-			request.withFilters(this.filters);
+		if (this.filters.isPresent()) {
+			request.withFilters(this.filters.get());
 		}
-
-		DescribeInstancesResult result = getClient().getApi()
-				.describeInstances(request);
-
-		String nextToken = "";
-
+		// paginate through result as long as there is another response token
+		boolean moreResults = false;
 		do {
-			for (Reservation reservation : result.getReservations()) {
-				for (Instance instance : reservation.getInstances()) {
-					instances.add(instance);
-				}
-			}
-
-			nextToken = result.getNextToken();
-			request.setNextToken(nextToken);
-		} while (nextToken != null);
+			DescribeInstancesResult result = getClient().getApi()
+					.describeInstances(request);
+			instances.addAll(instances(result));
+			moreResults = (result.getNextToken() != null)
+					&& !result.getNextToken().equals("");
+			request.setNextToken(result.getNextToken());
+		} while (moreResults);
 
 		return instances;
+	}
 
+	private List<Instance> instances(DescribeInstancesResult result) {
+		List<Instance> instances = Lists.newArrayList();
+		List<Reservation> reservations = result.getReservations();
+		for (Reservation reservation : reservations) {
+			instances.addAll(reservation.getInstances());
+		}
+		return instances;
 	}
 }

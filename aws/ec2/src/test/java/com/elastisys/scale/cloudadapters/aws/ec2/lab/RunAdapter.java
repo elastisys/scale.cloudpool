@@ -40,8 +40,8 @@ public class RunAdapter extends AbstractClient {
 	static Logger logger = LoggerFactory.getLogger(RunAdapter.class);
 
 	// TODO: set launch configuration parameters for new group instances
-	private static final String size = "m1.small";
-	private static final String image = "ami-018c9568";
+	private static final String size = "t1.micro";
+	private static final String image = "ami-b48ccedc";
 	private static final List<String> bootScript = Arrays.asList("#!bin/bash",
 			"sudo apt-get update -qy", "sudo apt-get install -qy apache2");
 	private static final String keyPair = System.getenv("EC2_KEYPAIR");

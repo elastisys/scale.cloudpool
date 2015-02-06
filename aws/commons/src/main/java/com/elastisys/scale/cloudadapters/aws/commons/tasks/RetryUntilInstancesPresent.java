@@ -1,15 +1,16 @@
 package com.elastisys.scale.cloudadapters.aws.commons.tasks;
 
+import static com.elastisys.scale.cloudadapters.aws.commons.functions.AwsEc2Functions.toInstanceId;
+import static com.google.common.collect.Collections2.transform;
 import static java.lang.String.format;
 
+import java.util.Collection;
 import java.util.List;
 
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.Instance;
-import com.elastisys.scale.cloudadapters.aws.commons.functions.AwsEc2Functions;
 import com.elastisys.scale.commons.net.retryable.Action;
 import com.elastisys.scale.commons.net.retryable.RetryLimitExceededException;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
 
 /**
@@ -19,35 +20,34 @@ import com.google.common.collect.ImmutableSet;
  * until it succeeds.
  */
 public class RetryUntilInstancesPresent extends
-AbstractAmazonLimitedRetryHandler<List<Instance>> {
+		AbstractAmazonLimitedRetryHandler<List<Instance>> {
 	/**
 	 * The set of instance identifiers that we hope to get back from the query.
 	 */
-	private final ImmutableSet<String> instanceIds;
+	private final ImmutableSet<String> expectedIds;
 
 	/**
 	 * Creates a new instance.
 	 *
-	 * @param instanceIds
+	 * @param expectedIds
 	 *            The instance identifiers that should be part of the returned
 	 *            set of identifiers. As long as they are not, the query will be
 	 *            retried until the max number of retries is exceeded (or an
 	 *            error from Amazon indicates that retries will not help).
-	 *
 	 * @param maxRetries
 	 *            The maximum number of retries that will be attempted before
 	 *            failing with a {@link RetryLimitExceededException}.
 	 */
-	public RetryUntilInstancesPresent(final List<String> instanceIds,
+	public RetryUntilInstancesPresent(final List<String> expectedIds,
 			int maxRetries) {
 		super(maxRetries);
-		this.instanceIds = ImmutableSet.copyOf(instanceIds);
+		this.expectedIds = ImmutableSet.copyOf(expectedIds);
 	}
 
 	@Override
 	public boolean isSuccessful(List<Instance> response) {
-		return this.instanceIds.containsAll(Collections2.transform(response,
-				AwsEc2Functions.toInstanceId()));
+		Collection<String> actualIds = transform(response, toInstanceId());
+		return actualIds.containsAll(this.expectedIds);
 	}
 
 	@Override
