@@ -1,7 +1,6 @@
 package com.elastisys.scale.cloudadapters.aws.commons.client;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
@@ -25,7 +24,7 @@ import com.amazonaws.services.ec2.AmazonEC2Client;
  * Instances of this class are thread-safe and can therefore be used
  * concurrently from multiple threads.
  *
- * 
+ *
  */
 public class Ec2Client implements Closeable {
 
@@ -94,7 +93,7 @@ public class Ec2Client implements Closeable {
 	 * Closes the client, releasing any held resources.
 	 */
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		this.api.shutdown();
 	}
 }

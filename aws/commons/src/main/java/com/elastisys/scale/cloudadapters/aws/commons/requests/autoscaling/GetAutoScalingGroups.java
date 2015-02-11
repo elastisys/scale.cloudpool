@@ -10,8 +10,6 @@ import com.amazonaws.services.autoscaling.model.DescribeAutoScalingGroupsResult;
 /**
  * A {@link Callable} task that, when executed, requests the listing of all AWS
  * Auto Scaling Groups in a region.
- * 
- * 
  */
 public class GetAutoScalingGroups extends
 		AmazonAutoScalingRequest<List<AutoScalingGroup>> {

@@ -5,6 +5,7 @@ import java.util.List;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
+import com.elastisys.scale.cloudadapers.api.NotFoundException;
 import com.elastisys.scale.cloudadapters.aws.ec2.scalinggroup.Ec2ScalingGroup;
 import com.elastisys.scale.cloudadapters.aws.ec2.scalinggroup.Ec2ScalingGroupConfig;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.ScaleUpConfig;
@@ -42,8 +43,10 @@ public interface Ec2Client {
 	 * @param instanceId
 	 *            An instance identifier.
 	 * @return The requested {@link Instance} meta data.
+	 * @throws NotFoundException
+	 *             if the instance doesn't exist
 	 */
-	Instance getInstanceMetadata(String instanceId);
+	Instance getInstanceMetadata(String instanceId) throws NotFoundException;
 
 	/**
 	 * Launches a new EC2 {@link Instance}.
@@ -62,14 +65,32 @@ public interface Ec2Client {
 	 *            An instance identifier.
 	 * @param tags
 	 *            The {@link Tag}s to set on the {@link Instance}.
+	 * @throws NotFoundException
+	 *             if the instance doesn't exist
 	 */
-	void tagInstance(String instanceId, List<Tag> tags);
+	void tagInstance(String instanceId, List<Tag> tags)
+			throws NotFoundException;
+
+	/**
+	 * Removes tags from an EC2 instance.
+	 *
+	 * @param instanceId
+	 *            An instance identifier.
+	 * @param tags
+	 *            The tags to remove from the instance.
+	 * @throws NotFoundException
+	 *             if the instance doesn't exist
+	 */
+	void untagInstance(String instanceId, List<Tag> tags)
+			throws NotFoundException;
 
 	/**
 	 * Terminates a particular EC2 {@link Instance}.
 	 *
 	 * @param instanceId
 	 *            Identifier of the {@link Instance} to be terminated.
+	 * @throws NotFoundException
+	 *             if the instance doesn't exist
 	 */
-	void terminateInstance(String instanceId);
+	void terminateInstance(String instanceId) throws NotFoundException;
 }

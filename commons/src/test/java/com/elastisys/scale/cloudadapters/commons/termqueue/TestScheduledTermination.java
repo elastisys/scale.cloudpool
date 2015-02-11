@@ -13,13 +13,12 @@ import com.elastisys.scale.cloudadapers.api.types.Machine;
 import com.elastisys.scale.cloudadapers.api.types.MachineState;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.collect.Lists;
-import com.google.gson.JsonObject;
 
 /**
  * Verifies the behavior of the {@link ScheduledTermination} class.
- * 
- * 
- * 
+ *
+ *
+ *
  */
 public class TestScheduledTermination {
 
@@ -91,6 +90,6 @@ public class TestScheduledTermination {
 		List<String> publicIps = Lists.newArrayList();
 		List<String> privateIps = Lists.newArrayList();
 		return new Machine(withId, MachineState.RUNNING, UtcTime.now(),
-				publicIps, privateIps, new JsonObject());
+				publicIps, privateIps);
 	}
 }

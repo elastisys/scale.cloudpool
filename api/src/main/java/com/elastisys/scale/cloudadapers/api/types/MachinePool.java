@@ -1,7 +1,6 @@
 package com.elastisys.scale.cloudadapers.api.types;
 
 import static com.elastisys.scale.cloudadapers.api.types.Machine.isActive;
-import static com.elastisys.scale.cloudadapers.api.types.Machine.isAllocated;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.filter;
 
@@ -13,6 +12,7 @@ import org.joda.time.DateTime;
 
 import com.elastisys.scale.cloudadapers.api.CloudAdapter;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -69,26 +69,44 @@ public class MachinePool {
 	}
 
 	/**
-	 * Returns all {@link Machine}s in the pool that are in one of the
-	 * <i>allocated states</i>: {@link MachineState#REQUESTED},
-	 * {@link MachineState#PENDING} or {@link MachineState#RUNNING}. See
+	 * Returns all allocated {@link Machine}s in the pool with a service state
+	 * of {@link ServiceState#OUT_OF_SERVICE}.
+	 *
+	 * @return
+	 */
+	public List<Machine> getOutOfServiceMachines() {
+		Iterable<Machine> outOfServiceMachines = filter(getAllocatedMachines(),
+				Machine.withServiceState(ServiceState.OUT_OF_SERVICE));
+		return Lists.newArrayList(outOfServiceMachines);
+	}
+
+	/**
+	 * Returns all <i>effective</i> {@link Machine}s in the pool. See
+	 * {@link Machine#isEffectiveMember()}.
+	 *
+	 * @return
+	 */
+	public List<Machine> getEffectiveMachines() {
+		Iterable<Machine> effectiveMachines = filter(getMachines(),
+				Machine.isEffectiveMember());
+		return Lists.newArrayList(effectiveMachines);
+	}
+
+	/**
+	 * Returns all <i>allocated</i> {@link Machine}s in the pool. See
 	 * {@link Machine#isAllocated()}.
-	 * <p/>
-	 * The effective size of a machine pool is considered to be the set of
-	 * allocated machines.
 	 *
 	 * @return
 	 */
 	public List<Machine> getAllocatedMachines() {
 		Iterable<Machine> allocatedMachines = filter(getMachines(),
-				isAllocated());
+				Machine.isAllocated());
 		return Lists.newArrayList(allocatedMachines);
 	}
 
 	/**
-	 * Returns all {@link Machine}s in the pool that are in one of the <i>active
-	 * states</i>: {@link MachineState#PENDING} or {@link MachineState#RUNNING}
-	 * ). See {@link Machine#isActive()}.
+	 * Returns all <i>active</i> {@link Machine}s in the pool. See
+	 * {@link Machine#isActive()}.
 	 *
 	 * @return
 	 */
@@ -128,8 +146,7 @@ public class MachinePool {
 			MachinePool that = (MachinePool) obj;
 			final boolean timestampsEqual;
 			if (this.timestamp != null && that.timestamp != null) {
-				timestampsEqual = this.timestamp.getMillis() == that.timestamp
-						.getMillis();
+				timestampsEqual = this.timestamp.isEqual(that.timestamp);
 			} else if (this.timestamp == null && that.timestamp == null) {
 				timestampsEqual = true;
 			} else {
@@ -143,7 +160,8 @@ public class MachinePool {
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this).add("timestamp", this.timestamp)
+		return MoreObjects.toStringHelper(this)
+				.add("timestamp", this.timestamp)
 				.add("machines", this.machines).toString();
 	}
 
@@ -165,8 +183,7 @@ public class MachinePool {
 		checkNotNull(machinePool.machines, "machine pool missing instances");
 		for (Machine machine : machinePool.machines) {
 			checkNotNull(machine.getId(), "machine missing id");
-			checkNotNull(machine.getState(), "machine missing state");
-			checkNotNull(machine.getMetadata(), "machine missing metadata");
+			checkNotNull(machine.getMachineState(), "machine missing state");
 		}
 		return machinePool;
 	}

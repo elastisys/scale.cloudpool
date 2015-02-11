@@ -6,13 +6,12 @@ import com.elastisys.scale.cloudadapers.api.types.Machine;
 import com.elastisys.scale.cloudadapers.api.types.MachineState;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.collect.Lists;
-import com.google.gson.JsonObject;
 
 /**
  * Base class for scaledown unit tests.
- * 
- * 
- * 
+ *
+ *
+ *
  */
 public abstract class AbstractScaledownTest {
 
@@ -20,7 +19,6 @@ public abstract class AbstractScaledownTest {
 		List<String> publicIps = Lists.newArrayList();
 		List<String> privateIps = Lists.newArrayList();
 		return new Machine(withId, MachineState.RUNNING,
-				UtcTime.parse(withLaunchTime), publicIps, privateIps,
-				new JsonObject());
+				UtcTime.parse(withLaunchTime), publicIps, privateIps);
 	}
 }

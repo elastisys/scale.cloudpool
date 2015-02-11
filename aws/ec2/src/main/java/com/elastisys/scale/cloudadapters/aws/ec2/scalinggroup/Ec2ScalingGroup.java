@@ -9,14 +9,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import jersey.repackaged.com.google.common.base.Throwables;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
+import com.elastisys.scale.cloudadapers.api.NotFoundException;
 import com.elastisys.scale.cloudadapers.api.types.Machine;
-import com.elastisys.scale.cloudadapters.aws.ec2.functions.InstanceToMachine;
+import com.elastisys.scale.cloudadapers.api.types.ServiceState;
+import com.elastisys.scale.cloudadapters.aws.commons.ScalingTags;
+import com.elastisys.scale.cloudadapters.aws.commons.functions.InstanceToMachine;
 import com.elastisys.scale.cloudadapters.aws.ec2.scalinggroup.client.Ec2Client;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapter;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig;
@@ -27,9 +32,6 @@ import com.elastisys.scale.cloudadapters.commons.adapter.scalinggroup.ScalingGro
 import com.elastisys.scale.cloudadapters.commons.adapter.scalinggroup.StartMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.schema.JsonValidator;
-import com.elastisys.scale.commons.net.retryable.Requester;
-import com.elastisys.scale.commons.net.retryable.RetryableRequest;
-import com.elastisys.scale.commons.net.retryable.retryhandlers.RetryUntilNoException;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Atomics;
 import com.google.gson.JsonObject;
@@ -124,14 +126,11 @@ public class Ec2ScalingGroup implements ScalingGroup {
 				Instance newInstance = launchInstance(scaleUpConfig);
 				startedMachines.add(InstanceToMachine.convert(newInstance));
 
-				newInstance = awaitIpAddress(newInstance);
-				startedMachines.set(i, InstanceToMachine.convert(newInstance));
-
 				// set scaling group tag to make sure machine is recognized as a
 				// scaling group member
-				newInstance = tagInstance(newInstance, getScalingGroupName());
+				List<Tag> tags = instanceTags(newInstance);
+				newInstance = tagInstance(newInstance.getInstanceId(), tags);
 				startedMachines.set(i, InstanceToMachine.convert(newInstance));
-
 			}
 		} catch (Exception e) {
 			throw new StartMachinesException(count, startedMachines, e);
@@ -144,6 +143,9 @@ public class Ec2ScalingGroup implements ScalingGroup {
 	public void terminateMachine(String machineId) throws ScalingGroupException {
 		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
 
+		// verify that machine exists in group
+		getMachineOrFail(machineId);
+
 		try {
 			LOG.info("terminating instance {}", machineId);
 			this.client.terminateInstance(machineId);
@@ -151,6 +153,62 @@ public class Ec2ScalingGroup implements ScalingGroup {
 			String message = format("failed to terminate instance \"%s\": %s",
 					machineId, e.getMessage());
 			throw new ScalingGroupException(message);
+		}
+	}
+
+	@Override
+	public void attachMachine(String machineId) throws NotFoundException,
+			ScalingGroupException {
+		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
+
+		try {
+			Tag tag = createTag(ScalingTags.SCALING_GROUP_TAG,
+					getScalingGroupName());
+			tagInstance(machineId, Arrays.asList(tag));
+		} catch (Exception e) {
+			Throwables.propagateIfInstanceOf(e, NotFoundException.class);
+			throw new ScalingGroupException(String.format(
+					"failed to attach '%s' to scaling group: %s", machineId,
+					e.getMessage()), e);
+		}
+	}
+
+	@Override
+	public void detachMachine(String machineId) throws NotFoundException,
+			ScalingGroupException {
+		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
+
+		// verify that machine exists in group
+		getMachineOrFail(machineId);
+
+		Tag membershipTag = createTag(ScalingTags.SCALING_GROUP_TAG,
+				getScalingGroupName());
+		try {
+			this.client.untagInstance(machineId, asList(membershipTag));
+		} catch (Exception e) {
+			throw new ScalingGroupException(String.format(
+					"failed to remove tag '%s' from instance %s: %s",
+					membershipTag, machineId, e.getMessage()), e);
+		}
+	}
+
+	@Override
+	public void setServiceState(String machineId, ServiceState serviceState)
+			throws NotFoundException, ScalingGroupException {
+		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
+
+		// verify that machine exists in group
+		getMachineOrFail(machineId);
+
+		try {
+			Tag tag = createTag(ScalingTags.SERVICE_STATE_TAG,
+					serviceState.name());
+			tagInstance(machineId, Arrays.asList(tag));
+		} catch (Exception e) {
+			Throwables.propagateIfInstanceOf(e, NotFoundException.class);
+			throw new ScalingGroupException(String.format(
+					"failed to set service state for instance %s: %s",
+					machineId, e.getMessage()), e);
 		}
 	}
 
@@ -171,11 +229,7 @@ public class Ec2ScalingGroup implements ScalingGroup {
 	private Instance launchInstance(ScaleUpConfig scaleUpConfig)
 			throws ScalingGroupException {
 		try {
-			Instance launchedInstance = this.client
-					.launchInstance(scaleUpConfig);
-			// refresh meta data
-			return this.client.getInstanceMetadata(launchedInstance
-					.getInstanceId());
+			return this.client.launchInstance(scaleUpConfig);
 		} catch (Exception e) {
 			throw new ScalingGroupException(format(
 					"failed to launch instance: %s", e.getMessage()), e);
@@ -183,92 +237,63 @@ public class Ec2ScalingGroup implements ScalingGroup {
 	}
 
 	/**
-	 * Waits for a newly created instance to be assigned a public IP address.
+	 * Retrieves a particular member instance from the scaling group or throws
+	 * an exception if it could not be found.
+	 *
+	 * @param machineId
+	 *            The id of the machine of interest.
+	 * @return
+	 * @throws NotFoundException
+	 */
+	private Machine getMachineOrFail(String machineId) throws NotFoundException {
+		List<Machine> machines = listMachines();
+		for (Machine machine : machines) {
+			if (machine.getId().equals(machineId)) {
+				return machine;
+			}
+		}
+
+		throw new NotFoundException(String.format(
+				"no machine with id '%s' found in scaling group", machineId));
+	}
+
+	private Tag createTag(String key, String value) {
+		return new Tag().withKey(key).withValue(value);
+	}
+
+	/**
+	 * Creates tags to assign to a new {@link Instance}.
 	 *
 	 * @param instance
 	 * @return
-	 * @return Updated meta data about the {@link Instance}, with its public IP
-	 *         address set.
-	 * @throws ScalingGroupException
 	 */
-	private Instance awaitIpAddress(Instance instance)
-			throws ScalingGroupException {
-		try {
-			LOG.debug("waiting for '{}' to be assigned a public IP address",
-					instance.getInstanceId());
-			String taskName = String.format("ip-address-waiter{%s}",
-					instance.getInstanceId());
-			RetryableRequest<String> awaitIp = new RetryableRequest<>(
-					new InstanceIpGetter(this.client, instance.getInstanceId()),
-					new RetryUntilNoException<String>(12, 10000), taskName);
-			String ipAddress = awaitIp.call();
-			LOG.debug("instance was assigned public IP address {}", ipAddress);
-			// re-read instance meta data
-			return this.client.getInstanceMetadata(instance.getInstanceId());
-		} catch (Exception e) {
-			throw new ScalingGroupException(
-					format("gave up waiting for instance \"%s\" to be assigned a public IP address: %s",
-							instance.getInstanceId(), e.getMessage()), e);
-		}
-	}
-
-	/**
-	 * Tag a started instance with the {@link Constants#SCALING_GROUP_TAG}.
-	 *
-	 * @param instance
-	 *            The instance to tag.
-	 * @return Returns updated meta data about the {@link Instance}.
-	 * @throws ScalingGroupException
-	 */
-	private Instance tagInstance(Instance instance, String scalingGroup)
-			throws ScalingGroupException {
-		// assign a name to the instance via the Name tag
-		String instanceName = String.format("%s-%s", scalingGroup,
+	private List<Tag> instanceTags(Instance instance) {
+		// assign a name to the instance
+		String instanceName = String.format("%s-%s", getScalingGroupName(),
 				instance.getInstanceId());
-		Tag nameTag = new Tag().withKey(Constants.NAME_TAG).withValue(
-				instanceName);
+		Tag nameTag = createTag(Constants.NAME_TAG, instanceName);
 
 		// tag new instance with scaling group
-		Tag scalingGroupTag = new Tag().withKey(Constants.SCALING_GROUP_TAG)
-				.withValue(getScalingGroupName());
-
-		try {
-			this.client.tagInstance(instance.getInstanceId(),
-					Arrays.asList(nameTag, scalingGroupTag));
-		} catch (Exception e) {
-			throw new ScalingGroupException(String.format(
-					"failed to set \"%s\" tag on instance \"%s\": %s",
-					Constants.SCALING_GROUP_TAG, instance.getInstanceId(),
-					e.getMessage()), e);
-		}
-		return this.client.getInstanceMetadata(instance.getInstanceId());
+		Tag scalingGroupTag = createTag(ScalingTags.SCALING_GROUP_TAG,
+				getScalingGroupName());
+		return Arrays.asList(nameTag, scalingGroupTag);
 	}
 
 	/**
-	 * Simple {@link Requester} that fetches the public IP address of a certain
-	 * instance if one has been assigned. If the instance doesn't have a public
-	 * IP address, a {@link IllegalStateException} is thrown.
+	 * Set tags on a started instance.
 	 *
-	 *
-	 *
+	 * @param instanceId
+	 *            The id of the instance to tag.
+	 * @param tags
+	 *            The tags to set on the instance.
+	 * @return Returns updated meta data about the {@link Instance}. throws
+	 *         {@link NotFoundException}
+	 * @throws ScalingGroupException
 	 */
-	public static class InstanceIpGetter implements Requester<String> {
-
-		private final Ec2Client client;
-		private final String instanceId;
-
-		public InstanceIpGetter(Ec2Client client, String instanceId) {
-			this.client = client;
-			this.instanceId = instanceId;
-		}
-
-		@Override
-		public String call() throws Exception {
-			Instance instance = this.client
-					.getInstanceMetadata(this.instanceId);
-			checkState(instance.getPublicIpAddress() != null,
-					"instance has not yet been assigned a public IP address");
-			return instance.getPublicIpAddress();
-		}
+	private Instance tagInstance(String instanceId, List<Tag> tags)
+			throws NotFoundException, ScalingGroupException {
+		this.client.tagInstance(instanceId, tags);
+		return this.client.getInstanceMetadata(instanceId);
 	}
+
 }

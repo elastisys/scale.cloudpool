@@ -17,9 +17,6 @@ import com.google.common.base.Charsets;
 /**
  * A {@link Callable} task that, when executed, requests the creation of an AWS
  * Launch Configuration.
- * 
- * 
- * 
  */
 public class CreateLaunchConfiguration extends AmazonAutoScalingRequest<Void> {
 	/** The name of the auto-scaling launch configuration create. */
@@ -62,7 +59,7 @@ public class CreateLaunchConfiguration extends AmazonAutoScalingRequest<Void> {
 	/**
 	 * Constructs a new {@link CreateLaunchConfiguration} task with boot script
 	 * passed as a {@link String}.
-	 * 
+	 *
 	 * @param awsCredentials
 	 * @param region
 	 * @param launchConfigurationName
@@ -90,7 +87,7 @@ public class CreateLaunchConfiguration extends AmazonAutoScalingRequest<Void> {
 	/**
 	 * Constructs a new {@link CreateLaunchConfiguration} task with boot script
 	 * passed as a {@link File} reference.
-	 * 
+	 *
 	 * @param awsCredentials
 	 * @param region
 	 * @param launchConfigurationName
@@ -100,7 +97,7 @@ public class CreateLaunchConfiguration extends AmazonAutoScalingRequest<Void> {
 	 * @param imageId
 	 * @param bootScriptFile
 	 * @param detailedMonitoring
-	 * 
+	 *
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */

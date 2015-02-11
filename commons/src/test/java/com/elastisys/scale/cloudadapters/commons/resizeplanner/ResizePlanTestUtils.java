@@ -7,16 +7,16 @@ import org.joda.time.DateTime;
 import com.elastisys.scale.cloudadapers.api.types.Machine;
 import com.elastisys.scale.cloudadapers.api.types.MachinePool;
 import com.elastisys.scale.cloudadapers.api.types.MachineState;
+import com.elastisys.scale.cloudadapers.api.types.ServiceState;
 import com.elastisys.scale.cloudadapters.commons.termqueue.ScheduledTermination;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.collect.Lists;
-import com.google.gson.JsonObject;
 
 /**
  * Test utilities for {@link ResizePlan} and {@link ResizePlanner} tests.
- * 
- * 
- * 
+ *
+ *
+ *
  */
 public class ResizePlanTestUtils {
 
@@ -25,7 +25,7 @@ public class ResizePlanTestUtils {
 	 * in state {@link MachineState#RUNNING} (unless the launch time is
 	 * <code>null</code>, in which case the state is
 	 * {@link MachineState#REQUESTED}).
-	 * 
+	 *
 	 * @param idIndex
 	 *            The identifier sequence number of the machine.
 	 * @param launchTime
@@ -43,29 +43,50 @@ public class ResizePlanTestUtils {
 
 	/**
 	 * Creates a {@link Machine} with a given identifier index, launch time and
-	 * state.
-	 * 
+	 * machine state. The service state is set to {@link ServiceState#UNKNOWN}.
+	 *
 	 * @param idIndex
 	 *            The identifier sequence number of the machine.
 	 * @param launchTime
 	 *            A launch times for the machine. <code>null</code> is accepted
 	 *            and represent a machine that hasn't started (yet).
-	 * @param state
+	 * @param machineState
 	 *            The {@link MachineState}.
 	 * @return
 	 */
 	public static Machine makeMachine(int idIndex, DateTime launchTime,
-			MachineState state) {
+			MachineState machineState) {
+		return makeMachine(idIndex, launchTime, machineState,
+				ServiceState.UNKNOWN);
+	}
+
+	/**
+	 * Creates a {@link Machine} with a given identifier index, launch time,
+	 * machine state and service state.
+	 *
+	 * @param idIndex
+	 *            The identifier sequence number of the machine.
+	 * @param launchTime
+	 *            A launch times for the machine. <code>null</code> is accepted
+	 *            and represent a machine that hasn't started (yet).
+	 * @param machineState
+	 *            The {@link MachineState}.
+	 * @param serviceState
+	 *            The {@link ServiceState}.
+	 * @return
+	 */
+	public static Machine makeMachine(int idIndex, DateTime launchTime,
+			MachineState machineState, ServiceState serviceState) {
 		List<String> publicIps = Lists.newArrayList();
 		List<String> privateIps = Lists.newArrayList();
-		return new Machine("instance-" + idIndex, state, launchTime, publicIps,
-				privateIps, new JsonObject());
+		return new Machine("instance-" + idIndex, machineState, serviceState,
+				launchTime, publicIps, privateIps);
 	}
 
 	/**
 	 * Creates a {@link MachinePool} with {@link Machine}s started according to
 	 * a list of launch times.
-	 * 
+	 *
 	 * @param launchTimes
 	 *            A list of launch times for the machines in the pool.
 	 *            <code>null</code> values are accepted and represent machines
@@ -83,7 +104,7 @@ public class ResizePlanTestUtils {
 
 	/**
 	 * Creates an empty {@link MachinePool}.
-	 * 
+	 *
 	 * @return
 	 */
 	public static MachinePool makePool() {
@@ -93,7 +114,7 @@ public class ResizePlanTestUtils {
 
 	/**
 	 * Creates an empty {@link MachinePool}.
-	 * 
+	 *
 	 * @return
 	 */
 	public static MachinePool makePool(DateTime timestamp,
@@ -110,8 +131,8 @@ public class ResizePlanTestUtils {
 		List<String> publicIps = Lists.newArrayList();
 		List<String> privateIps = Lists.newArrayList();
 		return new ScheduledTermination(new Machine(instanceId,
-				MachineState.RUNNING, UtcTime.now(), publicIps, privateIps,
-				new JsonObject()), terminationTime);
+				MachineState.RUNNING, UtcTime.now(), publicIps, privateIps),
+				terminationTime);
 	}
 
 	public static List<ScheduledTermination> toTerminate(
@@ -126,7 +147,7 @@ public class ResizePlanTestUtils {
 	/**
 	 * Returns all {@link Machine} instances that are to be scheduled for
 	 * termination in a certain {@link ResizePlan}.
-	 * 
+	 *
 	 * @param plan
 	 * @return
 	 */

@@ -1,46 +1,35 @@
 package com.elastisys.scale.cloudadapters.openstack.functions;
 
-import static java.lang.String.format;
-import static java.util.Arrays.asList;
-import static org.jclouds.openstack.nova.v2_0.domain.Server.Status.ACTIVE;
-import static org.jclouds.openstack.nova.v2_0.domain.Server.Status.BUILD;
-import static org.jclouds.openstack.nova.v2_0.domain.Server.Status.ERROR;
-import static org.jclouds.openstack.nova.v2_0.domain.Server.Status.HARD_REBOOT;
-import static org.jclouds.openstack.nova.v2_0.domain.Server.Status.PASSWORD;
-import static org.jclouds.openstack.nova.v2_0.domain.Server.Status.REBOOT;
-import static org.jclouds.openstack.nova.v2_0.domain.Server.Status.REBUILD;
-import static org.jclouds.openstack.nova.v2_0.domain.Server.Status.RESIZE;
-import static org.jclouds.openstack.nova.v2_0.domain.Server.Status.REVERT_RESIZE;
-
 import java.util.Collection;
 import java.util.List;
 
 import org.jclouds.openstack.nova.v2_0.domain.Address;
 import org.jclouds.openstack.nova.v2_0.domain.Server;
-import org.jclouds.openstack.nova.v2_0.domain.Server.Status;
 import org.jclouds.util.InetAddresses2.IsPrivateIPAddress;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import com.elastisys.scale.cloudadapers.api.types.Machine;
 import com.elastisys.scale.cloudadapers.api.types.MachineState;
+import com.elastisys.scale.cloudadapers.api.types.ServiceState;
+import com.elastisys.scale.cloudadapters.openstack.scalinggroup.Constants;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 /**
  * Translates a {@link Server} from the OpenStack API to its {@link Machine}
  * counterpart.
- * 
- * 
- * 
+ *
+ *
+ *
  */
 public class ServerToMachine implements Function<Server, Machine> {
 
 	/**
 	 * Converts a {@link Server} to its {@link Machine} representation.
-	 * 
+	 *
 	 * @param server
 	 * @return
 	 */
@@ -51,7 +40,7 @@ public class ServerToMachine implements Function<Server, Machine> {
 	/**
 	 * Converts a {@link Server} from the OpenStack API to its {@link Machine}
 	 * representation.
-	 * 
+	 *
 	 * @param server
 	 *            The {@link Server} representation.
 	 * @return The corresponding {@link Machine} representation.
@@ -66,7 +55,8 @@ public class ServerToMachine implements Function<Server, Machine> {
 	 * representation.
 	 */
 	private static Machine asMachine(Server server) {
-		MachineState state = convertState(server.getStatus());
+		MachineState machineState = new StatusToMachineState().apply(server
+				.getStatus());
 		DateTime launchTime = new DateTime(server.getCreated(),
 				DateTimeZone.UTC);
 
@@ -82,23 +72,14 @@ public class ServerToMachine implements Function<Server, Machine> {
 				publicIps.add(ip);
 			}
 		}
-		JsonElement metadata = JsonUtils.toJson(server);
-		return new Machine(server.getId(), state, launchTime, publicIps,
-				privateIps, metadata);
+		ServiceState serviceState = ServiceState.UNKNOWN;
+		if (server.getMetadata().containsKey(Constants.SERVICE_STATE_TAG)) {
+			serviceState = ServiceState.valueOf(server.getMetadata().get(
+					Constants.SERVICE_STATE_TAG));
+		}
+		JsonObject metadata = JsonUtils.toJson(server).getAsJsonObject();
+		return new Machine(server.getId(), machineState, serviceState,
+				launchTime, publicIps, privateIps, metadata);
 	}
 
-	private static MachineState convertState(Status state) {
-		if (asList(ACTIVE, ERROR, PASSWORD).contains(state)) {
-			return MachineState.RUNNING;
-		} else if (asList(BUILD, REBUILD, REBOOT, HARD_REBOOT, RESIZE,
-				REVERT_RESIZE, Status.VERIFY_RESIZE).contains(state)) {
-			return MachineState.PENDING;
-		} else if (asList(Status.STOPPED, Status.PAUSED, Status.SUSPENDED,
-				Status.DELETED).contains(state)) {
-			return MachineState.TERMINATED;
-		} else {
-			throw new IllegalArgumentException(format(
-					"unrecognized instance state \"%s\"", state));
-		}
-	}
 }

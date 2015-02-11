@@ -3,11 +3,14 @@ package com.elastisys.scale.cloudadapers.api.types;
 /**
  * The range of permissible execution states for a {@link Machine} in a
  * {@link MachinePool}.
- * 
+ * <p/>
+ * The <i>machine state</i>, is the execution state of a {@link Machine}, as
+ * reported by the infrastructure.
+ *
  * @see Machine
  * @see MachinePool
- * 
- * 
+ *
+ *
  */
 public enum MachineState {
 	/**
@@ -22,7 +25,7 @@ public enum MachineState {
 	/**
 	 * The machine is launched. However, the boot process may not yet have
 	 * completed and the machine may not be operational (the {@link Machine}'s
-	 * {@link LivenessState} may provide more detailed state information).
+	 * {@link ServiceState} may provide more detailed state information).
 	 */
 	RUNNING,
 	/** The machine is in the process of being stopped/shut down. */

@@ -1,0 +1,31 @@
+{
+	"poolSizeCalculator": "STRICT",
+	"adapters": [
+		{
+			"priority": 40,
+			"cloudAdapterHost": "localhost0",
+			"cloudAdapterPort": 10
+		},
+		{
+		    "_comment": "duplicate of the first entry (same host and port)",
+			"priority": 20,
+			"cloudAdapterHost": "localhost0",
+			"cloudAdapterPort": 10,
+			"basicCredentials": {
+				"username": "testuser1",
+				"password": "testpassword1"
+			}
+		},
+		{
+			"priority": 30,
+			"cloudAdapterHost": "localhost2",
+			"cloudAdapterPort": 12,
+			"certificateCredentials": {
+				"keystorePath": "/proc/cpuinfo",
+				"keystorePassword": "somekeystorepassword2",
+				"keystoreType": "PKCS12"
+			}
+		}
+    ],
+	"poolUpdatePeriod": 30
+}

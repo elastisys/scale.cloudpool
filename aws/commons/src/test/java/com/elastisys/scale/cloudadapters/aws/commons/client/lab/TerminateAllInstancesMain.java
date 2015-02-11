@@ -1,8 +1,8 @@
 package com.elastisys.scale.cloudadapters.aws.commons.client.lab;
 
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 
-import java.util.Arrays;
 import java.util.List;
 
 import com.amazonaws.auth.PropertiesCredentials;
@@ -25,12 +25,13 @@ public class TerminateAllInstancesMain extends AbstractClient {
 		PropertiesCredentials awsCredentials = new PropertiesCredentials(
 				credentialsFile);
 		List<Instance> runningInstances = new GetInstances(awsCredentials,
-				region).withFilters(Arrays.asList(filter)).call();
+				region).withFilters(asList(filter)).call();
 		for (Instance instance : runningInstances) {
 			logger.debug("  Terminating instance " + instance);
 			InstanceStateChange stateChange = new TerminateInstance(
 					awsCredentials, region, instance.getInstanceId()).call();
 			logger.debug("  Result: " + stateChange);
 		}
+
 	}
 }

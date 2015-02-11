@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.elastisys.scale.cloudadapers.api.types.Machine;
 import com.elastisys.scale.cloudadapters.commons.termqueue.ScheduledTermination;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 
@@ -15,10 +16,10 @@ import com.google.common.base.Optional;
  * <p/>
  * A {@link ResizePlan} is the outcome of calculations performed by a
  * {@link ResizePlanner}.
- * 
+ *
  * @see ResizePlanner
- * 
- * 
+ *
+ *
  */
 public class ResizePlan {
 
@@ -37,7 +38,7 @@ public class ResizePlan {
 
 	/**
 	 * Creates a new {@link ResizePlan}.
-	 * 
+	 *
 	 * @param toRequest
 	 *            Number of additional machines to request.
 	 * @param toSpare
@@ -62,7 +63,7 @@ public class ResizePlan {
 	 * Performs a basic sanity check of this {@link ResizePlan}. If values are
 	 * sane, the method simply returns. Should the {@link ResizePlan} contain an
 	 * illegal mix of values, an {@link IllegalArgumentException} is thrown.
-	 * 
+	 *
 	 * @throws IllegalArgumentException
 	 */
 	public void validate() throws IllegalArgumentException {
@@ -82,7 +83,7 @@ public class ResizePlan {
 	/**
 	 * Returns the number of machines currently in termination queue that shall
 	 * be spared, rather than terminated.
-	 * 
+	 *
 	 * @return
 	 */
 	public int getToSpare() {
@@ -91,7 +92,7 @@ public class ResizePlan {
 
 	/**
 	 * Returns the number of additional machines to request.
-	 * 
+	 *
 	 * @return
 	 */
 	public int getToRequest() {
@@ -101,7 +102,7 @@ public class ResizePlan {
 	/**
 	 * Returns the {@link Machine}s that are to be terminated, together with
 	 * their scheduled termination time.
-	 * 
+	 *
 	 * @return
 	 */
 	public List<ScheduledTermination> getToTerminate() {
@@ -111,7 +112,7 @@ public class ResizePlan {
 	/**
 	 * Indicate if this {@link ResizePlan} represents a scale-up (adding of
 	 * capacity) of the machine pool.
-	 * 
+	 *
 	 * @return <code>true</code> if this {@link ResizePlan} reperesents a
 	 *         scale-up. <code>false</code> otherwise.
 	 */
@@ -122,7 +123,7 @@ public class ResizePlan {
 	/**
 	 * Indicate if this {@link ResizePlan} represents a scale-down (down-size of
 	 * capacity) of the machine pool.
-	 * 
+	 *
 	 * @return <code>true</code> if this {@link ResizePlan} reperesents a
 	 *         scale-down. <code>false</code> otherwise.
 	 */
@@ -148,8 +149,8 @@ public class ResizePlan {
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this).add("toRequest", this.toRequest)
-				.add("toSpare", this.toSpare)
+		return MoreObjects.toStringHelper(this)
+				.add("toRequest", this.toRequest).add("toSpare", this.toSpare)
 				.add("toTerminate", this.toTerminate).toString();
 	}
 }

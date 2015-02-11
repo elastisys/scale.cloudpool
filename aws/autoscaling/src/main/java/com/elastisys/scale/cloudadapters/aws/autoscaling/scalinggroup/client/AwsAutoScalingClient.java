@@ -9,18 +9,23 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.Tag;
+import com.elastisys.scale.cloudadapers.api.NotFoundException;
 import com.elastisys.scale.cloudadapters.aws.autoscaling.scalinggroup.AwsAsScalingGroupConfig;
+import com.elastisys.scale.cloudadapters.aws.commons.requests.autoscaling.AttachAutoScalingGroupInstance;
+import com.elastisys.scale.cloudadapters.aws.commons.requests.autoscaling.DetachAutoScalingGroupInstance;
 import com.elastisys.scale.cloudadapters.aws.commons.requests.autoscaling.GetAutoScalingGroup;
 import com.elastisys.scale.cloudadapters.aws.commons.requests.autoscaling.GetAutoScalingGroupInstances;
 import com.elastisys.scale.cloudadapters.aws.commons.requests.autoscaling.SetDesiredAutoScalingGroupSize;
 import com.elastisys.scale.cloudadapters.aws.commons.requests.autoscaling.TerminateAutoScalingGroupInstance;
-import com.elastisys.scale.cloudadapters.aws.commons.requests.ec2.GetEc2Instance;
+import com.elastisys.scale.cloudadapters.aws.commons.requests.ec2.GetInstance;
+import com.elastisys.scale.cloudadapters.aws.commons.requests.ec2.TagEc2Resource;
 import com.google.common.util.concurrent.Atomics;
 
 /**
  * Standard implementation of the {@link AutoScalingClient} interface.
  *
- * 
+ *
  *
  */
 public class AwsAutoScalingClient implements AutoScalingClient {
@@ -53,14 +58,6 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 	}
 
 	@Override
-	public Instance getInstanceMetadata(String instanceId) {
-		checkArgument(isConfigured(), "can't use client before it's configured");
-
-		return new GetEc2Instance(awsCredentials(), region(), instanceId)
-				.call();
-	}
-
-	@Override
 	public void setDesiredSize(String autoScalingGroupName, int desiredSize) {
 		checkArgument(isConfigured(), "can't use client before it's configured");
 
@@ -69,11 +66,57 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 	}
 
 	@Override
-	public void terminateInstance(String autoScalingGroupName, String instanceId) {
+	public void terminateInstance(String autoScalingGroupName, String instanceId)
+			throws NotFoundException {
 		checkArgument(isConfigured(), "can't use client before it's configured");
 
+		// verify that instance exists
+		getInstanceOrFail(instanceId);
+
 		new TerminateAutoScalingGroupInstance(awsCredentials(), region(),
+				instanceId).call();
+	}
+
+	@Override
+	public void attachInstance(String autoScalingGroupName, String instanceId)
+			throws NotFoundException {
+		checkArgument(isConfigured(), "can't use client before it's configured");
+
+		// verify that instance exists
+		getInstanceOrFail(instanceId);
+
+		new AttachAutoScalingGroupInstance(awsCredentials(), region(),
 				autoScalingGroupName, instanceId).call();
+	}
+
+	@Override
+	public void detachInstance(String autoScalingGroupName, String instanceId)
+			throws NotFoundException {
+		checkArgument(isConfigured(), "can't use client before it's configured");
+
+		// verify that instance exists
+		getInstanceOrFail(instanceId);
+
+		new DetachAutoScalingGroupInstance(awsCredentials(), region(),
+				autoScalingGroupName, instanceId).call();
+	}
+
+	@Override
+	public void tagInstance(String instanceId, List<Tag> tags)
+			throws NotFoundException {
+		checkArgument(isConfigured(), "can't use client before it's configured");
+
+		// verify that instance exists
+		getInstanceOrFail(instanceId);
+
+		new TagEc2Resource(awsCredentials(), region(), instanceId, tags).call();
+	}
+
+	private Instance getInstanceOrFail(String instanceId)
+			throws NotFoundException {
+		checkArgument(isConfigured(), "can't use client before it's configured");
+
+		return new GetInstance(awsCredentials(), region(), instanceId).call();
 	}
 
 	private boolean isConfigured() {

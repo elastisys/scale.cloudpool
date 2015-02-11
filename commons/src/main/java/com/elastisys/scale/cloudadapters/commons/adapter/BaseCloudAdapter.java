@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudadapters.commons.adapter;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static java.lang.Math.max;
 import static java.lang.String.format;
 
 import java.net.InetAddress;
@@ -15,29 +16,23 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudadapers.api.CloudAdapter;
 import com.elastisys.scale.cloudadapers.api.CloudAdapterException;
-import com.elastisys.scale.cloudadapers.api.types.LivenessState;
 import com.elastisys.scale.cloudadapers.api.types.Machine;
 import com.elastisys.scale.cloudadapers.api.types.MachinePool;
 import com.elastisys.scale.cloudadapers.api.types.MachineState;
+import com.elastisys.scale.cloudadapers.api.types.PoolSizeSummary;
+import com.elastisys.scale.cloudadapers.api.types.ServiceState;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.AlertSettings;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.ScaleDownConfig;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.ScaleUpConfig;
 import com.elastisys.scale.cloudadapters.commons.adapter.alerts.AlertTopics;
-import com.elastisys.scale.cloudadapters.commons.adapter.liveness.LivenessTracker;
-import com.elastisys.scale.cloudadapters.commons.adapter.liveness.impl.NotifyingLivenessTracker;
-import com.elastisys.scale.cloudadapters.commons.adapter.liveness.testing.SshLivenessTestFactory;
-import com.elastisys.scale.cloudadapters.commons.adapter.liveness.testing.impl.StandardSshLivenessTestFactory;
 import com.elastisys.scale.cloudadapters.commons.adapter.scalinggroup.ScalingGroup;
 import com.elastisys.scale.cloudadapters.commons.adapter.scalinggroup.StartMachinesException;
-import com.elastisys.scale.cloudadapters.commons.adapter.scalinggroup.impl.LivenessTrackingScalingGroup;
 import com.elastisys.scale.cloudadapters.commons.resizeplanner.ResizePlan;
 import com.elastisys.scale.cloudadapters.commons.resizeplanner.ResizePlanner;
 import com.elastisys.scale.cloudadapters.commons.termqueue.ScheduledTermination;
@@ -54,6 +49,7 @@ import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.EventBus;
@@ -61,27 +57,31 @@ import com.google.common.util.concurrent.Atomics;
 import com.google.gson.JsonObject;
 
 /**
- * A generic {@link CloudAdapter} that is built to work against any cloud
- * provider. A cloud-specific {@link ScalingGroup} is used to provide primitives
- * for managing the scaling group according to the API/protocol provided by the
- * particular cloud provider. A {@link ScalingGroup} for the targeted cloud
- * needs to be supplied at construction-time.
+ * A generic {@link CloudAdapter} that is provided as a basis for building
+ * cloud-specific {@link CloudAdapter}s.
+ * <p/>
+ * The {@link BaseCloudAdapter} implements sensible behavior for the
+ * {@link CloudAdapter} methods and relieves implementors from dealing with the
+ * details of continuously monitoring and re-scaling the pool with the right
+ * amount of machines given the member machine states, handling
+ * (re-)configurations, sending alerts, etc. Implementers of cloud-specific
+ * {@link CloudAdapter}s only need to implements a small set of machine pool
+ * management primitives for a particular cloud. These management primitives are
+ * supplied to the {@link BaseCloudAdapter} at construction-time in the form of
+ * a {@link ScalingGroup}, which implements the management primitives according
+ * to the API of the targeted cloud.
  * <p/>
  * The configuration ({@link BaseCloudAdapterConfig}) for this adapter specifies
  * how the {@link BaseCloudAdapter}:
  * <ul>
- * <li>should configure its ScalingGroup to allow it to communicate with its
- * cloud API ({@code scalingGroup}).</li>
- * <li>provisions new instances when the scaling group needs to grow (
- * {@code scaleUpConfig}).</li>
- * <li>decommissions instances when the scaling group needs to shrink (
- * {@code scaleDownConfig}).</li>
- * <li>performs <i>boot-time liveness checks</i> when starting new group members
- * ({@code bootTimeCheck}).</li>
- * <li>performs periodical <i>run-time liveness checks</i> on existing group
- * members ({@code runTimecheck}).</li>
- * <li>alerts system administrators (via email) when resize operations, liveness
- * checks, etc fail ({@code alerts}).</li>
+ * <li>should configure its {@link ScalingGroup} to allow it to communicate with
+ * its cloud API (the {@code scalingGroup} key).</li>
+ * <li>provisions new instances when the scaling group needs to grow (the
+ * {@code scaleUpConfig} key).</li>
+ * <li>decommissions instances when the scaling group needs to shrink (the
+ * {@code scaleDownConfig} key).</li>
+ * <li>alerts system administrators (via email) of interesting events: resize
+ * operations, error conditions, etc (the {@code alerts} key).</li>
  * </ul>
  * A configuration document may look as follows:
  *
@@ -109,21 +109,6 @@ import com.google.gson.JsonObject;
  *   "scaleDownConfig": {
  *     "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
  *     "instanceHourMargin": 0
- *   },
- *   "liveness": {
- *     "loginUser": "ubuntu",
- *     "loginKey": "/path/to/instancekey.pem",
- *     "bootTimeCheck": {
- *       "command": "sudo service apache2 status | grep 'is running'",
- *       "retryDelay": 20,
- *       "maxRetries": 15
- *     },
- *     "runTimeCheck": {
- *       "command": "sudo service apache2 status | grep 'is running'",
- *       "period": 60,
- *       "maxRetries": 3,
- *       "retryDelay": 10
- *     }
  *   },
  *   "alerts": {
  *     "subject": "[elastisys:scale] scaling group alert for MyScalingGroup",
@@ -164,8 +149,14 @@ import com.google.gson.JsonObject;
  *
  * <h3>Handling resize requests:</h3>
  *
- * When {@link #resizeMachinePool} is called, the actions taken depend on if the
- * resize request requires growing or shrinking the scaling group.
+ * When {@link #setDesiredSize(int)} is called, the {@link BaseCloudAdapter}
+ * notes the new desired size but does not immediately apply the necessary
+ * changes to the machine pool. Instead, pool updates are carried out in a
+ * periodical manner (with a period specified by the {@code poolUpdatePeriod}
+ * configuration key).
+ * <p/>
+ * When a pool update is triggered, the actions taken depend on if the scaling
+ * group needs to grow or shrink.
  *
  * <ul>
  * <li><i>scale up</i>: start by sparing machines from termination if the
@@ -181,22 +172,6 @@ import com.google.gson.JsonObject;
  * delegated to {@link ScalingGroup#terminateMachine(String)}.</li>
  * </ul>
  *
- * <h3>Tracking group member liveness:</h3>
- *
- * The {@link BaseCloudAdapter} uses two tests to monitor the
- * {@link LivenessState} of machines in the {@link ScalingGroup}:
- *
- * <ul>
- * <li><i>boot-time liveness test<i>, which waits for a server to come live when
- * a new server is provisioned in the scaling group.</li>
- * <li><i>run-time liveness test</i>, which is performed periodically to verify
- * that scaling group members are still operational.</li>
- * </ul>
- * Both tests work by attempting to execute an SSH command against the machine
- * (a limited number of times), and if the exit code is zero, the machine is
- * considered {@link LivenessState#LIVE}, otherwise
- * {@link LivenessState#UNHEALTHY}.
- *
  * <h3>Alerts:</h3>
  *
  * If an alerts attribute is present in the configuration, the
@@ -204,7 +179,7 @@ import com.google.gson.JsonObject;
  * of interesting events (such as errors, scale-ups/scale-downs, liveness state
  * changes, etc).
  *
- * 
+ * @see ScalingGroup
  */
 public class BaseCloudAdapter implements CloudAdapter {
 
@@ -238,19 +213,14 @@ public class BaseCloudAdapter implements CloudAdapter {
 	private final AtomicReference<Integer> desiredSize;
 
 	/**
-	 * The factory that produces liveness test tasks when a boot-time or
-	 * run-time liveness test needs to be created.
-	 */
-	private final SshLivenessTestFactory livenessTestFactory;
-	/**
 	 * {@link EventBus} used to post {@link Alert} events that are to be
 	 * forwarded by the {@link EmailAlerter} (if configured).
 	 */
 	private final EventBus eventBus;
 	/**
 	 * If email alerts are configured, will hold an {@link EmailAlerter} that is
-	 * registered with the {@link EventBus} to forward {@link Alert}s to
-	 * a list of configured email recipients.
+	 * registered with the {@link EventBus} to forward {@link Alert}s to a list
+	 * of configured email recipients.
 	 */
 	private final AtomicReference<EmailAlerter> smtpAlerter;
 	/**
@@ -259,8 +229,8 @@ public class BaseCloudAdapter implements CloudAdapter {
 	 * termination queue and (2) replace terminated instances.
 	 */
 	private ScheduledFuture<?> poolUpdateTask;
-	/** Lock to protect critical sections. */
-	private final Lock lock = new ReentrantLock();
+	/** Lock to protect the machine pool from concurrent modifications. */
+	private final Object updateLock = new Object();
 
 	/**
 	 * The queue of already termination-marked instances (these will be used to
@@ -287,8 +257,8 @@ public class BaseCloudAdapter implements CloudAdapter {
 	 * @param scalingGroup
 	 *            A cloud-specific management client for the scaling group.
 	 * @param eventBus
-	 *            The {@link EventBus} used to send {@link Alert}s and
-	 *            event messages between components of the cloud adapter.
+	 *            The {@link EventBus} used to send {@link Alert}s and event
+	 *            messages between components of the cloud adapter.
 	 */
 	public BaseCloudAdapter(ScalingGroup scalingGroup, EventBus eventBus) {
 		checkArgument(scalingGroup != null, "scalingGroup is null");
@@ -306,8 +276,6 @@ public class BaseCloudAdapter implements CloudAdapter {
 		this.config = Atomics.newReference();
 		this.started = new AtomicBoolean(false);
 
-		this.livenessTestFactory = new StandardSshLivenessTestFactory();
-
 		this.smtpAlerter = Atomics.newReference();
 
 		this.terminationQueue = new TerminationQueue();
@@ -317,12 +285,15 @@ public class BaseCloudAdapter implements CloudAdapter {
 	@Override
 	public void configure(JsonObject jsonConfig) throws CloudAdapterException {
 		BaseCloudAdapterConfig configuration = validate(jsonConfig);
-		this.config.set(configuration);
 
-		if (isStarted()) {
-			stop();
+		synchronized (this.updateLock) {
+			this.config.set(configuration);
+
+			if (isStarted()) {
+				stop();
+			}
+			start();
 		}
-		start();
 	}
 
 	private BaseCloudAdapterConfig validate(JsonObject jsonConfig)
@@ -367,19 +338,6 @@ public class BaseCloudAdapter implements CloudAdapter {
 		// initialize to original scaling group (without liveness tracking)
 		this.scalingGroup = this.wrappedScalingGroup;
 
-		// decorate scaling group with liveness checking if configured
-		if (config().getLiveness() != null) {
-			LivenessTracker livenessTracker = new NotifyingLivenessTracker(
-					this.livenessTestFactory, this.eventBus,
-					this.executorService);
-			livenessTracker.configure(config().getLiveness());
-			int livenessCheckPeriod = config().getLiveness().getRunTimeCheck()
-					.getPeriod();
-			this.scalingGroup = new LivenessTrackingScalingGroup(
-					this.scalingGroup, livenessTracker, this.executorService,
-					livenessCheckPeriod);
-		}
-
 		// re-configure scalinggroup
 		LOG.info("configuring scaling group '{}'", config().getScalingGroup()
 				.getName());
@@ -411,9 +369,7 @@ public class BaseCloudAdapter implements CloudAdapter {
 
 		try {
 			LOG.debug("determining initial desired scaling group size");
-			this.desiredSize
-					.set(getMachinePool().getAllocatedMachines().size());
-			LOG.info("initial desired scaling group size is {}", desiredSize());
+			setDesiredSizeIfUnset(getMachinePool());
 		} catch (CloudAdapterException e) {
 			String message = format(
 					"failed to determine initial size of scaling group: %s\n%s",
@@ -422,6 +378,28 @@ public class BaseCloudAdapter implements CloudAdapter {
 					AlertSeverity.ERROR, UtcTime.now(), message));
 			LOG.error(message);
 		}
+	}
+
+	/**
+	 * Initializes the {@link #desiredSize} (if one hasn't already been set)
+	 * from a given {@link MachinePool} .
+	 * <p/>
+	 * If {@link #desiredSize} is already set, this method returns immediately.
+	 * 
+	 * @param pool
+	 */
+	private void setDesiredSizeIfUnset(MachinePool pool) {
+		if (this.desiredSize.get() != null) {
+			return;
+		}
+		// exclude out-of-service instances since they aren't actually part
+		// of the desiredSize (they have been replaced with stand-ins)
+		int effectiveSize = pool.getEffectiveMachines().size();
+		int allocated = pool.getAllocatedMachines().size();
+		int outOfService = pool.getOutOfServiceMachines().size();
+		this.desiredSize.set(effectiveSize);
+		LOG.info("initial desiredSize is {} (allocated: {}, outOfService: {})",
+				this.desiredSize, allocated, outOfService);
 	}
 
 	private void stop() {
@@ -438,6 +416,129 @@ public class BaseCloudAdapter implements CloudAdapter {
 
 	boolean isStarted() {
 		return this.started.get();
+	}
+
+	@Override
+	public MachinePool getMachinePool() throws CloudAdapterException {
+		checkState(getConfiguration().isPresent(),
+				"cloud adapter needs to be configured before use");
+
+		List<Machine> machines = listMachines();
+		MachinePool pool = new MachinePool(machines, UtcTime.now());
+		// if we haven't yet determined the desired size, we do so now
+		setDesiredSizeIfUnset(pool);
+		return pool;
+	}
+
+	Integer desiredSize() {
+		return this.desiredSize.get();
+	}
+
+	@Override
+	public PoolSizeSummary getPoolSize() throws CloudAdapterException {
+		checkState(getConfiguration().isPresent(),
+				"cloud adapter needs to be configured before use");
+
+		MachinePool pool = getMachinePool();
+		return new PoolSizeSummary(this.desiredSize.get(), pool
+				.getAllocatedMachines().size(), pool.getOutOfServiceMachines()
+				.size());
+	}
+
+	/**
+	 * Lists the {@link Machine}s in the {@link ScalingGroup}. Raises a
+	 * {@link CloudAdapterException} on failure and sends alert (if configured).
+	 *
+	 * @return
+	 *
+	 * @throws CloudAdapterException
+	 */
+	private List<Machine> listMachines() {
+		return this.scalingGroup.listMachines();
+	}
+
+	@Override
+	public void setDesiredSize(int desiredSize)
+			throws IllegalArgumentException, CloudAdapterException {
+		checkState(getConfiguration().isPresent(),
+				"cloud adapter needs to be configured before use");
+		checkArgument(desiredSize >= 0, "negative desired pool size");
+
+		// prevent concurrent pool modifications
+		synchronized (this.updateLock) {
+			LOG.info("set desiredSize to {}", desiredSize);
+			this.desiredSize.set(desiredSize);
+		}
+	}
+
+	@Override
+	public void terminateMachine(String machineId, boolean decrementDesiredSize)
+			throws IllegalArgumentException, CloudAdapterException {
+		checkState(getConfiguration().isPresent(),
+				"cloud adapter needs to be configured before use");
+
+		// prevent concurrent pool modifications
+		synchronized (this.updateLock) {
+			LOG.debug("terminating {}", machineId);
+			this.scalingGroup.terminateMachine(machineId);
+			if (decrementDesiredSize) {
+				// note: decrement unless desiredSize has been set to 0 (without
+				// having been effectuated yet)
+				int newSize = max(this.desiredSize.get() - 1, 0);
+				LOG.debug("decrementing desiredSize to {}", newSize);
+				setDesiredSize(newSize);
+			}
+		}
+		terminationAlert(machineId);
+	}
+
+	@Override
+	public void attachMachine(String machineId)
+			throws IllegalArgumentException, CloudAdapterException {
+		checkState(getConfiguration().isPresent(),
+				"cloud adapter needs to be configured before use");
+
+		// prevent concurrent pool modifications
+		synchronized (this.updateLock) {
+			LOG.debug("attaching instance {} to group", machineId);
+			this.scalingGroup.attachMachine(machineId);
+			// implicitly increases pool size
+			setDesiredSize(this.desiredSize.get() + 1);
+		}
+		attachAlert(machineId);
+	}
+
+	@Override
+	public void detachMachine(String machineId, boolean decrementDesiredSize)
+			throws IllegalArgumentException, CloudAdapterException {
+		checkState(getConfiguration().isPresent(),
+				"cloud adapter needs to be configured before use");
+
+		// prevent concurrent pool modifications
+		synchronized (this.updateLock) {
+			LOG.debug("detaching {} from group", machineId);
+			this.scalingGroup.detachMachine(machineId);
+			if (decrementDesiredSize) {
+				// note: decrement unless desiredSize has been set to 0 (without
+				// having been effectuated yet)
+				int newSize = max(this.desiredSize.get() - 1, 0);
+				LOG.debug("decrementing desiredSize to {}", newSize);
+				setDesiredSize(newSize);
+			}
+		}
+		detachAlert(machineId);
+	}
+
+	@Override
+	public void setServiceState(String machineId, ServiceState serviceState)
+			throws IllegalArgumentException {
+		checkState(getConfiguration().isPresent(),
+				"cloud adapter needs to be configured before use");
+
+		LOG.debug("service state {} assigned to {}", serviceState.name(),
+				machineId);
+		this.scalingGroup.setServiceState(machineId, serviceState);
+		serviceStateAlert(machineId, serviceState);
 	}
 
 	/**
@@ -462,8 +563,8 @@ public class BaseCloudAdapter implements CloudAdapter {
 	}
 
 	/**
-	 * Standard {@link Alert} tags to include in all {@link Alert}
-	 * mails sent by the {@link EmailAlerter}.
+	 * Standard {@link Alert} tags to include in all {@link Alert} mails sent by
+	 * the {@link EmailAlerter}.
 	 *
 	 * @return
 	 */
@@ -489,22 +590,6 @@ public class BaseCloudAdapter implements CloudAdapter {
 		}
 	}
 
-	@Override
-	public MachinePool getMachinePool() throws CloudAdapterException {
-		checkState(getConfiguration().isPresent(),
-				"cloud adapter needs to be configured before use");
-		try {
-			List<Machine> members = this.scalingGroup.listMachines();
-			return new MachinePool(members, UtcTime.now());
-		} catch (Exception e) {
-			String message = format("failed to retrieve scaling group: %s\n%s",
-					e.getMessage(), Throwables.getStackTraceAsString(e));
-			this.eventBus.post(new Alert(AlertTopics.POOL_FETCH.name(),
-					AlertSeverity.ERROR, UtcTime.now(), message));
-			throw new CloudAdapterException(message, e);
-		}
-	}
-
 	BaseCloudAdapterConfig config() {
 		return this.config.get();
 	}
@@ -521,42 +606,18 @@ public class BaseCloudAdapter implements CloudAdapter {
 		return config().getScaleDownConfig();
 	}
 
-	@Override
-	public void resizeMachinePool(int desiredSize) throws CloudAdapterException {
-		checkState(getConfiguration().isPresent(),
-				"cloud adapter needs to be configured before use");
-		checkArgument(desiredSize >= 0, "negative desired pool size");
-
-		this.desiredSize.set(desiredSize);
-		updateMachinePool();
-	}
-
 	/**
 	 * Updates the size of the machine pool to match the currently set desired
-	 * size. This may involve terminating termination-due instances and placing
+	 * size. This may involve terminating termination-due machines and placing
 	 * new server requests to replace terminated servers.
+	 * <p/>
+	 * Waits for the {@link #updateLock} to avoid concurrent pool updates.
 	 *
 	 * @throws CloudAdapterException
 	 */
 	void updateMachinePool() throws CloudAdapterException {
-		try {
-			// prevent multiple threads from concurrently updating pool
-			this.lock.lock();
-			doPoolUpdate();
-		} catch (Throwable e) {
-			String message = format("failed to adjust scaling group "
-					+ "\"%s\" to desired capacity %d: %s\n%s", scalingGroup(),
-					desiredSize(), e.getMessage(),
-					Throwables.getStackTraceAsString(e));
-			this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
-					AlertSeverity.ERROR, UtcTime.now(), message));
-			throw new CloudAdapterException(message, e);
-		} finally {
-			this.lock.unlock();
-		}
-	}
-
-	private void doPoolUpdate() throws CloudAdapterException {
+		// check if we need to determine desired size (it may not have been
+		// possible on startup, e.g., due to cloud API being ureachable)
 		determineDesiredSizeIfUnset();
 		if (this.desiredSize.get() == null) {
 			LOG.warn("cannot update scaling group: haven't been able to "
@@ -564,23 +625,41 @@ public class BaseCloudAdapter implements CloudAdapter {
 			return;
 		}
 
-		LOG.info("updating pool size to desired size {}", desiredSize());
+		// prevent multiple threads from concurrently updating pool
+		synchronized (this.updateLock) {
+			int targetSize = this.desiredSize.get();
+			try {
+				doPoolUpdate(targetSize);
+			} catch (Throwable e) {
+				String message = format("failed to adjust scaling group "
+						+ "\"%s\" to desired size %d: %s\n%s", scalingGroup(),
+						targetSize, e.getMessage(),
+						Throwables.getStackTraceAsString(e));
+				this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
+						AlertSeverity.ERROR, UtcTime.now(), message));
+				throw new CloudAdapterException(message, e);
+			}
+		}
+	}
 
-		MachinePool machinePool = getMachinePool();
-		int poolSize = machinePool.getAllocatedMachines().size();
+	private void doPoolUpdate(int newSize) throws CloudAdapterException {
+		LOG.info("updating pool size to desired size {}", newSize);
 
-		// clean out obsolete machines from termination queue
-		this.terminationQueue.filter(machinePool.getAllocatedMachines());
-		ResizePlanner resizePlanner = new ResizePlanner(machinePool,
+		MachinePool pool = getMachinePool();
+		// Clean out obsolete machines from termination queue. Note: this also
+		// cleans out machines that have been taken out of service after being
+		// scheduled for termination.
+		int poolSize = pool.getEffectiveMachines().size();
+		this.terminationQueue.filter(pool.getEffectiveMachines());
+		ResizePlanner resizePlanner = new ResizePlanner(pool,
 				this.terminationQueue, scaleDownConfig()
 						.getVictimSelectionPolicy(), scaleDownConfig()
 						.getInstanceHourMargin());
 		int netSize = resizePlanner.getEffectiveSize();
 
-		ResizePlan resizePlan = resizePlanner
-				.calculateResizePlan(desiredSize());
+		ResizePlan resizePlan = resizePlanner.calculateResizePlan(newSize);
 		if (resizePlan.isScaleUp()) {
-			List<Machine> startedMachines = scaleUp(poolSize, resizePlan);
+			List<Machine> startedMachines = scaleOut(poolSize, resizePlan);
 			poolSize += startedMachines.size();
 		} else if (resizePlan.isScaleDown()) {
 			List<ScheduledTermination> terminations = resizePlan
@@ -598,15 +677,15 @@ public class BaseCloudAdapter implements CloudAdapter {
 			LOG.info("scaling group is already properly sized ({})", netSize);
 		}
 		// effectuate scheduled terminations that are (over)due
-		List<Machine> terminated = terminateOverdueInstances();
+		List<Machine> terminated = terminateOverdueMachines();
 		if (!terminated.isEmpty()) {
-			alertOfScaleDown(poolSize, terminated);
+			scaleInAlert(poolSize, terminated);
 		}
 	}
 
-	private List<Machine> scaleUp(int originalPoolSize, ResizePlan resizePlan)
+	private List<Machine> scaleOut(int originalPoolSize, ResizePlan resizePlan)
 			throws StartMachinesException {
-		LOG.info("sparing {} instance(s) from termination, "
+		LOG.info("sparing {} machine(s) from termination, "
 				+ "placing {} new request(s)", resizePlan.getToSpare(),
 				resizePlan.getToRequest());
 		this.terminationQueue.spare(resizePlan.getToSpare());
@@ -614,18 +693,18 @@ public class BaseCloudAdapter implements CloudAdapter {
 		try {
 			List<Machine> startedMachines = this.scalingGroup.startMachines(
 					resizePlan.getToRequest(), scaleUpConfig());
-			alertOfScaleUp(originalPoolSize, startedMachines);
+			scaleOutAlert(originalPoolSize, startedMachines);
 			return startedMachines;
 		} catch (StartMachinesException e) {
-			// may have failed part-way through. notify of instances that were
+			// may have failed part-way through. notify of machines that were
 			// started before error occurred.
-			alertOfScaleUp(originalPoolSize, e.getStartedMachines());
+			scaleOutAlert(originalPoolSize, e.getStartedMachines());
 			throw e;
 		}
 	}
 
-	private List<Machine> terminateOverdueInstances() {
-		LOG.debug("checking termination queue for overdue instances: {}",
+	private List<Machine> terminateOverdueMachines() {
+		LOG.debug("checking termination queue for overdue machines: {}",
 				this.terminationQueue);
 		List<ScheduledTermination> overdueInstances = this.terminationQueue
 				.popOverdueInstances();
@@ -634,7 +713,7 @@ public class BaseCloudAdapter implements CloudAdapter {
 		}
 
 		List<Machine> terminated = Lists.newArrayList();
-		LOG.info("Terminating {} overdue instance(s): {}",
+		LOG.info("Terminating {} overdue machine(s): {}",
 				overdueInstances.size(), overdueInstances);
 		for (ScheduledTermination overdueInstance : overdueInstances) {
 			String victimId = overdueInstance.getInstance().getId();
@@ -642,8 +721,8 @@ public class BaseCloudAdapter implements CloudAdapter {
 				this.scalingGroup.terminateMachine(victimId);
 				terminated.add(overdueInstance.getInstance());
 			} catch (Exception e) {
-				String message = String.format(
-						"failed to terminate instance %s: %s\n%s", victimId,
+				String message = format(
+						"failed to terminate instance '%s': %s\n%s", victimId,
 						e.getMessage(), Throwables.getStackTraceAsString(e));
 				LOG.error(message);
 				this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
@@ -662,7 +741,7 @@ public class BaseCloudAdapter implements CloudAdapter {
 	 * @param startedMachines
 	 *            The new machine instances that have been started.
 	 */
-	private void alertOfScaleUp(Integer oldSize, List<Machine> startedMachines) {
+	private void scaleOutAlert(Integer oldSize, List<Machine> startedMachines) {
 		if (startedMachines.isEmpty()) {
 			return;
 		}
@@ -690,8 +769,7 @@ public class BaseCloudAdapter implements CloudAdapter {
 	 * @param terminatedMachines
 	 *            The machine instances that were terminated.
 	 */
-	private void alertOfScaleDown(Integer oldSize,
-			List<Machine> terminatedMachines) {
+	private void scaleInAlert(Integer oldSize, List<Machine> terminatedMachines) {
 		int newSize = oldSize - terminatedMachines.size();
 		String message = String.format(
 				"size of scaling group \"%s\" changed from %d to %d",
@@ -709,12 +787,59 @@ public class BaseCloudAdapter implements CloudAdapter {
 	}
 
 	/**
-	 * Returns the currently set desired size.
+	 * Post an {@link Alert} that a machine was terminated from the group.
 	 *
-	 * @return
+	 * @param machineId
 	 */
-	Integer desiredSize() {
-		return this.desiredSize.get();
+	private void terminationAlert(String machineId) {
+		Map<String, String> tags = ImmutableMap.of("terminatedMachines",
+				machineId);
+		String message = String.format("Terminated machine %s.", machineId);
+		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
+				AlertSeverity.INFO, UtcTime.now(), message, tags));
+	}
+
+	/**
+	 * Post an {@link Alert} that a machine was attached to the group.
+	 *
+	 * @param machineId
+	 */
+	private void attachAlert(String machineId) {
+		Map<String, String> tags = ImmutableMap.of("attachedMachines",
+				machineId);
+		String message = String.format("Attached machine %s to scaling group.",
+				machineId);
+		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
+				AlertSeverity.INFO, UtcTime.now(), message, tags));
+	}
+
+	/**
+	 * Post an {@link Alert} that a machine was detached from the group.
+	 *
+	 * @param machineId
+	 */
+	private void detachAlert(String machineId) {
+		Map<String, String> tags = ImmutableMap.of("detachedMachines",
+				machineId);
+		String message = String.format(
+				"Detached machine %s from scaling group.", machineId);
+		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
+				AlertSeverity.INFO, UtcTime.now(), message, tags));
+	}
+
+	/**
+	 * Post an {@link Alert} that a group member had its {@link ServiceState}
+	 * set.
+	 *
+	 * @param machineId
+	 */
+	private void serviceStateAlert(String machineId, ServiceState state) {
+		Map<String, String> tags = ImmutableMap.of();
+		String message = String.format(
+				"Service state set to %s for machine %s.", state.name(),
+				machineId);
+		this.eventBus.post(new Alert(AlertTopics.SERVICE_STATE.name(),
+				AlertSeverity.INFO, UtcTime.now(), message, tags));
 	}
 
 	/**

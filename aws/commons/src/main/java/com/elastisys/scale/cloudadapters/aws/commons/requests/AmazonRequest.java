@@ -1,20 +1,19 @@
 package com.elastisys.scale.cloudadapters.aws.commons.requests;
 
+import java.util.concurrent.Callable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.amazonaws.auth.AWSCredentials;
-import com.elastisys.scale.commons.net.retryable.Requester;
 
 /**
  * An abstract base class for AWS request clients.
- * 
- * 
- * 
+ *
  * @param <R>
  *            The response type.
  */
-public abstract class AmazonRequest<R> implements Requester<R> {
+public abstract class AmazonRequest<R> implements Callable<R> {
 	protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	/** AWS security credentials for the account to be used. */
@@ -24,7 +23,7 @@ public abstract class AmazonRequest<R> implements Requester<R> {
 
 	/**
 	 * Constructs a new {@link AmazonRequest} instance.
-	 * 
+	 *
 	 * @param awsCredentials
 	 *            AWS security credentials for the account to be used.
 	 * @param region

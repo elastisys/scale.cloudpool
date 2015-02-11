@@ -8,8 +8,6 @@ import com.amazonaws.services.autoscaling.model.DeleteLaunchConfigurationRequest
 /**
  * A {@link Callable} task that, when executed, requests the deletion of a AWS
  * Launch Configuration.
- * 
- * 
  */
 public class DeleteLaunchConfiguration extends AmazonAutoScalingRequest<Void> {
 

@@ -19,7 +19,7 @@ public class ScriptUtils {
 	 * The passed in script can be given in a pretty "raw form" as the method
 	 * takes care of adding a shell declaration line and some basic environment
 	 * (such as {@code PATH} variable) declarations to the script.
-	 * 
+	 *
 	 * @param script
 	 *            A (possibly multi-line) script of commands. Each line should
 	 *            be separated by a newline character.

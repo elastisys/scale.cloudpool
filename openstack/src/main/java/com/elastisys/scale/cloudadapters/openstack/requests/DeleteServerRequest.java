@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudadapters.openstack.requests;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.util.List;
 
@@ -13,17 +14,17 @@ import org.jclouds.openstack.nova.v2_0.features.ServerApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.elastisys.scale.cloudadapers.api.NotFoundException;
 import com.elastisys.scale.cloudadapters.commons.adapter.scalinggroup.ScalingGroupException;
 import com.elastisys.scale.cloudadapters.openstack.scalinggroup.OpenStackScalingGroupConfig;
-import com.elastisys.scale.commons.net.retryable.RetryableRequest;
-import com.elastisys.scale.commons.net.retryable.retryhandlers.RetryUntilPredicateSatisfied;
+import com.elastisys.scale.commons.net.retryable.Retryable;
+import com.elastisys.scale.commons.net.retryable.Retryers;
 import com.google.common.base.Predicates;
 
 /**
- * Openstack task that, when executed, deletes a server instance.
- *
- * 
- *
+ * OpenStack task that, when executed, deletes a server instance, releases any
+ * allocated floating IP addresses and waits for the server to be terminated
+ * (since this may not be immediate due to eventual consistency).
  */
 public class DeleteServerRequest extends AbstractNovaRequest<Void> {
 	static final Logger LOG = LoggerFactory
@@ -46,40 +47,46 @@ public class DeleteServerRequest extends AbstractNovaRequest<Void> {
 	}
 
 	@Override
-	public Void doRequest(NovaApi api) {
+	public Void doRequest(NovaApi api) throws NotFoundException {
 		// look for victim server in all regions
 		ServerApi serverApi = api.getServerApiForZone(getAccount().getRegion());
 		Server victimServer = serverApi.get(this.victimId);
-		if (victimServer != null) {
-			releaseFloatingIps(api, getAccount().getRegion(), victimServer);
-			boolean wasDeleted = serverApi.delete(this.victimId);
-			if (!wasDeleted) {
-				throw new ScalingGroupException(
-						"failed to delete victim server " + this.victimId);
-			}
 
-			try {
-				awaitTermination(victimServer.getId());
-			} catch (Exception e) {
-				throw new ScalingGroupException(String.format(
-						"timed out waiting for server %s to be terminated",
-						e.getMessage()), e);
-			}
-			return null;
+		if (victimServer == null) {
+			throw new NotFoundException(format(
+					"a victim server with id '%s' could not be found "
+							+ "in region %s", this.victimId, getAccount()
+							.getRegion()));
 		}
 
-		throw new IllegalArgumentException(format(
-				"a victim server with id '%s' could not be found "
-						+ "in region %s", this.victimId, getAccount()
-						.getRegion()));
+		releaseFloatingIps(api, getAccount().getRegion(), victimServer);
+		boolean wasDeleted = serverApi.delete(this.victimId);
+		if (!wasDeleted) {
+			throw new ScalingGroupException("failed to delete victim server "
+					+ this.victimId);
+		}
+
+		try {
+			awaitTermination(victimServer.getId());
+		} catch (Exception e) {
+			throw new ScalingGroupException(String.format(
+					"timed out waiting for server %s to be terminated",
+					e.getMessage()), e);
+		}
+		return null;
 	}
 
 	private void awaitTermination(String serverId) throws Exception {
 		String taskName = String.format("termination-waiter{%s}", serverId);
-		RetryableRequest<Boolean> awaitTermination = new RetryableRequest<>(
-				new ServerExistsRequest(getAccount(), serverId),
-				new RetryUntilPredicateSatisfied<Boolean>(
-						Predicates.equalTo(false), 12, 5000), taskName);
+
+		ServerExistsRequest serverExistsRequester = new ServerExistsRequest(
+				getAccount(), serverId);
+		int fixedDelay = 5;
+		int maxRetries = 12;
+		Retryable<Boolean> awaitTermination = Retryers.fixedDelayRetryer(
+				taskName, serverExistsRequester, fixedDelay, SECONDS,
+				maxRetries, Predicates.equalTo(false));
+
 		awaitTermination.call();
 	}
 

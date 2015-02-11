@@ -1,0 +1,15 @@
+{
+	"poolSizeCalculator": "STRICT",
+	"adapters": [
+		{
+			"priority": 20,
+			"cloudAdapterHost": "localhost1",
+			"cloudAdapterPort": 11,
+			"basicCredentials": {
+				
+				"password": "testpassword1"
+			}
+		}
+	],
+	"poolUpdatePeriod": 30
+}

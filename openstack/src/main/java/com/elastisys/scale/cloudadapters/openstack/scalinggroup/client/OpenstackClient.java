@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.jclouds.openstack.nova.v2_0.domain.Server;
 
+import com.elastisys.scale.cloudadapers.api.NotFoundException;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.ScaleUpConfig;
 import com.elastisys.scale.cloudadapters.openstack.scalinggroup.OpenStackScalingGroup;
 import com.elastisys.scale.cloudadapters.openstack.scalinggroup.OpenStackScalingGroupConfig;
@@ -16,7 +17,7 @@ import com.elastisys.scale.cloudadapters.openstack.scalinggroup.OpenStackScaling
  * The {@link #configure} method must be called before calling any other
  * methods.
  *
- * 
+ *
  *
  */
 public interface OpenstackClient {
@@ -48,8 +49,11 @@ public interface OpenstackClient {
 	 * @param serverId
 	 *            The identifier of the requested server.
 	 * @return {@link Server} meta data.
+	 *
+	 * @throws NotFoundException
+	 *             if the server doesn't exist.
 	 */
-	Server getServer(String serverId);
+	Server getServer(String serverId) throws NotFoundException;
 
 	/**
 	 * Launch a new server.
@@ -80,7 +84,35 @@ public interface OpenstackClient {
 	 *
 	 * @param serverId
 	 *            Identifier of the server to be terminated.
+	 * @throws NotFoundException
+	 *             if the server doesn't exist.
 	 */
-	void terminateServer(String serverId);
+	void terminateServer(String serverId) throws NotFoundException;
+
+	/**
+	 * Adds meta data tags to a given server.
+	 *
+	 * @param serverId
+	 *            Identifier of the server to be tagged.
+	 * @param tags
+	 *            Meta data tags to set on the server.
+	 * @throws NotFoundException
+	 *             if the server doesn't exist.
+	 */
+	void tagServer(String serverId, Map<String, String> tags)
+			throws NotFoundException;
+
+	/**
+	 * Removes a collection of meta data tags from a given server.
+	 *
+	 * @param serverId
+	 *            Identifier of the server to be untagged.
+	 * @param tags
+	 *            The meta data tag keys to remove from the server.
+	 * @throws NotFoundException
+	 *             if the server doesn't exist.
+	 */
+	void untagServer(String serverId, List<String> tagKeys)
+			throws NotFoundException;
 
 }

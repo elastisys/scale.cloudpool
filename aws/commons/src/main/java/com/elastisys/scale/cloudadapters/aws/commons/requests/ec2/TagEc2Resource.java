@@ -14,10 +14,10 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.google.common.collect.Lists;
 
 /**
- * * A {@link Callable} task that, when executed, applies a {@link Tag} to an
- * EC2 resource (such as an instance) in a given region.
+ * A {@link Callable} task that, when executed, applies {@link Tag}s to an EC2
+ * resource (such as an instance) in a given region.
  *
- * 
+ *
  *
  */
 public class TagEc2Resource extends AmazonEc2Request<Void> {

@@ -13,9 +13,6 @@ import com.google.common.collect.Lists;
 /**
  * An OpenStack request task that, when executed, retrieves all available
  * images.
- *
- * 
- *
  */
 public class ListImagesRequest extends AbstractNovaRequest<List<Image>> {
 

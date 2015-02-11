@@ -2,7 +2,6 @@ package com.elastisys.scale.cloudadapters.aws.ec2.scalinggroup.client;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -14,22 +13,21 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
+import com.elastisys.scale.cloudadapers.api.NotFoundException;
 import com.elastisys.scale.cloudadapters.aws.commons.requests.ec2.CreateInstance;
+import com.elastisys.scale.cloudadapters.aws.commons.requests.ec2.GetInstance;
 import com.elastisys.scale.cloudadapters.aws.commons.requests.ec2.GetInstances;
 import com.elastisys.scale.cloudadapters.aws.commons.requests.ec2.TagEc2Resource;
 import com.elastisys.scale.cloudadapters.aws.commons.requests.ec2.TerminateInstance;
+import com.elastisys.scale.cloudadapters.aws.commons.requests.ec2.UntagEc2Resource;
 import com.elastisys.scale.cloudadapters.aws.ec2.scalinggroup.Ec2ScalingGroup;
 import com.elastisys.scale.cloudadapters.aws.ec2.scalinggroup.Ec2ScalingGroupConfig;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.ScaleUpConfig;
 import com.google.common.base.Joiner;
-import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Atomics;
 
 /**
  * Standard {@link Ec2Client} implementation that operates against the EC2 API.
- *
- *
- *
  */
 public class AwsEc2Client implements Ec2Client {
 
@@ -59,18 +57,11 @@ public class AwsEc2Client implements Ec2Client {
 	}
 
 	@Override
-	public Instance getInstanceMetadata(String instanceId) {
+	public Instance getInstanceMetadata(String instanceId)
+			throws NotFoundException {
 		checkArgument(isConfigured(), "can't use client before it's configured");
 
-		List<Instance> instances = new GetInstances(awsCredentials(), region(),
-				Arrays.asList(instanceId)).call();
-		if (instances.isEmpty()) {
-			throw new IllegalArgumentException(String.format(
-					"failed to get instance metadata: "
-							+ "no instance matching id '%s' was found",
-					instanceId));
-		}
-		return Iterables.getOnlyElement(instances);
+		return new GetInstance(awsCredentials(), region(), instanceId).call();
 	}
 
 	@Override
@@ -88,19 +79,39 @@ public class AwsEc2Client implements Ec2Client {
 				provisioningDetails.getKeyPair(),
 				provisioningDetails.getSize(), provisioningDetails.getImage(),
 				bootscript).call();
+
 		return startedInstance;
 	}
 
 	@Override
-	public void tagInstance(String instanceId, List<Tag> tags) {
+	public void tagInstance(String instanceId, List<Tag> tags)
+			throws NotFoundException {
 		checkArgument(isConfigured(), "can't use client before it's configured");
+
+		// verify that instance exists
+		getInstanceMetadata(instanceId);
 
 		new TagEc2Resource(awsCredentials(), region(), instanceId, tags).call();
 	}
 
 	@Override
-	public void terminateInstance(String instanceId) {
+	public void untagInstance(String instanceId, List<Tag> tags)
+			throws NotFoundException {
 		checkArgument(isConfigured(), "can't use client before it's configured");
+
+		// verify that instance exists
+		getInstanceMetadata(instanceId);
+
+		new UntagEc2Resource(awsCredentials(), region(), instanceId, tags)
+				.call();
+	}
+
+	@Override
+	public void terminateInstance(String instanceId) throws NotFoundException {
+		checkArgument(isConfigured(), "can't use client before it's configured");
+
+		// verify that instance exists
+		getInstanceMetadata(instanceId);
 
 		new TerminateInstance(awsCredentials(), region(), instanceId).call();
 	}

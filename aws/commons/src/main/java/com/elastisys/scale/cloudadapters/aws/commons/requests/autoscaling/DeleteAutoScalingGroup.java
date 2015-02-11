@@ -10,8 +10,6 @@ import com.amazonaws.services.autoscaling.model.DeleteAutoScalingGroupRequest;
  * Auto Scaling Group.
  * <p/>
  * <b>Note: all member instances of the group will be terminated.</b>
- * 
- * 
  */
 public class DeleteAutoScalingGroup extends AmazonAutoScalingRequest<Void> {
 

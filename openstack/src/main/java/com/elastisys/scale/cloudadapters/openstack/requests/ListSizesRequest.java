@@ -14,9 +14,6 @@ import com.google.common.collect.Lists;
 /**
  * An OpenStack request task that, when executed, retrieves all available
  * instance sizes, (or "server flavors" ).
- *
- * 
- *
  */
 public class ListSizesRequest extends AbstractNovaRequest<List<Flavor>> {
 	static Logger LOG = LoggerFactory.getLogger(ListSizesRequest.class);

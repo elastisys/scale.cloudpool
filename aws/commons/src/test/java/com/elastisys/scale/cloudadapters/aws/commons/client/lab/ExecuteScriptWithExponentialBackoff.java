@@ -1,12 +1,12 @@
 package com.elastisys.scale.cloudadapters.aws.commons.client.lab;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.elastisys.scale.commons.net.retryable.RetryableRequest;
-import com.elastisys.scale.commons.net.retryable.retryhandlers.ExponentialBackoffRetryHandler;
+import com.elastisys.scale.commons.net.retryable.Retryers;
 import com.elastisys.scale.commons.net.ssh.SshCommandRequester;
 import com.elastisys.scale.commons.net.ssh.SshCommandResult;
 
@@ -26,11 +26,12 @@ public class ExecuteScriptWithExponentialBackoff {
 			.getenv("EC2_INSTANCE_KEY");
 
 	public static void main(String[] args) throws Exception {
-		Callable<SshCommandResult> retryableRequest = new RetryableRequest<SshCommandResult>(
-				new SshCommandRequester(hostname, 22, username, privateKeyPath,
-						script, 2000, 2000),
-				new ExponentialBackoffRetryHandler<SshCommandResult>(5, 1000),
-				"persistent ls");
-		logger.info("Final response: " + retryableRequest.call());
+		Callable<SshCommandResult> requester = new SshCommandRequester(
+				hostname, 22, username, privateKeyPath, script, 2000, 2000);
+		Callable<SshCommandResult> retryer = Retryers
+				.exponentialBackoffRetryer("persistent-ls", requester, 1,
+						TimeUnit.SECONDS, 5);
+
+		logger.info("Final response: " + retryer.call());
 	}
 }

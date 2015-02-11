@@ -32,11 +32,14 @@ import org.junit.Test;
 import org.mockito.Matchers;
 
 import com.elastisys.scale.cloudadapers.api.CloudAdapter;
+import com.elastisys.scale.cloudadapers.api.NotFoundException;
 import com.elastisys.scale.cloudadapers.api.server.CloudAdapterOptions;
 import com.elastisys.scale.cloudadapers.api.server.CloudAdapterServer;
 import com.elastisys.scale.cloudadapers.api.types.Machine;
 import com.elastisys.scale.cloudadapers.api.types.MachinePool;
 import com.elastisys.scale.cloudadapers.api.types.MachineState;
+import com.elastisys.scale.cloudadapers.api.types.PoolSizeSummary;
+import com.elastisys.scale.cloudadapers.api.types.ServiceState;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.host.HostUtils;
 import com.elastisys.scale.commons.rest.client.RestClients;
@@ -237,7 +240,7 @@ public class TestRestApi {
 		// set up mocked cloud adapter response
 		List<Machine> machines = Lists.newArrayList();
 		machines.add(new Machine("i-1", MachineState.RUNNING, UtcTime.now()
-				.minusHours(1), Arrays.asList("1.2.3.4"), null, null));
+				.minusHours(1), Arrays.asList("1.2.3.4"), null));
 		MachinePool pool = new MachinePool(machines, UtcTime.now());
 		when(cloudAdapter.getMachinePool()).thenReturn(pool);
 
@@ -273,45 +276,362 @@ public class TestRestApi {
 	}
 
 	/**
-	 * Verifies a {@code 200} response on a successful {@code POST /pool} resize
-	 * request.
+	 * Verifies a {@code 200} response on a successful {@code GET /pool/size}.
 	 */
 	@Test
-	public void testPostPool() {
-		// set up expectated call on mock
-		doNothing().when(cloudAdapter).resizeMachinePool(15);
+	public void testGetPoolSize() {
+		// set up mocked cloud adapter response
+		PoolSizeSummary poolSizeSummary = new PoolSizeSummary(1, 1, 0);
+		when(cloudAdapter.getPoolSize()).thenReturn(poolSizeSummary);
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
-		Entity<String> request = Entity.json("{\"desiredCapacity\": 15}");
-		Response response = client.target(getUrl("/pool")).request()
-				.post(request);
+		Response response = client.target(getUrl("/pool/size")).request().get();
 		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
+		PoolSizeSummary poolSize = JsonUtils.toObject(
+				response.readEntity(JsonObject.class), PoolSizeSummary.class);
+		assertThat(poolSize, is(poolSizeSummary));
 
 		// verify dispatch from REST server to cloud adapter
-		verify(cloudAdapter).resizeMachinePool(15);
+		verify(cloudAdapter).getPoolSize();
 		verifyNoMoreInteractions(cloudAdapter);
 	}
 
 	/**
-	 * An unexpected cloud adapter error on a {@code POST /pool} resize request
-	 * should give a {@code 500} response.
+	 * An unexpected cloud adapter error on {@code GET /pool/size} should give a
+	 * {@code 500} response.
 	 */
 	@Test
-	public void testPostPoolOnCloudAdapterError() {
+	public void testGetPoolSizeOnCloudAdapterError() throws IOException {
 		// set up mocked cloud adapter response
 		doThrow(new IllegalStateException("something went wrong!")).when(
-				cloudAdapter).resizeMachinePool(15);
+				cloudAdapter).getPoolSize();
+
+		Client client = RestClients.httpsNoAuth();
+		Response response = client.target(getUrl("/pool/size")).request().get();
+		assertThat(response.getStatus(),
+				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+		assertThat(response.readEntity(String.class),
+				containsString("something went wrong"));
+	}
+
+	/**
+	 * Verifies a {@code 200} response on a successful {@code POST /pool/size}
+	 * resize request.
+	 */
+	@Test
+	public void testSetDesiredSize() {
+		// set up expected call on mock
+		doNothing().when(cloudAdapter).setDesiredSize(15);
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
-		Entity<String> request = Entity.json("{\"desiredCapacity\": 15}");
-		Response response = client.target(getUrl("/pool")).request()
+		Entity<String> request = Entity.json("{\"desiredSize\": 15}");
+		Response response = client.target(getUrl("/pool/size")).request()
+				.post(request);
+		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
+
+		// verify dispatch from REST server to cloud adapter
+		verify(cloudAdapter).setDesiredSize(15);
+		verifyNoMoreInteractions(cloudAdapter);
+	}
+
+	/**
+	 * An unexpected cloud adapter error on a {@code POST /pool/size} resize
+	 * request should give a {@code 500} response.
+	 */
+	@Test
+	public void testSetDesiredSizeOnCloudAdapterError() {
+		// set up mocked cloud adapter response
+		doThrow(new IllegalStateException("something went wrong!")).when(
+				cloudAdapter).setDesiredSize(15);
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Entity<String> request = Entity.json("{\"desiredSize\": 15}");
+		Response response = client.target(getUrl("/pool/size")).request()
 				.post(request);
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
 		assertThat(response.readEntity(String.class),
 				containsString("something went wrong"));
+	}
+
+	/**
+	 * Verifies a {@code 200} response on a successful
+	 * {@code POST /pool/<machine>/terminate} request.
+	 */
+	@Test
+	public void testTerminateMachine() {
+		// set up expected call on mock
+		doNothing().when(cloudAdapter).terminateMachine("i-1", true);
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Entity<String> request = Entity
+				.json("{\"decrementDesiredSize\": true}");
+		Response response = client.target(getUrl("/pool/i-1/terminate"))
+				.request().post(request);
+		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
+
+		// verify dispatch from REST server to cloud adapter
+		verify(cloudAdapter).terminateMachine("i-1", true);
+		verifyNoMoreInteractions(cloudAdapter);
+	}
+
+	/**
+	 * Verifies a {@code 404} response on a
+	 * {@code POST /pool/<machine>/terminate} request for an unrecognized
+	 * member.
+	 */
+	@Test
+	public void testTerminateMachineOnNotFoundError() {
+		// set up expected call on mock
+		doThrow(new NotFoundException("unrecognized!")).when(cloudAdapter)
+				.terminateMachine("i-1", true);
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Entity<String> request = Entity
+				.json("{\"decrementDesiredSize\": true}");
+		Response response = client.target(getUrl("/pool/i-1/terminate"))
+				.request().post(request);
+		assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
+
+		// verify dispatch from REST server to cloud adapter
+		verify(cloudAdapter).terminateMachine("i-1", true);
+		verifyNoMoreInteractions(cloudAdapter);
+	}
+
+	/**
+	 * Verifies a {@code 500} response on a cloud adapter error when doing a
+	 * {@code POST /pool/<machine>/terminate} request.
+	 */
+	@Test
+	public void testTerminateMachineOnCloudAdapterError() {
+		// set up expected call on mock
+		doThrow(new RuntimeException("failed!")).when(cloudAdapter)
+				.terminateMachine("i-1", true);
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Entity<String> request = Entity
+				.json("{\"decrementDesiredSize\": true}");
+		Response response = client.target(getUrl("/pool/i-1/terminate"))
+				.request().post(request);
+		assertThat(response.getStatus(),
+				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+
+		// verify dispatch from REST server to cloud adapter
+		verify(cloudAdapter).terminateMachine("i-1", true);
+		verifyNoMoreInteractions(cloudAdapter);
+	}
+
+	/**
+	 * Verifies a {@code 200} response on a successful
+	 * {@code POST /pool/<machine>/detach} request.
+	 */
+	@Test
+	public void testDetachMachine() {
+		// set up expected call on mock
+		doNothing().when(cloudAdapter).detachMachine("i-1", true);
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Entity<String> request = Entity
+				.json("{\"decrementDesiredSize\": true}");
+		Response response = client.target(getUrl("/pool/i-1/detach")).request()
+				.post(request);
+		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
+
+		// verify dispatch from REST server to cloud adapter
+		verify(cloudAdapter).detachMachine("i-1", true);
+		verifyNoMoreInteractions(cloudAdapter);
+	}
+
+	/**
+	 * Verifies a {@code 404} response on a {@code POST /pool/<machine>/detach}
+	 * request for an unrecognized member.
+	 */
+	@Test
+	public void testDetachMachineOnNotFoundError() {
+		// set up expected call on mock
+		doThrow(new NotFoundException("unrecognized!")).when(cloudAdapter)
+				.detachMachine("i-1", true);
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Entity<String> request = Entity
+				.json("{\"decrementDesiredSize\": true}");
+		Response response = client.target(getUrl("/pool/i-1/detach")).request()
+				.post(request);
+		assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
+
+		// verify dispatch from REST server to cloud adapter
+		verify(cloudAdapter).detachMachine("i-1", true);
+		verifyNoMoreInteractions(cloudAdapter);
+	}
+
+	/**
+	 * Verifies a {@code 500} response on a {@code POST /pool/<machine>/detach}
+	 * request when the cloud adapter fails unexpectedly.
+	 */
+	@Test
+	public void testDetachMachineOnCloudAdapterError() {
+		// set up expected call on mock
+		doThrow(new RuntimeException("failed!")).when(cloudAdapter)
+				.detachMachine("i-1", true);
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Entity<String> request = Entity
+				.json("{\"decrementDesiredSize\": true}");
+		Response response = client.target(getUrl("/pool/i-1/detach")).request()
+				.post(request);
+		assertThat(response.getStatus(),
+				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+
+		// verify dispatch from REST server to cloud adapter
+		verify(cloudAdapter).detachMachine("i-1", true);
+		verifyNoMoreInteractions(cloudAdapter);
+	}
+
+	/**
+	 * Verifies a {@code 200} response on a successful
+	 * {@code POST /pool/<machine>/attach} request.
+	 */
+	@Test
+	public void testAttachMachine() {
+		// set up expected call on mock
+		doNothing().when(cloudAdapter).attachMachine("i-1");
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Response response = client.target(getUrl("/pool/i-1/attach")).request()
+				.post(null);
+		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
+
+		// verify dispatch from REST server to cloud adapter
+		verify(cloudAdapter).attachMachine("i-1");
+		verifyNoMoreInteractions(cloudAdapter);
+	}
+
+	/**
+	 * Verifies a {@code 404} response on a {@code POST /pool/<machine>/attach}
+	 * request for an unrecognized machine.
+	 */
+	@Test
+	public void testAttachMachineOnNotFoundError() {
+		// set up expected call on mock
+		doThrow(new NotFoundException("unrecognized!")).when(cloudAdapter)
+				.attachMachine("i-1");
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Response response = client.target(getUrl("/pool/i-1/attach")).request()
+				.post(null);
+		assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
+
+		// verify dispatch from REST server to cloud adapter
+		verify(cloudAdapter).attachMachine("i-1");
+		verifyNoMoreInteractions(cloudAdapter);
+	}
+
+	/**
+	 * Verifies a {@code 500} response on a {@code POST /pool/<machine>/attach}
+	 * request to a cloud adapter that unexpectedly fails.
+	 */
+	@Test
+	public void testAttachMachineOnCloudAdapterError() {
+		// set up expected call on mock
+		doThrow(new RuntimeException("failed!")).when(cloudAdapter)
+				.attachMachine("i-1");
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Response response = client.target(getUrl("/pool/i-1/attach")).request()
+				.post(null);
+		assertThat(response.getStatus(),
+				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+
+		// verify dispatch from REST server to cloud adapter
+		verify(cloudAdapter).attachMachine("i-1");
+		verifyNoMoreInteractions(cloudAdapter);
+	}
+
+	/**
+	 * Verifies a {@code 200} response on a successful
+	 * {@code POST /pool/<machine>/serviceState} request.
+	 */
+	@Test
+	public void testSetServiceState() {
+		// set up expected call on mock
+		doNothing().when(cloudAdapter).setServiceState("i-1",
+				ServiceState.OUT_OF_SERVICE);
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Entity<String> request = Entity
+				.json("{\"serviceState\": \"OUT_OF_SERVICE\"}");
+		Response response = client.target(getUrl("/pool/i-1/serviceState"))
+				.request().post(request);
+		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
+
+		// verify dispatch from REST server to cloud adapter
+		verify(cloudAdapter)
+				.setServiceState("i-1", ServiceState.OUT_OF_SERVICE);
+		verifyNoMoreInteractions(cloudAdapter);
+	}
+
+	/**
+	 * Verifies a {@code 404} response on a
+	 * {@code POST /pool/<machine>/serviceState} request for an unrecognized
+	 * machine.
+	 */
+	@Test
+	public void testSetServiceStateOnNotFoundError() {
+		// set up expected call on mock
+		doThrow(new NotFoundException("unrecognized!")).when(cloudAdapter)
+				.setServiceState("i-1", ServiceState.OUT_OF_SERVICE);
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Entity<String> request = Entity
+				.json("{\"serviceState\": \"OUT_OF_SERVICE\"}");
+		Response response = client.target(getUrl("/pool/i-1/serviceState"))
+				.request().post(request);
+		assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
+
+		// verify dispatch from REST server to cloud adapter
+		verify(cloudAdapter)
+				.setServiceState("i-1", ServiceState.OUT_OF_SERVICE);
+		verifyNoMoreInteractions(cloudAdapter);
+	}
+
+	/**
+	 * Verifies a {@code 404} response on a
+	 * {@code POST /pool/<machine>/serviceState} request to a cloud adapter that
+	 * unexpectedly fails.
+	 */
+	@Test
+	public void testSetServiceStateOnCloudAdapterError() {
+		// set up expected call on mock
+		doThrow(new RuntimeException("failed!")).when(cloudAdapter)
+				.setServiceState("i-1", ServiceState.OUT_OF_SERVICE);
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Entity<String> request = Entity
+				.json("{\"serviceState\": \"OUT_OF_SERVICE\"}");
+		Response response = client.target(getUrl("/pool/i-1/serviceState"))
+				.request().post(request);
+		assertThat(response.getStatus(),
+				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+
+		// verify dispatch from REST server to cloud adapter
+		verify(cloudAdapter)
+				.setServiceState("i-1", ServiceState.OUT_OF_SERVICE);
+		verifyNoMoreInteractions(cloudAdapter);
 	}
 
 	/**

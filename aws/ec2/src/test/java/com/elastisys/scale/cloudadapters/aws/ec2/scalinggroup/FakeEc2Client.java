@@ -6,6 +6,7 @@ import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.Tag;
+import com.elastisys.scale.cloudadapers.api.NotFoundException;
 import com.elastisys.scale.cloudadapters.aws.ec2.scalinggroup.client.Ec2Client;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.ScaleUpConfig;
 import com.google.common.collect.Lists;
@@ -13,7 +14,7 @@ import com.google.common.collect.Lists;
 /**
  * Fake {@link Ec2Client} that manages instances for a phony AWS account.
  *
- * 
+ *
  *
  */
 public class FakeEc2Client implements Ec2Client {
@@ -36,13 +37,14 @@ public class FakeEc2Client implements Ec2Client {
 	}
 
 	@Override
-	public Instance getInstanceMetadata(String instanceId) {
+	public Instance getInstanceMetadata(String instanceId)
+			throws NotFoundException {
 		for (Instance instance : this.instances) {
 			if (instanceId.equals(instance.getInstanceId())) {
 				return instance;
 			}
 		}
-		throw new IllegalArgumentException(String.format(
+		throw new NotFoundException(String.format(
 				"no instance with id %s exists", instanceId));
 	}
 
@@ -59,13 +61,21 @@ public class FakeEc2Client implements Ec2Client {
 	}
 
 	@Override
-	public void tagInstance(String instanceId, List<Tag> tags) {
+	public void tagInstance(String instanceId, List<Tag> tags)
+			throws NotFoundException {
 		Instance instance = getInstanceMetadata(instanceId);
 		instance.withTags(tags);
 	}
 
 	@Override
-	public void terminateInstance(String instanceId) {
+	public void untagInstance(String instanceId, List<Tag> tags)
+			throws NotFoundException {
+		Instance instance = getInstanceMetadata(instanceId);
+		instance.getTags().removeAll(tags);
+	}
+
+	@Override
+	public void terminateInstance(String instanceId) throws NotFoundException {
 		Instance instance = getInstanceMetadata(instanceId);
 		this.instances.remove(instance);
 	}

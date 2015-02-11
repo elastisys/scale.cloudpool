@@ -9,8 +9,6 @@ import com.amazonaws.services.autoscaling.model.CreateAutoScalingGroupRequest;
 /**
  * A {@link Callable} task that, when executed, requests the creation of an AWS
  * Auto Scaling Group.
- *
- * 
  */
 public class CreateAutoScalingGroup extends AmazonAutoScalingRequest<Void> {
 
@@ -70,14 +68,14 @@ public class CreateAutoScalingGroup extends AmazonAutoScalingRequest<Void> {
 	@Override
 	public Void call() {
 		CreateAutoScalingGroupRequest request = new CreateAutoScalingGroupRequest()
-		.withAutoScalingGroupName(this.autoScalingGroupName)
-		.withMinSize(this.minSize).withMaxSize(this.maxSize)
-		.withDesiredCapacity(this.desiredSize)
-		.withLaunchConfigurationName(this.launchConfigurationName)
-		.withAvailabilityZones(this.availabilityZones)
-		.withTerminationPolicies(this.terminationPolicy)
-		.withLoadBalancerNames(this.loadBalancerNames)
-		.withDefaultCooldown(0);
+				.withAutoScalingGroupName(this.autoScalingGroupName)
+				.withMinSize(this.minSize).withMaxSize(this.maxSize)
+				.withDesiredCapacity(this.desiredSize)
+				.withLaunchConfigurationName(this.launchConfigurationName)
+				.withAvailabilityZones(this.availabilityZones)
+				.withTerminationPolicies(this.terminationPolicy)
+				.withLoadBalancerNames(this.loadBalancerNames)
+				.withDefaultCooldown(0);
 		getClient().getApi().createAutoScalingGroup(request);
 		return null;
 	}

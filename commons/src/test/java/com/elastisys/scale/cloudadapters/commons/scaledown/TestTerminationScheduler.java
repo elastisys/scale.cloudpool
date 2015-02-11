@@ -14,12 +14,11 @@ import com.elastisys.scale.cloudadapers.api.types.MachineState;
 import com.elastisys.scale.cloudadapters.commons.termqueue.ScheduledTermination;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.gson.JsonObject;
 
 /**
  * Exercises the {@link TerminationScheduler}.
- * 
- * 
+ *
+ *
  */
 public class TestTerminationScheduler extends AbstractScaledownTest {
 
@@ -168,7 +167,7 @@ public class TestTerminationScheduler extends AbstractScaledownTest {
 	public void candidateWithNullLaunchTime() {
 		DateTime launchTime = null;
 		Machine machine = new Machine("i-1", MachineState.REQUESTED,
-				launchTime, null, null, new JsonObject());
+				launchTime, null, null);
 		new TerminationScheduler(60).scheduleEviction(machine);
 	}
 }

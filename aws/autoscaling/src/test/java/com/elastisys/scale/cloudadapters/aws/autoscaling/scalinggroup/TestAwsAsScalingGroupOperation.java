@@ -1,18 +1,25 @@
 package com.elastisys.scale.cloudadapters.aws.autoscaling.scalinggroup;
 
+import static com.elastisys.scale.cloudadapers.api.types.ServiceState.IN_SERVICE;
+import static com.elastisys.scale.cloudadapters.aws.autoscaling.scalinggroup.AwsAsScalingGroup.REQUESTED_ID_PREFIX;
 import static com.elastisys.scale.cloudadapters.aws.autoscaling.scalinggroup.MachinesMatcher.machines;
 import static com.elastisys.scale.cloudadapters.aws.autoscaling.scalinggroup.TestUtils.config;
 import static com.elastisys.scale.cloudadapters.aws.autoscaling.scalinggroup.TestUtils.ec2Instance;
 import static com.elastisys.scale.cloudadapters.aws.autoscaling.scalinggroup.TestUtils.ec2Instances;
 import static com.elastisys.scale.cloudadapters.aws.autoscaling.scalinggroup.TestUtils.group;
+import static com.elastisys.scale.cloudadapters.aws.commons.ScalingTags.SERVICE_STATE_TAG;
+import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Before;
@@ -24,9 +31,13 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.Tag;
+import com.elastisys.scale.cloudadapers.api.NotFoundException;
 import com.elastisys.scale.cloudadapers.api.types.Machine;
 import com.elastisys.scale.cloudadapers.api.types.MachineState;
+import com.elastisys.scale.cloudadapers.api.types.ServiceState;
 import com.elastisys.scale.cloudadapters.aws.autoscaling.scalinggroup.client.AutoScalingClient;
+import com.elastisys.scale.cloudadapters.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudadapters.aws.commons.functions.AwsAutoScalingFunctions;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapter;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig;
@@ -59,6 +70,10 @@ public class TestAwsAsScalingGroupOperation {
 		this.scalingGroup.configure(TestUtils.config(GROUP_NAME));
 	}
 
+	/**
+	 * {@link ScalingGroup#listMachines()} should delegate to
+	 * {@link AutoScalingClient} and basically return anything it returns.
+	 */
 	@Test
 	public void listMachines() throws ScalingGroupException {
 		// empty Auto Scaling Group
@@ -76,8 +91,13 @@ public class TestAwsAsScalingGroupOperation {
 		List<Instance> members = ec2Instances(ec2Instance("i-1", "running"),
 				ec2Instance("i-2", "pending"), ec2Instance("i-3", "terminated"));
 		setUpMockedAutoScalingGroup(GROUP_NAME, 0, members);
-		assertThat(this.scalingGroup.listMachines(),
-				is(machines("i-1", "i-2", "i-3")));
+		List<Machine> machines = this.scalingGroup.listMachines();
+		assertThat(machines, is(machines("i-1", "i-2", "i-3")));
+		// verify that listMachines returns cloud-specific metadata about each
+		// machine
+		assertTrue(machines.get(0).getMetadata().has("instanceId"));
+		assertTrue(machines.get(1).getMetadata().has("instanceId"));
+		assertTrue(machines.get(2).getMetadata().has("instanceId"));
 	}
 
 	/**
@@ -99,9 +119,12 @@ public class TestAwsAsScalingGroupOperation {
 		List<Machine> groupMembers = this.scalingGroup.listMachines();
 		assertThat(groupMembers,
 				is(machines("i-1", "i-requested1", "i-requested2")));
-		assertThat(groupMembers.get(0).getState(), is(MachineState.RUNNING));
-		assertThat(groupMembers.get(1).getState(), is(MachineState.REQUESTED));
-		assertThat(groupMembers.get(2).getState(), is(MachineState.REQUESTED));
+		assertThat(groupMembers.get(0).getMachineState(),
+				is(MachineState.RUNNING));
+		assertThat(groupMembers.get(1).getMachineState(),
+				is(MachineState.REQUESTED));
+		assertThat(groupMembers.get(2).getMachineState(),
+				is(MachineState.REQUESTED));
 	}
 
 	/**
@@ -116,6 +139,11 @@ public class TestAwsAsScalingGroupOperation {
 		this.scalingGroup.listMachines();
 	}
 
+	/**
+	 * Starting machines should result in incrementing the desiredCapacity of
+	 * the group and "placeholder instances" (with pseudo identifiers) should be
+	 * returned.
+	 */
 	@Test
 	public void startMachines() throws Exception {
 		BaseCloudAdapterConfig config = config(GROUP_NAME);
@@ -128,7 +156,7 @@ public class TestAwsAsScalingGroupOperation {
 		this.scalingGroup.configure(config);
 		List<Machine> startedMachines = this.scalingGroup.startMachines(1,
 				scaleUpConfig);
-		assertThat(startedMachines, is(machines("i-1")));
+		assertThat(startedMachines, is(machines("i-requested1")));
 
 		// scale up from 1 -> 2
 		desiredCapacity = 1;
@@ -137,7 +165,7 @@ public class TestAwsAsScalingGroupOperation {
 						"running"))));
 		this.scalingGroup.configure(config);
 		startedMachines = this.scalingGroup.startMachines(1, scaleUpConfig);
-		assertThat(startedMachines, is(machines("i-2")));
+		assertThat(startedMachines, is(machines("i-requested1")));
 
 		// scale up from 2 -> 4
 		desiredCapacity = 2;
@@ -147,9 +175,14 @@ public class TestAwsAsScalingGroupOperation {
 						ec2Instance("i-2", "pending"))));
 		this.scalingGroup.configure(config);
 		startedMachines = this.scalingGroup.startMachines(2, scaleUpConfig);
-		assertThat(startedMachines, is(machines("i-3", "i-4")));
+		assertThat(startedMachines,
+				is(machines("i-requested1", "i-requested2")));
 	}
 
+	/**
+	 * A {@link ScalingGroupException} should be raised on failure to start more
+	 * instances.
+	 */
 	@Test
 	public void startMachinesOnFailure() throws StartMachinesException {
 		// set up mock to throw an error whenever setDesiredSize is called
@@ -170,6 +203,9 @@ public class TestAwsAsScalingGroupOperation {
 		}
 	}
 
+	/**
+	 * Verifies behavior when terminating an actual group member.
+	 */
 	@Test
 	public void terminate() throws Exception {
 		BaseCloudAdapterConfig config = config(GROUP_NAME);
@@ -187,74 +223,46 @@ public class TestAwsAsScalingGroupOperation {
 		assertThat(this.scalingGroup.listMachines(), is(machines()));
 	}
 
+	/**
+	 * Verifies behavior when terminating an group member that has only been
+	 * requested but not yet been acquired by the Auto Scaling Group (and has a
+	 * placeholder id such as 'i-requested1').
+	 */
 	@Test
-	public void removeFakeInstances() {
-		class UnsatisfyingAutoScalingClient extends FakeAutoScalingClient {
-			public UnsatisfyingAutoScalingClient(String autoScalingGroupName,
-					int desiredCapacity, List<Instance> instances) {
-				super(autoScalingGroupName, desiredCapacity, instances);
-			}
-
-			@Override
-			public void setDesiredSize(String autoScalingGroupName,
-					int desiredSize) {
-				if (desiredSize > this.instances.size()) {
-					this.desiredCapacity = desiredSize;
-					LOG.debug(
-							"not scaling up, desired size now {}, actual machine count {}",
-							desiredSize, this.instances.size());
-				} else {
-					LOG.debug(
-							"asked to scale down, requested size {}, actual desired size {}, actual machine count {}",
-							desiredSize, this.desiredCapacity,
-							this.instances.size());
-					if (desiredSize < this.instances.size()) {
-						super.setDesiredSize(autoScalingGroupName, desiredSize);
-					} else {
-						this.desiredCapacity = desiredSize;
-					}
-				}
-			}
-		}
-
-		int desiredCapacity = 2;
-		UnsatisfyingAutoScalingClient unsatisfyingClient = new UnsatisfyingAutoScalingClient(
-				GROUP_NAME, desiredCapacity, ec2Instances(
-						ec2Instance("i-1", "running"),
-						ec2Instance("i-2", "pending")));
-
+	public void terminateRequestedInstance() {
 		BaseCloudAdapterConfig config = config(GROUP_NAME);
-
-		this.scalingGroup = new AwsAsScalingGroup(unsatisfyingClient);
+		int desiredCapacity = 2;
+		FakeAutoScalingClient client = new FakeAutoScalingClient(GROUP_NAME,
+				desiredCapacity, ec2Instances(ec2Instance("i-1", "running"),
+						ec2Instance("i-2", "pending")));
+		this.scalingGroup = new AwsAsScalingGroup(client);
 		this.scalingGroup.configure(config);
+		assertThat(client.getAutoScalingGroup(GROUP_NAME).getDesiredCapacity(),
+				is(2));
 
-		ScaleUpConfig scaleUpConfig = config.getScaleUpConfig();
-
-		assertThat(unsatisfyingClient.getAutoScalingGroup(GROUP_NAME)
-				.getDesiredCapacity(), is(2));
-
-		this.scalingGroup.startMachines(1, scaleUpConfig);
-		final String fakeMachineId = AwsAsScalingGroup.REQUESTED_ID_PREFIX
-				+ "1";
-		// we should now have one machine that is faked by the group
+		// request scaling group to grow by one
+		this.scalingGroup.startMachines(1, config.getScaleUpConfig());
+		final String requestedMachineId = REQUESTED_ID_PREFIX + "1";
+		// we should now have incremented the desired capacity of the Auto
+		// Scaling Group and have one requested machine that is faked by the
+		// group
+		assertThat(client.getAutoScalingGroup(GROUP_NAME).getDesiredCapacity(),
+				is(3));
 		assertThat(this.scalingGroup.listMachines(),
-				is(machines("i-1", "i-2", fakeMachineId)));
+				is(machines("i-1", "i-2", requestedMachineId)));
 
-		assertThat(unsatisfyingClient.getAutoScalingGroup(GROUP_NAME)
-				.getDesiredCapacity(), is(3));
-
-		this.scalingGroup.terminateMachine(fakeMachineId);
-
-		assertThat(unsatisfyingClient.getAutoScalingGroup(GROUP_NAME)
-				.getDesiredCapacity(), is(2));
+		// now ask scaling group to terminate the requested instance (this
+		// should only result in the desired capacity being decremented, not
+		// attempting to actually terminate the fake instance)
+		this.scalingGroup.terminateMachine(requestedMachineId);
+		assertThat(client.getAutoScalingGroup(GROUP_NAME).getDesiredCapacity(),
+				is(2));
 		assertThat(this.scalingGroup.listMachines(), is(machines("i-1", "i-2")));
-
-		this.scalingGroup.terminateMachine("i-1");
-		assertThat(unsatisfyingClient.getAutoScalingGroup(GROUP_NAME)
-				.getDesiredCapacity(), is(1));
-		assertThat(this.scalingGroup.listMachines(), is(machines("i-2")));
 	}
 
+	/**
+	 * On a client error, a {@link ScalingGroupException} should be raised.
+	 */
 	@Test(expected = ScalingGroupException.class)
 	public void terminateOnError() throws Exception {
 		// set up mock to throw an error whenever terminateInstance is called
@@ -267,10 +275,205 @@ public class TestAwsAsScalingGroupOperation {
 		this.scalingGroup.terminateMachine("i-1");
 	}
 
+	/**
+	 * It should not be possible to terminate a machine instance that is not
+	 * recognized as a group member.
+	 */
+	@Test(expected = NotFoundException.class)
+	public void terminateOnNonGroupMember() throws Exception {
+		int desiredCapacity = 1;
+		List<Instance> members = ec2Instances(ec2Instance("i-1", "running"));
+		List<Instance> nonMembers = ec2Instances(ec2Instance("i-2", "running"));
+		this.scalingGroup = new AwsAsScalingGroup(new FakeAutoScalingClient(
+				GROUP_NAME, desiredCapacity, members, nonMembers));
+		this.scalingGroup.configure(TestUtils.config(GROUP_NAME));
+
+		this.scalingGroup.terminateMachine("i-2");
+	}
+
+	/**
+	 * Verify that the detach is called on the Auto Scaling Group API when
+	 * detaching a group member.
+	 */
+	@Test
+	public void detach() {
+		int desiredCapacity = 1;
+		List<Instance> members = ec2Instances(ec2Instance("i-1", "running"));
+		List<Instance> nonMembers = ec2Instances();
+		this.scalingGroup = new AwsAsScalingGroup(new FakeAutoScalingClient(
+				GROUP_NAME, desiredCapacity, members, nonMembers));
+		this.scalingGroup.configure(TestUtils.config(GROUP_NAME));
+
+		this.scalingGroup.detachMachine("i-1");
+		List<String> emptyList = asList();
+		assertThat(groupIds(this.scalingGroup), is(emptyList));
+	}
+
+	/**
+	 * It should not be possible to detach a machine instance that is not
+	 * recognized as a group member.
+	 */
+	@Test(expected = NotFoundException.class)
+	public void detachOnNonGroupMember() {
+		int desiredCapacity = 1;
+		List<Instance> members = ec2Instances(ec2Instance("i-1", "running"));
+		List<Instance> nonMembers = ec2Instances(ec2Instance("i-2", "running"));
+		this.scalingGroup = new AwsAsScalingGroup(new FakeAutoScalingClient(
+				GROUP_NAME, desiredCapacity, members, nonMembers));
+		this.scalingGroup.configure(TestUtils.config(GROUP_NAME));
+
+		this.scalingGroup.detachMachine("i-2");
+	}
+
+	/**
+	 * A {@link ScalingGroupException} should be thrown on failure to detach an
+	 * instance from the group.
+	 */
+	@Test(expected = ScalingGroupException.class)
+	public void detachOnError() throws Exception {
+		int desiredCapacity = 1;
+		setUpMockedAutoScalingGroup(GROUP_NAME, desiredCapacity,
+				ec2Instances(ec2Instance("i-1", "running")));
+
+		doThrow(new RuntimeException("API unreachable")).when(
+				this.mockAwsClient).detachInstance(GROUP_NAME, "i-1");
+
+		this.scalingGroup.detachMachine("i-1");
+	}
+
+	/**
+	 * Verifies that attach is called on the Auto Scaling Group API when
+	 * instances are attached to the group.
+	 */
+	@Test
+	public void attach() {
+		int desiredCapacity = 1;
+		List<Instance> members = ec2Instances(ec2Instance("i-1", "running"));
+		List<Instance> nonMembers = ec2Instances(ec2Instance("i-2", "running"));
+		this.scalingGroup = new AwsAsScalingGroup(new FakeAutoScalingClient(
+				GROUP_NAME, desiredCapacity, members, nonMembers));
+		this.scalingGroup.configure(TestUtils.config(GROUP_NAME));
+
+		assertThat(groupIds(this.scalingGroup), is(Arrays.asList("i-1")));
+		this.scalingGroup.attachMachine("i-2");
+		assertThat(groupIds(this.scalingGroup), is(Arrays.asList("i-1", "i-2")));
+	}
+
+	/**
+	 * An attempt to attach a non-existing machine should result in
+	 * {@link NotFoundException}.
+	 */
+	@Test(expected = NotFoundException.class)
+	public void attachNonExistingMachine() {
+		int desiredCapacity = 0;
+		this.scalingGroup = new AwsAsScalingGroup(new FakeAutoScalingClient(
+				GROUP_NAME, desiredCapacity, ec2Instances(), ec2Instances()));
+		this.scalingGroup.configure(TestUtils.config(GROUP_NAME));
+
+		this.scalingGroup.attachMachine("i-3");
+	}
+
+	/**
+	 * A {@link ScalingGroupException} should be thrown on failure to call
+	 * attach on the Auto Scaling Group API when instances are attached to the
+	 * group.
+	 */
+	@Test(expected = ScalingGroupException.class)
+	public void attachOnError() {
+		int desiredCapacity = 1;
+		List<Instance> members = ec2Instances(ec2Instance("i-1", "running"));
+		List<Instance> nonMembers = ec2Instances(ec2Instance("i-2", "running"));
+		setUpMockedAutoScalingGroup(GROUP_NAME, desiredCapacity, members,
+				nonMembers);
+
+		doThrow(new RuntimeException("API unreachable")).when(
+				this.mockAwsClient).attachInstance(GROUP_NAME, "i-2");
+
+		this.scalingGroup.attachMachine("i-2");
+	}
+
+	/**
+	 * Verifies that a
+	 * {@link ScalingGroup#setServiceState(String, ServiceState)} stores the
+	 * state by setting a tag on the instance.
+	 */
+	@Test
+	public void setServiceState() {
+		int desiredCapacity = 1;
+		setUpMockedAutoScalingGroup(GROUP_NAME, desiredCapacity,
+				ec2Instances(ec2Instance("i-1", "running")));
+
+		List<Tag> stateTag = asList(new Tag().withKey(
+				ScalingTags.SERVICE_STATE_TAG).withValue(
+				ServiceState.IN_SERVICE.name()));
+		this.scalingGroup.setServiceState("i-1", ServiceState.IN_SERVICE);
+
+		verify(this.mockAwsClient).tagInstance("i-1", stateTag);
+	}
+
+	/**
+	 * It should not be possible to set service state on a machine instance that
+	 * is not recognized as a group member.
+	 */
+	@Test(expected = NotFoundException.class)
+	public void setServiceStateOnNonGroupMember() {
+		int desiredCapacity = 1;
+		setUpMockedAutoScalingGroup(GROUP_NAME, desiredCapacity,
+				ec2Instances(ec2Instance("i-1", "running")));
+
+		this.scalingGroup.setServiceState("i-2", ServiceState.IN_SERVICE);
+	}
+
+	/**
+	 * A {@link ScalingGroupException} should be thrown on failure to tag the
+	 * service state of a group instance.
+	 */
+	@Test(expected = ScalingGroupException.class)
+	public void setServiceStateOnError() {
+		int desiredCapacity = 1;
+		setUpMockedAutoScalingGroup(GROUP_NAME, desiredCapacity,
+				ec2Instances(ec2Instance("i-1", "running")));
+
+		List<Tag> serviceStateTag = asList(new Tag().withKey(SERVICE_STATE_TAG)
+				.withValue(IN_SERVICE.name()));
+		doThrow(new RuntimeException("API unreachable")).when(
+				this.mockAwsClient).tagInstance("i-1", serviceStateTag);
+
+		this.scalingGroup.setServiceState("i-1", IN_SERVICE);
+	}
+
+	/**
+	 * Sets up a fake {@link AutoScalingClient} with a fake pool containing only
+	 * instances that are actual members of the Auto Scaling Group.
+	 *
+	 * @param autoScalingGroupName
+	 * @param desiredCapacity
+	 * @param memberInstances
+	 */
 	private void setUpMockedAutoScalingGroup(String autoScalingGroupName,
-			int desiredCapacity, List<Instance> ec2Instances) {
+			int desiredCapacity, List<Instance> memberInstances) {
+		setUpMockedAutoScalingGroup(autoScalingGroupName, desiredCapacity,
+				memberInstances, new ArrayList<Instance>());
+	}
+
+	/**
+	 * Sets up a fake {@link AutoScalingClient} with a fake pool containing both
+	 * instances that are members of the Auto Scaling Group and instances that
+	 * are not members.
+	 *
+	 * @param autoScalingGroupName
+	 * @param desiredCapacity
+	 * @param memberInstances
+	 *            Auto Scaling Group members.
+	 * @param nonMemberInstances
+	 *            EC2 instances that exist in the (fake) cloud but aren't
+	 *            members of the Auto Scaling Group.
+	 */
+	private void setUpMockedAutoScalingGroup(String autoScalingGroupName,
+			int desiredCapacity, List<Instance> memberInstances,
+			List<Instance> nonMemberInstances) {
 		AutoScalingGroup autoScalingGroup = group(autoScalingGroupName,
-				desiredCapacity, ec2Instances);
+				desiredCapacity, memberInstances);
 		LOG.debug("setting up mocked group: {}", Lists.transform(
 				autoScalingGroup.getInstances(),
 				AwsAutoScalingFunctions.toAutoScalingInstanceId()));
@@ -280,12 +483,17 @@ public class TestAwsAsScalingGroupOperation {
 		when(
 				this.mockAwsClient
 						.getAutoScalingGroupMembers(autoScalingGroupName))
-				.thenReturn(ec2Instances);
-		for (Instance instance : ec2Instances) {
-			when(
-					this.mockAwsClient.getInstanceMetadata(instance
-							.getInstanceId())).thenReturn(instance);
-		}
-
+				.thenReturn(memberInstances);
 	}
+
+	/**
+	 * Return the group member ids.
+	 *
+	 * @param scalingGroup
+	 * @return
+	 */
+	private static List<String> groupIds(ScalingGroup scalingGroup) {
+		return Lists.transform(scalingGroup.listMachines(), Machine.toId());
+	}
+
 }

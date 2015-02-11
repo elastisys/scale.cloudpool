@@ -14,8 +14,6 @@ import com.amazonaws.services.autoscaling.model.DescribeAutoScalingGroupsResult;
 /**
  * A {@link Callable} task that, when executed, requests details about a
  * particular AWS Auto Scaling Group in a region.
- * 
- * 
  */
 public class GetAutoScalingGroup extends
 		AmazonAutoScalingRequest<AutoScalingGroup> {
@@ -25,7 +23,7 @@ public class GetAutoScalingGroup extends
 
 	/**
 	 * Constructs a new {@link GetAutoScalingGroup} task.
-	 * 
+	 *
 	 * @param awsCredentials
 	 * @param region
 	 * @param groupName

@@ -11,10 +11,7 @@ import org.junit.Test;
 
 import com.elastisys.scale.cloudadapers.api.CloudAdapterException;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.AlertSettings;
-import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.BootTimeLivenessCheck;
-import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.LivenessConfig;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.MailServerSettings;
-import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.RunTimeLivenessCheck;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.ScaleDownConfig;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.ScaleUpConfig;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.ScalingGroupConfig;
@@ -25,22 +22,19 @@ import com.google.gson.JsonObject;
 
 /**
  * Tests validation of {@link BaseCloudAdapterConfig}s.
- *
- * 
- *
  */
 public class TestBaseCloudAdapterConfigValidation {
 
 	@Test
 	public void minimalConfig() throws CloudAdapterException {
 		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), null, null, null).validate();
+				scaleDownConfig(), null, null).validate();
 	}
 
 	@Test
 	public void withAlertConfig() throws CloudAdapterException {
 		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), null, alertConfig(), null).validate();
+				scaleDownConfig(), alertConfig(), null).validate();
 	}
 
 	@Test
@@ -53,7 +47,7 @@ public class TestBaseCloudAdapterConfigValidation {
 				defaultSeverity, mailServer());
 
 		BaseCloudAdapterConfig config = new BaseCloudAdapterConfig(
-				scalingGroupConfig(), scaleUpConfig(), scaleDownConfig(), null,
+				scalingGroupConfig(), scaleUpConfig(), scaleDownConfig(),
 				alertSettings, null);
 		assertThat(config.getAlerts().getSeverityFilter(),
 				is(AlertSettings.DEFAULT_SEVERITY_FILTER));
@@ -66,14 +60,14 @@ public class TestBaseCloudAdapterConfigValidation {
 		AlertSettings alerts = alertConfig();
 		setPrivateField(alerts, "severityFilter", "**");
 		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), null, alerts, null).validate();
+				scaleDownConfig(), alerts, null).validate();
 	}
 
 	// illegal config: missing /scalingGroup
 	@Test(expected = CloudAdapterException.class)
 	public void missingScalingGroup() throws CloudAdapterException {
 		new BaseCloudAdapterConfig(null, scaleUpConfig(), scaleDownConfig(),
-				null, alertConfig(), null).validate();
+				alertConfig(), null).validate();
 	}
 
 	// illegal config: missing /scalingGroup/name
@@ -82,7 +76,7 @@ public class TestBaseCloudAdapterConfigValidation {
 		ScalingGroupConfig scalingGroupConfig = scalingGroupConfig();
 		setPrivateField(scalingGroupConfig, "name", null);
 		new BaseCloudAdapterConfig(scalingGroupConfig, scaleUpConfig(),
-				scaleDownConfig(), null, null, null).validate();
+				scaleDownConfig(), null, null).validate();
 	}
 
 	// illegal config: missing /scalingGroup/config
@@ -91,14 +85,14 @@ public class TestBaseCloudAdapterConfigValidation {
 		ScalingGroupConfig scalingGroupConfig = scalingGroupConfig();
 		setPrivateField(scalingGroupConfig, "config", null);
 		new BaseCloudAdapterConfig(scalingGroupConfig, scaleUpConfig(),
-				scaleDownConfig(), null, null, null).validate();
+				scaleDownConfig(), null, null).validate();
 	}
 
 	// illegal config: missing /scaleUpConfig
 	@Test(expected = CloudAdapterException.class)
 	public void missingScaleUpConfig() throws CloudAdapterException {
 		new BaseCloudAdapterConfig(scalingGroupConfig(), null,
-				scaleDownConfig(), null, alertConfig(), null).validate();
+				scaleDownConfig(), alertConfig(), null).validate();
 	}
 
 	// illegal config: missing /scaleUpConfig/size
@@ -107,7 +101,7 @@ public class TestBaseCloudAdapterConfigValidation {
 		ScaleUpConfig scaleUpConfig = scaleUpConfig();
 		setPrivateField(scaleUpConfig, "size", null);
 		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig,
-				scaleDownConfig(), null, alertConfig(), null).validate();
+				scaleDownConfig(), alertConfig(), null).validate();
 	}
 
 	// illegal config: missing /scaleUpConfig/image
@@ -116,7 +110,7 @@ public class TestBaseCloudAdapterConfigValidation {
 		ScaleUpConfig scaleUpConfig = scaleUpConfig();
 		setPrivateField(scaleUpConfig, "image", null);
 		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig,
-				scaleDownConfig(), null, alertConfig(), null).validate();
+				scaleDownConfig(), alertConfig(), null).validate();
 	}
 
 	// illegal config: missing /scaleUpConfig/keyPair
@@ -125,7 +119,7 @@ public class TestBaseCloudAdapterConfigValidation {
 		ScaleUpConfig scaleUpConfig = scaleUpConfig();
 		setPrivateField(scaleUpConfig, "keyPair", null);
 		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig,
-				scaleDownConfig(), null, alertConfig(), null).validate();
+				scaleDownConfig(), alertConfig(), null).validate();
 	}
 
 	// illegal config: missing /scaleUpConfig/securityGroups
@@ -135,7 +129,7 @@ public class TestBaseCloudAdapterConfigValidation {
 		ScaleUpConfig scaleUpConfig = scaleUpConfig();
 		setPrivateField(scaleUpConfig, "securityGroups", null);
 		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig,
-				scaleDownConfig(), null, alertConfig(), null).validate();
+				scaleDownConfig(), alertConfig(), null).validate();
 	}
 
 	// illegal config: missing /scaleUpConfig/bootScript
@@ -144,113 +138,7 @@ public class TestBaseCloudAdapterConfigValidation {
 		ScaleUpConfig scaleUpConfig = scaleUpConfig();
 		setPrivateField(scaleUpConfig, "bootScript", null);
 		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig,
-				scaleDownConfig(), null, alertConfig(), null).validate();
-	}
-
-	// illegal config: missing /liveness/loginUser
-	@Test(expected = CloudAdapterException.class)
-	public void missingLivenessLoginUser() throws CloudAdapterException {
-		LivenessConfig liveness = liveness();
-		setPrivateField(liveness, "loginUser", null);
-		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), liveness, null, null).validate();
-	}
-
-	// illegal config: missing /liveness/loginKey
-	@Test(expected = CloudAdapterException.class)
-	public void missingLivenessLoginKey() throws CloudAdapterException {
-		LivenessConfig liveness = liveness();
-		setPrivateField(liveness, "loginKey", null);
-		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), liveness, null, null).validate();
-	}
-
-	// illegal config: missing /liveness/bootTimeCheck
-	@Test(expected = CloudAdapterException.class)
-	public void missingLivenessBootTimeCheck() throws CloudAdapterException {
-		LivenessConfig liveness = liveness();
-		setPrivateField(liveness, "bootTimeCheck", null);
-		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), liveness, null, null).validate();
-	}
-
-	// illegal config: missing /liveness/bootTimeCheck/command
-	@Test(expected = CloudAdapterException.class)
-	public void missingLivenessBootTimeCheckCommand()
-			throws CloudAdapterException {
-		LivenessConfig liveness = liveness();
-		setPrivateField(liveness.getBootTimeCheck(), "command", null);
-		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), liveness, null, null).validate();
-	}
-
-	// illegal config: missing /liveness/bootTimeCheck/retryDelay
-	@Test(expected = CloudAdapterException.class)
-	public void missingLivenessBootTimeCheckRetryDelay()
-			throws CloudAdapterException {
-		LivenessConfig liveness = liveness();
-		setPrivateField(liveness.getBootTimeCheck(), "retryDelay", null);
-		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), liveness, null, null).validate();
-	}
-
-	// illegal config: missing /liveness/bootTimeCheck/maxRetries
-	@Test(expected = CloudAdapterException.class)
-	public void missingLivenessBootTimeCheckMaxRetries()
-			throws CloudAdapterException {
-		LivenessConfig liveness = liveness();
-		setPrivateField(liveness.getBootTimeCheck(), "maxRetries", null);
-		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), liveness, null, null).validate();
-	}
-
-	// illegal config: missing /liveness/runTimeCheck
-	@Test(expected = CloudAdapterException.class)
-	public void missingLivenessRunTimeCheck() throws CloudAdapterException {
-		LivenessConfig liveness = liveness();
-		setPrivateField(liveness, "runTimeCheck", null);
-		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), liveness, null, null).validate();
-	}
-
-	// illegal config: missing /liveness/runTimeCheck/command
-	@Test(expected = CloudAdapterException.class)
-	public void missingLivenessRunTimeCheckCommand()
-			throws CloudAdapterException {
-		LivenessConfig liveness = liveness();
-		setPrivateField(liveness.getRunTimeCheck(), "command", null);
-		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), liveness, null, null).validate();
-	}
-
-	// illegal config: missing /liveness/runTimeCheck/period
-	@Test(expected = CloudAdapterException.class)
-	public void missingLivenessRunTimeCheckPeriod()
-			throws CloudAdapterException {
-		LivenessConfig liveness = liveness();
-		setPrivateField(liveness.getRunTimeCheck(), "period", null);
-		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), liveness, null, null).validate();
-	}
-
-	// illegal config: missing /liveness/runTimeCheck/maxRetries
-	@Test(expected = CloudAdapterException.class)
-	public void missingLivenessRunTimeCheckMaxRetries()
-			throws CloudAdapterException {
-		LivenessConfig liveness = liveness();
-		setPrivateField(liveness.getRunTimeCheck(), "maxRetries", null);
-		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), liveness, null, null).validate();
-	}
-
-	// illegal config: missing /liveness/runTimeCheck/retryDelay
-	@Test(expected = CloudAdapterException.class)
-	public void missingLivenessRunTimeCheckRetryDelay()
-			throws CloudAdapterException {
-		LivenessConfig liveness = liveness();
-		setPrivateField(liveness.getRunTimeCheck(), "retryDelay", null);
-		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), liveness, null, null).validate();
+				scaleDownConfig(), alertConfig(), null).validate();
 	}
 
 	// illegal config: missing /alerts/subject
@@ -259,7 +147,7 @@ public class TestBaseCloudAdapterConfigValidation {
 		AlertSettings alerts = alertConfig();
 		setPrivateField(alerts, "subject", null);
 		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), null, alerts, null).validate();
+				scaleDownConfig(), alerts, null).validate();
 	}
 
 	// illegal config: missing /alerts/recipients
@@ -268,7 +156,7 @@ public class TestBaseCloudAdapterConfigValidation {
 		AlertSettings alerts = alertConfig();
 		setPrivateField(alerts, "recipients", null);
 		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), null, alerts, null).validate();
+				scaleDownConfig(), alerts, null).validate();
 	}
 
 	// illegal config: missing /alerts/sender
@@ -277,7 +165,7 @@ public class TestBaseCloudAdapterConfigValidation {
 		AlertSettings alerts = alertConfig();
 		setPrivateField(alerts, "sender", null);
 		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), null, alerts, null).validate();
+				scaleDownConfig(), alerts, null).validate();
 	}
 
 	// illegal config: missing /alerts/mailServer
@@ -286,7 +174,7 @@ public class TestBaseCloudAdapterConfigValidation {
 		AlertSettings alerts = alertConfig();
 		setPrivateField(alerts, "mailServer", null);
 		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), null, alerts, null).validate();
+				scaleDownConfig(), alerts, null).validate();
 	}
 
 	// illegal config: missing /alerts/mailServer/smtpHost
@@ -295,7 +183,7 @@ public class TestBaseCloudAdapterConfigValidation {
 		AlertSettings alerts = alertConfig();
 		setPrivateField(alerts.getMailServer(), "smtpHost", null);
 		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), null, alerts, null).validate();
+				scaleDownConfig(), alerts, null).validate();
 	}
 
 	// illegal config: missing /alerts/mailServer/authentication/userName
@@ -307,7 +195,7 @@ public class TestBaseCloudAdapterConfigValidation {
 				.getAuthentication();
 		setPrivateField(authentication, "userName", null);
 		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), null, alerts, null).validate();
+				scaleDownConfig(), alerts, null).validate();
 	}
 
 	// illegal config: missing /alerts/mailServer/authentication/password
@@ -319,7 +207,7 @@ public class TestBaseCloudAdapterConfigValidation {
 				.getAuthentication();
 		setPrivateField(authentication, "password", null);
 		new BaseCloudAdapterConfig(scalingGroupConfig(), scaleUpConfig(),
-				scaleDownConfig(), null, alerts, null).validate();
+				scaleDownConfig(), alerts, null).validate();
 	}
 
 	private AlertSettings alertConfig() {
@@ -334,22 +222,6 @@ public class TestBaseCloudAdapterConfigValidation {
 
 	private ClientAuthentication smtpAuth() {
 		return new ClientAuthentication("userName", "password");
-	}
-
-	private LivenessConfig liveness() {
-		return new LivenessConfig(22, "loginUser",
-				"src/test/resources/security/clientkey.pem", bootTimeCheck(),
-				runTimeCheck());
-	}
-
-	private RunTimeLivenessCheck runTimeCheck() {
-		return new RunTimeLivenessCheck(
-				"service apache2 status | grep running", 60, 10, 30);
-	}
-
-	private BootTimeLivenessCheck bootTimeCheck() {
-		return new BootTimeLivenessCheck(
-				"service apache2 status | grep running", 30, 20);
 	}
 
 	private ScalingGroupConfig scalingGroupConfig() {

@@ -1,10 +1,11 @@
 package com.elastisys.scale.cloudadapers.api;
 
 import com.elastisys.scale.cloudadapers.api.restapi.PoolHandler;
-import com.elastisys.scale.cloudadapers.api.types.LivenessState;
 import com.elastisys.scale.cloudadapers.api.types.Machine;
 import com.elastisys.scale.cloudadapers.api.types.MachinePool;
 import com.elastisys.scale.cloudadapers.api.types.MachineState;
+import com.elastisys.scale.cloudadapers.api.types.PoolSizeSummary;
+import com.elastisys.scale.cloudadapers.api.types.ServiceState;
 import com.elastisys.scale.commons.json.schema.JsonValidator;
 import com.google.common.base.Optional;
 import com.google.gson.JsonObject;
@@ -15,15 +16,15 @@ import com.google.gson.JsonObject;
  * provider, handling communication with the cloud provider according to the
  * protocol/API that the cloud provider supports.
  * <p/>
- * A {@link CloudAdapter} performs the following tasks:
+ * The primary tasks of a {@link CloudAdapter} are:
  * <ul>
- * <li>It provides an up-to-date view of the scaling group members.</li>
- * <li>It resizes the scaling group, by commissioning/decommissioning machine
+ * <li>tracking the scaling group members and their states.</li>
+ * <li>resizing the scaling group, by commissioning/decommissioning machine
  * instances so that the number of active machines in the pool matches the
  * desired pool size.</li>
  * </ul>
  * <p/>
- * A {@link CloudAdapter} instance is supposed to be made network-accessible by
+ * A {@link CloudAdapter} instance is intended to be made network-accessible by
  * a {@link PoolHandler} REST endpoint, which exposes the {@link CloudAdapter}
  * through the <a
  * href="http://cloudadapterapi.readthedocs.org/en/latest/">elastisys:scale
@@ -31,11 +32,8 @@ import com.google.gson.JsonObject;
  * <p/>
  * Implementors should take measures to ensure that implementations are
  * thread-safe, since they may be called by several concurrent threads.
- * 
+ *
  * @see PoolHandler
- * 
- * 
- * 
  */
 public interface CloudAdapter {
 
@@ -45,7 +43,7 @@ public interface CloudAdapter {
 	 * <p/>
 	 * In case this {@link CloudAdapter} doesn't publish a JSON Schema,
 	 * {@link Optional#absent()} is returned.
-	 * 
+	 *
 	 * @return A JSON Schema if one is supplied by this {@link CloudAdapter},
 	 *         {@link Optional#absent()} otherwise.
 	 */
@@ -64,9 +62,9 @@ public interface CloudAdapter {
 	 * {@link #getConfigurationSchema()}), it should make sure that the received
 	 * configuration is a valid instance of the JSON Schema.
 	 * {@link JsonValidator} can be used for this purpose.
-	 * 
+	 *
 	 * @see JsonValidator
-	 * 
+	 *
 	 * @param configuration
 	 *            The JSON configuration to be set.
 	 * @throws IllegalArgumentException
@@ -75,74 +73,151 @@ public interface CloudAdapter {
 	 *             If the configuration could not be applied.
 	 */
 	void configure(JsonObject configuration) throws IllegalArgumentException,
-			CloudAdapterException;
+	CloudAdapterException;
 
 	/**
 	 * Returns the configuration currently set for this {@link CloudAdapter}, if
 	 * one has been set.
-	 * 
+	 *
 	 * @return A JSON configuration if set, {@link Optional#absent()} otherwise.
 	 */
 	Optional<JsonObject> getConfiguration();
 
 	/**
-	 * Returns all known members of the scaling group.
+	 * Returns a list of the members of the scaling group.
 	 * <p/>
-	 * The returned {@link MachinePool} may include both active group members
-	 * (in state {@link MachineState#PENDING} or {@link MachineState#RUNNING})
-	 * as well as machines that have just been requested or members of the group
-	 * that are shut down or are in the process of being shut down. The
-	 * execution state of each machine is indicated by its {@link MachineState}.
+	 * Note, that the response may include machines in any {@link MachineState},
+	 * even machines that are in the process of terminating.
 	 * <p/>
-	 * The effective size of the machine pool should be interpreted as the
-	 * number of <i>allocated</i> machines, being the machines in any of the
-	 * non-terminal states: {@link MachineState#REQUESTED},
-	 * {@link MachineState#PENDING}, or {@link MachineState#RUNNING} (see
-	 * {@link Machine#isAllocated()}).
+	 * The only machines that are to be considered <i>active</i> members of the
+	 * pool are machines in machine state {@link MachineState#PENDING} or
+	 * {@link MachineState#RUNNING} that are <b>not</b> in service state
+	 * {@link ServiceState#OUT_OF_SERVICE}.
 	 * <p/>
-	 * For {@link Machine}s in an active machine state (see
-	 * {@link Machine#isActive()}), the {@link CloudAdapter} may choose to
-	 * include {@link LivenessState} to describe their operational status
-	 * further.
-	 * 
-	 * @return The current members of the scaling group.
-	 * 
+	 * The service state should be set to UNKNOWN for all machine instances for
+	 * which no service state has been reported (see
+	 * {@link #setServiceState(String, ServiceState)}).
+	 * <p/>
+	 * The <i>effective size</i> of the machine pool should be interpreted as
+	 * the number of allocated machines (in any of the non-terminal states:
+	 * {@link MachineState#REQUESTED}, {@link MachineState#PENDING}, or
+	 * {@link MachineState#RUNNING}) that have not been marked
+	 * {@link ServiceState#OUT_OF_SERVICE}. See
+	 * {@link Machine#isEffectiveMember()}.
+	 *
+	 * @return A list of scaling group members.
+	 *
 	 * @throws CloudAdapterException
-	 *             If there was a problem retrieving the {@link MachinePool}
-	 *             from the cloud provider.
+	 *             If the operation could not be completed.
 	 */
 	MachinePool getMachinePool() throws CloudAdapterException;
 
 	/**
-	 * Sets the desired number of machines in the machine pool.
+	 * Returns the current size of the {@link MachinePool} -- both in terms of
+	 * the desired size and the actual size (as these may differ at any time).
+	 *
+	 * @return The current {@link PoolSizeSummary}.
+	 * @throws CloudAdapterException
+	 *             If the operation could not be completed.
+	 */
+	PoolSizeSummary getPoolSize() throws CloudAdapterException;
+
+	/**
+	 * Sets the desired number of machines in the machine pool. This method is
+	 * asynchronous in that the method returns immediately without having
+	 * carried out any required changes to the machine pool.
 	 * <p/>
-	 * If the resize operation increases the size of the scaling group, the
-	 * {@link CloudAdapter} should take measures to ensure that requested
+	 * The {@link CloudAdapter} should take measures to ensure that requested
 	 * machines are recognized as members of the scaling group and returned by
 	 * subsequent calls to {@link #getMachinePool()}. The specific mechanism to
 	 * mark group members, which may depend on the features offered by the
 	 * particular cloud API, is left to the implementation but could, for
 	 * example, make use of tags.
-	 * <p/>
-	 * Should the boot-up of a machine fail (after it has been launched), the
-	 * method should raise an exception, but the {@link Machine} should be kept
-	 * in the group for purposes of troubleshooting. There are lots of reasons
-	 * for the start-up failing (a bug in one of the software packages of the
-	 * machine, a bug in a provisioning script, faulty launch configuration,
-	 * etc), most of which are difficult to address in an automated manner. A
-	 * sensible approach is to notify a human administrator, who can fix the
-	 * error, for example, by repairing the broken machine in-place or by
-	 * terminating it and having the {@link CloudAdapter} replace it with a new
-	 * machine.
-	 * 
+	 *
 	 * @param desiredSize
-	 *            The desired number of machines in the machine pool.
+	 *            The desired number of machines in the pool.
+	 *
 	 * @throws IllegalArgumentException
-	 *             If the requested capacity is invalid.
+	 *             If the desired size is illegal.
 	 * @throws CloudAdapterException
-	 *             If there was a problem in requesting the desired capacity
-	 *             from the cloud provider.
+	 *             If the operation could not be completed.
 	 */
-	void resizeMachinePool(int desiredSize) throws IllegalArgumentException,
-			CloudAdapterException;
+	void setDesiredSize(int desiredSize) throws IllegalArgumentException,
+	CloudAdapterException;
+
+	/**
+	 * Terminates a particular machine pool member. The caller can control if a
+	 * replacement machine is to be provisioned via the
+	 * {@code decrementDesiredSize} parameter.
+	 *
+	 * @param machineId
+	 *            The machine to terminate.
+	 * @param decrementDesiredSize
+	 *            If the desired pool size should be decremented ({@code true})
+	 *            or left at its current size ({@code false}).
+	 *
+	 * @throws NotFoundException
+	 *             If the specified machine is not a member of the pool.
+	 * @throws CloudAdapterException
+	 *             If the operation could not be completed.
+	 */
+	void terminateMachine(String machineId, boolean decrementDesiredSize)
+			throws NotFoundException, CloudAdapterException;
+
+	/**
+	 * Sets the service state of a given machine pool member. Setting the
+	 * service state has no side-effects, unless the service state is set to
+	 * {@link ServiceState#OUT_OF_SERVICE}, in which case a replacement machine
+	 * will be launched (since {@link ServiceState#OUT_OF_SERVICE} machines are
+	 * not considered effective members of the pool). An out-of-service machine
+	 * can later be taken back into service by another call to this method to
+	 * re-set its service state.
+	 *
+	 * @param machineId
+	 *            The id of the machine whose service state is to be updated.
+	 * @param serviceState
+	 *            The {@link ServiceState} to assign to the machine.
+	 * @throws NotFoundException
+	 *             If the specified machine is not a member of the pool.
+	 * @throws CloudAdapterException
+	 *             If the operation could not be completed.
+	 */
+	void setServiceState(String machineId, ServiceState serviceState)
+			throws NotFoundException, CloudAdapterException;
+
+	/**
+	 * Attaches an already running machine instance to the pool, growing the
+	 * pool with a new member. This operation implies that the desired size of
+	 * the group is incremented by one.
+	 *
+	 * @param machineId
+	 *            The identifier of the machine to attach to the pool.
+	 * @throws NotFoundException
+	 *             If the specified machine does not exist.
+	 * @throws CloudAdapterException
+	 *             If the operation could not be completed.
+	 */
+	void attachMachine(String machineId) throws NotFoundException,
+	CloudAdapterException;
+
+	/**
+	 * Removes a member from the pool without terminating it. The machine keeps
+	 * running but is no longer considered a pool member and, therefore, needs
+	 * to be managed independently. The caller can control if a replacement
+	 * machine is to be provisioned via the {@code decrementDesiredSize}
+	 * parameter.
+	 *
+	 * @param machineId
+	 *            The identifier of the machine to detach from the pool.
+	 * @param decrementDesiredSize
+	 *            If the desired pool size should be decremented ({@code true})
+	 *            or left at its current size ({@code false}).
+	 * @throws NotFoundException
+	 *             If the specified machine is not a member of the pool.
+	 * @throws CloudAdapterException
+	 *             If the operation could not be completed.
+	 */
+	void detachMachine(String machineId, boolean decrementDesiredSize)
+			throws NotFoundException, CloudAdapterException;
+
 }

@@ -1,7 +1,6 @@
 package com.elastisys.scale.cloudadapters.aws.commons.client;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
@@ -25,7 +24,7 @@ import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingCli
  * Instances of this class are thread-safe and can therefore be used
  * concurrently from multiple threads.
  *
- * 
+ *
  *
  */
 public class LoadBalancingClient implements Closeable {
@@ -96,7 +95,7 @@ public class LoadBalancingClient implements Closeable {
 	 * Closes the client, releasing any held resources.
 	 */
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		this.api.shutdown();
 	}
 }

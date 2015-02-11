@@ -12,8 +12,6 @@ import org.junit.Test;
 
 import com.elastisys.scale.cloudadapers.api.CloudAdapterException;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.AlertSettings;
-import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.BootTimeLivenessCheck;
-import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.RunTimeLivenessCheck;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.ScalingGroupConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.collect.Lists;
@@ -24,13 +22,13 @@ import com.google.gson.JsonObject;
 /**
  * Verifies that parsing a JSON-formatted configuration into its Java
  * counterpart ({@link BaseCloudAdapterConfig}) works as expected.
- * 
+ *
  */
 public class TestBaseCloudAdapterConfigParsing {
 
 	/**
 	 * Verifies parsing of a configuration without all optional elements.
-	 * 
+	 *
 	 * @throws CloudAdapterException
 	 */
 	@Test
@@ -66,32 +64,6 @@ public class TestBaseCloudAdapterConfigParsing {
 		assertThat(config.getScaleDownConfig().getInstanceHourMargin(),
 				is(geti(jsonConf, "scaleDownConfig/instanceHourMargin")));
 
-		// verify liveness config
-		assertThat(config.getLiveness().getLoginUser(),
-				is(gets(jsonConf, "liveness/loginUser")));
-		assertThat(config.getLiveness().getLoginKey(),
-				is(gets(jsonConf, "liveness/loginKey")));
-		// verify that boot-time liveness check config was correctly parsed
-		BootTimeLivenessCheck bootTimeCheck = config.getLiveness()
-				.getBootTimeCheck();
-		assertThat(bootTimeCheck.getCommand(),
-				is(gets(jsonConf, "liveness/bootTimeCheck/command")));
-		assertThat(bootTimeCheck.getMaxRetries(),
-				is(geti(jsonConf, "liveness/bootTimeCheck/maxRetries")));
-		assertThat(bootTimeCheck.getRetryDelay(),
-				is(geti(jsonConf, "liveness/bootTimeCheck/retryDelay")));
-		// verify that run-time liveness check config was correctly parsed
-		RunTimeLivenessCheck runTimeCheck = config.getLiveness()
-				.getRunTimeCheck();
-		assertThat(runTimeCheck.getPeriod(),
-				is(geti(jsonConf, "liveness/runTimeCheck/period")));
-		assertThat(runTimeCheck.getCommand(),
-				is(gets(jsonConf, "liveness/runTimeCheck/command")));
-		assertThat(runTimeCheck.getMaxRetries(),
-				is(geti(jsonConf, "liveness/runTimeCheck/maxRetries")));
-		assertThat(runTimeCheck.getRetryDelay(),
-				is(geti(jsonConf, "liveness/runTimeCheck/retryDelay")));
-
 		// verify alert settings were configured
 		AlertSettings alerts = config.getAlerts();
 		assertThat(alerts.getRecipients().size(), is(1));
@@ -115,7 +87,7 @@ public class TestBaseCloudAdapterConfigParsing {
 
 	/**
 	 * Verifies parsing of a configuration without all optional elements.
-	 * 
+	 *
 	 * @throws CloudAdapterException
 	 */
 	@Test
@@ -150,9 +122,6 @@ public class TestBaseCloudAdapterConfigParsing {
 				is(gets(jsonConf, "scaleDownConfig/victimSelectionPolicy")));
 		assertThat(config.getScaleDownConfig().getInstanceHourMargin(),
 				is(geti(jsonConf, "scaleDownConfig/instanceHourMargin")));
-
-		// verify that no liveness config were set
-		assertThat(config.getLiveness(), is(nullValue()));
 
 		// verify that no alert settings were configured
 		assertThat(config.getAlerts(), is(nullValue()));
@@ -191,7 +160,7 @@ public class TestBaseCloudAdapterConfigParsing {
 
 	/**
 	 * Verifies parsing of a config with non-default poolUpdatePeriod.
-	 * 
+	 *
 	 * @throws CloudAdapterException
 	 */
 	@Test
@@ -285,7 +254,7 @@ public class TestBaseCloudAdapterConfigParsing {
 
 	/**
 	 * Returns the element at {@code path} as a {@link String}.
-	 * 
+	 *
 	 * @param jsonConf
 	 * @param path
 	 * @return
@@ -296,7 +265,7 @@ public class TestBaseCloudAdapterConfigParsing {
 
 	/**
 	 * Returns the element at {@code path} as an integer.
-	 * 
+	 *
 	 * @param jsonConf
 	 * @param path
 	 * @return
@@ -307,7 +276,7 @@ public class TestBaseCloudAdapterConfigParsing {
 
 	/**
 	 * Returns the array element at {@code path} as a {@link List} of string.
-	 * 
+	 *
 	 * @param jsonConf
 	 * @param path
 	 * @return
@@ -323,7 +292,7 @@ public class TestBaseCloudAdapterConfigParsing {
 
 	/**
 	 * Returns the element at {@code path}.
-	 * 
+	 *
 	 * @param configResource
 	 * @param path
 	 * @return

@@ -3,7 +3,7 @@ package com.elastisys.scale.cloudadapters.commons.adapter;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
-import org.junit.internal.matchers.TypeSafeMatcher;
+import org.hamcrest.TypeSafeMatcher;
 
 import com.elastisys.scale.commons.net.smtp.alerter.Alert;
 import com.elastisys.scale.commons.net.smtp.alerter.AlertSeverity;
@@ -33,7 +33,8 @@ public class IsAlert extends TypeSafeMatcher<Alert> {
 	}
 
 	@Factory
-	public static <T> Matcher<Alert> isAlert(String topic, AlertSeverity severity) {
+	public static <T> Matcher<Alert> isAlert(String topic,
+			AlertSeverity severity) {
 		return new IsAlert(topic, severity);
 	}
 }

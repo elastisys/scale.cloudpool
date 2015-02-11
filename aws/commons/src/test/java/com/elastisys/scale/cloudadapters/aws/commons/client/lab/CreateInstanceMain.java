@@ -8,10 +8,6 @@ import java.util.List;
 import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.services.ec2.model.Instance;
 import com.elastisys.scale.cloudadapters.aws.commons.requests.ec2.CreateInstance;
-import com.elastisys.scale.cloudadapters.aws.commons.requests.ec2.GetInstancePublicIp;
-import com.elastisys.scale.commons.net.retryable.Requester;
-import com.elastisys.scale.commons.net.retryable.RetryableRequest;
-import com.elastisys.scale.commons.net.retryable.retryhandlers.RetryUntilNoException;
 
 public class CreateInstanceMain extends AbstractClient {
 
@@ -49,15 +45,5 @@ public class CreateInstanceMain extends AbstractClient {
 		Instance instance = request.call();
 		logger.info("Launched instance : " + instance.getInstanceId() + ": "
 				+ instance.getState());
-
-		logger.info(
-				"waiting for instance {} to be assigned a public IP address",
-				instance.getInstanceId());
-		Requester<String> requester = new GetInstancePublicIp(awsCredentials,
-				region, instance.getInstanceId());
-		String publicIp = new RetryableRequest<>(requester,
-				new RetryUntilNoException<String>(300, 3),
-				"public-ip-address-waiter").call();
-		logger.info("assigned public IP {}", publicIp);
 	}
 }

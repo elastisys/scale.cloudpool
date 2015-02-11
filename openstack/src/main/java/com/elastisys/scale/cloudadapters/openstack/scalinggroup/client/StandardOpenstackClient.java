@@ -9,12 +9,15 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.jclouds.openstack.nova.v2_0.domain.Server;
 import org.jclouds.scriptbuilder.domain.OsFamily;
 
+import com.elastisys.scale.cloudadapers.api.NotFoundException;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.ScaleUpConfig;
 import com.elastisys.scale.cloudadapters.openstack.requests.AssignFloatingIpRequest;
 import com.elastisys.scale.cloudadapters.openstack.requests.CreateServerRequest;
+import com.elastisys.scale.cloudadapters.openstack.requests.DeleteServerMetadataRequest;
 import com.elastisys.scale.cloudadapters.openstack.requests.DeleteServerRequest;
 import com.elastisys.scale.cloudadapters.openstack.requests.GetServerRequest;
 import com.elastisys.scale.cloudadapters.openstack.requests.ListServersWithTagRequest;
+import com.elastisys.scale.cloudadapters.openstack.requests.UpdateServerMetadataRequest;
 import com.elastisys.scale.cloudadapters.openstack.scalinggroup.OpenStackScalingGroupConfig;
 import com.elastisys.scale.cloudadapters.openstack.utils.jclouds.ScriptUtils;
 import com.google.common.base.Joiner;
@@ -24,7 +27,7 @@ import com.google.common.util.concurrent.Atomics;
 /**
  * Standard implementation of the {@link OpenstackClient} interface.
  *
- * 
+ *
  *
  */
 public class StandardOpenstackClient implements OpenstackClient {
@@ -51,7 +54,7 @@ public class StandardOpenstackClient implements OpenstackClient {
 	}
 
 	@Override
-	public Server getServer(String serverId) {
+	public Server getServer(String serverId) throws NotFoundException {
 		checkArgument(isConfigured(), "can't use client before it's configured");
 
 		return new GetServerRequest(config(), serverId).call();
@@ -75,16 +78,29 @@ public class StandardOpenstackClient implements OpenstackClient {
 	}
 
 	@Override
-	public String assignFloatingIp(String serverId) {
+	public String assignFloatingIp(String serverId) throws NotFoundException {
 		Server server = getServer(serverId);
 		return new AssignFloatingIpRequest(config(), server).call();
 	}
 
 	@Override
-	public void terminateServer(String serverId) {
+	public void terminateServer(String serverId) throws NotFoundException {
+		checkArgument(isConfigured(), "can't use client before it's configured");
+		new DeleteServerRequest(config(), serverId).call();
+	}
+
+	@Override
+	public void tagServer(String serverId, Map<String, String> tags) {
 		checkArgument(isConfigured(), "can't use client before it's configured");
 
-		new DeleteServerRequest(config(), serverId).call();
+		new UpdateServerMetadataRequest(config(), serverId, tags).call();
+	}
+
+	@Override
+	public void untagServer(String serverId, List<String> tagKeys) {
+		checkArgument(isConfigured(), "can't use client before it's configured");
+
+		new DeleteServerMetadataRequest(config(), serverId, tagKeys).call();
 	}
 
 	private boolean isConfigured() {

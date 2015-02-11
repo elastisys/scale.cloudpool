@@ -1,28 +1,29 @@
 package com.elastisys.scale.cloudadapters.aws.commons.requests.ec2;
 
+import static com.elastisys.scale.cloudadapters.aws.commons.predicates.InstancePredicates.instanceStateIn;
+import static java.util.Arrays.asList;
+
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.services.autoscaling.model.Activity;
 import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.Placement;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.elastisys.scale.cloudadapters.aws.commons.client.AmazonApiUtils;
+import com.elastisys.scale.commons.net.retryable.Retryable;
+import com.elastisys.scale.commons.net.retryable.Retryers;
 import com.google.common.collect.Iterables;
 
 /**
  * A {@link Callable} task that, when executed, requests a AWS EC2 machine
- * instance to be created. The call blocks until the machine instance has
- * reached running state and passed the system reachability test.
+ * instance to be created and waits for the instance to appear started in
+ * {@code DescribeInstances}.
  * <p/>
- * The termination is a long-running {@link Activity} which can be tracked
- * through the returned object.
- *
- *
- *
+ * Due to the eventual consistency semantics of the Amazon API, operations may
+ * need time to propagate through the system and results may not be immediate.
  */
 public class CreateInstance extends AmazonEc2Request<Instance> {
 
@@ -58,7 +59,7 @@ public class CreateInstance extends AmazonEc2Request<Instance> {
 	@Override
 	public Instance call() {
 		Placement placement = new Placement()
-		.withAvailabilityZone(this.availabilityZone);
+				.withAvailabilityZone(this.availabilityZone);
 		RunInstancesRequest request = new RunInstancesRequest().withMinCount(1)
 				.withMaxCount(1).withImageId(this.imageId)
 				.withInstanceType(this.instanceType)
@@ -68,23 +69,28 @@ public class CreateInstance extends AmazonEc2Request<Instance> {
 		RunInstancesResult result = getClient().getApi().runInstances(request);
 		Instance launchedInstance = Iterables.getLast(result.getReservation()
 				.getInstances());
-		// await running and await reachable checks are disabled for now, since
-		// they take quite long to finish (especially the reachability check).
-		// These checks are also somewhat superfluous if we have boot-time
-		// liveness checking enabled.
-		// InstanceState state = awaitRunningState(launchedInstance);
-		// launchedInstance = launchedInstance.withState(state);
-		// awaitReachability(launchedInstance);
-		return launchedInstance;
+
+		return awaitInstance(launchedInstance.getInstanceId());
 	}
 
-	private InstanceState awaitRunningState(Instance instance) throws Exception {
-		return new AwaitInstanceRunning(getAwsCredentials(), getRegion(),
-				instance.getInstanceId(), 30).call();
-	}
+	private Instance awaitInstance(String instanceId) {
+		String name = String.format("await-active-state{%s}", instanceId);
+		Callable<Instance> requester = new GetInstance(getAwsCredentials(),
+				getRegion(), instanceId);
+		List<String> activeStates = asList("pending", "running");
 
-	private void awaitReachability(Instance instance) throws Exception {
-		new AwaitInstanceReachable(getAwsCredentials(), getRegion(),
-				instance.getInstanceId(), 30).call();
+		int initialDelay = 1;
+		int maxRetries = 8;
+		Retryable<Instance> retryer = Retryers.exponentialBackoffRetryer(name,
+				requester, initialDelay, TimeUnit.SECONDS, maxRetries,
+				instanceStateIn(activeStates));
+
+		try {
+			return retryer.call();
+		} catch (Exception e) {
+			throw new RuntimeException(String.format(
+					"gave up waiting for instance to become active: '%s': %s",
+					instanceId, e.getMessage()), e);
+		}
 	}
 }

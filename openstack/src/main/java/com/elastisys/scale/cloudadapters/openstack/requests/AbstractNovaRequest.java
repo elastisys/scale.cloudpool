@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
 import org.jclouds.compute.ComputeService;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
@@ -12,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudadapters.openstack.scalinggroup.OpenStackScalingGroupConfig;
 import com.elastisys.scale.cloudadapters.openstack.utils.OpenstackApiUtils;
-import com.elastisys.scale.commons.net.retryable.Requester;
 
 /**
  * An abstract base class for implementing OpenStack Nova (compute) request
@@ -25,12 +25,10 @@ import com.elastisys.scale.commons.net.retryable.Requester;
  * over the Jclouds {@link ComputeService} API should extend the
  * {@link AbstractOpenstackRequest} class.
  *
- * 
- *
  * @param <R>
  *            the response type
  */
-public abstract class AbstractNovaRequest<R> implements Requester<R> {
+public abstract class AbstractNovaRequest<R> implements Callable<R> {
 
 	static Logger LOG = LoggerFactory.getLogger(AbstractNovaRequest.class);
 

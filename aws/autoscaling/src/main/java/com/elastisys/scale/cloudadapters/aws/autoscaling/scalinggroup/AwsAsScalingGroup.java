@@ -1,13 +1,12 @@
 package com.elastisys.scale.cloudadapters.aws.autoscaling.scalinggroup;
 
-import static com.elastisys.scale.cloudadapters.aws.commons.functions.AwsEc2Functions.toInstanceId;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Lists.transform;
 import static java.lang.String.format;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
@@ -15,9 +14,13 @@ import org.slf4j.LoggerFactory;
 
 import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.Tag;
+import com.elastisys.scale.cloudadapers.api.NotFoundException;
 import com.elastisys.scale.cloudadapers.api.types.Machine;
 import com.elastisys.scale.cloudadapers.api.types.MachineState;
+import com.elastisys.scale.cloudadapers.api.types.ServiceState;
 import com.elastisys.scale.cloudadapters.aws.autoscaling.scalinggroup.client.AutoScalingClient;
+import com.elastisys.scale.cloudadapters.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudadapters.aws.commons.functions.InstanceToMachine;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapter;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig;
@@ -28,12 +31,8 @@ import com.elastisys.scale.cloudadapters.commons.adapter.scalinggroup.ScalingGro
 import com.elastisys.scale.cloudadapters.commons.adapter.scalinggroup.StartMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.schema.JsonValidator;
-import com.elastisys.scale.commons.net.retryable.Requester;
-import com.elastisys.scale.commons.net.retryable.RetryableRequest;
-import com.elastisys.scale.commons.net.retryable.retryhandlers.RetryUntilNoException;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Atomics;
 import com.google.gson.JsonObject;
 
@@ -56,9 +55,7 @@ import com.google.gson.JsonObject;
 public class AwsAsScalingGroup implements ScalingGroup {
 	static Logger LOG = LoggerFactory.getLogger(AwsAsScalingGroup.class);
 
-	/**
-	 * JSON Schema describing valid {@link AwsAsScalingGroupConfig}instances.
-	 */
+	/** JSON Schema describing valid configuration documents. */
 	private static final JsonObject CONFIG_SCHEMA = JsonUtils
 			.parseJsonResource("awsas-scaling-group-schema.json");
 
@@ -115,43 +112,21 @@ public class AwsAsScalingGroup implements ScalingGroup {
 		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
 
 		try {
-			// The desired capacity of the AWS Auto Scaling Group is just the
-			// requested size and may differ from the actual number of instances
-			// in the pool, for example when there is a shortage of instances.
-			// If the desiredCapacity of the Auto Scaling Group is greater than
-			// the actual number of instances in the group, we should return
-			// dummy Machines in REQUESTED state for the missing instances. This
-			// prevents the BaseCloudAdapter from regarding the scaling group
-			// too small and ordering new machines via startMachines.
-			AutoScalingGroup autoScalingGroup = this.client
+			AutoScalingGroup group = this.client
 					.getAutoScalingGroup(getScalingGroupName());
-			int desiredCapacity = autoScalingGroup.getDesiredCapacity();
-			int actualCapacity = autoScalingGroup.getInstances().size();
-			LOG.debug("desiredCapacity: {}, actual capacity: {}",
-					desiredCapacity, actualCapacity);
-			List<Machine> requestedInstances = Lists.newArrayList();
-			int missingInstances = desiredCapacity - actualCapacity;
-			if (missingInstances > 0) {
-				for (int i = 1; i <= missingInstances; i++) {
-					String pseudoId = String.format("%s%d",
-							REQUESTED_ID_PREFIX, i);
-					requestedInstances.add(new Machine(pseudoId,
-							MachineState.REQUESTED, null, null, null, null));
-				}
-			}
-
-			// retrieve all scaling group members
+			// requested, but not yet allocated, machines
+			List<Machine> requestedInstances = requestedInstances(group
+					.getInstances().size(), group.getDesiredCapacity());
+			// actual scaling group members
 			List<Instance> groupInstances = this.client
 					.getAutoScalingGroupMembers(getScalingGroupName());
-
-			List<Machine> acquiredInstances = Lists.newArrayList(transform(
+			List<Machine> acquiredMachines = Lists.newArrayList(transform(
 					groupInstances, new InstanceToMachine()));
 
-			List<Machine> group = Lists.newArrayList();
-			group.addAll(acquiredInstances);
-			group.addAll(requestedInstances);
-			LOG.debug("scaling group members: {}", group);
-			return group;
+			List<Machine> scalingGroup = Lists.newArrayList();
+			scalingGroup.addAll(acquiredMachines);
+			scalingGroup.addAll(requestedInstances);
+			return scalingGroup;
 		} catch (Exception e) {
 			throw new ScalingGroupException(format(
 					"failed to retrieve machines in scaling group \"%s\": %s",
@@ -159,66 +134,91 @@ public class AwsAsScalingGroup implements ScalingGroup {
 		}
 	}
 
+	/**
+	 * Produces a number of placeholder {@link Machine}s (in {@code REQUESTED}
+	 * state) for requested, but not yet acquired, instances in an Auto Scaling
+	 * Group. The number of produced placeholder instances is the the difference
+	 * between {@code desiredCapacity} and {@code actualCapacity}.
+	 * <p/>
+	 * Rationale: the desired capacity of the AWS Auto Scaling Group may differ
+	 * from the actual number of instances in the group. If the desiredCapacity
+	 * of the Auto Scaling Group is greater than the actual number of instances
+	 * in the group, we should return placeholder Machines in REQUESTED state
+	 * for the missing instances. This prevents the {@link BaseCloudAdapter}
+	 * from regarding the scaling group too small and ordering new machines via
+	 * startMachines.
+	 *
+	 * @param actualCapacity
+	 *            The actual scaling group size.
+	 * @param desiredCapacity
+	 *            The desired scaling group size.
+	 * @return
+	 */
+	private List<Machine> requestedInstances(int actualCapacity,
+			int desiredCapacity) {
+		int missingInstances = desiredCapacity - actualCapacity;
+
+		List<Machine> requestedInstances = Lists.newArrayList();
+		for (int i = 0; i < missingInstances; i++) {
+			String pseudoId = String.format("%s%d", REQUESTED_ID_PREFIX,
+					(i + 1));
+			requestedInstances.add(new Machine(pseudoId,
+					MachineState.REQUESTED, ServiceState.UNKNOWN, null, null,
+					null));
+		}
+		return requestedInstances;
+	}
+
 	@Override
 	public List<Machine> startMachines(int count, ScaleUpConfig scaleUpConfig)
 			throws StartMachinesException {
 		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
 
-		List<Machine> startedMachines = Lists.newArrayList();
+		List<Machine> requestedMachines = Lists.newArrayList();
 		try {
-			// get current group membership: {G}
+			// We simply set the desired size of the scaling group without
+			// waiting for the request to be fulfilled, simply because there is
+			// no bulletproof method of knowing when this particular desired
+			// size request has taken effect. Waiting for the group size to
+			// reach the desired size is problematic, since the desired size may
+			// be set to some other value while we are waiting.
 			AutoScalingGroup group = this.client
 					.getAutoScalingGroup(getScalingGroupName());
-			List<Instance> initialGroup = this.client
-					.getAutoScalingGroupMembers(getScalingGroupName());
-			LOG.debug("initial group: {}", initialGroup);
-			// increase desiredCapacity and wait for group to reach new size
 			int newDesiredSize = group.getDesiredCapacity() + count;
 			LOG.info("starting {} new instance(s) in scaling group '{}': "
 					+ "changing desired capacity from {} to {}", count,
 					getScalingGroupName(), group.getDesiredCapacity(),
 					newDesiredSize);
 			this.client.setDesiredSize(getScalingGroupName(), newDesiredSize);
-
-			// get new group membership: {N}
-			List<Instance> expandedGroup = this.client
-					.getAutoScalingGroupMembers(getScalingGroupName());
-			LOG.debug("group after raising desired capacity: {}", expandedGroup);
-			// new member instance(s): {N} - {G}
-			List<Instance> startedInstances = difference(expandedGroup,
-					initialGroup);
-			LOG.debug("started instances: {}", startedInstances);
-			startedMachines = transform(startedInstances,
-					new InstanceToMachine());
-
-			// await new instance(s) being assigned an IP address
-			List<Instance> membersWithIp = Lists.newArrayList();
-			for (Instance createdInstance : startedInstances) {
-				membersWithIp.add(awaitIpAddress(createdInstance));
-			}
-			startedMachines = transform(membersWithIp, new InstanceToMachine());
+			requestedMachines = requestedInstances(group.getInstances().size(),
+					newDesiredSize);
 		} catch (Exception e) {
-			throw new StartMachinesException(count, startedMachines, e);
+			throw new StartMachinesException(count, requestedMachines, e);
 		}
 
-		return startedMachines;
+		return requestedMachines;
 	}
 
 	@Override
 	public void terminateMachine(String machineId) throws ScalingGroupException {
 		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
 
+		// verify that machine exists in group
+		getMachineOrFail(machineId);
+
 		try {
 			if (machineId.startsWith(REQUESTED_ID_PREFIX)) {
+				// we were asked to terminate a placeholder instance (a
+				// requested, but not yet assigned, instance). just decrement
+				// desiredCapacity of the group.
 				AutoScalingGroup group = this.client
 						.getAutoScalingGroup(getScalingGroupName());
-				int currentDesiredSize = group.getDesiredCapacity();
-				int futureDesiredSize = currentDesiredSize - 1;
-				LOG.info(
-						"asked to terminate fake instance, decrementing desired size from {} to {} instead",
-						currentDesiredSize, futureDesiredSize);
-				this.client.setDesiredSize(getScalingGroupName(),
-						futureDesiredSize);
+				int desiredSize = group.getDesiredCapacity();
+				int newSize = desiredSize - 1;
+				LOG.debug("termination request for placeholder instance, "
+						+ "reducing desiredCapacity from {} to {}",
+						desiredSize, newSize);
+				this.client.setDesiredSize(getScalingGroupName(), newSize);
 			} else {
 				LOG.info("terminating instance {}", machineId);
 				this.client.terminateInstance(getScalingGroupName(), machineId);
@@ -226,30 +226,81 @@ public class AwsAsScalingGroup implements ScalingGroup {
 		} catch (Exception e) {
 			String message = format("failed to terminate instance \"%s\": %s",
 					machineId, e.getMessage());
-			LOG.error(message);
-			throw new ScalingGroupException(message);
+			throw new ScalingGroupException(message, e);
 		}
 	}
 
+	@Override
+	public void attachMachine(String machineId) throws NotFoundException {
+		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
+
+		try {
+			this.client.attachInstance(getScalingGroupName(), machineId);
+		} catch (Exception e) {
+			Throwables.propagateIfInstanceOf(e, NotFoundException.class);
+			String message = format("failed to attach instance \"%s\": %s",
+					machineId, e.getMessage());
+			throw new ScalingGroupException(message, e);
+		}
+	}
+
+	@Override
+	public void detachMachine(String machineId) throws NotFoundException,
+	ScalingGroupException {
+		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
+
+		// verify that machine exists in group
+		getMachineOrFail(machineId);
+
+		try {
+			this.client.detachInstance(getScalingGroupName(), machineId);
+		} catch (Exception e) {
+			String message = format("failed to detach instance \"%s\": %s",
+					machineId, e.getMessage());
+			throw new ScalingGroupException(message, e);
+		}
+	}
+
+	@Override
+	public void setServiceState(String machineId, ServiceState serviceState)
+			throws NotFoundException, ScalingGroupException {
+		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
+
+		// verify that machine exists in group
+		getMachineOrFail(machineId);
+
+		try {
+			Tag tag = new Tag().withKey(ScalingTags.SERVICE_STATE_TAG)
+					.withValue(serviceState.name());
+			this.client.tagInstance(machineId, Arrays.asList(tag));
+		} catch (Exception e) {
+			Throwables.propagateIfInstanceOf(e, ScalingGroupException.class);
+			String message = format(
+					"failed to tag service state on server \"%s\": %s",
+					machineId, e.getMessage());
+			throw new ScalingGroupException(message, e);
+		}
+	};
+
 	/**
-	 * Determines whether there is a machine with a given identifier in the auto
-	 * scaling group.
+	 * Retrieves a particular member instance from the scaling group or throws
+	 * an exception if it could not be found.
 	 *
 	 * @param machineId
-	 *            The sought identifier.
-	 * @return true if there is a machine with the given identifier, false
-	 *         otherwise.
+	 *            The id of the machine of interest.
+	 * @return
+	 * @throws NotFoundException
 	 */
-	private boolean instanceInGroup(final String machineId) {
-		AutoScalingGroup group = this.client
-				.getAutoScalingGroup(getScalingGroupName());
-		for (com.amazonaws.services.autoscaling.model.Instance instance : group
-				.getInstances()) {
-			if (instance.getInstanceId().equals(machineId)) {
-				return true;
+	private Machine getMachineOrFail(String machineId) throws NotFoundException {
+		List<Machine> machines = listMachines();
+		for (Machine machine : machines) {
+			if (machine.getId().equals(machineId)) {
+				return machine;
 			}
 		}
-		return false;
+
+		throw new NotFoundException(String.format(
+				"no machine with id '%s' found in scaling group", machineId));
 	}
 
 	@Override
@@ -265,92 +316,5 @@ public class AwsAsScalingGroup implements ScalingGroup {
 
 	AwsAsScalingGroupConfig config() {
 		return this.config.get();
-	}
-
-	/**
-	 * Returns the set difference between two instance collections. That is, all
-	 * instances in group1 that are <i>not</i> also in group2.
-	 *
-	 * @param group1
-	 * @param group2
-	 * @return
-	 */
-	private List<Instance> difference(List<Instance> group1,
-			List<Instance> group2) {
-		List<String> group1Ids = Lists.transform(group1, toInstanceId());
-		LOG.debug("group1 ids: {}", group1Ids);
-		List<String> group2Ids = Lists.transform(group2, toInstanceId());
-		LOG.debug("group2 ids: {}", group2Ids);
-		Set<String> uniqueGroup1Ids = Sets.difference(
-				Sets.newHashSet(group1Ids), Sets.newHashSet(group2Ids));
-		LOG.debug("new instance ids: {}", uniqueGroup1Ids);
-
-		List<Instance> uniqueGroup1Members = Lists.newArrayList();
-		for (Instance instance : group1) {
-			if (uniqueGroup1Ids.contains(instance.getInstanceId())) {
-				uniqueGroup1Members.add(instance);
-			}
-		}
-		return uniqueGroup1Members;
-	}
-
-	/**
-	 * Waits for a newly created instance to be assigned a public IP address.
-	 *
-	 * @param instance
-	 * @return
-	 * @return Returns updated meta data for the {@link Instance}, with its
-	 *         public IP address set.
-	 * @throws ScalingGroupException
-	 */
-	private Instance awaitIpAddress(Instance instance)
-			throws ScalingGroupException {
-		String instanceId = instance.getInstanceId();
-		try {
-			LOG.info("waiting for '{}' to be assigned a public IP address",
-					instanceId);
-			String taskName = String
-					.format("ip-address-waiter{%s}", instanceId);
-			RetryableRequest<String> awaitIp = new RetryableRequest<>(
-					new InstanceIpGetter(this.client, instanceId),
-					new RetryUntilNoException<String>(12, 10000), taskName);
-			String ipAddress = awaitIp.call();
-			LOG.info("instance was assigned public IP address {}", ipAddress);
-			// re-read instance meta data
-			return this.client.getInstanceMetadata(instanceId);
-		} catch (Exception e) {
-			throw new ScalingGroupException(format(
-					"gave up waiting for instance \"%s\" to be "
-							+ "assigned a public IP address: %s", instanceId,
-					e.getMessage()), e);
-		}
-	}
-
-	/**
-	 * Simple {@link Requester} that fetches the public IP address of a certain
-	 * instance if one has been assigned. If the instance doesn't have a public
-	 * IP address, a {@link IllegalStateException} is thrown.
-	 *
-	 *
-	 *
-	 */
-	public static class InstanceIpGetter implements Requester<String> {
-
-		private final AutoScalingClient client;
-		private final String instanceId;
-
-		public InstanceIpGetter(AutoScalingClient client, String instanceId) {
-			this.client = client;
-			this.instanceId = instanceId;
-		}
-
-		@Override
-		public String call() throws Exception {
-			Instance instance = this.client
-					.getInstanceMetadata(this.instanceId);
-			checkState(instance.getPublicIpAddress() != null,
-					"instance has not been assigned a public IP address");
-			return instance.getPublicIpAddress();
-		}
 	}
 }

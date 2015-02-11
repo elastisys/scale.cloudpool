@@ -15,13 +15,12 @@ import com.elastisys.scale.cloudadapers.api.types.MachineState;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.collect.Lists;
-import com.google.gson.JsonObject;
 
 /**
  * Verifies the behavior of the {@link TerminationQueue}.
- * 
- * 
- * 
+ *
+ *
+ *
  */
 public class TestTerminationQueue {
 
@@ -229,7 +228,7 @@ public class TestTerminationQueue {
 		List<String> publicIps = Lists.newArrayList();
 		List<String> privateIps = Lists.newArrayList();
 		return new Machine(withId, MachineState.RUNNING, UtcTime.now(),
-				publicIps, privateIps, new JsonObject());
+				publicIps, privateIps);
 	}
 
 }

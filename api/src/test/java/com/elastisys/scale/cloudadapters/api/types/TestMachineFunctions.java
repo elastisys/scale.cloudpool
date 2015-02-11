@@ -18,15 +18,13 @@ import com.elastisys.scale.cloudadapers.api.types.MachineState;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Function;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 
 /**
  * Verifies the behavior of {@link Function}s declared for the {@link Machine}
  * class.
- * 
- * 
- * 
+ *
+ *
+ *
  */
 public class TestMachineFunctions {
 
@@ -35,14 +33,11 @@ public class TestMachineFunctions {
 	 */
 	@Test
 	public void testMachineStateExtractor() {
-		JsonElement metadata = new JsonObject();
 		DateTime now = UtcTime.now();
-		Machine m1 = new Machine("id", MachineState.REQUESTED, now, null, null,
-				metadata);
+		Machine m1 = new Machine("id", MachineState.REQUESTED, now, null, null);
 		Machine m2 = new Machine("id", MachineState.RUNNING, now,
-				ips("1.2.3.4"), ips("1.2.3.5"), metadata);
-		Machine m3 = new Machine("id", MachineState.PENDING, now, null, null,
-				metadata);
+				ips("1.2.3.4"), ips("1.2.3.5"));
+		Machine m3 = new Machine("id", MachineState.PENDING, now, null, null);
 
 		assertThat(Machine.toState().apply(m1), is(MachineState.REQUESTED));
 		assertThat(Machine.toState().apply(m2), is(MachineState.RUNNING));
@@ -54,14 +49,11 @@ public class TestMachineFunctions {
 	 */
 	@Test
 	public void testMachineIdExtractor() {
-		JsonElement metadata = new JsonObject();
 		DateTime now = UtcTime.now();
-		Machine m1 = new Machine("i-1", MachineState.REQUESTED, now, null,
-				null, metadata);
+		Machine m1 = new Machine("i-1", MachineState.REQUESTED, now, null, null);
 		Machine m2 = new Machine("i-2", MachineState.RUNNING, now,
-				ips("1.2.3.4"), ips("1.2.3.5"), metadata);
-		Machine m3 = new Machine("i-3", MachineState.PENDING, now, null, null,
-				metadata);
+				ips("1.2.3.4"), ips("1.2.3.5"));
+		Machine m3 = new Machine("i-3", MachineState.PENDING, now, null, null);
 
 		assertThat(Machine.toId().apply(m1), is("i-1"));
 		assertThat(Machine.toId().apply(m2), is("i-2"));

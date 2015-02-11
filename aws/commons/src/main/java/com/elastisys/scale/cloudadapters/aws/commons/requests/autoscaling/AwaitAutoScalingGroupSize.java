@@ -1,14 +1,13 @@
 package com.elastisys.scale.cloudadapters.aws.commons.requests.autoscaling;
 
+import static com.elastisys.scale.cloudadapters.aws.commons.predicates.AutoScalingPredicates.autoScalingGroupSize;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import java.util.concurrent.Callable;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
-import com.elastisys.scale.cloudadapters.aws.commons.tasks.AutoScalingGroupRequester;
-import com.elastisys.scale.cloudadapters.aws.commons.tasks.RetryUntilScalingGroupSizeReached;
-import com.elastisys.scale.commons.net.retryable.Requester;
-import com.elastisys.scale.commons.net.retryable.RetryHandler;
-import com.elastisys.scale.commons.net.retryable.RetryableRequest;
+import com.elastisys.scale.commons.net.retryable.Retryers;
 
 /**
  * A {@link Callable} task that, when executed, waits for an AWS Auto Scaling
@@ -17,7 +16,7 @@ import com.elastisys.scale.commons.net.retryable.RetryableRequest;
  *
  */
 public class AwaitAutoScalingGroupSize extends
-AmazonAutoScalingRequest<AutoScalingGroup> {
+		AmazonAutoScalingRequest<AutoScalingGroup> {
 
 	/** The Auto Scaling Group of interest. */
 	private final String autoScalingGroupName;
@@ -75,17 +74,19 @@ AmazonAutoScalingRequest<AutoScalingGroup> {
 	private AutoScalingGroup awaitGroupSize(AutoScalingGroup autoScalingGroup,
 			int targetSize) throws RuntimeException {
 		String groupName = autoScalingGroup.getAutoScalingGroupName();
-		Requester<AutoScalingGroup> requester = new AutoScalingGroupRequester(
-				getClient(), groupName);
-		RetryHandler<AutoScalingGroup> retryHandler = new RetryUntilScalingGroupSizeReached(
-				targetSize, this.maxRetries);
-		Callable<AutoScalingGroup> retryableRequest = new RetryableRequest<AutoScalingGroup>(
-				requester, retryHandler, "await group size");
+		Callable<AutoScalingGroup> requester = new GetAutoScalingGroup(
+				getAwsCredentials(), getRegion(), groupName);
+
+		String name = String.format("await-group-size{%d}", targetSize);
+		Callable<AutoScalingGroup> retryer = Retryers
+				.exponentialBackoffRetryer(name, requester, 1, SECONDS,
+						this.maxRetries, autoScalingGroupSize(targetSize));
+
 		try {
-			return retryableRequest.call();
+			return retryer.call();
 		} catch (Exception e) {
 			throw new RuntimeException(
-					"Failed to wait for scaling group to reach capacity "
+					"failed to wait for scaling group to reach capacity "
 							+ targetSize + ": " + e.getMessage(), e);
 		}
 	}

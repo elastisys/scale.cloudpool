@@ -7,22 +7,15 @@ import org.slf4j.LoggerFactory;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.Instance;
-import com.elastisys.scale.commons.net.retryable.Requester;
-import com.elastisys.scale.commons.net.retryable.RetryHandler;
-import com.elastisys.scale.commons.net.retryable.RetryableRequest;
-import com.elastisys.scale.commons.net.retryable.retryhandlers.RetryUntilNoException;
+import com.elastisys.scale.commons.net.retryable.Retryable;
 
 /**
  * A {@link Requester} that, when called, retrieves the public IP address from
  * an EC2 instance. If the instance hasn't yet been assigned an IP address, an
  * {@link IllegalStateException} is thrown.
  * <p/>
- * Can be used in a {@link RetryableRequest} with a
- * {@link RetryUntilNoException} {@link RetryHandler} to wait for an instance to
- * be assigned an IP address.
- *
- * 
- *
+ * Can be used in a {@link Retryable} to wait for an instance to be assigned an
+ * IP address.
  */
 public class GetInstancePublicIp extends AmazonEc2Request<String> {
 
@@ -47,8 +40,8 @@ public class GetInstancePublicIp extends AmazonEc2Request<String> {
 	@Override
 	public String call() throws Exception {
 		LOG.debug("requesting details for instance '{}'", this.instanceId);
-		Instance instance = new GetEc2Instance(getAwsCredentials(),
-				getRegion(), this.instanceId).call();
+		Instance instance = new GetInstance(getAwsCredentials(), getRegion(),
+				this.instanceId).call();
 		LOG.debug("got details for instance '{}'", instance);
 		String ipAddress = instance.getPublicIpAddress();
 

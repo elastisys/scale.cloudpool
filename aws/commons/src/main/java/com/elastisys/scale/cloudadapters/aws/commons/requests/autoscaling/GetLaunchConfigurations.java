@@ -13,9 +13,6 @@ import com.google.common.base.Optional;
 /**
  * A {@link Callable} task that, when executed, requests the listing of all (or
  * a particular collcetion of) AWS Launch Configurations in a region.
- * 
- * 
- * 
  */
 public class GetLaunchConfigurations extends
 		AmazonAutoScalingRequest<List<LaunchConfiguration>> {
@@ -29,7 +26,7 @@ public class GetLaunchConfigurations extends
 	/**
 	 * Constructs a new {@link GetLaunchConfigurations} task that fetches all
 	 * launch configurations.
-	 * 
+	 *
 	 * @param awsCredentials
 	 * @param region
 	 */
@@ -40,7 +37,7 @@ public class GetLaunchConfigurations extends
 	/**
 	 * Constructs a new {@link GetLaunchConfigurations} task that fetches a
 	 * particular set of launch configurations.
-	 * 
+	 *
 	 * @param awsCredentials
 	 * @param region
 	 * @param launchConfigurationNames

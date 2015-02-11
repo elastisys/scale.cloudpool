@@ -1,0 +1,10 @@
+{
+	"poolSizeCalculator": "STRICT",
+	"adapters": [
+		{
+			"priority": 100,
+			"cloudAdapterHost": "localhost0",
+			"cloudAdapterPort": 10
+		}
+	]
+}

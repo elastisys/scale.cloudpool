@@ -1,8 +1,0 @@
-{
-	cloudAdapterHost: "localhost",
-	cloudAdapterPort: 1234,
-	priority: 100,
-	basicCredentials: {
-		password: "password"
-	}
-}

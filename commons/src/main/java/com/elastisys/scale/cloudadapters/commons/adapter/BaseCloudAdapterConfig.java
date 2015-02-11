@@ -5,7 +5,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 
-import java.io.File;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -23,7 +22,7 @@ import com.google.gson.JsonObject;
 /**
  * Represents a configuration for a {@link BaseCloudAdapter}.
  *
- * 
+ *
  */
 public class BaseCloudAdapterConfig {
 	/** Default value for {@link #poolUpdatePeriod}. */
@@ -33,12 +32,6 @@ public class BaseCloudAdapterConfig {
 
 	private final ScaleUpConfig scaleUpConfig;
 	private final ScaleDownConfig scaleDownConfig;
-
-	/**
-	 * Optional configuration that determines how to monitor the liveness of
-	 * scaling group members. If left out, liveness checking is disabled.
-	 */
-	private final LivenessConfig liveness;
 
 	/**
 	 * Optional configuration that describes how to send email alerts. If left
@@ -56,12 +49,10 @@ public class BaseCloudAdapterConfig {
 
 	public BaseCloudAdapterConfig(ScalingGroupConfig scalingGroupConfig,
 			ScaleUpConfig scaleUpConfig, ScaleDownConfig scaleDownConfig,
-			LivenessConfig livenessConfig, AlertSettings alertSettings,
-			Integer poolUpdatePeriod) {
+			AlertSettings alertSettings, Integer poolUpdatePeriod) {
 		this.scalingGroup = scalingGroupConfig;
 		this.scaleUpConfig = scaleUpConfig;
 		this.scaleDownConfig = scaleDownConfig;
-		this.liveness = livenessConfig;
 		this.alerts = alertSettings;
 		this.poolUpdatePeriod = poolUpdatePeriod;
 	}
@@ -76,10 +67,6 @@ public class BaseCloudAdapterConfig {
 
 	public ScaleDownConfig getScaleDownConfig() {
 		return this.scaleDownConfig;
-	}
-
-	public LivenessConfig getLiveness() {
-		return this.liveness;
 	}
 
 	public AlertSettings getAlerts() {
@@ -107,9 +94,6 @@ public class BaseCloudAdapterConfig {
 			this.scalingGroup.validate();
 			this.scaleUpConfig.validate();
 			this.scaleDownConfig.validate();
-			if (this.liveness != null) {
-				this.liveness.validate();
-			}
 			if (this.alerts != null) {
 				this.alerts.validate();
 			}
@@ -124,8 +108,7 @@ public class BaseCloudAdapterConfig {
 	@Override
 	public int hashCode() {
 		return Objects.hashCode(this.scalingGroup, this.scaleUpConfig,
-				this.scaleDownConfig, this.liveness, this.alerts,
-				this.poolUpdatePeriod);
+				this.scaleDownConfig, this.alerts, this.poolUpdatePeriod);
 	}
 
 	@Override
@@ -135,7 +118,6 @@ public class BaseCloudAdapterConfig {
 			return equal(this.scalingGroup, that.scalingGroup)
 					&& equal(this.scaleUpConfig, that.scaleUpConfig)
 					&& equal(this.scaleDownConfig, that.scaleDownConfig)
-					&& equal(this.liveness, that.liveness)
 					&& equal(this.alerts, that.alerts)
 					&& equal(this.poolUpdatePeriod, that.poolUpdatePeriod);
 		}
@@ -151,7 +133,7 @@ public class BaseCloudAdapterConfig {
 	 * Describes how the {@link ScalingGroup} implementation identifies/manages
 	 * scaling group members and connects to its cloud provider.
 	 *
-	 * 
+	 *
 	 *
 	 */
 	public static class ScalingGroupConfig {
@@ -222,7 +204,7 @@ public class BaseCloudAdapterConfig {
 	/**
 	 * Describes how to provision additional servers (on scale-up).
 	 *
-	 * 
+	 *
 	 *
 	 */
 	public static class ScaleUpConfig {
@@ -313,7 +295,7 @@ public class BaseCloudAdapterConfig {
 	/**
 	 * Describes how to decommission servers (on scale-down).
 	 *
-	 * 
+	 *
 	 *
 	 */
 	public static class ScaleDownConfig {
@@ -382,402 +364,7 @@ public class BaseCloudAdapterConfig {
 	}
 
 	/**
-	 * Configuration that determines how to monitor the liveness of scaling
-	 * group members.
-	 *
-	 * 
-	 *
-	 */
-	public static class LivenessConfig {
-		/**
-		 * The SSH port to connect to on machines in the scaling group. Defaults
-		 * to {@code 22}.
-		 */
-		private final Integer sshPort;
-
-		/**
-		 * The user name to use (together with the {@code loginKey} when logging
-		 * in remotely (over SSH) against machines in the scaling group.
-		 */
-		private final String loginUser;
-		/**
-		 * The path to the private key file of the key pair used to launch new
-		 * machine instances in the scaling group. This key is used to log in
-		 * remotely (over SSH) against machines in the scaling group.
-		 */
-		private final String loginKey;
-		/**
-		 * Configuration for the boot-time liveness test, which waits for a
-		 * server to come live when a new server is provisioned in the scaling
-		 * group.
-		 */
-		private final BootTimeLivenessCheck bootTimeCheck;
-		/**
-		 * Configuration for the run-time liveness test, which is performed
-		 * periodically to verify that scaling group members are still
-		 * operational.
-		 */
-		private final RunTimeLivenessCheck runTimeCheck;
-
-		public LivenessConfig(int sshPort, String loginUser, String loginKey,
-				BootTimeLivenessCheck bootTimeCheck,
-				RunTimeLivenessCheck runTimeCheck) {
-			this.sshPort = sshPort;
-			this.loginUser = loginUser;
-			this.loginKey = loginKey;
-			this.bootTimeCheck = bootTimeCheck;
-			this.runTimeCheck = runTimeCheck;
-		}
-
-		/**
-		 * Returns the port to use when running SSH commands on machines in the
-		 * scaling group.
-		 *
-		 * @return
-		 */
-		public Integer getSshPort() {
-			return Optional.fromNullable(this.sshPort).or(22);
-		}
-
-		/**
-		 * Returns the user name to use (together with the {@code loginKey} when
-		 * logging in remotely (over SSH) against machines in the scaling group.
-		 *
-		 * @return
-		 */
-		public String getLoginUser() {
-			return this.loginUser;
-		}
-
-		/**
-		 * Returns the path to the private key file of the key pair used to
-		 * launch new machine instances in the scaling group. This key is used
-		 * to log in remotely (over SSH) against machines in the scaling group.
-		 *
-		 * @return
-		 */
-		public String getLoginKey() {
-			return this.loginKey;
-		}
-
-		/**
-		 * Returns the configuration for the boot-time liveness test, which
-		 * waits for a server to come live when a new server is provisioned in
-		 * the scaling group.
-		 *
-		 * @return the bootTimeCheck
-		 */
-		public BootTimeLivenessCheck getBootTimeCheck() {
-			return this.bootTimeCheck;
-		}
-
-		/**
-		 * Returns the configuration for the run-time liveness test, which is
-		 * performed periodically to verify that scaling group members are still
-		 * operational.
-		 *
-		 * @return the runTimeCheck
-		 */
-		public RunTimeLivenessCheck getRunTimeCheck() {
-			return this.runTimeCheck;
-		}
-
-		/**
-		 * Performs basic validation of this configuration.
-		 *
-		 * @throws CloudAdapterException
-		 */
-		public void validate() throws CloudAdapterException {
-			try {
-				checkArgument(getSshPort() > 0, "sshPort must be > 0");
-				checkNotNull(this.loginUser, "login user cannot be null");
-				checkNotNull(this.loginKey, "login key cannot be null");
-				File keyFile = new File(this.loginKey);
-				checkArgument(keyFile.isFile(),
-						"login key '%s' is not a valid file",
-						keyFile.getAbsolutePath());
-				checkNotNull(this.bootTimeCheck,
-						"missing boot-time liveness check");
-				checkNotNull(this.runTimeCheck,
-						"missing run-time liveness check");
-
-				this.bootTimeCheck.validate();
-				this.runTimeCheck.validate();
-			} catch (Exception e) {
-				throw new CloudAdapterException(format(
-						"failed to validate liveness configuration: %s",
-						e.getMessage()), e);
-			}
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hashCode(getSshPort(), this.loginUser,
-					this.loginKey, this.bootTimeCheck, this.runTimeCheck);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (obj instanceof LivenessConfig) {
-				LivenessConfig that = (LivenessConfig) obj;
-				return equal(this.getSshPort(), that.getSshPort())
-						&& equal(this.loginUser, that.loginUser)
-						&& equal(this.loginKey, that.loginKey)
-						&& equal(this.bootTimeCheck, that.bootTimeCheck)
-						&& equal(this.runTimeCheck, that.runTimeCheck);
-			}
-			return false;
-		}
-
-		@Override
-		public String toString() {
-			return JsonUtils.toPrettyString(JsonUtils.toJson(this, true));
-		}
-	}
-
-	/**
-	 * Configuration for boot-time liveness tests, which wait for a server to
-	 * come live when a new server is provisioned in the scaling group.
-	 *
-	 * 
-	 *
-	 */
-	public static class BootTimeLivenessCheck {
-		/**
-		 * The command/script (executed over SSH) used to determine when a
-		 * booting machine is up and running. A machine instance is considered
-		 * live when the command is successful (zero exit code).
-		 */
-		private final String command;
-		/**
-		 * The maximum number of attempts to run the liveness test before
-		 * failing.
-		 */
-		private final Integer maxRetries;
-		/**
-		 * The delay (in seconds) between two successive liveness command
-		 * retries.
-		 */
-		private final Integer retryDelay;
-
-		public BootTimeLivenessCheck(String command, int maxRetries,
-				int retryDelay) {
-			this.command = command;
-			this.maxRetries = maxRetries;
-			this.retryDelay = retryDelay;
-		}
-
-		/**
-		 * Returns the command/script (executed over SSH) used to determine when
-		 * a booting machine is up and running. A machine instance is considered
-		 * live when the command is successful (zero exit code).
-		 *
-		 * @return the command
-		 */
-		public String getCommand() {
-			return this.command;
-		}
-
-		/**
-		 * Returns the maximum number of attempts to run the liveness test
-		 * before failing.
-		 *
-		 * @return the maxRetries
-		 */
-		public int getMaxRetries() {
-			return this.maxRetries;
-		}
-
-		/**
-		 * Returns the delay (in seconds) between two successive liveness
-		 * command retries.
-		 *
-		 * @return the retryDelay
-		 */
-		public int getRetryDelay() {
-			return this.retryDelay;
-		}
-
-		/**
-		 * Performs basic validation of this configuration.
-		 *
-		 * @throws CloudAdapterException
-		 */
-		public void validate() throws CloudAdapterException {
-			try {
-				checkNotNull(this.command,
-						"boot-time liveness command cannot be null");
-				checkNotNull(this.maxRetries, "missing maxRetries");
-				checkNotNull(this.retryDelay, "missing retryDelay");
-
-				checkArgument(this.maxRetries >= 0,
-						"boot-time liveness max retries must be >= 0");
-				checkArgument(this.retryDelay >= 0,
-						"boot-time liveness retry delay must be >= 0");
-			} catch (Exception e) {
-				throw new CloudAdapterException(format(
-						"failed to validate bootTimeLiveness config: %s",
-						e.getMessage()), e);
-			}
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hashCode(this.command, this.maxRetries,
-					this.retryDelay);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (obj instanceof BootTimeLivenessCheck) {
-				BootTimeLivenessCheck that = (BootTimeLivenessCheck) obj;
-				return equal(this.command, that.command)
-						&& equal(this.maxRetries, that.maxRetries)
-						&& equal(this.retryDelay, that.retryDelay);
-			}
-			return false;
-		}
-
-		@Override
-		public String toString() {
-			return JsonUtils.toPrettyString(JsonUtils.toJson(this, true));
-		}
-	}
-
-	/**
-	 * Configuration for run-time liveness tests, which are performed
-	 * periodically to verify that scaling group members are still operational.
-	 *
-	 * 
-	 *
-	 */
-	public static class RunTimeLivenessCheck {
-		/**
-		 * The command/script (executed over SSH) used to periodically verify
-		 * that running servers in the pool are still up and running. A machine
-		 * instance is considered live when the command is successful (zero exit
-		 * code).
-		 */
-		private final String command;
-		/**
-		 * The time (in seconds) between two successive liveness test runs.
-		 */
-		private final Integer period;
-		/**
-		 * The maximum number of attempts to run the liveness test before
-		 * deeming an instance unhealthy.
-		 */
-		private final Integer maxRetries;
-		/**
-		 * The delay (in seconds) between two successive liveness command
-		 * retries.
-		 */
-		private final Integer retryDelay;
-
-		public RunTimeLivenessCheck(String command, int period, int maxRetries,
-				int retryDelay) {
-			this.command = command;
-			this.period = period;
-			this.maxRetries = maxRetries;
-			this.retryDelay = retryDelay;
-		}
-
-		/**
-		 * Returns the command/script (executed over SSH) used to periodically
-		 * verify that running servers in the pool are still up and running. A
-		 * machine instance is considered live when the command is successful
-		 * (zero exit code).
-		 *
-		 * @return the command
-		 */
-		public String getCommand() {
-			return this.command;
-		}
-
-		/**
-		 * Returns the time (in seconds) between two successive liveness test
-		 * runs.
-		 *
-		 * @return the period
-		 */
-		public int getPeriod() {
-			return this.period;
-		}
-
-		/**
-		 * Returns the maximum number of attempts to run the liveness test
-		 * before deeming an instance unhealthy.
-		 *
-		 * @return the maxRetries
-		 */
-		public int getMaxRetries() {
-			return this.maxRetries;
-		}
-
-		/**
-		 * Returns the delay (in seconds) between two successive liveness
-		 * command retries.
-		 *
-		 * @return the retryDelay
-		 */
-		public int getRetryDelay() {
-			return this.retryDelay;
-		}
-
-		/**
-		 * Performs basic validation of this configuration.
-		 *
-		 * @throws CloudAdapterException
-		 */
-		public void validate() throws CloudAdapterException {
-			try {
-				checkNotNull(this.command,
-						"run-time liveness test command cannot be null");
-				checkNotNull(this.period, "missing period");
-				checkNotNull(this.maxRetries, "missing maxRetries");
-				checkNotNull(this.retryDelay, "missing retryDelay");
-				checkArgument(this.period > 0,
-						"run-time liveness test period must be > 0");
-				checkArgument(this.maxRetries > 0,
-						"run-time liveness test max retries must be >= 0");
-				checkArgument(this.retryDelay >= 0,
-						"run-time liveness test retry delay must be >= 0");
-			} catch (Exception e) {
-				throw new CloudAdapterException(format(
-						"failed to validate runTimeLiveness config: %s",
-						e.getMessage()), e);
-			}
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hashCode(this.command, this.period, this.maxRetries,
-					this.retryDelay);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (obj instanceof RunTimeLivenessCheck) {
-				RunTimeLivenessCheck that = (RunTimeLivenessCheck) obj;
-				return equal(this.command, that.command)
-						&& equal(this.period, that.period)
-						&& equal(this.maxRetries, that.maxRetries)
-						&& equal(this.retryDelay, that.retryDelay);
-			}
-			return false;
-		}
-
-		@Override
-		public String toString() {
-			return JsonUtils.toPrettyString(JsonUtils.toJson(this, true));
-		}
-	}
-
-	/**
 	 * Configuration that describes how to send email alerts.
-	 *
-	 * 
-	 *
 	 */
 	public static class AlertSettings {
 		/**
@@ -913,7 +500,7 @@ public class BaseCloudAdapterConfig {
 	 * Connection settings for the SMTP server through which emails are to be
 	 * sent.
 	 *
-	 * 
+	 *
 	 *
 	 */
 	public static class MailServerSettings {

@@ -16,13 +16,13 @@ import org.joda.time.DateTime;
 import com.elastisys.scale.cloudadapers.api.CloudAdapter;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Function;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 /**
@@ -38,18 +38,20 @@ public class Machine {
 
 	/** The identifier of the {@link Machine} . */
 	private final String id;
-	/** The execution state of the {@link Machine}. */
-	private MachineState state;
 	/**
-	 * Additional state information about the operational status of the machine,
-	 * for machines in an <i>active machine state</i> (either
-	 * {@link MachineState#PENDING} or {@link MachineState#RUNNING}). This is an
-	 * optional field that can be included for cloud adapters that perform
-	 * liveness tests on machine pool members. See the table below for the range
-	 * of possible values. If not specified, this field is set to
-	 * {@link LivenessState#UNKNOWN}.
+	 * The execution state of the {@link Machine} reported by the
+	 * infrastructure.
 	 */
-	private LivenessState liveness;
+	private MachineState machineState;
+	/**
+	 * The operational state of the service running on the machine. This is
+	 * different from the {@link MachineState}, which is the execution state of
+	 * the {@link Machine} reported by the infrastructure.
+	 * <p/>
+	 * If the {@link CloudAdapter} is not aware of the service state for a
+	 * machine, this field is set to {@link ServiceState#UNKNOWN}.
+	 */
+	private ServiceState serviceState;
 
 	/**
 	 * The launch time of the {@link Machine} if it has been launched. This
@@ -67,14 +69,16 @@ public class Machine {
 	 * Depending on the state of the {@link Machine}, this list may be empty.
 	 */
 	private final List<String> privateIps;
-	/**
-	 * Additional meta-data about the {@link Machine} (as a JSON document).
-	 */
-	private final JsonElement metadata;
 
 	/**
-	 * Constructs a new {@link Machine} with {@link LivenessState#UNKNOWN}
-	 * liveness state.
+	 * Additional cloud provider-specific meta data about the {@link Machine}.
+	 * This field is optional (may be <code>null</code>).
+	 */
+	private final JsonObject metadata;
+
+	/**
+	 * Constructs a new {@link Machine} with {@link ServiceState#UNKNOWN}
+	 * service state and without any cloud-specific machine meta data.
 	 *
 	 * @param id
 	 *            The identifier of the {@link Machine} .
@@ -94,16 +98,43 @@ public class Machine {
 	 *            {@link Machine}. If the machine hasn't (yet) been assigned any
 	 *            IP addresses, this attribute can be set to <code>null</code>
 	 *            or an empty list.
-	 * @param metadata
-	 *            Additional meta-data about the {@link Machine} (as a JSON
-	 *            document). Can be <code>null</code>, in which case it is set
-	 *            to an empty {@link JsonObject}.
 	 */
 	public Machine(String id, MachineState state, DateTime launchtime,
-			List<String> publicIps, List<String> privateIps,
-			JsonElement metadata) {
-		this(id, state, LivenessState.UNKNOWN, launchtime, publicIps,
-				privateIps, metadata);
+			List<String> publicIps, List<String> privateIps) {
+		this(id, state, ServiceState.UNKNOWN, launchtime, publicIps,
+				privateIps, null);
+	}
+
+	/**
+	 * Constructs a new {@link Machine} without any cloud-specific machine meta
+	 * data.
+	 *
+	 * @param id
+	 *            The identifier of the {@link Machine}.
+	 * @param machineState
+	 *            The execution state of the {@link Machine}.
+	 * @param serviceState
+	 *            The operational state of the service.
+	 * @param launchtime
+	 *            The launch time of the {@link Machine} if it has been
+	 *            launched. This attribute may be <code>null</code>, depending
+	 *            on the state of the {@link Machine}.
+	 * @param publicIps
+	 *            The list of public IP addresses associated with this
+	 *            {@link Machine}. If the machine hasn't (yet) been assigned any
+	 *            IP addresses, this attribute can be set to <code>null</code>
+	 *            or an empty list.
+	 * @param privateIps
+	 *            The list of private IP addresses associated with this
+	 *            {@link Machine}. If the machine hasn't (yet) been assigned any
+	 *            IP addresses, this attribute can be set to <code>null</code>
+	 *            or an empty list.
+	 */
+	public Machine(String id, MachineState machineState,
+			ServiceState serviceState, DateTime launchtime,
+			List<String> publicIps, List<String> privateIps) {
+		this(id, machineState, serviceState, launchtime, publicIps, privateIps,
+				null);
 	}
 
 	/**
@@ -111,13 +142,10 @@ public class Machine {
 	 *
 	 * @param id
 	 *            The identifier of the {@link Machine}.
-	 * @param state
-	 *            The state of the {@link Machine}.
-	 * @param liveness
-	 *            Additional state information about the operational status of
-	 *            the machine, for machines in an <i>active machine state</i>
-	 *            (either {@link MachineState#PENDING} or
-	 *            {@link MachineState#RUNNING}).
+	 * @param machineState
+	 *            The execution state of the {@link Machine}.
+	 * @param serviceState
+	 *            The operational state of the service.
 	 * @param launchtime
 	 *            The launch time of the {@link Machine} if it has been
 	 *            launched. This attribute may be <code>null</code>, depending
@@ -133,26 +161,25 @@ public class Machine {
 	 *            IP addresses, this attribute can be set to <code>null</code>
 	 *            or an empty list.
 	 * @param metadata
-	 *            Additional meta-data about the {@link Machine} (as a JSON
-	 *            document). Can be <code>null</code>, in which case it is set
-	 *            to an empty {@link JsonObject}.
+	 *            Additional cloud provider-specific meta data about the
+	 *            {@link Machine}. May be <code>null</code>.
 	 */
-	public Machine(String id, MachineState state, LivenessState liveness,
-			DateTime launchtime, List<String> publicIps,
-			List<String> privateIps, JsonElement metadata) {
+	public Machine(String id, MachineState machineState,
+			ServiceState serviceState, DateTime launchtime,
+			List<String> publicIps, List<String> privateIps, JsonObject metadata) {
 		checkNotNull(id, "missing id");
-		checkNotNull(state, "missing state");
-		checkNotNull(liveness, "missing liveness");
+		checkNotNull(machineState, "missing machineState");
+		checkNotNull(serviceState, "missing serviceState");
 
 		this.id = id;
-		this.state = state;
-		this.liveness = liveness;
+		this.machineState = machineState;
+		this.serviceState = serviceState;
 		this.launchtime = launchtime;
 		this.publicIps = Optional.fromNullable(publicIps).or(
 				new ArrayList<String>());
 		this.privateIps = Optional.fromNullable(privateIps).or(
 				new ArrayList<String>());
-		this.metadata = Optional.fromNullable(metadata).or(new JsonObject());
+		this.metadata = metadata;
 	}
 
 	/**
@@ -165,39 +192,39 @@ public class Machine {
 	}
 
 	/**
-	 * Returns the state of the {@link Machine}.
+	 * Returns the execution state of the {@link Machine}.
 	 *
 	 * @return
 	 */
-	public MachineState getState() {
-		return this.state;
+	public MachineState getMachineState() {
+		return this.machineState;
 	}
 
 	/**
-	 * Sets the state of the {@link Machine}.
+	 * Sets the execution state of the {@link Machine}.
 	 *
 	 * @return
 	 */
-	public void setState(MachineState state) {
-		this.state = state;
+	public void setMachineState(MachineState state) {
+		this.machineState = state;
 	}
 
 	/**
-	 * Returns the liveness state of the {@link Machine}.
+	 * Returns the service state of the {@link Machine}.
 	 *
 	 * @return
 	 */
-	public LivenessState getLiveness() {
-		return this.liveness;
+	public ServiceState getServiceState() {
+		return this.serviceState;
 	}
 
 	/**
-	 * Sets the liveness state of the {@link Machine}.
+	 * Sets the service state of the {@link Machine}.
 	 *
-	 * @param liveness
+	 * @param serviceState
 	 */
-	public void setLiveness(LivenessState liveness) {
-		this.liveness = liveness;
+	public void setServiceState(ServiceState serviceState) {
+		this.serviceState = serviceState;
 	}
 
 	/**
@@ -234,20 +261,21 @@ public class Machine {
 	}
 
 	/**
-	 * Returns additional meta-data about the {@link Machine} (as a JSON
-	 * document).
+	 * Returns any additional cloud provider-specific meta data about the
+	 * {@link Machine} if set, otherwise <code>null</code>.
 	 *
 	 * @return
 	 */
-	public JsonElement getMetadata() {
+	public JsonObject getMetadata() {
 		return this.metadata;
 	}
 
 	@Override
 	public int hashCode() {
 		return Objects
-				.hashCode(this.id, this.state, this.liveness, this.launchtime,
-						this.publicIps, this.privateIps, this.metadata);
+				.hashCode(this.id, this.machineState, this.serviceState,
+						this.launchtime, this.publicIps, this.privateIps,
+						this.metadata);
 	}
 
 	@Override
@@ -256,16 +284,15 @@ public class Machine {
 			Machine that = (Machine) obj;
 			final boolean launchtimesEqual;
 			if (this.launchtime != null && that.launchtime != null) {
-				launchtimesEqual = this.launchtime.getMillis() == that.launchtime
-						.getMillis();
+				launchtimesEqual = this.launchtime.isEqual(that.launchtime);
 			} else if (this.launchtime == null && that.launchtime == null) {
 				launchtimesEqual = true;
 			} else {
 				launchtimesEqual = false;
 			}
 			return Objects.equal(this.id, that.id)
-					&& Objects.equal(this.state, that.state)
-					&& Objects.equal(this.liveness, that.liveness)
+					&& Objects.equal(this.machineState, that.machineState)
+					&& Objects.equal(this.serviceState, that.serviceState)
 					&& launchtimesEqual
 					&& Objects.equal(this.publicIps, that.publicIps)
 					&& Objects.equal(this.privateIps, that.privateIps)
@@ -276,8 +303,9 @@ public class Machine {
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this).add("id", this.id)
-				.add("state", this.state).add("liveness", this.liveness)
+		return MoreObjects.toStringHelper(this).add("id", this.id)
+				.add("machineState", this.machineState)
+				.add("serviceState", this.serviceState)
 				.add("launchtime", this.launchtime)
 				.add("publicIps", this.publicIps)
 				.add("privateIps", this.privateIps)
@@ -340,16 +368,16 @@ public class Machine {
 
 	/**
 	 * Returns a {@link Predicate} that returns <code>true</code> when passed a
-	 * {@link Machine} in a given {@link LivenessState}.
+	 * {@link Machine} in a given {@link ServiceState}.
 	 *
-	 * @param livenessState
-	 *            The {@link LivenessState} for which this {@link Predicate}
-	 *            will return <code>true</code>.
+	 * @param serviceState
+	 *            The {@link ServiceState} for which this {@link Predicate} will
+	 *            return <code>true</code>.
 	 * @return
 	 */
-	public static Predicate<? super Machine> withLivenessState(
-			LivenessState livenessState) {
-		return new MachineWithLivenessState(livenessState);
+	public static Predicate<? super Machine> withServiceState(
+			ServiceState serviceState) {
+		return new MachineWithServiceState(serviceState);
 	}
 
 	/**
@@ -369,28 +397,25 @@ public class Machine {
 
 		@Override
 		public boolean apply(Machine machine) {
-			return machine.getState() == this.state;
+			return machine.getMachineState() == this.state;
 		}
 	}
 
 	/**
 	 * A {@link Predicate} that returns <code>true</code> when passed a
-	 * {@link Machine} in a given {@link MachineState}.
-	 *
-	 *
-	 *
+	 * {@link Machine} in a given {@link ServiceState}.
 	 */
-	public static class MachineWithLivenessState implements Predicate<Machine> {
-		private final LivenessState livenessState;
+	public static class MachineWithServiceState implements Predicate<Machine> {
+		private final ServiceState serviceState;
 
-		public MachineWithLivenessState(LivenessState livenessState) {
-			checkNotNull(livenessState);
-			this.livenessState = livenessState;
+		public MachineWithServiceState(ServiceState serviceState) {
+			checkNotNull(serviceState);
+			this.serviceState = serviceState;
 		}
 
 		@Override
 		public boolean apply(Machine machine) {
-			return machine.getLiveness() == this.livenessState;
+			return machine.getServiceState() == this.serviceState;
 		}
 	}
 
@@ -403,8 +428,6 @@ public class Machine {
 	 * {@link Iterables#transform(Iterable, Function)}.
 	 *
 	 * @see http://code.google.com/p/guava-libraries/wiki/FunctionalExplained
-	 *
-	 *
 	 */
 	public static class MachineStateExtractor implements
 			Function<Machine, MachineState> {
@@ -415,7 +438,7 @@ public class Machine {
 		 */
 		@Override
 		public MachineState apply(Machine machine) {
-			return machine.getState();
+			return machine.getMachineState();
 		}
 	}
 
@@ -444,21 +467,36 @@ public class Machine {
 
 	/**
 	 * Returns a {@link Predicate} that returns <code>true</code> when passed a
+	 * {@link Machine} that contributes to the effective size of the machine
+	 * pool, meaning that it has been allocated from the underlying
+	 * infrastructure ({@link MachineState#REQUESTED},
+	 * {@link MachineState#PENDING} or {@link MachineState#RUNNING}) and is not
+	 * marked {@link ServiceState#OUT_OF_SERVICE}.
+	 *
+	 * @return
+	 */
+	public static Predicate<? super Machine> isEffectiveMember() {
+		return new EffectiveMemberPredicate();
+	}
+
+	/**
+	 * Returns a {@link Predicate} that returns <code>true</code> when passed a
 	 * {@link Machine} that has been allocated from the underlying
-	 * infrastructure and is in a non-terminal state, as indicated by it being
-	 * in one of the states: {@link MachineState#REQUESTED},
-	 * {@link MachineState#PENDING} or {@link MachineState#RUNNING}.
+	 * infrastructure (machine state {@link MachineState#REQUESTED},
+	 * {@link MachineState#PENDING} or {@link MachineState#RUNNING}).
 	 *
 	 * @return
 	 */
 	public static Predicate<? super Machine> isAllocated() {
-		return new MachineAllocatedPredicate();
+		return new AllocatedMachinePredicate();
 	}
 
 	/**
 	 * Returns a {@link Predicate} that returns <code>true</code> when passed a
 	 * {@link Machine} that is active, as indicated by it being in one of the
-	 * states: {@link MachineState#PENDING} or {@link MachineState#RUNNING}.
+	 * machine states {@link MachineState#PENDING} or
+	 * {@link MachineState#RUNNING} while <b>not</b> being in service state
+	 * {@link ServiceState#OUT_OF_SERVICE}.
 	 *
 	 * @return
 	 */
@@ -468,30 +506,47 @@ public class Machine {
 
 	/**
 	 * A {@link Predicate} that returns <code>true</code> when passed a
-	 * {@link Machine} that has been allocated from the underlying
-	 * infrastructure and is in a non-terminal state, as indicated by it being
-	 * in one of the states: {@link MachineState#REQUESTED},
-	 * {@link MachineState#PENDING} or {@link MachineState#RUNNING}.
-	 *
-	 *
+	 * {@link Machine} that contributes to the effective size of the machine
+	 * pool, meaning that it has been allocated from the underlying
+	 * infrastructure ({@link MachineState#REQUESTED},
+	 * {@link MachineState#PENDING} or {@link MachineState#RUNNING}) and is not
+	 * marked {@link ServiceState#OUT_OF_SERVICE}.
 	 */
-	public static class MachineAllocatedPredicate implements Predicate<Machine> {
+	public static class EffectiveMemberPredicate implements Predicate<Machine> {
 		private static final Set<MachineState> allocatedStates = Sets
 				.newHashSet(MachineState.REQUESTED, MachineState.PENDING,
 						MachineState.RUNNING);
 
 		@Override
 		public boolean apply(Machine machine) {
-			return allocatedStates.contains(machine.getState());
+			return allocatedStates.contains(machine.getMachineState())
+					&& (machine.getServiceState() != ServiceState.OUT_OF_SERVICE);
+		}
+	}
+
+	/**
+	 * A {@link Predicate} that returns <code>true</code> when passed a
+	 * {@link Machine} that has been allocated from the underlying
+	 * infrastructure (machine state {@link MachineState#REQUESTED},
+	 * {@link MachineState#PENDING} or {@link MachineState#RUNNING}).
+	 */
+	public static class AllocatedMachinePredicate implements Predicate<Machine> {
+		private static final Set<MachineState> allocatedStates = Sets
+				.newHashSet(MachineState.REQUESTED, MachineState.PENDING,
+						MachineState.RUNNING);
+
+		@Override
+		public boolean apply(Machine machine) {
+			return allocatedStates.contains(machine.getMachineState());
 		}
 	}
 
 	/**
 	 * A {@link Predicate} that returns <code>true</code> when passed a
 	 * {@link Machine} that is active, as indicated by it being in one of the
-	 * states: {@link MachineState#PENDING} or {@link MachineState#RUNNING}.
-	 *
-	 *
+	 * machine states {@link MachineState#PENDING} or
+	 * {@link MachineState#RUNNING} while <b>not</b> being in service state
+	 * {@link ServiceState#OUT_OF_SERVICE}.
 	 */
 	public static class MachineActivePredicate implements Predicate<Machine> {
 		private static final Set<MachineState> activeStates = Sets.newHashSet(
@@ -500,7 +555,8 @@ public class Machine {
 		@Override
 		public boolean apply(Machine machine) {
 			return machine.getLaunchtime() != null
-					&& activeStates.contains(machine.getState());
+					&& activeStates.contains(machine.getMachineState())
+					&& (machine.getServiceState() != ServiceState.OUT_OF_SERVICE);
 		}
 	}
 

@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Lists.transform;
 import static java.lang.String.format;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -14,7 +15,9 @@ import org.jclouds.openstack.nova.v2_0.domain.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.elastisys.scale.cloudadapers.api.NotFoundException;
 import com.elastisys.scale.cloudadapers.api.types.Machine;
+import com.elastisys.scale.cloudadapers.api.types.ServiceState;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapter;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig;
 import com.elastisys.scale.cloudadapters.commons.adapter.BaseCloudAdapterConfig.ScaleUpConfig;
@@ -38,7 +41,7 @@ import com.google.gson.JsonObject;
  *
  * @see BaseCloudAdapter
  *
- * 
+ *
  *
  */
 public class OpenStackScalingGroup implements ScalingGroup {
@@ -146,6 +149,9 @@ public class OpenStackScalingGroup implements ScalingGroup {
 	public void terminateMachine(String machineId) throws ScalingGroupException {
 		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
 
+		// verify that machine exists in group
+		getMachineOrFail(machineId);
+
 		try {
 			this.client.terminateServer(machineId);
 		} catch (Exception e) {
@@ -157,10 +163,93 @@ public class OpenStackScalingGroup implements ScalingGroup {
 	}
 
 	@Override
+	public void attachMachine(String machineId) throws NotFoundException,
+	ScalingGroupException {
+		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
+
+		Map<String, String> tags = ImmutableMap.of(Constants.SCALING_GROUP_TAG,
+				getScalingGroupName());
+		try {
+			this.client.tagServer(machineId, tags);
+		} catch (Exception e) {
+			Throwables.propagateIfInstanceOf(e, NotFoundException.class);
+			Throwables.propagateIfInstanceOf(e, ScalingGroupException.class);
+			String message = format("failed to attach server \"%s\": %s",
+					machineId, e.getMessage());
+			throw new ScalingGroupException(message, e);
+		}
+
+	}
+
+	@Override
+	public void detachMachine(String machineId) throws NotFoundException,
+	ScalingGroupException {
+		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
+
+		// verify that machine exists in group
+		getMachineOrFail(machineId);
+
+		try {
+			List<String> tagKeys = Arrays.asList(Constants.SCALING_GROUP_TAG);
+			this.client.untagServer(machineId, tagKeys);
+		} catch (Exception e) {
+			Throwables.propagateIfInstanceOf(e, ScalingGroupException.class);
+			String message = format("failed to detach server \"%s\": %s",
+					machineId, e.getMessage());
+			throw new ScalingGroupException(message, e);
+		}
+	}
+
+	@Override
+	public void setServiceState(String machineId, ServiceState serviceState)
+			throws NotFoundException {
+		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
+
+		// verify that machine exists in group
+		getMachineOrFail(machineId);
+
+		try {
+			LOG.debug("service state {} reported for {}", serviceState.name(),
+					machineId);
+			// set serviceState as tag on machine instance
+			Map<String, String> tags = ImmutableMap.of(
+					Constants.SERVICE_STATE_TAG, serviceState.name());
+			this.client.tagServer(machineId, tags);
+		} catch (Exception e) {
+			Throwables.propagateIfInstanceOf(e, ScalingGroupException.class);
+			String message = format(
+					"failed to tag service state on server \"%s\": %s",
+					machineId, e.getMessage());
+			throw new ScalingGroupException(message, e);
+		}
+	}
+
+	@Override
 	public String getScalingGroupName() {
 		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
 
 		return this.scalingGroupName.get();
+	}
+
+	/**
+	 * Retrieves a particular member machine from the scaling group or throws an
+	 * exception if it could not be found.
+	 *
+	 * @param machineId
+	 *            The id of the machine of interest.
+	 * @return
+	 * @throws NotFoundException
+	 */
+	private Machine getMachineOrFail(String machineId) throws NotFoundException {
+		List<Machine> machines = listMachines();
+		for (Machine machine : machines) {
+			if (machine.getId().equals(machineId)) {
+				return machine;
+			}
+		}
+
+		throw new NotFoundException(String.format(
+				"no machine with id '%s' found in scaling group", machineId));
 	}
 
 	/**
