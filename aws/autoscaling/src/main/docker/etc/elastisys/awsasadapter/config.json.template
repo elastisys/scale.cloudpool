@@ -19,21 +19,6 @@
     "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
     "instanceHourMargin": 300
   },
-  "liveness": {
-    "loginUser": "ubuntu",
-    "loginKey": "${INSTANCE_KEY}",
-    "bootTimeCheck": {
-      "command": "sudo service ${SERVICE} status | grep 'is running'",
-      "retryDelay": 20,
-      "maxRetries": 30
-    },
-    "runTimeCheck": {      
-      "command": "sudo service ${SERVICE} status | grep 'is running'",
-      "period": 60,
-      "maxRetries": 12,
-      "retryDelay": 5
-    }    
-  },
   "alerts": {
     "subject": "[elastisys:scale] scaling group alert for ${SCALING_GROUP_NAME}",    
     "recipients": ["${EMAIL_ADDRESS}"],
