@@ -13,9 +13,7 @@ import com.elastisys.scale.cloudadapers.api.CloudAdapter;
 import com.elastisys.scale.cloudadapers.api.types.Machine;
 import com.elastisys.scale.cloudadapers.api.types.ServiceState;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.MoreObjects;
 import com.google.common.collect.Lists;
 
 /**
@@ -129,7 +127,7 @@ public class CloudadapterCommandLineDriver {
 			} else {
 				// exclude metadata
 				System.out.println(Joiner.on("\n").join(
-						Lists.transform(machines, new ToShortMachineFormat())));
+						Lists.transform(machines, Machine.toShortFormat())));
 			}
 			break;
 		}
@@ -171,21 +169,6 @@ public class CloudadapterCommandLineDriver {
 			System.err.println(String.format(
 					"error: unrecognized command '%s'", command));
 		}
-		}
-	}
-
-	private static class ToShortMachineFormat implements
-			Function<Machine, String> {
-
-		@Override
-		public String apply(Machine input) {
-			return MoreObjects.toStringHelper("Machine")
-					.add("id", input.getId())
-					.add("machineState", input.getMachineState().name())
-					.add("serviceState", input.getServiceState().name())
-					.add("launchtime", input.getLaunchtime())
-					.add("publicIps", input.getPublicIps())
-					.add("privateIps", input.getPrivateIps()).toString();
 		}
 	}
 }

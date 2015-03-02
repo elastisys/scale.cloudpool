@@ -652,4 +652,33 @@ public class Machine {
 		Collections.sort(list, comparator);
 		return list;
 	}
+
+	/**
+	 * Factory method for the {@link ToShortMachineFormat} {@link Function}.
+	 * 
+	 * @return
+	 */
+	public static Function<Machine, String> toShortFormat() {
+		return new ToShortMachineFormat();
+	}
+
+	/**
+	 * A {@link Function} that, for a given {@link Machine}, returns a string
+	 * representation that excludes any {@link Machine} meta data (which can
+	 * produce quite some log noise).
+	 */
+	public static class ToShortMachineFormat implements
+			Function<Machine, String> {
+
+		@Override
+		public String apply(Machine input) {
+			return MoreObjects.toStringHelper("Machine")
+					.add("id", input.getId())
+					.add("machineState", input.getMachineState().name())
+					.add("serviceState", input.getServiceState().name())
+					.add("launchtime", input.getLaunchtime())
+					.add("publicIps", input.getPublicIps())
+					.add("privateIps", input.getPrivateIps()).toString();
+		}
+	}
 }

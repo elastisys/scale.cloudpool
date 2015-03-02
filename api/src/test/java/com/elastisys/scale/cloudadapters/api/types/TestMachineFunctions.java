@@ -4,6 +4,7 @@ import static com.elastisys.scale.cloudadapters.api.types.TestUtils.ips;
 import static com.elastisys.scale.cloudadapters.api.types.TestUtils.machine;
 import static com.elastisys.scale.cloudadapters.api.types.TestUtils.secondsBetween;
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 
 import org.joda.time.DateTime;
@@ -15,9 +16,12 @@ import com.elastisys.scale.cloudadapers.api.types.Machine.MachineIdExtractor;
 import com.elastisys.scale.cloudadapers.api.types.Machine.MachineStateExtractor;
 import com.elastisys.scale.cloudadapers.api.types.Machine.RemainingInstanceHourTime;
 import com.elastisys.scale.cloudadapers.api.types.MachineState;
+import com.elastisys.scale.cloudadapers.api.types.ServiceState;
+import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Function;
+import com.google.gson.JsonObject;
 
 /**
  * Verifies the behavior of {@link Function}s declared for the {@link Machine}
@@ -192,5 +196,16 @@ public class TestMachineFunctions {
 	@Test(expected = IllegalArgumentException.class)
 	public void testRemainingInstanceHourTimeWithNullLaunchTime() {
 		Machine.remainingInstanceHourTime().apply(machine("i-1", null));
+	}
+
+	@Test
+	public void testToShortMachineFormat() {
+		DateTime now = UtcTime.now();
+		JsonObject metadata = JsonUtils.parseJsonString("{\"id\": \"i-1\"}");
+		Machine m1 = new Machine("i-2", MachineState.RUNNING,
+				ServiceState.UNKNOWN, now, ips("1.2.3.4"), ips("1.2.3.5"),
+				metadata);
+
+		assertFalse(Machine.toShortFormat().apply(m1).contains("metadata"));
 	}
 }
