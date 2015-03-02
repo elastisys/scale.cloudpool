@@ -45,21 +45,6 @@ The `ec2adapter` is configured with a JSON document such as the following:
       "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
       "instanceHourMargin": 300
     },
-    "liveness": {
-      "loginUser": "ubuntu",
-      "loginKey": "/path/to/ec2/instancekey.pem",
-      "bootTimeCheck": {
-        "command": "sudo service apache2 status | grep 'is running'",
-        "retryDelay": 20,
-        "maxRetries": 15
-      },
-      "runTimeCheck": {
-        "command": "sudo service apache2 status | grep 'is running'",
-        "period": 60,
-        "maxRetries": 3,
-        "retryDelay": 10
-      }
-    },
     "alerts": {
       "subject": "[elastisys:scale] scaling group alert for MyScalingGroup",
       "recipients": ["receiver@destination.com"],
@@ -106,37 +91,6 @@ The configuration keys have the following meaning:
       should be set to a conservative and safe value to prevent the machine 
       from being billed for an additional hour. A value of zero is used to 
       specify immediate termination when a scale-down is ordered.
-  - ``liveness``: Configuration that determines how to monitor the liveness 
-    of scaling group members. 
-    - ``sshPort``: The SSH port to connect to on machines in the scaling group. 
-      Defaults to 22.
-    - ``loginUser``: The user name to use (together with the 'loginKey' when 
-      logging in remotely (over SSH) against machines in the scaling group.
-     - ``loginKey``: The path to the private key file of the key pair used to 
-      launch new machine instances. This key is used to log in remotely (over 
-      SSH) against machines in the scaling group.
-    - ``bootTimeCheck``: Configuration for boot-time liveness tests, which wait
-      for a server to come live when a new server is provisioned in the scaling 
-      group. 
-      - ``command``: The command/script (executed over SSH) used to determine 
-        when a booting machine is up and running. A machine instance is 
-        considered live when the command is successful (zero exit code).
-      - ``maxRetries``: The maximum number of attempts to run the liveness test 
-        before failing.
-      - ``retryDelay``: The delay (in seconds) between two successive liveness 
-        command retries.
-    - ``runTimeCheck``: Configuration for run-time liveness tests, which are 
-      performed periodically to verify that scaling group members are still 
-      operational.
-      - ``period``: The time (in seconds) between two successive liveness test runs. 
-      - ``command``: The command/script (executed over SSH) used to periodically 
-        verify that running servers in the pool are still up and running. A 
-        machine instance is considered live when the command is successful (zero 
-        exit code).
-      - ``maxRetries``: The maximum number of attempts to run the liveness test 
-        before failing. 
-      - ``retryDelay``: The delay (in seconds) between two successive liveness 
-        command retries.
   - ``alerts``: Configuration that describes how to send email alerts.
     - ``subject``: The subject line to use in sent mails (Subject).
     - ``recipients``: The receiver list (a list of recipient email addresses).

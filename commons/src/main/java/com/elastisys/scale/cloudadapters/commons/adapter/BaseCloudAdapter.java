@@ -176,8 +176,7 @@ import com.google.gson.JsonObject;
  *
  * If an alerts attribute is present in the configuration, the
  * {@link BaseCloudAdapter} will send alert emails to notify selected recipients
- * of interesting events (such as errors, scale-ups/scale-downs, liveness state
- * changes, etc).
+ * of interesting events (such as error conditions, scale-ups/scale-downs, etc).
  *
  * @see ScalingGroup
  */
@@ -189,12 +188,7 @@ public class BaseCloudAdapter implements CloudAdapter {
 	/** Maximum concurrency in the {@link #executorService}. */
 	private static final int MAX_CONCURRENCY = 20;
 
-	/**
-	 * The original undecorated (no liveness checking) {@link ScalingGroup}
-	 * reference managed by this {@link BaseCloudAdapter}.
-	 */
-	private final ScalingGroup wrappedScalingGroup;
-	/** The (possibly) liveness-check decorated {@link ScalingGroup}. */
+	/** The {@link ScalingGroup} cloud adapter. */
 	private ScalingGroup scalingGroup = null;
 
 	/**
@@ -264,8 +258,7 @@ public class BaseCloudAdapter implements CloudAdapter {
 		checkArgument(scalingGroup != null, "scalingGroup is null");
 		checkArgument(eventBus != null, "eventBus is null");
 
-		this.wrappedScalingGroup = scalingGroup;
-		this.scalingGroup = null;
+		this.scalingGroup = scalingGroup;
 		this.eventBus = eventBus;
 
 		this.jsonSchema = JsonUtils
@@ -333,10 +326,7 @@ public class BaseCloudAdapter implements CloudAdapter {
 			return;
 		}
 		LOG.info("starting {} driving a {}", getClass().getSimpleName(),
-				this.wrappedScalingGroup.getClass().getSimpleName());
-
-		// initialize to original scaling group (without liveness tracking)
-		this.scalingGroup = this.wrappedScalingGroup;
+				this.scalingGroup.getClass().getSimpleName());
 
 		// re-configure scalinggroup
 		LOG.info("configuring scaling group '{}'", config().getScalingGroup()
@@ -385,7 +375,7 @@ public class BaseCloudAdapter implements CloudAdapter {
 	 * from a given {@link MachinePool} .
 	 * <p/>
 	 * If {@link #desiredSize} is already set, this method returns immediately.
-	 * 
+	 *
 	 * @param pool
 	 */
 	private void setDesiredSizeIfUnset(MachinePool pool) {

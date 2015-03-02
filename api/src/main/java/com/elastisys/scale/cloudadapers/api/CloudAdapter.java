@@ -73,7 +73,7 @@ public interface CloudAdapter {
 	 *             If the configuration could not be applied.
 	 */
 	void configure(JsonObject configuration) throws IllegalArgumentException,
-	CloudAdapterException;
+			CloudAdapterException;
 
 	/**
 	 * Returns the configuration currently set for this {@link CloudAdapter}, if
@@ -124,15 +124,15 @@ public interface CloudAdapter {
 
 	/**
 	 * Sets the desired number of machines in the machine pool. This method is
-	 * asynchronous in that the method returns immediately without having
-	 * carried out any required changes to the machine pool.
+	 * asynchronous and returns immediately after updating the desired size.
+	 * There may be a delay before the changes take effect and are reflected in
+	 * the machine pool.
 	 * <p/>
-	 * The {@link CloudAdapter} should take measures to ensure that requested
-	 * machines are recognized as members of the scaling group and returned by
-	 * subsequent calls to {@link #getMachinePool()}. The specific mechanism to
-	 * mark group members, which may depend on the features offered by the
-	 * particular cloud API, is left to the implementation but could, for
-	 * example, make use of tags.
+	 * Note: the {@link CloudAdapter} implementation should take measures to
+	 * ensure that requested machines are recognized as pool members. The
+	 * specific mechanism to mark group members, which may depend on the
+	 * features offered by the particular cloud API, is left to the
+	 * implementation but could, for example, make use of tags.
 	 *
 	 * @param desiredSize
 	 *            The desired number of machines in the pool.
@@ -143,7 +143,7 @@ public interface CloudAdapter {
 	 *             If the operation could not be completed.
 	 */
 	void setDesiredSize(int desiredSize) throws IllegalArgumentException,
-	CloudAdapterException;
+			CloudAdapterException;
 
 	/**
 	 * Terminates a particular machine pool member. The caller can control if a
@@ -198,7 +198,7 @@ public interface CloudAdapter {
 	 *             If the operation could not be completed.
 	 */
 	void attachMachine(String machineId) throws NotFoundException,
-	CloudAdapterException;
+			CloudAdapterException;
 
 	/**
 	 * Removes a member from the pool without terminating it. The machine keeps
