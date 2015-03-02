@@ -1,8 +1,10 @@
 package com.elastisys.scale.cloudadapers.api.types;
 
 import static com.elastisys.scale.cloudadapers.api.types.Machine.isActive;
+import static com.elastisys.scale.cloudadapers.api.types.Machine.toShortFormat;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Lists.transform;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -160,9 +162,10 @@ public class MachinePool {
 
 	@Override
 	public String toString() {
+		List<String> shortPool = transform(this.machines, toShortFormat());
 		return MoreObjects.toStringHelper(this)
-				.add("timestamp", this.timestamp)
-				.add("machines", this.machines).toString();
+				.add("timestamp", this.timestamp).add("machines", shortPool)
+				.toString();
 	}
 
 	/**
