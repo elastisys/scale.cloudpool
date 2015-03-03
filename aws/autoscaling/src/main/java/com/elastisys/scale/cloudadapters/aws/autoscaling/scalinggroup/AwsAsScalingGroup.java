@@ -205,7 +205,6 @@ public class AwsAsScalingGroup implements ScalingGroup {
 
 		// verify that machine exists in group
 		getMachineOrFail(machineId);
-
 		try {
 			if (machineId.startsWith(REQUESTED_ID_PREFIX)) {
 				// we were asked to terminate a placeholder instance (a
@@ -215,8 +214,8 @@ public class AwsAsScalingGroup implements ScalingGroup {
 						.getAutoScalingGroup(getScalingGroupName());
 				int desiredSize = group.getDesiredCapacity();
 				int newSize = desiredSize - 1;
-				LOG.debug("termination request for placeholder instance, "
-						+ "reducing desiredCapacity from {} to {}",
+				LOG.debug("termination request for placeholder instance {}, "
+						+ "reducing desiredCapacity from {} to {}", machineId,
 						desiredSize, newSize);
 				this.client.setDesiredSize(getScalingGroupName(), newSize);
 			} else {
@@ -246,7 +245,7 @@ public class AwsAsScalingGroup implements ScalingGroup {
 
 	@Override
 	public void detachMachine(String machineId) throws NotFoundException,
-	ScalingGroupException {
+			ScalingGroupException {
 		checkState(isConfigured(), "attempt to use unconfigured ScalingGroup");
 
 		// verify that machine exists in group

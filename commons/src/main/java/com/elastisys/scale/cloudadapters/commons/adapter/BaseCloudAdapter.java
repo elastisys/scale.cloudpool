@@ -636,6 +636,8 @@ public class BaseCloudAdapter implements CloudAdapter {
 		LOG.info("updating pool size to desired size {}", newSize);
 
 		MachinePool pool = getMachinePool();
+		LOG.debug("current pool members: {}",
+				Lists.transform(pool.getMachines(), Machine.toShortFormat()));
 		// Clean out obsolete machines from termination queue. Note: this also
 		// cleans out machines that have been taken out of service after being
 		// scheduled for termination.
@@ -711,12 +713,16 @@ public class BaseCloudAdapter implements CloudAdapter {
 				this.scalingGroup.terminateMachine(victimId);
 				terminated.add(overdueInstance.getInstance());
 			} catch (Exception e) {
+				// only warn, since a failure to terminate an instance is not
+				// necessarily an error condition, as the machine, e.g., may
+				// have been terminated by external means since we last checked
+				// the pool members
 				String message = format(
 						"failed to terminate instance '%s': %s\n%s", victimId,
 						e.getMessage(), Throwables.getStackTraceAsString(e));
-				LOG.error(message);
+				LOG.warn(message);
 				this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
-						AlertSeverity.ERROR, UtcTime.now(), message));
+						AlertSeverity.WARN, UtcTime.now(), message));
 			}
 		}
 

@@ -21,6 +21,7 @@ import static com.elastisys.scale.cloudadapters.commons.adapter.alerts.AlertTopi
 import static com.elastisys.scale.cloudadapters.commons.scaledown.VictimSelectionPolicy.NEWEST_INSTANCE;
 import static com.elastisys.scale.cloudadapters.commons.scaledown.VictimSelectionPolicy.OLDEST_INSTANCE;
 import static com.elastisys.scale.commons.net.smtp.alerter.AlertSeverity.ERROR;
+import static com.elastisys.scale.commons.net.smtp.alerter.AlertSeverity.WARN;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -521,7 +522,7 @@ public class TestBaseCloudAdapterOperation {
 		// machine
 		verify(this.scalingGroupMock).terminateMachine("i-3");
 		// verify error events posted on event bus
-		verify(this.eventBusMock).post(argThat(isAlert(RESIZE.name(), ERROR)));
+		verify(this.eventBusMock).post(argThat(isAlert(RESIZE.name(), WARN)));
 
 		assertThat(this.cloudAdapter.desiredSize(), is(2));
 	}
@@ -561,7 +562,7 @@ public class TestBaseCloudAdapterOperation {
 		verify(this.scalingGroupMock).terminateMachine("i-2");
 		// verify error events posted on event bus
 		verify(this.eventBusMock, atLeast(2)).post(
-				argThat(isAlert(RESIZE.name(), ERROR)));
+				argThat(isAlert(RESIZE.name(), WARN)));
 
 		assertThat(this.cloudAdapter.desiredSize(), is(1));
 	}
