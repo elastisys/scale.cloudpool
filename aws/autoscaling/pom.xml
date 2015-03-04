@@ -3,17 +3,17 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.elastisys.scale</groupId>
-    <artifactId>cloudadapters.aws</artifactId>
+    <artifactId>cloudpool.aws</artifactId>
     <version>2.0.2-SNAPSHOT</version>
   </parent>
-  <artifactId>cloudadapters.aws.autoscaling</artifactId>
+  <artifactId>cloudpool.aws.autoscaling</artifactId>
   <packaging>jar</packaging>
-  <name>elastisys:scale :: cloudadapters :: AWS :: Auto Scaling Group adapter</name>
+  <name>elastisys:scale :: cloudpool :: AWS :: Auto Scaling Group</name>
   <description>
-    A cloud adapter capable of managing the capacity of AWS Auto Scaling Groups.
+    A cloud pool capable of managing the capacity of AWS Auto Scaling Groups.
     This build module produces an all-in-one "server and application" executable
     jar file. When executed, it starts an embedded web server that publishes 
-    the cloud adapter REST API endpoint.
+    the cloud pool REST API endpoint.
   </description>
 
   <properties>
@@ -24,18 +24,17 @@
   <dependencies>
     <dependency>
       <groupId>com.elastisys.scale</groupId>
-      <artifactId>cloudadapters.api</artifactId>
+      <artifactId>cloudpool.api</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>com.elastisys.scale</groupId>
-      <artifactId>cloudadapters.aws.commons</artifactId>
+      <artifactId>cloudpool.aws.commons</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <!-- Access to GenericCloudAdapter and the CloudClient interface -->
     <dependency>
       <groupId>com.elastisys.scale</groupId>
-      <artifactId>cloudadapters.commons</artifactId>
+      <artifactId>cloudpool.commons</artifactId>
       <version>${project.version}</version>
     </dependency>    
     <!-- Logging -->
@@ -93,7 +92,7 @@
           <transformers>
             <!-- Make jar file executable (add Main-Class header to jar manifest) -->
             <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-              <mainClass>com.elastisys.scale.cloudadapters.aws.autoscaling.server.Main</mainClass>
+              <mainClass>com.elastisys.scale.cloudpool.aws.autoscaling.server.Main</mainClass>
             </transformer>
           </transformers>
           <!-- Make shaded jar file the main artifact output by the build. -->
@@ -146,7 +145,7 @@
           <arguments>
             <argument>build</argument>
             <argument>--tag</argument>
-            <argument>elastisys/awsasadapter:${docker.image.version}</argument>
+            <argument>elastisys/awsaspool:${docker.image.version}</argument>
             <argument>.</argument>
           </arguments>
         </configuration>

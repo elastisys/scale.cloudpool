@@ -1,10 +1,10 @@
 {
 	"poolSizeCalculator": "STRICT",
-	"adapters": [
+	"backendPools": [
 		{
 			"priority": 40,
-			"cloudAdapterHost": "localhost0",
-			"cloudAdapterPort": 10,
+			"cloudPoolHost": "localhost0",
+			"cloudPoolPort": 10,
 			"basicCredentials": {
 				"username": "testuser0",
 				"password": "testpassword0"
@@ -12,8 +12,8 @@
 		},
 		{
 			"priority": 20,
-			"cloudAdapterHost": "localhost1",
-			"cloudAdapterPort": 11,
+			"cloudPoolHost": "localhost1",
+			"cloudPoolPort": 11,
 			"basicCredentials": {
 				"username": "testuser1",
 				"password": "testpassword1"
@@ -21,8 +21,8 @@
 		},
 		{
 			"priority": 20,
-			"cloudAdapterHost": "localhost2",
-			"cloudAdapterPort": 12,
+			"cloudPoolHost": "localhost2",
+			"cloudPoolPort": 12,
 			"certificateCredentials": {
 				"keystorePath": "/proc/cpuinfo",
 				"keystorePassword": "somekeystorepassword2",
@@ -31,8 +31,8 @@
 		},
 		{
 			"priority": 20,
-			"cloudAdapterHost": "localhost3",
-			"cloudAdapterPort": 13,
+			"cloudPoolHost": "localhost3",
+			"cloudPoolPort": 13,
 			"basicCredentials": {
 				"username": "testuser3",
 				"password": "testpassword3"

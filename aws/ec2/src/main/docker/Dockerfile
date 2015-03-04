@@ -33,9 +33,9 @@ RUN addgroup --system elastisys && \
 # set password for elastisys user
 RUN echo 'elastisys:secret' | chpasswd
       
-# install ec2adapter server
-COPY ${project.build.finalName}.jar /opt/elastisys/ec2adapter/ec2adapter.jar
-COPY opt/elastisys/ec2adapter/start.sh /opt/elastisys/ec2adapter/start.sh
+# install ec2pool server
+COPY ${project.build.finalName}.jar /opt/elastisys/ec2pool/ec2pool.jar
+COPY opt/elastisys/ec2pool/start.sh /opt/elastisys/ec2pool/start.sh
 COPY opt/elastisys/seed-authorized_keys.sh /opt/elastisys/seed-authorized_keys.sh
 
 # create configuration directory
@@ -46,7 +46,7 @@ RUN mkdir -p /var/log/elastisys && \
     mkdir -p /var/run/elastisys/ && \
     chown -R elastisys:elastisys /var/log/elastisys /var/run/elastisys \
             /opt/elastisys && \
-    chmod +x /opt/elastisys/ec2adapter/start.sh && \
+    chmod +x /opt/elastisys/ec2pool/start.sh && \
     chmod +x /opt/elastisys/seed-authorized_keys.sh
 
 
@@ -64,5 +64,5 @@ COPY etc/supervisor/conf.d/supervisord.conf /etc/supervisor/conf.d/supervisord.c
 RUN mkdir -p /var/log/supervisor
 
 EXPOSE 22 443
-# run supervisord, which takes care of starting the services (ssh, ec2adapter)
+# run supervisord, which takes care of starting the services (ssh, ec2pool)
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

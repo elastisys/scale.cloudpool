@@ -9,10 +9,10 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.elastisys.scale</groupId>
-  <artifactId>cloudadapters.root</artifactId>
+  <artifactId>cloudpool.root</artifactId>
   <version>2.0.2-SNAPSHOT</version>
-  <name>elastisys:scale :: cloudadapters :: root</name>
-  <description>Java-based elastisys:scale cloud adapter implementations.</description>
+  <name>elastisys:scale :: cloudpool :: root</name>
+  <description>Java-based elastisys:scale cloud pool implementations.</description>
   <packaging>pom</packaging>
   <url>http://www.elastisys.com</url>
   <organization>
@@ -40,9 +40,9 @@
 
   <!-- Location of Git repository. Used to tag releases. -->
   <scm>
-    <developerConnection>scm:git:https://github.com/elastisys/scale.cloudadapters.git</developerConnection>
+    <developerConnection>scm:git:https://github.com/elastisys/scale.cloudpool.git</developerConnection>
     <tag>HEAD</tag>
-    <url>https://github.com/elastisys/scale.cloudadapters</url>
+    <url>https://github.com/elastisys/scale.cloudpool</url>
   </scm>
 
   <properties>
@@ -369,7 +369,7 @@
 
   <issueManagement>
     <system>GitHub Issue Management</system>
-    <url>https://github.com/elastisys/scale.cloudadapters/issues</url>
+    <url>https://github.com/elastisys/scale.cloudpool/issues</url>
   </issueManagement>
 
   <developers>
@@ -422,7 +422,7 @@
       See http://maven.apache.org/plugins/maven-site-plugin/usage.html -->
     <site>
       <id>development.site</id>
-      <url>file:///scratch/devsite/scale.cloudadapters</url>
+      <url>file:///scratch/devsite/scale.cloudpool</url>
     </site>
   </distributionManagement>
 

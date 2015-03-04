@@ -1,10 +1,10 @@
 {
 	"poolSizeCalculator": "STRICT",
-	"adapters": [
+	"backendPools": [
 		{
 			"priority": 100,
-			"cloudAdapterHost": "localhost0",
-			"cloudAdapterPort": 10
+			"cloudPoolHost": "localhost0",
+			"cloudPoolPort": 10
 		}
 	]
 }

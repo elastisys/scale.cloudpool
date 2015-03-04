@@ -3,14 +3,14 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.elastisys.scale</groupId>
-    <artifactId>cloudadapters.root</artifactId>
+    <artifactId>cloudpool.root</artifactId>
     <version>2.0.2-SNAPSHOT</version>
   </parent>
-  <artifactId>cloudadapters.commons</artifactId>
+  <artifactId>cloudpool.commons</artifactId>
   <packaging>jar</packaging>
-  <name>elastisys:scale :: cloudadapters :: commons</name>
+  <name>elastisys:scale :: cloudpool :: commons</name>
   <description>
-    Common utility classes for building cloud adapters.    
+    Common utility classes for building cloud pools.    
   </description>
 
   <properties>
@@ -19,7 +19,7 @@
   <dependencies>
     <dependency>
       <groupId>com.elastisys.scale</groupId>
-      <artifactId>cloudadapters.api</artifactId>
+      <artifactId>cloudpool.api</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

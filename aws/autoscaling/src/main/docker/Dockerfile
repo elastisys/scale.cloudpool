@@ -33,9 +33,9 @@ RUN addgroup --system elastisys && \
 # set password for elastisys user
 RUN echo 'elastisys:secret' | chpasswd
       
-# install awsasadapter server
-COPY ${project.build.finalName}.jar /opt/elastisys/awsasadapter/awsasadapter.jar
-COPY opt/elastisys/awsasadapter/start.sh /opt/elastisys/awsasadapter/start.sh
+# install awsaspool server
+COPY ${project.build.finalName}.jar /opt/elastisys/awsaspool/awsaspool.jar
+COPY opt/elastisys/awsaspool/start.sh /opt/elastisys/awsaspool/start.sh
 COPY opt/elastisys/seed-authorized_keys.sh /opt/elastisys/seed-authorized_keys.sh
 
 # create configuration directory
@@ -46,7 +46,7 @@ RUN mkdir -p /var/log/elastisys && \
     mkdir -p /var/run/elastisys/ && \
     chown -R elastisys:elastisys /var/log/elastisys /var/run/elastisys \
             /opt/elastisys && \
-    chmod +x /opt/elastisys/awsasadapter/start.sh && \
+    chmod +x /opt/elastisys/awsaspool/start.sh && \
     chmod +x /opt/elastisys/seed-authorized_keys.sh
 
 # make sure https port (443) can be used by server via authbind
@@ -63,5 +63,5 @@ COPY etc/supervisor/conf.d/supervisord.conf /etc/supervisor/conf.d/supervisord.c
 RUN mkdir -p /var/log/supervisor
 
 EXPOSE 22 443
-# run supervisord, which takes care of starting the services (ssh, awsasadapter)
+# run supervisord, which takes care of starting the services (ssh, awsaspool)
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

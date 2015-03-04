@@ -1,0 +1,21 @@
+{
+  "id": "http://elastisys.com/ec2-pool-driver-schema#",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "configuration schema for an AWS EC2 CloudPoolDriver",
+  "type": "object",
+  "properties": {
+    "awsAccessKeyId": {  
+      "description": "The access key id of the AWS account.", 
+      "type": "string"
+    },
+    "awsSecretAccessKey": {  
+      "description": "The secret access key of the AWS account.", 
+      "type": "string"
+    },
+    "region": { 
+      "description": "The particular AWS region to connect to. For example, 'us-east-1'.", 
+      "type": "string" 
+    }              
+  },
+  "required": ["awsAccessKeyId", "awsSecretAccessKey", "region"]
+}

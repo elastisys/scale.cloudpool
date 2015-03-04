@@ -4,8 +4,8 @@
 JAVA_HOME="$(readlink -f /usr/bin/java | sed "s:/jre/bin/java::")"
 java="${JAVA_HOME}/bin/java"
 
-logconfig="/etc/elastisys/splitteradapter/logback.xml"
-julconfig="/etc/elastisys/splitteradapter/logging.properties"
+logconfig="/etc/elastisys/splitterpool/logback.xml"
+julconfig="/etc/elastisys/splitterpool/logging.properties"
 security_dir="/etc/elastisys/security"
 httpsport=443
 
@@ -21,4 +21,4 @@ SERVER_OPTS="--config-handler --https-port ${httpsport} ${SECURITY_OPTS}"
 # to allow use of ports below 1024, use: authbind --deep <prog> [args ...]
 # note: assumes that /etc/authbind/byport/<port> files with proper owner/mode
 # have been set up
-authbind --deep ${java} ${JAVA_OPTS} -jar splitteradapter.jar ${SERVER_OPTS}
+authbind --deep ${java} ${JAVA_OPTS} -jar splitterpool.jar ${SERVER_OPTS}

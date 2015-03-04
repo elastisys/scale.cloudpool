@@ -3,17 +3,17 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.elastisys.scale</groupId>
-    <artifactId>cloudadapters.aws</artifactId>
+    <artifactId>cloudpool.aws</artifactId>
     <version>2.0.2-SNAPSHOT</version>
   </parent>
-  <artifactId>cloudadapters.aws.ec2</artifactId>
+  <artifactId>cloudpool.aws.ec2</artifactId>
   <packaging>jar</packaging>
-  <name>elastisys:scale :: cloudadapters :: AWS :: EC2 adapter</name> 
+  <name>elastisys:scale :: cloudpool :: AWS :: EC2</name> 
   <description>
-    A cloud adapter capable of managing a scaling group of EC2 instances.
+    A cloud pool capable of managing a scaling group of EC2 instances.
     This build module produces an all-in-one "server and application" executable
     jar file. When executed, it starts an embedded web server that publishes 
-    the cloud adapter REST API endpoint.
+    the cloud pool REST API endpoint.
   </description>
 
   <properties>
@@ -22,22 +22,22 @@
   </properties>
 
   <dependencies>
-    <!-- Common cloud adapter API/server classes -->
+    <!-- Common cloud pool API/server classes -->
     <dependency>
       <groupId>com.elastisys.scale</groupId>
-      <artifactId>cloudadapters.api</artifactId>
+      <artifactId>cloudpool.api</artifactId>
       <version>${project.version}</version>
     </dependency>    
-    <!-- Common cloud adapter functionality (such as TerminationQueue and ResizePlanner) -->
+    <!-- Common cloud pool functionality (such as TerminationQueue and ResizePlanner) -->
     <dependency>
       <groupId>com.elastisys.scale</groupId>
-      <artifactId>cloudadapters.commons</artifactId>
+      <artifactId>cloudpool.commons</artifactId>
       <version>${project.version}</version>
     </dependency>    
     <!-- AWS EC2 API -->
     <dependency>
       <groupId>com.elastisys.scale</groupId>
-      <artifactId>cloudadapters.aws.commons</artifactId>
+      <artifactId>cloudpool.aws.commons</artifactId>
       <version>${project.version}</version>
     </dependency>    
 
@@ -101,7 +101,7 @@
           <transformers>
             <!-- Make jar file executable (add Main-Class header to jar manifest) -->
             <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-              <mainClass>com.elastisys.scale.cloudadapters.aws.ec2.server.Main</mainClass>
+              <mainClass>com.elastisys.scale.cloudpool.aws.ec2.server.Main</mainClass>
             </transformer>
           </transformers>
           <!-- Make shaded jar file the main artifact output by the build. -->
@@ -154,7 +154,7 @@
           <arguments>
             <argument>build</argument>
             <argument>--tag</argument>
-            <argument>elastisys/ec2adapter:${docker.image.version}</argument>
+            <argument>elastisys/ec2pool:${docker.image.version}</argument>
             <argument>.</argument>
           </arguments>
         </configuration>

@@ -1,0 +1,125 @@
+{
+  "id": "http://elastisys.com/basepool-schema#",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "configuration schema for a generic cloud pool",
+  "type": "object",
+  "properties": {
+    "cloudPool": {
+      "description": "Describes how the CloudPoolDriver implementation identifies pool members and connects to its cloud provider.", 
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The name of the logical group of servers managed by the CloudPoolDriver.", 
+          "type": "string"
+        },
+        "driverConfig": {
+          "description": "CloudPoolDriver-specific JSON configuration document, the contents of which depends on the particular CloudPoolDriver-implementation being used. Typically, a minimum amount of configuration includes login credentials for connecting to the particular cloud API endpoint.",
+          "type": "object"
+        }
+      },
+      "required": ["name", "driverConfig"]
+    },
+    "scaleOutConfig": { 
+      "description": "Describes how to provision additional servers (on scale-out).", 
+      "type": "object",
+      "properties": {
+        "size": {
+          "description": "The name of the server type to launch. For example, m1.medium.", 
+          "type":  "string"
+        },
+        "image": {
+          "description": "The name of the machine image used to boot new servers.", 
+          "type":  "string" 
+        },
+        "keyPair": {
+          "description": "The name of the key pair to use for new machine instances.", 
+          "type":  "string" 
+        },
+        "securityGroups": {
+          "description": "The security group(s) to use for new machine instances.", 
+          "type":  "array",
+          "items": { "type": "string" }
+        },
+        "bootScript": {
+          "description": "The script to run after first boot of a new instance.",
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["size", "image", "keyPair", "securityGroups", "bootScript"] 
+    },
+    "scaleInConfig": { 
+      "description": "Describes how to decommission servers (on scale-in).", 
+      "type": "object",
+      "properties": {
+        "victimSelectionPolicy": {
+          "description": "Policy for selecting which server to terminate.", 
+          "enum":  ["NEWEST_INSTANCE", "OLDEST_INSTANCE", "CLOSEST_TO_INSTANCE_HOUR"] 
+        },
+        "instanceHourMargin": {
+          "description": "How many seconds prior to the next instance hour an acquired machine instance should be scheduled for termination. This should be set to a conservative and safe value to prevent the machine from being billed for an additional hour. A value of zero is used to specify immediate termination when a scale-down is ordered.",
+          "type": "number"
+        }
+      },
+      "required": ["victimSelectionPolicy", "instanceHourMargin"]
+    },
+    "alerts": {
+      "description": "Optional configuration that describes how to send email alerts. If left out, alerts are disabled.",
+      "type": "object",
+      "properties": {
+        "subject": {
+          "description": "The subject line to use in sent mails (Subject).",
+          "type": "string"
+        },
+        "recipients": {
+          "description": "The receiver list (a list of recipient email addresses).",
+          "type": "array",
+          "items": { "type": "string", "format": "email" }            
+        },
+        "sender": {
+          "description": "The sender email address to use in sent mails (From).",
+          "type": "string",
+          "format": "email"
+        },
+        "severityFilter": {
+          "description": "A regular expression used to filter alerts. Alerts with a severity (one of DEBUG, INFO, NOTICE, WARN, ERROR, FATAL) that doesn't match the filter expression are suppressed and not sent. Default: '.*'",
+          "type": "string"
+        },        
+        "mailServer": {
+          "description": "Connection settings for the SMTP server through which emails are to be sent.",
+          "type": "object",
+          "properties": {
+            "smtpHost": {
+              "description": "SMTP server host name/IP address.",
+              "type": "string"
+            },
+            "smtpPort": {
+              "description": "SMTP server port. Default is 25.",
+              "type": "number"
+            },
+            "authentication": {
+              "description": "Optional username/password to authenticate with SMTP server. If left out, authentication is disabled.",
+              "type": "object",
+              "properties": {
+                "userName": { "type": "string" },
+                "password": { "type": "string" }
+              },
+              "required": ["userName", "password"]
+            },
+            "useSsl": {
+              "description": "Enables/disables the use of SSL for SMTP connections. Default is false (disabled).",
+              "type": "boolean"
+            }
+          },
+          "required": ["smtpHost"]
+        }
+      },
+      "required": ["subject", "recipients", "sender", "mailServer"]
+    },
+    "poolUpdatePeriod": {
+      "description": "The time interval (in seconds) between periodical pool size updates. A pool size update may involve terminating termination-due instances and placing new spot requests to replace terminated spot requests. Default: 60.",
+      "type": "number"
+    }
+  },
+  "required": ["cloudPool", "scaleOutConfig", "scaleInConfig"]
+}

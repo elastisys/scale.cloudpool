@@ -33,9 +33,9 @@ RUN addgroup --system elastisys && \
 # set password for elastisys user
 RUN echo 'elastisys:secret' | chpasswd
       
-# install splitteradapter server
-COPY ${project.build.finalName}.jar /opt/elastisys/splitteradapter/splitteradapter.jar
-COPY opt/elastisys/splitteradapter/start.sh /opt/elastisys/splitteradapter/start.sh
+# install splitterpool server
+COPY ${project.build.finalName}.jar /opt/elastisys/splitterpool/splitterpool.jar
+COPY opt/elastisys/splitterpool/start.sh /opt/elastisys/splitterpool/start.sh
 COPY opt/elastisys/seed-authorized_keys.sh /opt/elastisys/seed-authorized_keys.sh
 
 # create configuration directory
@@ -46,7 +46,7 @@ RUN mkdir -p /var/log/elastisys && \
     mkdir -p /var/run/elastisys/ && \
     chown -R elastisys:elastisys /var/log/elastisys /var/run/elastisys \
             /opt/elastisys && \
-    chmod +x /opt/elastisys/splitteradapter/start.sh && \
+    chmod +x /opt/elastisys/splitterpool/start.sh && \
     chmod +x /opt/elastisys/seed-authorized_keys.sh
 
 # make sure https port (443) can be used by server via authbind
@@ -63,5 +63,5 @@ COPY etc/supervisor/conf.d/supervisord.conf /etc/supervisor/conf.d/supervisord.c
 RUN mkdir -p /var/log/supervisor
 
 EXPOSE 22 443
-# run supervisord, which takes care of starting the services (ssh, splitteradapter)
+# run supervisord, which takes care of starting the services (ssh, splitterpool)
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

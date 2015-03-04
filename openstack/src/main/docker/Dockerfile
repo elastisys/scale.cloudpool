@@ -34,9 +34,9 @@ RUN addgroup --system elastisys && \
 RUN echo 'elastisys:secret' | chpasswd
 
 
-# install openstackadapter server
-COPY ${project.build.finalName}.jar /opt/elastisys/openstackadapter/openstackadapter.jar
-COPY opt/elastisys/openstackadapter/start.sh /opt/elastisys/openstackadapter/start.sh
+# install openstackpool server
+COPY ${project.build.finalName}.jar /opt/elastisys/openstackpool/openstackpool.jar
+COPY opt/elastisys/openstackpool/start.sh /opt/elastisys/openstackpool/start.sh
 COPY opt/elastisys/seed-authorized_keys.sh /opt/elastisys/seed-authorized_keys.sh
 
 # create configuration directory
@@ -47,7 +47,7 @@ RUN mkdir -p /var/log/elastisys && \
     mkdir -p /var/run/elastisys/ && \
     chown -R elastisys:elastisys /var/log/elastisys /var/run/elastisys \
             /opt/elastisys /etc/elastisys && \
-    chmod +x /opt/elastisys/openstackadapter/start.sh && \
+    chmod +x /opt/elastisys/openstackpool/start.sh && \
     chmod +x /opt/elastisys/seed-authorized_keys.sh
 
 
@@ -65,5 +65,5 @@ COPY etc/supervisor/conf.d/supervisord.conf /etc/supervisor/conf.d/supervisord.c
 RUN mkdir -p /var/log/supervisor
 
 EXPOSE 22 443
-# run supervisord, which takes care of starting the services (ssh, openstackadapter)
+# run supervisord, which takes care of starting the services (ssh, openstackpool)
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

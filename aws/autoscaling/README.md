@@ -1,42 +1,41 @@
-# AWS AutoScaling cloud adapter
+# AWS AutoScaling cloud pool
 
 The [elastisys:scale](http://elastisys.com/scale) AWS AutoScaling 
-[cloud adapter](http://cloudadapterapi.readthedocs.org/en/latest/)
+[cloud pool](http://cloudpoolapi.readthedocs.org/en/latest/)
 manages an AWS Auto Scaling Group. The size of the AWS Auto Scaling Group
 is adjusted over the AWS Auto Scaling API, according to the desired size 
-that the cloud adapter has been instructed to maintain.
+that the cloud pool has been instructed to maintain.
 
-This cloud adapter assumes that an AWS *Auto Scaling group* with a proper
+This cloud pool assumes that an AWS *Auto Scaling group* with a proper
 *launch configuration* (specifying how new instances are to be created)
 has already been created by external means (for instance, through the AWS
 Auto Scaling command-line interface). Load-balancing between instances, if
 needed, is also assumed to be taken care of, for example, via Elastic Load
 Balancer or with a custom-made load balancing solution.
 
-The cloud adapter publishes a REST API that follows the general contract of an
-[elastisys:scale](http://elastisys.com/scale) cloud adapter, through which
-a client (for example, an autoscaler) can request changes to the scaling group 
-and retrieve the current members of the scaling group. For the complete API 
+The cloud pool publishes a REST API that follows the general contract of an
+[elastisys:scale](http://elastisys.com/scale) cloud pool, through which
+a client (for example, an autoscaler) can manage the pool. For the complete API 
 reference, the reader is referred to the 
-[cloud adapter API documentation](http://cloudadapterapi.readthedocs.org/en/latest/).
+[cloud pool API documentation](http://cloudpoolapi.readthedocs.org/en/latest/).
 
 
 
 ## Configuration
-The `awsasadapter` is configured with a JSON document such as the following:
+The `awsaspool` is configured with a JSON document such as the following:
 
 ```javascript
 {
   {
-    "scalingGroup": {
+    "cloudPool": {
       "name": "MyScalingGroup",
-      "config": {
+      "driverConfig": {
         "awsAccessKeyId": "AXZ31...Q",
         "awsSecretAccessKey": "afAC/3Dd...s",
         "region": "eu-west-1"
       }
     },
-    "scaleUpConfig": {
+    "scaleOutConfig": {
       "_comment": "These properties are specified in an AWS Launch Configuration for the Auto Scaling Group.",
       "size": "N/A",
       "image": "N/A",
@@ -44,7 +43,7 @@ The `awsasadapter` is configured with a JSON document such as the following:
       "securityGroups": [],
       "bootScript": []
     },
-    "scaleDownConfig": {
+    "scaleInConfig": {
       "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
       "instanceHourMargin": 300
     },
@@ -73,7 +72,7 @@ The configuration keys have the following meaning:
     - ``awsAccessKeyId``: Your [AWS Access Key ID](https://aws-portal.amazon.com/gp/aws/securityCredentials). 
     - ``awsSecretAccessKey``: Your [AWS Secret Access Key](https://aws-portal.amazon.com/gp/aws/securityCredentials). 
     - ``region``: The [AWS region](http://docs.aws.amazon.com/general/latest/gr/rande.html) to connect to.
-  - ``scaleUpConfig``: Describes how to provision additional servers (on scale-up).
+  - ``scaleOutConfig``: Describes how to provision additional servers (on scale-out).
     However, since this is already specified in the Auto Scaling Group's
     [launch configuration](http://docs.aws.amazon.com/AutoScaling/latest/DeveloperGuide/GettingStartedTutorial.html#gs-create-lc)
     none of these keys are actually used. 
@@ -82,7 +81,7 @@ The configuration keys have the following meaning:
     - ``keyPair``: Not applicable.
     - ``securityGroups``: Not applicable.
     - ``bootScript``: Not applicable.
-  - ``scaleDownConfig``: Describes how to decommission servers (on scale-down).
+  - ``scaleInConfig``: Describes how to decommission servers (on scale-in).
     - ``victimSelectionPolicy``: Policy for selecting which spot instance to 
       terminate. Allowed values: ``NEWEST_INSTANCE``, ``OLDEST_INSTANCE``, 
       ``CLOSEST_TO_INSTANCE_HOUR``.
@@ -114,7 +113,7 @@ The configuration keys have the following meaning:
 
 
 ## Usage
-This module produces an executable jar file for the cloud adapter server.
+This module produces an executable jar file for the cloud pool server.
 The simplest way of starting the server is to run
 
     java -jar <jar-file>
@@ -130,10 +129,10 @@ run the server with the ``--help`` flag:
 
 
 
-## Running the cloud adapter in a Docker container
-The cloud adapter can be executed inside a 
+## Running the cloud pool in a Docker container
+The cloud pool can be executed inside a 
 [Docker](https://www.docker.com/) container. First, however, a docker image 
-needs to be built that includes the cloud adapter. The steps for building 
+needs to be built that includes the cloud pool. The steps for building 
 the image and running a container from the image are outlined below.
 
 Before proceeding, make sure that your user is a member of the `docker` user group.
@@ -160,17 +159,17 @@ with the desired version name.
 If you want to build the image yourself, issue the following commands:
 
     cd target/
-    docker build --tag "elastisys/awsasadapter:<version>" .
+    docker build --tag "elastisys/awsaspool:<version>" .
 
 
 
 ### Running a container from the image
-Once the docker image is built for the cloud adapter, it can be run with:
+Once the docker image is built for the cloud pool, it can be run with:
 
-    docker run -d -p 2222:22 -p 8443:443 elastisys/awsasadapter:<version>
+    docker run -d -p 2222:22 -p 8443:443 elastisys/awsaspool:<version>
 
 This will publish the container's SSH port on host port 2222 and the 
-cloud adapter's HTTPS port on host port 8443. The container includes a 
+cloud pool's HTTPS port on host port 8443. The container includes a 
 privileged user named `elastisys` (password: `secret`).
 
 However, password logins are diabled for that user, so if you want to be able to 
@@ -183,7 +182,7 @@ the container could be run as follows:
 
     docker run -d -p 2222:22 -p 8443:443 \
            -e "SSH_KEY=$(cat ~/.ssh/id_rsa.pub)" \
-           elastisys/awsasadapter:<version>
+           elastisys/awsaspool:<version>
 
 You will then be able to log in to the started container with:
 
@@ -199,10 +198,10 @@ located under `/etc/elastisys` and binaries under `/opt/elastisys`.
 
 
 
-## Interacting with the cloud adapter over its REST API
+## Interacting with the cloud pool over its REST API
 The following examples, all using the [curl](http://en.wikipedia.org/wiki/CURL) 
-command-line tool, shows how to interact with the cloud adapter over its
-[REST API](http://cloudadapterapi.readthedocs.org/en/latest/).
+command-line tool, shows how to interact with the cloud pool over its
+[REST API](http://cloudpoolapi.readthedocs.org/en/latest/).
 
 The exact command-line arguments to pass to curl depends on the security
 settings that the server was launched with. For example, if client-certificate
@@ -212,7 +211,7 @@ below can be replaced with:
     --key-type pem --key credentials/client_private.pem \
     --cert-type pem --cert credentials/client_certificate.pem
 
-Here are some examples illustrating basic interactions with the spot adapter:
+Here are some examples illustrating basic interactions with the cloud pool endpoint:
 
  1. Retrieve configuration JSON schema (note: requires ``--config-handler`` to be turned on):
 

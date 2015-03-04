@@ -2,13 +2,13 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.elastisys.scale</groupId>
-    <artifactId>cloudadapters.root</artifactId>
+    <artifactId>cloudpool.root</artifactId>
     <version>2.0.2-SNAPSHOT</version>
   </parent>
-  <artifactId>cloudadapters.splitter</artifactId>
+  <artifactId>cloudpool.splitter</artifactId>
   <packaging>jar</packaging>
-  <name>elastisys:scale :: cloudadapters :: splitter</name>
-  <description>A cloud adapter that uses a configured list of child cloud adapters to carry out operations.</description>
+  <name>elastisys:scale :: cloudpool :: splitter</name>
+  <description>A cloud pool that uses a configured list of child cloud pools to carry out operations.</description>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -27,17 +27,17 @@
       <groupId>com.elastisys.scale</groupId>
       <artifactId>commons.net</artifactId>
     </dependency>
-    <!-- Common cloud adapter API/server classes -->
+    <!-- Common cloud pool API/server classes -->
     <dependency>
       <groupId>com.elastisys.scale</groupId>
-      <artifactId>cloudadapters.api</artifactId>
+      <artifactId>cloudpool.api</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <!-- Common cloud adapter functionality (such as TerminationQueue and 
+    <!-- Common cloud pool functionality (such as TerminationQueue and 
       ResizePlanner) -->
     <dependency>
       <groupId>com.elastisys.scale</groupId>
-      <artifactId>cloudadapters.commons</artifactId>
+      <artifactId>cloudpool.commons</artifactId>
       <version>${project.version}</version>
     </dependency>
     <!-- Logging -->
@@ -95,7 +95,7 @@
           <transformers>
             <!-- Make jar file executable (add Main-Class header to jar manifest) -->
             <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-              <mainClass>com.elastisys.scale.cloudadapters.splitter.server.Main</mainClass>
+              <mainClass>com.elastisys.scale.cloudpool.splitter.server.Main</mainClass>
             </transformer>
           </transformers>
           <!-- Make shaded jar file the main artifact output by the build. -->
@@ -148,7 +148,7 @@
           <arguments>
             <argument>build</argument>
             <argument>--tag</argument>
-            <argument>elastisys/splitteradapter:${docker.image.version}</argument>
+            <argument>elastisys/splitterpool:${docker.image.version}</argument>
             <argument>.</argument>
           </arguments>
         </configuration>

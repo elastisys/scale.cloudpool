@@ -3,17 +3,17 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.elastisys.scale</groupId>
-    <artifactId>cloudadapters.root</artifactId>
+    <artifactId>cloudpool.root</artifactId>
     <version>2.0.2-SNAPSHOT</version>
   </parent>
-  <artifactId>cloudadapters.openstack</artifactId>
+  <artifactId>cloudpool.openstack</artifactId>
   <packaging>jar</packaging>
-  <name>elastisys:scale :: cloudadapters :: openstack</name>
+  <name>elastisys:scale :: cloudpool :: OpenStack</name>
   <description>
-    A cloud adapter capable of managing a scaling group of OpenStack servers.
+    A cloud pool capable of managing a scaling group of OpenStack servers.
     This build module produces an all-in-one "server and application" executable
     jar file. When executed, it starts an embedded web server that publishes 
-    the cloud adapter REST API endpoint.
+    the cloud pool REST API endpoint.
   </description>
 
   <properties>
@@ -22,16 +22,16 @@
   </properties>
 
   <dependencies>
-    <!-- Common cloud adapter API/server classes -->
+    <!-- Common cloud pool API/server classes -->
     <dependency>
       <groupId>com.elastisys.scale</groupId>
-      <artifactId>cloudadapters.api</artifactId>
+      <artifactId>cloudpool.api</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <!-- Common cloud adapter functionality (such as TerminationQueue and ResizePlanner) -->
+    <!-- Common cloud pool functionality (such as TerminationQueue and ResizePlanner) -->
     <dependency>
       <groupId>com.elastisys.scale</groupId>
-      <artifactId>cloudadapters.commons</artifactId>
+      <artifactId>cloudpool.commons</artifactId>
       <version>${project.version}</version>
     </dependency>    
     <!-- Openstack API access -->
@@ -104,7 +104,7 @@
           <transformers>
             <!-- Make jar file executable (add Main-Class header to jar manifest) -->
             <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-              <mainClass>com.elastisys.scale.cloudadapters.openstack.server.Main</mainClass>
+              <mainClass>com.elastisys.scale.cloudpool.openstack.server.Main</mainClass>
             </transformer>
           </transformers>
           <!-- Make shaded jar file the main artifact output by the build. -->
@@ -157,7 +157,7 @@
           <arguments>
             <argument>build</argument>
             <argument>--tag</argument>
-            <argument>elastisys/openstackadapter:${docker.image.version}</argument>
+            <argument>elastisys/openstackpool:${docker.image.version}</argument>
             <argument>.</argument>
           </arguments>
         </configuration>

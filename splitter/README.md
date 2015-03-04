@@ -1,35 +1,35 @@
-# splitter adapter
+# splitter pool
 
-The splitter adapter makes it easy to work with multiple cloud backends.
-It uses a number of other cloud adapters to carry out its operations,
-allowing one to work with a single adapter while still making use of
-several distinct cloud infrastructures. The backend cloud adapters are
+The splitter pool makes it easy to work with multiple cloud backends.
+It uses a number of other cloud pools to carry out its operations,
+allowing one to work with a single pool while still making use of
+several distinct cloud infrastructures. The backend cloud pools are
 prioritized, making it possible to specify that, e.g., 90% of the 
 deployment should be made to one cloud provider, and 10% to some
 other provider.
 
-Running several of these splitter adapters, one can create arbitrarily 
+Running several of these splitter pools, one can create arbitrarily 
 complex but useful tree-like configurations, e.g. to deploy a certain 
 percentage of machines to Amazon, and some to an internal OpenStack cloud.
 Further, the Amazon resources can be split between spot instances and 
 on-demand instances.
 
-The splitter adapter adheres to the cloud adapter API, and is used just
+The splitter pool adheres to the cloud pool API, and is used just
 like any other.
 
 ## Configuration
 
-The splitter cloud adapter is configured with a JSON document such as the
+The splitter cloud pool is configured with a JSON document such as the
 following:
 
 ```javascript
 {
   "poolSizeCalculator": "STRICT",
-    "adapters": [
+    "backendPools": [
     {
       "priority": 40,
-      "cloudAdapterHost": "cloudadapter-host-1",
-      "cloudAdapterPort": 8443,
+      "cloudPoolHost": "cloudpool-host-1",
+      "cloudPoolPort": 8443,
       "basicCredentials": {
         "username": "admin",
         "password": "adminpassword"
@@ -37,8 +37,8 @@ following:
     },
     {
       "priority": 40,
-      "cloudAdapterHost": "cloudadapter-host-2",
-      "cloudAdapterPort": 8443,
+      "cloudPoolHost": "cloudpool-host-2",
+      "cloudPoolPort": 8443,
       "basicCredentials": {
         "username": "admin",
         "password": "adminpassword"
@@ -46,8 +46,8 @@ following:
     },
     {
       "priority": 20,
-      "cloudAdapterHost": "cloudadapter-host-3",
-      "cloudAdapterPort": 8443,
+      "cloudPoolHost": "cloudpool-host-3",
+      "cloudPoolPort": 8443,
       "certificateCredentials": {
         "keystorePath": "/path/to/keystore/goes/here",
         "keystorePassword": "keystorepassword",
@@ -61,15 +61,15 @@ following:
 The properties are:
 
  - ``poolSizeCalculator``: Sets which pool size calculation strategy to use,
-   i.e., how the adapter should calculate appropriate pool sizes. The 
+   i.e., how the pool should calculate appropriate pool sizes. The 
    currently only supported calculator is ``STRICT``, and it only looks at
-   the specified priorities of each backend adapter. It does not take current
+   the specified priorities of each backend pool. It does not take current
    deployment into account.
- - ``adapters``: an array of adapter configurations, consisting of:
-  - ``priority``: the priority of the cloud adapter. Must be a positive 
+ - ``backendPools``: an array of backend cloud pool configurations, consisting of:
+  - ``priority``: the priority of the cloud pool. Must be a positive 
     integer, and all priorities in the configuration file must sum to 100.
-  - ``cloudAdapterHost``: the hostname of the cloud adapter REST endpoint;
-  - ``cloudAdapterPort``: the port number of the cloud adapter REST endpoint;
+  - ``cloudPoolHost``: the hostname of the cloud pool REST endpoint;
+  - ``cloudPoolPort``: the port number of the cloud pool REST endpoint;
   - Credentials for either HTTP Basic or HTTPS authentication, or both, 
     given as:
     - ``basicCredentials``, consisting of ``username`` and ``password``.
@@ -81,7 +81,7 @@ The properties are:
 
 
 ## Usage
-This module produces an executable jar file for the cloud adapter server.
+This module produces an executable jar file for the cloud pool server.
 The simplest way of starting the server is to run
 
     java -jar <jar-file>
@@ -97,10 +97,10 @@ run the server with the ``--help`` flag:
 
 
 
-## Running the cloud adapter in a Docker container
-The cloud adapter can be executed inside a 
+## Running the cloud pool in a Docker container
+The cloud pool can be executed inside a 
 [Docker](https://www.docker.com/) container. First, however, a docker image 
-needs to be built that includes the cloud adapter. The steps for building 
+needs to be built that includes the cloud pool. The steps for building 
 the image and running a container from the image are outlined below.
 
 Before proceeding, make sure that your user is a member of the `docker` user group.
@@ -127,17 +127,17 @@ with the desired version name.
 If you want to build the image yourself, issue the following commands:
 
     cd target/
-    docker build --tag "elastisys/splitteradapter:<version>" .
+    docker build --tag "elastisys/splitterpool:<version>" .
 
 
 
 ### Running a container from the image
-Once the docker image is built for the cloud adapter, it can be run with:
+Once the docker image is built for the cloud pool, it can be run with:
 
-    docker run -d -p 2222:22 -p 8443:443 elastisys/splitteradapter:<version>
+    docker run -d -p 2222:22 -p 8443:443 elastisys/splitterpool:<version>
 
 This will publish the container's SSH port on host port 2222 and the 
-cloud adapter's HTTPS port on host port 8443. The container includes a 
+cloud pool's HTTPS port on host port 8443. The container includes a 
 privileged user named `elastisys` (password: `secret`).
 
 However, password logins are diabled for that user, so if you want to be able to 
@@ -150,7 +150,7 @@ the container could be run as follows:
 
     docker run -d -p 2222:22 -p 8443:443 \
            -e "SSH_KEY=$(cat ~/.ssh/id_rsa.pub)" \
-           elastisys/splitteradapter:<version>
+           elastisys/splitterpool:<version>
 
 You will then be able to log in to the started container with:
 
@@ -165,10 +165,10 @@ located under `/etc/elastisys` and binaries under `/opt/elastisys`.
 
 
 
-## Interacting with the cloud adapter over its REST API
+## Interacting with the cloud pool over its REST API
 The following examples, all using the [curl](http://en.wikipedia.org/wiki/CURL) 
-command-line tool, shows how to interact with the cloud adapter over its
-[REST API](http://cloudadapterapi.readthedocs.org/en/latest/).
+command-line tool, shows how to interact with the cloud pool over its
+[REST API](http://cloudpoolapi.readthedocs.org/en/latest/).
 
 The exact command-line arguments to pass to curl depends on the security
 settings that the server was launched with. For example, if client-certificate
@@ -178,7 +178,7 @@ below can be replaced with:
     --key-type pem --key credentials/client_private.pem \
     --cert-type pem --cert credentials/client_certificate.pem
 
-Here are some examples illustrating basic interactions with the spot adapter:
+Here are some examples illustrating basic interactions with the cloud pool endpoint:
 
  1. Retrieve configuration JSON schema (note: requires ``--config-handler`` to be turned on):
 

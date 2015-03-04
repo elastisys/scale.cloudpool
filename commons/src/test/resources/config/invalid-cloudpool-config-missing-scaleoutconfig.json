@@ -1,0 +1,17 @@
+{
+    "cloudPool": {
+      "name": "my-scaling-group",
+      "driverConfig": { 
+        "keystoneEndpoint": "http://openstack.nova.com:5000/v2.0",
+        "region": "RegionOne",
+        "tenantName": "tenant",
+        "userName": "clouduser",
+        "password": "cloudpass"
+      }      
+    },
+
+    "scaleInConfig": {
+      "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
+      "instanceHourMargin": 0
+    }
+}  

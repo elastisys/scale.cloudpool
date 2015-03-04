@@ -1,0 +1,23 @@
+{
+    "cloudPool": {
+      "name": "ec2-cluster",
+      "driverConfig": {
+        "awsAccessKeyId": "ABC",
+        "awsSecretAccessKey": "XYZ",
+        "region": "us-west-1"
+      }
+    },
+    "scaleOutConfig": {
+      "_comment": "These properties are specified in an AWS Launch Configuration for the Auto Scaling Group.",      
+      "size": "N/A",
+      "image": "N/A",
+      "keyPair": "N/A",
+      "securityGroups": [],
+      "bootScript": []
+    },
+    "scaleInConfig": {
+      "victimSelectionPolicy": "OLDEST_INSTANCE",
+      "instanceHourMargin": 600
+    },
+    "poolUpdatePeriod": 60            
+}  

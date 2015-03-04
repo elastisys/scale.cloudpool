@@ -1,30 +1,29 @@
-# AWS OpenStack cloud adapter
+# AWS OpenStack cloud pool
 
 The [elastisys:scale](http://elastisys.com/scale) OpenStack 
-[cloud adapter](http://cloudadapterapi.readthedocs.org/en/latest/)
-manages a group of OpenStack instances. Group members are identified by a 
+[cloud pool](http://cloudpoolapi.readthedocs.org/en/latest/)
+manages a pool of OpenStack instances. Pool members are identified by a 
 configurable tag and instances are continuously provisioned/decommissioned to 
-keep the group's actual size in sync with the desired size that the cloud 
-adapter has been instructed to maintain.
+keep the pool's actual size in sync with the desired size that the cloud 
+pool has been instructed to maintain.
 
-The cloud adapter publishes a REST API that follows the general contract of an
-[elastisys:scale](http://elastisys.com/scale) cloud adapter, through which
-a client (for example, an autoscaler) can request changes to the scaling group 
-and retrieve the current members of the scaling group. For the complete API 
+The cloud pool publishes a REST API that follows the general contract of an
+[elastisys:scale](http://elastisys.com/scale) cloud pool, through which
+a client (for example, an autoscaler) can manage the pool. For the complete API 
 reference, the reader is referred to the 
-[cloud adapter API documentation](http://cloudadapterapi.readthedocs.org/en/latest/).
+[cloud pool API documentation](http://cloudpoolapi.readthedocs.org/en/latest/).
 
 
 
 ## Configuration
-The `openstackadapter` is configured with a JSON document such as the following:
+The `openstackpool` is configured with a JSON document such as the following:
 
 ```javascript
 {
   {
-    "scalingGroup": {
-      "name": "MyScalingGroup",
-      "config": {
+    "cloudPool": {
+      "name": "MyScalingPool",
+      "driverConfig": {
         "keystoneEndpoint": "http://nova.host.com:5000/v2.0",
         "region": "RegionOne",
         "tenantName": "tenant",
@@ -32,7 +31,7 @@ The `openstackadapter` is configured with a JSON document such as the following:
         "password": "cloudpass"      
       }
     },
-    "scaleUpConfig": {
+    "scaleOutConfig": {
       "size": "m1.small",
       "image": "ami-018c9568",
       "keyPair": "instancekey",
@@ -43,12 +42,12 @@ The `openstackadapter` is configured with a JSON document such as the following:
         "sudo apt-get install -qy apache2"
       ]
     },
-    "scaleDownConfig": {
+    "scaleInConfig": {
       "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
       "instanceHourMargin": 300
     },
     "alerts": {
-      "subject": "[elastisys:scale] scaling group alert for MyScalingGroup",
+      "subject": "[elastisys:scale] cloud pool alert for MyScalingPool",
       "recipients": ["receiver@destination.com"],
       "sender": "noreply@elastisys.com",
       "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
@@ -66,10 +65,10 @@ The `openstackadapter` is configured with a JSON document such as the following:
 
 The configuration keys have the following meaning:
 
-  - ``scalingGroup``: Describes how to identify/manage scaling group members 
-    and connect to the cloud provider.   
-    - ``name``: The name of the managed scaling group. All server instances with this 
-      tag are to be considered members of the scaling group.
+  - ``cloudPool``: Describes how to identify/manage pool members 
+    and connect to the cloud provider.
+    - ``name``: The logical name of the managed machine pool. All server instances with this 
+      tag are to be considered members of the pool.
       - ``keystoneEndpoint``: Endpoint URL of the OpenStack authentication service (Keystone). 
         For example, http://172.16.0.1:5000/v2.0."
       - ``region``: The particular OpenStack region (out of the ones available in Keystone's 
@@ -79,13 +78,13 @@ The configuration keys have the following meaning:
       - ``password``: OpenStack account password
       - ``assignFloatingIp``: Set to true if a floating IP address should be allocated 
         to launched servers. Default: ``true``.
-  - ``scaleUpConfig``: Describes how to provision additional servers (on scale-up).
+  - ``scaleOutConfig``: Describes how to provision additional servers (on scale-up).
     - ``size``: The name of the server type to launch. For example, ``m1.medium``.
     - ``image``: The name of the machine image used to boot new servers.
     - ``keyPair``: The name of the key pair to use for new machine instances.
     - ``securityGroups``: The security group(s) to use for new machine instances.
     - ``bootScript``: The script to run after first boot of a new instance.
-  - ``scaleDownConfig``: Describes how to decommission servers (on scale-down).
+  - ``scaleInConfig``: Describes how to decommission servers (on scale-down).
     - ``victimSelectionPolicy``: Policy for selecting which spot instance to 
       terminate. Allowed values: ``NEWEST_INSTANCE``, ``OLDEST_INSTANCE``, 
       ``CLOSEST_TO_INSTANCE_HOUR``.
@@ -117,7 +116,7 @@ The configuration keys have the following meaning:
 
 
 ## Usage
-This module produces an executable jar file for the cloud adapter server.
+This module produces an executable jar file for the cloud pool server.
 The simplest way of starting the server is to run
 
     java -jar <jar-file>
@@ -133,10 +132,10 @@ run the server with the ``--help`` flag:
 
 
 
-## Running the cloud adapter in a Docker container
-The cloud adapter can be executed inside a 
+## Running the cloud pool in a Docker container
+The cloud pool can be executed inside a 
 [Docker](https://www.docker.com/) container. First, however, a docker image 
-needs to be built that includes the cloud adapter. The steps for building 
+needs to be built that includes the cloud pool. The steps for building 
 the image and running a container from the image are outlined below.
 
 Before proceeding, make sure that your user is a member of the `docker` user group.
@@ -163,17 +162,17 @@ with the desired version name.
 If you want to build the image yourself, issue the following commands:
 
     cd target/
-    docker build --tag "elastisys/openstackadapter:<version>" .
+    docker build --tag "elastisys/openstackpool:<version>" .
 
 
 
 ### Running a container from the image
-Once the docker image is built for the cloud adapter, it can be run with:
+Once the docker image is built for the cloud pool, it can be run with:
 
-    docker run -d -p 2222:22 -p 8443:443 elastisys/openstackadapter:<version>
+    docker run -d -p 2222:22 -p 8443:443 elastisys/openstackpool:<version>
 
 This will publish the container's SSH port on host port 2222 and the 
-cloud adapter's HTTPS port on host port 8443. The container includes a 
+cloud pool's HTTPS port on host port 8443. The container includes a 
 privileged user named `elastisys` (password: `secret`).
 
 However, password logins are diabled for that user, so if you want to be able to 
@@ -186,7 +185,7 @@ the container could be run as follows:
 
     docker run -d -p 2222:22 -p 8443:443 \
            -e "SSH_KEY=$(cat ~/.ssh/id_rsa.pub)" \
-           elastisys/openstackadapter:<version>
+           elastisys/openstackpool:<version>
 
 You will then be able to log in to the started container with:
 
@@ -201,10 +200,10 @@ located under `/etc/elastisys` and binaries under `/opt/elastisys`.
 
 
 
-## Interacting with the cloud adapter over its REST API
+## Interacting with the cloud pool over its REST API
 The following examples, all using the [curl](http://en.wikipedia.org/wiki/CURL) 
-command-line tool, shows how to interact with the cloud adapter over its
-[REST API](http://cloudadapterapi.readthedocs.org/en/latest/).
+command-line tool, shows how to interact with the cloud pool over its
+[REST API](http://cloudpoolapi.readthedocs.org/en/latest/).
 
 The exact command-line arguments to pass to curl depends on the security
 settings that the server was launched with. For example, if client-certificate
@@ -214,7 +213,7 @@ below can be replaced with:
     --key-type pem --key credentials/client_private.pem \
     --cert-type pem --cert credentials/client_certificate.pem
 
-Here are some examples illustrating basic interactions with the spot adapter:
+Here are some examples illustrating basic interactions with the cloud pool:
 
  1. Retrieve configuration JSON schema (note: requires ``--config-handler`` to be turned on):
 

@@ -1,33 +1,33 @@
 {
 	"poolSizeCalculator": "STRICT",
-	"adapters": [
+	"backendPool": [
 		{
-			"priority": ${FIRST_ADAPTER_PRIORITY},
-			"cloudAdapterHost": "${FIRST_ADAPTER_HOST}",
-			"cloudAdapterPort": ${FIRST_ADAPTER_PORT},
+			"priority": ${FIRST_POOL_PRIORITY},
+			"cloudPoolHost": "${FIRST_POOL_HOST}",
+			"cloudPoolPort": ${FIRST_POOL_PORT},
 			"basicCredentials": {
-				"username": "${FIRST_ADAPTER_USERNAME}",
-				"password": "${FIRST_ADAPTER_PASSWORD}"
+				"username": "${FIRST_POOL_USERNAME}",
+				"password": "${FIRST_POOL_PASSWORD}"
 			}
 			
 		},
 		{
-			"priority": ${SECOND_ADAPTER_PRIORITY},
-			"cloudAdapterHost": "${SECOND_ADAPTER_HOST}",
-			"cloudAdapterPort": ${SECOND_ADAPTER_PORT},
+			"priority": ${SECOND_POOL_PRIORITY},
+			"cloudPoolHost": "${SECOND_POOL_HOST}",
+			"cloudPoolPort": ${SECOND_POOL_PORT},
 			"basicCredentials": {
-				"username": "${SECOND_ADAPTER_USERNAME}",
-				"password": "${SECOND_ADAPTER_PASSWORD}"
+				"username": "${SECOND_POOL_USERNAME}",
+				"password": "${SECOND_POOL_PASSWORD}"
 			}
 			
 		},
 		{
-			"priority": ${THIRD_ADAPTER_PRIORITY},
-			"cloudAdapterHost": "${THIRD_ADAPTER_HOST}",
-			"cloudAdapterPort": ${THIRD_ADAPTER_PORT},
+			"priority": ${THIRD_POOL_PRIORITY},
+			"cloudPoolHost": "${THIRD_POOL_HOST}",
+			"cloudPoolPort": ${THIRD_POOL_PORT},
 			"basicCredentials": {
-				"username": "${THIRD_ADAPTER_USERNAME}",
-				"password": "${THIRD_ADAPTER_PASSWORD}"
+				"username": "${THIRD_POOL_USERNAME}",
+				"password": "${THIRD_POOL_PASSWORD}"
 			}
 			
 		}
