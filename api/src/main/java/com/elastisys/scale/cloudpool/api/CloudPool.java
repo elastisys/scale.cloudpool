@@ -27,8 +27,8 @@ import com.google.gson.JsonObject;
  * A {@link CloudPool} instance is intended to be made network-accessible by a
  * {@link CloudPoolHandler} REST endpoint, which exposes the {@link CloudPool}
  * through the <a
- * href="http://cloudpoolapi.readthedocs.org/en/latest/">elastisys:scale cloud
- * pool REST API</a>).
+ * href="http://cloudpoolrestapi.readthedocs.org/en/latest/">elastisys:scale
+ * cloud pool REST API</a>).
  * <p/>
  * Implementors should take measures to ensure that implementations are
  * thread-safe, since they may be called by several concurrent threads.

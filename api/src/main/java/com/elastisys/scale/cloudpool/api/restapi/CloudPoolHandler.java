@@ -28,8 +28,8 @@ import com.google.gson.JsonObject;
 
 /**
  * Implements the cloud pool REST API, which is fully covered in the <a
- * href="http://cloudpoolapi.readthedocs.org/en/latest/">elastisys:scale cloud
- * pool REST API documentation</a>.
+ * href="http://cloudpoolrestapi.readthedocs.org/en/latest/">elastisys:scale
+ * cloud pool REST API documentation</a>.
  */
 @Path("/")
 public class CloudPoolHandler {
@@ -47,8 +47,8 @@ public class CloudPoolHandler {
 	 * Retrieves the current machine pool members.
 	 *
 	 * @return A response message as per the <a
-	 *         href="http://cloudpoolapi.readthedocs.org/en/latest/" >cloud pool
-	 *         REST API</a>.
+	 *         href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >cloud
+	 *         pool REST API</a>.
 	 */
 	@GET
 	@Path("/pool")
@@ -76,8 +76,8 @@ public class CloudPoolHandler {
 	 * @param request
 	 *            The desired number of machine in the pool.
 	 * @return A response message as per the <a
-	 *         href="http://cloudpoolapi.readthedocs.org/en/latest/" >cloud pool
-	 *         REST API</a>.
+	 *         href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >cloud
+	 *         pool REST API</a>.
 	 */
 	@POST
 	@Path("/pool/size")
@@ -106,8 +106,8 @@ public class CloudPoolHandler {
 	 * desired size and the actual size (as these may differ at any time).
 	 *
 	 * @return A response message as per the <a
-	 *         href="http://cloudpoolapi.readthedocs.org/en/latest/" >cloud pool
-	 *         REST API</a>.
+	 *         href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >cloud
+	 *         pool REST API</a>.
 	 */
 	@GET
 	@Path("/pool/size")
@@ -136,8 +136,8 @@ public class CloudPoolHandler {
 	 * @param request
 	 *            A {@link TerminateMachineRequest}.
 	 * @return A response message as per the <a
-	 *         href="http://cloudpoolapi.readthedocs.org/en/latest/" >cloud pool
-	 *         REST API</a>.
+	 *         href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >cloud
+	 *         pool REST API</a>.
 	 */
 	@POST
 	@Path("/pool/{machine}/terminate")
@@ -175,8 +175,8 @@ public class CloudPoolHandler {
 	 * @param request
 	 *            A {@link DetachMachineRequest}.
 	 * @return A response message as per the <a
-	 *         href="http://cloudpoolapi.readthedocs.org/en/latest/" >cloud pool
-	 *         REST API</a>.
+	 *         href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >cloud
+	 *         pool REST API</a>.
 	 */
 	@POST
 	@Path("/pool/{machine}/detach")
@@ -211,8 +211,8 @@ public class CloudPoolHandler {
 	 * @param machineId
 	 *            The identifier of the machine to attach to the pool.
 	 * @return A response message as per the <a
-	 *         href="http://cloudpoolapi.readthedocs.org/en/latest/" >cloud pool
-	 *         REST API</a>.
+	 *         href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >cloud
+	 *         pool REST API</a>.
 	 */
 	@POST
 	@Path("/pool/{machine}/attach")
@@ -251,8 +251,8 @@ public class CloudPoolHandler {
 	 * @param request
 	 *            A {@link SetServiceStateRequest}.
 	 * @return A response message as per the <a
-	 *         href="http://cloudpoolapi.readthedocs.org/en/latest/" >cloud pool
-	 *         REST API</a>.
+	 *         href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >cloud
+	 *         pool REST API</a>.
 	 */
 	@POST
 	@Path("/pool/{machine}/serviceState")

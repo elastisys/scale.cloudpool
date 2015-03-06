@@ -1,20 +1,18 @@
 scale.cloudpool
 ===============
 
-
-
 The ``scale.cloudpool`` project contains Java-based 
 [elastisys:scale](http://elastisys.com/scale) 
-[cloud pool](http://cloudpoolapi.readthedocs.org/en/latest) implementations 
+[cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) implementations 
 for different cloud providers:
 
-  - ``cloudadapers.openstack``: a [cloud pool](http://cloudpoolapi.readthedocs.org/en/latest) 
+  - ``cloudadapers.openstack``: a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages a group of [OpenStack](https://www.openstack.org/) servers.
-  - ``cloudadapers.aws.ec2``: a [cloud pool](http://cloudpoolapi.readthedocs.org/en/latest) 
+  - ``cloudadapers.aws.ec2``: a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages a group of [AWS EC2](http://aws.amazon.com/ec2/) instances.
-  - ``cloudadapers.aws.autoscaling``: a [cloud pool](http://cloudpoolapi.readthedocs.org/en/latest) 
+  - ``cloudadapers.aws.autoscaling``: a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages the size of an [AWS Auto Scaling Group](http://docs.aws.amazon.com/AutoScaling/latest/DeveloperGuide/WorkingWithASG.html).
-  - ``cloudadapers.splitter``: a [cloud pool](http://cloudpoolapi.readthedocs.org/en/latest) 
+  - ``cloudadapers.splitter``: a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages the size of several backend cloud pools.
 
 
@@ -28,7 +26,7 @@ Clone the repository and build it with:
 
 For each of the cloud pool implementation modules, the build produces an 
 executable jar file that starts an HTTP(S) server that publishes the cloud
-pool [REST API](http://cloudpoolapi.readthedocs.org/en/latest/api.html).
+pool [REST API](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html).
 
 To start a server, simply execute the jar file:
 

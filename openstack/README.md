@@ -1,7 +1,7 @@
 # AWS OpenStack cloud pool
 
 The [elastisys:scale](http://elastisys.com/scale) OpenStack 
-[cloud pool](http://cloudpoolapi.readthedocs.org/en/latest/)
+[cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest/)
 manages a pool of OpenStack instances. Pool members are identified by a 
 configurable tag and instances are continuously provisioned/decommissioned to 
 keep the pool's actual size in sync with the desired size that the cloud 
@@ -11,7 +11,7 @@ The cloud pool publishes a REST API that follows the general contract of an
 [elastisys:scale](http://elastisys.com/scale) cloud pool, through which
 a client (for example, an autoscaler) can manage the pool. For the complete API 
 reference, the reader is referred to the 
-[cloud pool API documentation](http://cloudpoolapi.readthedocs.org/en/latest/).
+[cloud pool API documentation](http://cloudpoolrestapi.readthedocs.org/en/latest/).
 
 
 
@@ -203,7 +203,7 @@ located under `/etc/elastisys` and binaries under `/opt/elastisys`.
 ## Interacting with the cloud pool over its REST API
 The following examples, all using the [curl](http://en.wikipedia.org/wiki/CURL) 
 command-line tool, shows how to interact with the cloud pool over its
-[REST API](http://cloudpoolapi.readthedocs.org/en/latest/).
+[REST API](http://cloudpoolrestapi.readthedocs.org/en/latest/).
 
 The exact command-line arguments to pass to curl depends on the security
 settings that the server was launched with. For example, if client-certificate

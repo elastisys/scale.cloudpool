@@ -31,8 +31,8 @@ import com.google.gson.JsonObject;
  * {@link CloudPool} instance.
  * <p/>
  * The REST API is fully covered in the <a
- * href="http://cloudpoolapi.readthedocs.org/en/latest/">elastisys:scale cloud
- * pool REST API documentation</a>.
+ * href="http://cloudpoolrestapi.readthedocs.org/en/latest/">elastisys:scale
+ * cloud pool REST API documentation</a>.
  */
 public class CloudPoolServer {
 	static Logger log = LoggerFactory.getLogger(CloudPoolServer.class);

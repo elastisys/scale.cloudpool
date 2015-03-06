@@ -168,7 +168,7 @@ located under `/etc/elastisys` and binaries under `/opt/elastisys`.
 ## Interacting with the cloud pool over its REST API
 The following examples, all using the [curl](http://en.wikipedia.org/wiki/CURL) 
 command-line tool, shows how to interact with the cloud pool over its
-[REST API](http://cloudpoolapi.readthedocs.org/en/latest/).
+[REST API](http://cloudpoolrestapi.readthedocs.org/en/latest/).
 
 The exact command-line arguments to pass to curl depends on the security
 settings that the server was launched with. For example, if client-certificate
