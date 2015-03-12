@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.splitter.requests.http;
 import java.util.concurrent.Callable;
 
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.splitter.Splitter;
@@ -48,6 +49,14 @@ public class HttpRequestFactory implements RequestFactory {
 			PrioritizedCloudPool cloudPool, String machineId,
 			ServiceState serviceState) {
 		return new SetServiceStateRequest(cloudPool, machineId, serviceState);
+	}
+
+	@Override
+	public Callable<Void> newSetMembershipStatusRequest(
+			PrioritizedCloudPool cloudPool, String machineId,
+			MembershipStatus membershipStatus) {
+		return new SetMembershipStatusRequest(cloudPool, machineId,
+				membershipStatus);
 	}
 
 	@Override

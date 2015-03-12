@@ -20,8 +20,9 @@ import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
-import com.elastisys.scale.cloudpool.openstack.functions.ServerToMachine;
+import com.elastisys.scale.cloudpool.openstack.driver.Constants;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.collect.ArrayListMultimap;
@@ -45,6 +46,8 @@ public class TestServerToMachine {
 		Machine machine = new ServerToMachine().apply(server);
 		assertThat(machine.getId(), is(server.getId()));
 		assertThat(machine.getMachineState(), is(MachineState.RUNNING));
+		assertThat(machine.getMembershipStatus(),
+				is(MembershipStatus.defaultStatus()));
 		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
 		assertThat(machine.getLaunchtime().toDate(), is(server.getCreated()));
 		assertThat(machine.getPublicIps(), is(asList(publicIp.getAddr())));
@@ -63,6 +66,8 @@ public class TestServerToMachine {
 		Machine machine = new ServerToMachine().apply(server);
 		assertThat(machine.getId(), is(server.getId()));
 		assertThat(machine.getMachineState(), is(MachineState.RUNNING));
+		assertThat(machine.getMembershipStatus(),
+				is(MembershipStatus.defaultStatus()));
 		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
 		assertThat(machine.getLaunchtime().toDate(), is(server.getCreated()));
 		List<String> empty = asList();
@@ -85,6 +90,26 @@ public class TestServerToMachine {
 
 		Machine machine = new ServerToMachine().apply(server);
 		assertThat(machine.getServiceState(), is(ServiceState.OUT_OF_SERVICE));
+	}
+
+	@Test
+	public void convertServerWithMembershipStatusTag() {
+		DateTime now = UtcTime.now();
+
+		Address privateIp = Address.createV4("10.11.12.2");
+		Address publicIp = Address.createV4("130.239.48.193");
+		List<Address> ipAddresses = Lists.newArrayList(privateIp, publicIp);
+
+		MembershipStatus status = MembershipStatus.blessed();
+		String statusAsJson = JsonUtils.toString(JsonUtils.toJson(status));
+
+		Map<String, String> tags = ImmutableMap.of(
+				Constants.MEMBERSHIP_STATUS_TAG, statusAsJson);
+		Server server = serverWithMetadata(Status.ACTIVE, now, ipAddresses,
+				tags);
+
+		Machine machine = new ServerToMachine().apply(server);
+		assertThat(machine.getMembershipStatus(), is(status));
 	}
 
 	private Server server(Status status, DateTime launchTime,

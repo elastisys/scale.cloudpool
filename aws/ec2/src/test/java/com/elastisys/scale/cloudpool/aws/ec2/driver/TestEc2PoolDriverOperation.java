@@ -34,6 +34,7 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.ec2.driver.client.Ec2Client;
@@ -42,6 +43,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleO
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
+import com.elastisys.scale.commons.json.JsonUtils;
 
 /**
  * Verifies the operational behavior of the {@link Ec2PoolDriver}.
@@ -399,6 +401,65 @@ public class TestEc2PoolDriverOperation {
 		this.driver.setServiceState("i-1", IN_SERVICE);
 	}
 
+	/**
+	 * Verifies that a
+	 * {@link CloudPoolDriver#setMembershipStatus(String, MembershipStatus)}
+	 * stores the status by setting a tag on the server.
+	 */
+	@Test
+	public void setMembershipStatus() {
+		FakeEc2Client fakeClient = new FakeEc2Client(
+				ec2Instances(memberInstance("i-1", "running")));
+		this.driver = new Ec2PoolDriver(fakeClient);
+		this.driver.configure(config(POOL_NAME));
+		assertThat(membershipStatusTag(fakeClient.getInstanceMetadata("i-1")),
+				is(nullValue()));
+
+		MembershipStatus status = MembershipStatus.awaitingService();
+		String statusAsJson = JsonUtils.toString(JsonUtils.toJson(status));
+		this.driver.setMembershipStatus("i-1", status);
+		assertThat(membershipStatusTag(fakeClient.getInstanceMetadata("i-1")),
+				is(statusAsJson));
+
+		MembershipStatus otherStatus = MembershipStatus.blessed();
+		String otherStatusAsJson = JsonUtils.toString(JsonUtils
+				.toJson(otherStatus));
+		this.driver.setMembershipStatus("i-1", otherStatus);
+		assertThat(membershipStatusTag(fakeClient.getInstanceMetadata("i-1")),
+				is(otherStatusAsJson));
+	}
+
+	/**
+	 * It should not be possible to set membership status on a machine instance
+	 * that is not recognized as a pool member.
+	 */
+	@Test(expected = NotFoundException.class)
+	public void setMembershipStatusOnNonGroupMember() {
+		setUpMockedScalingGroup(POOL_NAME,
+				ec2Instances(memberInstance("i-1", "running")));
+
+		this.driver.setMembershipStatus("i-2", MembershipStatus.blessed());
+	}
+
+	/**
+	 * A {@link CloudPoolDriverException} should be thrown on failure to tag the
+	 * membership status of a pool instance.
+	 */
+	@Test(expected = CloudPoolDriverException.class)
+	public void setMembershipStatusOnError() {
+		setUpMockedScalingGroup(POOL_NAME,
+				ec2Instances(memberInstance("i-1", "running")));
+
+		MembershipStatus status = MembershipStatus.awaitingService();
+		String statusAsJson = JsonUtils.toString(JsonUtils.toJson(status));
+		List<Tag> tag = asList(new Tag().withKey(
+				ScalingTags.MEMBERSHIP_STATUS_TAG).withValue(statusAsJson));
+		doThrow(new RuntimeException("API unreachable")).when(this.mockClient)
+				.tagInstance("i-1", tag);
+
+		this.driver.setMembershipStatus("i-1", status);
+	}
+
 	private void setUpMockedScalingGroup(String poolName,
 			List<Instance> poolMembers) {
 		// set up response to queries for pool member instances
@@ -424,13 +485,23 @@ public class TestEc2PoolDriverOperation {
 	}
 
 	/**
-	 * Gets the service state tag ({@link Constants#SERVICE_STATE_TAG}) for a
+	 * Gets the service state tag ({@link ScalingTags#SERVICE_STATE_TAG}) for a
 	 * {@link Server} or <code>null</code> if none is set.
 	 *
 	 * @param server
 	 */
 	private static String serviceStateTag(Instance instance) {
 		return getTag(instance, SERVICE_STATE_TAG);
+	}
+
+	/**
+	 * Gets the service state tag ({@link ScalingTags#MEMBERSHIP_STATUS_TAG})
+	 * for a {@link Server} or <code>null</code> if none is set.
+	 *
+	 * @param server
+	 */
+	private static String membershipStatusTag(Instance instance) {
+		return getTag(instance, ScalingTags.MEMBERSHIP_STATUS_TAG);
 	}
 
 	/**

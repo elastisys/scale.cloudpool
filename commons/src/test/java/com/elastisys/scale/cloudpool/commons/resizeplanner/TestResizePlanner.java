@@ -22,9 +22,7 @@ import org.junit.Test;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
-import com.elastisys.scale.cloudpool.api.types.ServiceState;
-import com.elastisys.scale.cloudpool.commons.resizeplanner.ResizePlan;
-import com.elastisys.scale.cloudpool.commons.resizeplanner.ResizePlanner;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.cloudpool.commons.termqueue.ScheduledTermination;
 import com.elastisys.scale.cloudpool.commons.termqueue.TerminationQueue;
@@ -45,10 +43,11 @@ public class TestResizePlanner {
 	}
 
 	/**
-	 * Exercises the {@link ResizePlanner#getEffectiveSize()}.
+	 * Exercises the {@link ResizePlanner#getNetSize()} with different number of
+	 * instances in termination queue.
 	 */
 	@Test
-	public void testGetEffectiveSize() {
+	public void testGetNetSize() {
 		Machine pending = makeMachine(1, nowOffset(-1800), MachineState.PENDING);
 		Machine running = makeMachine(2, nowOffset(-3600), MachineState.RUNNING);
 		Machine requested = makeMachine(3, null, MachineState.REQUESTED);
@@ -56,13 +55,13 @@ public class TestResizePlanner {
 		// pool size: 0, termination queue size: 0
 		ResizePlanner planner = new ResizePlanner(makePool(),
 				new TerminationQueue(), OLDEST_INSTANCE, INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(0));
+		assertThat(planner.getNetSize(), is(0));
 
 		// pool size: 2 (1 PENDING, 1 RUNNING), termination queue size: 0
 		MachinePool pool = makePool(UtcTime.now(), asList(pending, running));
 		planner = new ResizePlanner(pool, new TerminationQueue(),
 				OLDEST_INSTANCE, INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(2));
+		assertThat(planner.getNetSize(), is(2));
 
 		// allocated: 3 (1 REQUESTED, 1 PENDING, 1 RUNNING), termination queue
 		// size: 0
@@ -70,7 +69,7 @@ public class TestResizePlanner {
 		TerminationQueue termq = new TerminationQueue();
 		planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(3));
+		assertThat(planner.getNetSize(), is(3));
 
 		// allocated: 1, termination queue size: 1
 		pool = makePool(UtcTime.now(), asList(pending));
@@ -78,14 +77,14 @@ public class TestResizePlanner {
 		termq.add(new ScheduledTermination(pending, nowOffset(1500)));
 		planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(0));
+		assertThat(planner.getNetSize(), is(0));
 
 		// allocated: 2, termination queue size: 0
 		pool = makePool(UtcTime.now(), asList(pending, running));
 		termq = new TerminationQueue();
 		planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(2));
+		assertThat(planner.getNetSize(), is(2));
 
 		// allocated: 2, termination queue size: 1
 		pool = makePool(UtcTime.now(), asList(pending, running));
@@ -93,7 +92,7 @@ public class TestResizePlanner {
 		termq.add(new ScheduledTermination(running, nowOffset(1500)));
 		planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(1));
+		assertThat(planner.getNetSize(), is(1));
 
 		// allocated: 2, termination queue size: 2
 		pool = makePool(UtcTime.now(), asList(pending, running));
@@ -102,15 +101,15 @@ public class TestResizePlanner {
 		termq.add(new ScheduledTermination(running, nowOffset(2400)));
 		planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(0));
+		assertThat(planner.getNetSize(), is(0));
 	}
 
 	/**
-	 * Exercises the {@link ResizePlanner#getEffectiveSize()} when there are
-	 * machine instances in terminal states in the pool.
+	 * Exercises the {@link ResizePlanner#getNetSize()} when there are machine
+	 * instances in terminal states in the pool.
 	 */
 	@Test
-	public void testGetEffectiveSizeWithInstancesInTerminalState() {
+	public void testGetNetSizeWithInstancesInTerminalState() {
 		Machine pending = makeMachine(1, nowOffset(-1800), MachineState.PENDING);
 		Machine running = makeMachine(2, nowOffset(-3600), MachineState.RUNNING);
 		Machine requested = makeMachine(3, null, MachineState.REQUESTED);
@@ -125,33 +124,34 @@ public class TestResizePlanner {
 						rejected));
 		ResizePlanner planner = new ResizePlanner(pool, new TerminationQueue(),
 				OLDEST_INSTANCE, INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(3));
+		assertThat(planner.getNetSize(), is(3));
 	}
 
 	/**
-	 * Effective size should not include pool members that are marked
-	 * {@link ServiceState#OUT_OF_SERVICE} and are awaiting
-	 * troubleshooting/repair.
+	 * Net size should not include pool members that are marked with an inactive
+	 * {@link MembershipStatus}.
 	 */
 	@Test
-	public void testGetEffectiveSizeWithOutOfServiceInstances() {
+	public void testGetNetSizeWithInactiveInstances() {
 		Machine pending = makeMachine(1, nowOffset(-1800), MachineState.PENDING);
 		Machine running = makeMachine(2, nowOffset(-3600), MachineState.RUNNING);
 		Machine requested = makeMachine(3, null, MachineState.REQUESTED);
-		Machine outOfService1 = makeMachine(4, nowOffset(-7200),
-				MachineState.RUNNING, ServiceState.OUT_OF_SERVICE);
-		Machine outOfService2 = makeMachine(5, nowOffset(-7800),
-				MachineState.RUNNING, ServiceState.OUT_OF_SERVICE);
+		Machine blessed = makeMachine(3, null, MachineState.REQUESTED,
+				MembershipStatus.blessed());
+		Machine inactive1 = makeMachine(4, nowOffset(-7200),
+				MachineState.RUNNING, MembershipStatus.awaitingService());
+		Machine inactive2 = makeMachine(5, nowOffset(-7800),
+				MachineState.RUNNING, new MembershipStatus(false, true));
 
-		// allocated: 5, out-of-service: 2, termination queue size: 0
+		// allocated: 6, inactive: 2, termination queue size: 0
 		MachinePool pool = makePool(
 				UtcTime.now(),
-				asList(requested, pending, running, outOfService1,
-						outOfService2));
+				asList(requested, pending, running, blessed, inactive1,
+						inactive2));
 		TerminationQueue termq = new TerminationQueue();
 		ResizePlanner planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(3));
+		assertThat(planner.getNetSize(), is(4));
 	}
 
 	/**
@@ -163,43 +163,42 @@ public class TestResizePlanner {
 		Machine pending = makeMachine(1, nowOffset(-1800), MachineState.PENDING);
 		Machine running = makeMachine(2, nowOffset(-3600), MachineState.RUNNING);
 		Machine requested = makeMachine(3, null, MachineState.REQUESTED);
-		// added to pool, but should not be considered as it has been set aside
-		// awaiting repair
+		// should not be considered as it is not active
 		Machine outOfService = makeMachine(4, nowOffset(-7200),
-				MachineState.RUNNING, ServiceState.OUT_OF_SERVICE);
+				MachineState.RUNNING, MembershipStatus.awaitingService());
 
 		// empty machine pool
 		ResizePlanner planner = new ResizePlanner(makePool(),
 				new TerminationQueue(), OLDEST_INSTANCE, INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(0));
+		assertThat(planner.getNetSize(), is(0));
 		// 0 -> 1
 		ResizePlan plan = planner.calculateResizePlan(1);
-		assertTrue(plan.isScaleUp());
+		assertTrue(plan.hasScaleOutActions());
 		assertThat(plan.getToRequest(), is(1));
 		assertThat(plan.getToSpare(), is(0));
 		assertThat(plan.getToTerminate().size(), is(0));
 		// 0 -> 2
 		plan = planner.calculateResizePlan(2);
-		assertTrue(plan.isScaleUp());
+		assertTrue(plan.hasScaleOutActions());
 		assertThat(plan.getToRequest(), is(2));
 		assertThat(plan.getToSpare(), is(0));
 		assertThat(plan.getToTerminate().size(), is(0));
 
-		// pool size: 3 (allocated: 4, out-of-service: 1)
+		// pool size: 3 (allocated: 4, inactive: 1)
 		MachinePool pool = makePool(now(),
 				asList(requested, pending, running, outOfService));
 		planner = new ResizePlanner(pool, new TerminationQueue(),
 				OLDEST_INSTANCE, INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(3));
+		assertThat(planner.getNetSize(), is(3));
 		// 3 -> 4
 		plan = planner.calculateResizePlan(4);
-		assertTrue(plan.isScaleUp());
+		assertTrue(plan.hasScaleOutActions());
 		assertThat(plan.getToRequest(), is(1));
 		assertThat(plan.getToSpare(), is(0));
 		assertThat(plan.getToTerminate().size(), is(0));
 		// 3 -> 5
 		plan = planner.calculateResizePlan(5);
-		assertTrue(plan.isScaleUp());
+		assertTrue(plan.hasScaleOutActions());
 		assertThat(plan.getToRequest(), is(2));
 		assertThat(plan.getToSpare(), is(0));
 		assertThat(plan.getToTerminate().size(), is(0));
@@ -215,57 +214,56 @@ public class TestResizePlanner {
 		Machine pending = makeMachine(1, nowOffset(-3600), MachineState.PENDING);
 		Machine running = makeMachine(2, nowOffset(-1800), MachineState.RUNNING);
 		Machine requested = makeMachine(3, null, MachineState.REQUESTED);
-		// added to pool, but should not be considered as it has been set aside
-		// awaiting repair
+		// should not be considered as it is not active
 		Machine outOfService = makeMachine(4, nowOffset(-7200),
-				MachineState.RUNNING, ServiceState.OUT_OF_SERVICE);
+				MachineState.RUNNING, MembershipStatus.awaitingService());
 
-		// pool size: 3 (allocated: 4, out-of-service: 1), termination queue: 1
+		// pool size: 3 (allocated: 4, inactive: 1), termination queue: 1
 		MachinePool pool = makePool(UtcTime.now(),
 				asList(pending, running, requested, outOfService));
 		TerminationQueue termq = new TerminationQueue();
 		termq.add(new ScheduledTermination(requested, nowOffset(0)));
 		ResizePlanner planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(2));
+		assertThat(planner.getNetSize(), is(2));
 		// 2 -> 3
 		ResizePlan plan = planner.calculateResizePlan(3);
-		assertTrue(plan.isScaleUp());
+		assertTrue(plan.hasScaleOutActions());
 		// needs to spare one
 		assertThat(plan.getToRequest(), is(0));
 		assertThat(plan.getToSpare(), is(1));
 		assertThat(plan.getToTerminate().size(), is(0));
 		// 2 -> 4
 		plan = planner.calculateResizePlan(4);
-		assertTrue(plan.isScaleUp());
+		assertTrue(plan.hasScaleOutActions());
 		// needs to spare one and request one additional
 		assertThat(plan.getToRequest(), is(1));
 		assertThat(plan.getToSpare(), is(1));
 		assertThat(plan.getToTerminate().size(), is(0));
 
-		// pool size: 2 (allocated: 3, out-of-service: 1), termination queue: 2
+		// pool size: 2 (allocated: 3, inactive: 1), termination queue: 2
 		pool = makePool(UtcTime.now(), asList(pending, running, outOfService));
 		termq = new TerminationQueue();
 		termq.add(new ScheduledTermination(pending, nowOffset(1500)));
 		termq.add(new ScheduledTermination(running, nowOffset(2400)));
 		planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(0));
+		assertThat(planner.getNetSize(), is(0));
 		// 0 -> 1
 		plan = planner.calculateResizePlan(1);
-		assertTrue(plan.isScaleUp());
+		assertTrue(plan.hasScaleOutActions());
 		// needs to spare one
 		assertThat(plan.getToRequest(), is(0));
 		assertThat(plan.getToSpare(), is(1));
 		// 0 -> 2
 		plan = planner.calculateResizePlan(2);
-		assertTrue(plan.isScaleUp());
+		assertTrue(plan.hasScaleOutActions());
 		// needs to spare two
 		assertThat(plan.getToRequest(), is(0));
 		assertThat(plan.getToSpare(), is(2));
 		// 0 -> 3
 		plan = planner.calculateResizePlan(3);
-		assertTrue(plan.isScaleUp());
+		assertTrue(plan.hasScaleOutActions());
 		// needs to spare two and request one additional
 		assertThat(plan.getToRequest(), is(1));
 		assertThat(plan.getToSpare(), is(2));
@@ -280,57 +278,56 @@ public class TestResizePlanner {
 		Machine pending = makeMachine(1, nowOffset(-3600), MachineState.PENDING);
 		Machine running = makeMachine(2, nowOffset(-1800), MachineState.RUNNING);
 		Machine requested = makeMachine(3, null, MachineState.REQUESTED);
-		// added to pool, but should not be considered as it has been set aside
-		// awaiting repair
+		// should not be considered as it is inactive
 		Machine outOfService = makeMachine(4, nowOffset(-7200),
-				MachineState.RUNNING, ServiceState.OUT_OF_SERVICE);
+				MachineState.RUNNING, MembershipStatus.awaitingService());
 
-		// pool size: 0 (allocated: 1, out-of-service: 1), termination queue: 0
+		// pool size: 0 (allocated: 1, inactive: 1), termination queue: 0
 		MachinePool pool = makePool(UtcTime.now(), asList(outOfService));
 		TerminationQueue termq = new TerminationQueue();
 		ResizePlanner planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(0));
+		assertThat(planner.getNetSize(), is(0));
 		// 0 -> 0
 		ResizePlan plan = planner.calculateResizePlan(0);
-		assertFalse(plan.isScaleUp());
-		assertFalse(plan.isScaleDown());
+		assertFalse(plan.hasScaleOutActions());
+		assertFalse(plan.hasScaleInActions());
 
 		pool = makePool(UtcTime.now(), asList(requested, pending));
 		// pool size: 2, termination queue size: 0
 		termq = new TerminationQueue();
 		planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(2));
+		assertThat(planner.getNetSize(), is(2));
 		// 2 -> 2
 		plan = planner.calculateResizePlan(2);
-		assertFalse(plan.isScaleUp());
-		assertFalse(plan.isScaleDown());
+		assertFalse(plan.hasScaleOutActions());
+		assertFalse(plan.hasScaleInActions());
 
-		// pool size: 2 (allocated: 3, out-of-service: 1), termination queue: 1
+		// pool size: 2 (allocated: 3, inactive: 1), termination queue: 1
 		pool = makePool(UtcTime.now(), asList(running, pending, outOfService));
 		termq = new TerminationQueue();
 		termq.add(new ScheduledTermination(pending, nowOffset(1500)));
 		planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(1));
+		assertThat(planner.getNetSize(), is(1));
 		// 1 -> 1
 		plan = planner.calculateResizePlan(1);
-		assertFalse(plan.isScaleUp());
-		assertFalse(plan.isScaleDown());
+		assertFalse(plan.hasScaleOutActions());
+		assertFalse(plan.hasScaleInActions());
 
-		// pool size: 2 (allocated: 3, out-of-service: 1), termination queue: 2
+		// pool size: 2 (allocated: 3, inactive: 1), termination queue: 2
 		pool = makePool(UtcTime.now(), asList(running, pending, outOfService));
 		termq = new TerminationQueue();
 		termq.add(new ScheduledTermination(pending, nowOffset(1500)));
 		termq.add(new ScheduledTermination(running, nowOffset(2400)));
 		planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(0));
+		assertThat(planner.getNetSize(), is(0));
 		// 0 -> 0
 		plan = planner.calculateResizePlan(0);
-		assertFalse(plan.isScaleUp());
-		assertFalse(plan.isScaleDown());
+		assertFalse(plan.hasScaleOutActions());
+		assertFalse(plan.hasScaleInActions());
 
 	}
 
@@ -342,37 +339,36 @@ public class TestResizePlanner {
 	public void scaleDownWithEmptyTerminationQueue() {
 		Machine pending = makeMachine(1, nowOffset(-1800), MachineState.PENDING);
 		Machine running = makeMachine(2, nowOffset(-900), MachineState.RUNNING);
-		// added to pool, but should not be considered as it has been set aside
-		// awaiting repair
+		// should not be considered as it is inactive
 		Machine outOfService = makeMachine(4, nowOffset(-7200),
-				MachineState.RUNNING, ServiceState.OUT_OF_SERVICE);
+				MachineState.RUNNING, MembershipStatus.awaitingService());
 
-		// pool size: 1 (allocated: 2, out-of-service: 1), termination queue: 0
+		// pool size: 1 (allocated: 2, inactive: 1), termination queue: 0
 		MachinePool pool = makePool(UtcTime.now(),
 				asList(pending, outOfService));
 		TerminationQueue termq = new TerminationQueue();
 		ResizePlanner planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(1));
+		assertThat(planner.getNetSize(), is(1));
 		// 1 -> 0
 		ResizePlan plan = planner.calculateResizePlan(0);
-		assertTrue(plan.isScaleDown());
+		assertTrue(plan.hasScaleInActions());
 		assertThat(plan.getToRequest(), is(0));
 		assertThat(plan.getToSpare(), is(0));
 		assertThat(plan.getToTerminate().size(), is(1));
 
-		// pool size: 2 (allocated: 3, out-of-service: 1), termination queue: 0
+		// pool size: 2 (allocated: 3, inactive: 1), termination queue: 0
 		pool = makePool(UtcTime.now(), asList(pending, running, outOfService));
 		planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(2));
+		assertThat(planner.getNetSize(), is(2));
 		// 2 -> 1
 		plan = planner.calculateResizePlan(1);
-		assertTrue(plan.isScaleDown());
+		assertTrue(plan.hasScaleInActions());
 		assertThat(plan.getToTerminate().size(), is(1));
 		// 2 -> 0
 		plan = planner.calculateResizePlan(0);
-		assertTrue(plan.isScaleDown());
+		assertTrue(plan.hasScaleInActions());
 		assertThat(plan.getToTerminate().size(), is(2));
 	}
 
@@ -386,21 +382,20 @@ public class TestResizePlanner {
 		Machine running = makeMachine(2, nowOffset(-1800), MachineState.RUNNING);
 		Machine requested1 = makeMachine(3, null, MachineState.REQUESTED);
 		Machine requested2 = makeMachine(4, null, MachineState.REQUESTED);
-		// added to pool, but should not be considered as it has been set aside
-		// awaiting repair
+		// should not be considered as it is inactive
 		Machine outOfService = makeMachine(4, nowOffset(-7200),
-				MachineState.RUNNING, ServiceState.OUT_OF_SERVICE);
+				MachineState.RUNNING, MembershipStatus.awaitingService());
 
-		// pool size: 4 (allocated: 5, out-of-service: 1), termination queue: 0
+		// pool size: 4 (allocated: 5, inactive: 1), termination queue: 0
 		MachinePool pool = makePool(UtcTime.now(),
 				asList(pending, running, requested1, requested2, outOfService));
 		TerminationQueue termq = new TerminationQueue();
 		ResizePlanner planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(4));
+		assertThat(planner.getNetSize(), is(4));
 		// 4 -> 3
 		ResizePlan plan = planner.calculateResizePlan(3);
-		assertTrue(plan.isScaleDown());
+		assertTrue(plan.hasScaleInActions());
 		assertThat(plan.getToRequest(), is(0));
 		assertThat(plan.getToSpare(), is(0));
 		assertThat(plan.getToTerminate().size(), is(1));
@@ -408,7 +403,7 @@ public class TestResizePlanner {
 
 		// 4 -> 2
 		plan = planner.calculateResizePlan(2);
-		assertTrue(plan.isScaleDown());
+		assertTrue(plan.hasScaleInActions());
 		assertThat(plan.getToRequest(), is(0));
 		assertThat(plan.getToSpare(), is(0));
 		assertThat(plan.getToTerminate().size(), is(2));
@@ -425,12 +420,11 @@ public class TestResizePlanner {
 		Machine machine1 = makeMachine(1, nowOffset(-1800));
 		Machine machine2 = makeMachine(2, nowOffset(-900));
 		Machine machine3 = makeMachine(3, nowOffset(-120));
-		// added to pool, but should not be considered as it has been set aside
-		// awaiting repair
+		// should not be considered as it is inactive
 		Machine outOfService = makeMachine(4, nowOffset(-7200),
-				MachineState.RUNNING, ServiceState.OUT_OF_SERVICE);
+				MachineState.RUNNING, MembershipStatus.awaitingService());
 
-		// pool size: 3 (allocated: 4, out-of-service: 1), termination queue:
+		// pool size: 3 (allocated: 4, inactive: 1), termination queue:
 		// [machine1]
 		MachinePool pool = makePool(UtcTime.now(),
 				asList(machine1, machine2, machine3, outOfService));
@@ -438,10 +432,10 @@ public class TestResizePlanner {
 		termq.add(new ScheduledTermination(machine1, nowOffset(1500)));
 		ResizePlanner planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(2));
+		assertThat(planner.getNetSize(), is(2));
 		// 2 -> 1
 		ResizePlan plan = planner.calculateResizePlan(1);
-		assertTrue(plan.isScaleDown());
+		assertTrue(plan.hasScaleInActions());
 		assertThat(plan.getToTerminate().size(), is(1));
 		// [machine2] to be termination queued
 		assertThat(terminationMarked(plan), is(asList(machine2)));
@@ -452,7 +446,7 @@ public class TestResizePlanner {
 
 		// 2 -> 0
 		plan = planner.calculateResizePlan(0);
-		assertTrue(plan.isScaleDown());
+		assertTrue(plan.hasScaleInActions());
 		// [machine2, machine3] to be termination queued
 		assertThat(plan.getToTerminate().size(), is(2));
 		assertThat(terminationMarked(plan), is(asList(machine2, machine3)));
@@ -476,22 +470,21 @@ public class TestResizePlanner {
 		Machine terminated = makeMachine(3, nowOffset(-3200),
 				MachineState.TERMINATED);
 		Machine running = makeMachine(2, nowOffset(-1800), MachineState.RUNNING);
-		// added to pool, but should not be considered as it has been set aside
-		// awaiting repair
+		// should not be counted as an evictable machine
 		Machine outOfService = makeMachine(4, nowOffset(-7200),
-				MachineState.RUNNING, ServiceState.OUT_OF_SERVICE);
+				MachineState.RUNNING, MembershipStatus.awaitingService());
 
-		// pool size: 1 (allocated: 2, out-of-service: 1)
+		// pool size: 1 (allocated: 2, inactive: 1)
 		MachinePool pool = makePool(
 				UtcTime.now(),
 				asList(rejected, terminating, terminated, running, outOfService));
 		TerminationQueue termq = new TerminationQueue();
 		ResizePlanner planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(1));
+		assertThat(planner.getNetSize(), is(1));
 		// 1 -> 0
 		ResizePlan plan = planner.calculateResizePlan(0);
-		assertTrue(plan.isScaleDown());
+		assertTrue(plan.hasScaleInActions());
 		// only one candidate can be selected for termination
 		assertThat(plan.getToTerminate().size(), is(1));
 		assertThat(terminationMarked(plan), is(asList(running)));
@@ -514,13 +507,13 @@ public class TestResizePlanner {
 		termq.add(new ScheduledTermination(victim2, nowOffset(2400)));
 		ResizePlanner planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(0));
+		assertThat(planner.getNetSize(), is(0));
 		// 0 -> 0
 		ResizePlan plan = planner.calculateResizePlan(0);
 		// all instances marked for termination or in a terminal state => no
 		// further scale-down possible
-		assertFalse(plan.isScaleUp());
-		assertFalse(plan.isScaleDown());
+		assertFalse(plan.hasScaleOutActions());
+		assertFalse(plan.hasScaleInActions());
 	}
 
 	/**
@@ -684,7 +677,7 @@ public class TestResizePlanner {
 		TerminationQueue termq = new TerminationQueue();
 		ResizePlanner planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
 				INSTANCE_HOUR_MARGIN);
-		assertThat(planner.getEffectiveSize(), is(4));
+		assertThat(planner.getNetSize(), is(4));
 		// 4 -> 3
 		ResizePlan plan = planner.calculateResizePlan(3);
 		assertThat(terminationMarked(plan), is(asList(requested1)));
@@ -698,6 +691,115 @@ public class TestResizePlanner {
 				is(UtcTime.now()));
 		assertThat(plan.getToTerminate().get(1).getTerminationTime(),
 				is(UtcTime.now()));
+	}
+
+	/**
+	 * Any machine in the pool marked with a {@link MembershipStatus} of
+	 * inactive, should be replaced.
+	 */
+	@Test
+	public void verifyThatInactiveMachinesAreReplaced() {
+		Machine inactive = makeMachine(1, nowOffset(-1800),
+				MachineState.RUNNING, MembershipStatus.awaitingService());
+
+		MachinePool pool = makePool(UtcTime.now(), asList(inactive));
+		TerminationQueue termq = new TerminationQueue();
+		ResizePlanner planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
+				INSTANCE_HOUR_MARGIN);
+
+		// inactive machine should not be counted
+		assertThat(planner.getNetSize(), is(0));
+		// replacement machines should be fired up for inactive instances
+		ResizePlan plan = planner.calculateResizePlan(1);
+		assertTrue(plan.hasScaleOutActions());
+		assertFalse(plan.hasScaleInActions());
+		assertThat(plan.getToRequest(), is(1));
+	}
+
+	/**
+	 * Make sure that blessed members (with a {@link MembershipStatus} that is
+	 * non-evictable) are never selected for termination.
+	 */
+	@Test
+	public void scaleDownWithNonEvictablePoolMembers() {
+		Machine blessed = makeMachine(1, nowOffset(-3600),
+				MachineState.RUNNING, MembershipStatus.blessed());
+		Machine youngerMachine = makeMachine(2, nowOffset(-1800));
+
+		MachinePool pool = makePool(UtcTime.now(),
+				asList(blessed, youngerMachine));
+		TerminationQueue termq = new TerminationQueue();
+		ResizePlanner planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
+				INSTANCE_HOUR_MARGIN);
+		assertThat(planner.getNetSize(), is(2));
+
+		// scale down by one: 2 -> 1
+		// make sure the younger machine gets terminated despite using
+		// OLDEST_INSTANCE victim selection policy, since the blessed instance
+		// is non-evictable
+		ResizePlan plan = planner.calculateResizePlan(1);
+		assertTrue(plan.hasScaleInActions());
+		assertThat(terminationMarked(plan), is(asList(youngerMachine)));
+
+		// scale down by two: not entirely possible, since there aren't enough
+		// evictable candidates
+		plan = planner.calculateResizePlan(0);
+		assertTrue(plan.hasScaleInActions());
+		assertThat(terminationMarked(plan), is(asList(youngerMachine)));
+	}
+
+	/**
+	 * test the situation where we cannot scale down since there aren't enough
+	 * evictable candidates
+	 */
+	@Test
+	public void scaleDownWithTooFewEvictableCandidates() {
+		Machine notEvictable1 = makeMachine(1, nowOffset(-3600),
+				MachineState.RUNNING, MembershipStatus.blessed());
+		Machine notEvictable2 = makeMachine(2, nowOffset(-3600),
+				MachineState.RUNNING, MembershipStatus.awaitingService());
+
+		MachinePool pool = makePool(UtcTime.now(),
+				asList(notEvictable1, notEvictable2));
+		TerminationQueue termq = new TerminationQueue();
+		ResizePlanner planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
+				INSTANCE_HOUR_MARGIN);
+		assertThat(planner.getNetSize(), is(1));
+
+		// scale down by one: 1 -> 0
+		ResizePlan plan = planner.calculateResizePlan(0);
+		// not possible, since there aren't enough evictable candidates
+		assertFalse(plan.hasScaleOutActions());
+		assertFalse(plan.hasScaleInActions());
+	}
+
+	/**
+	 * Any disposable (with inactive, evictable {@link MembershipStatus})
+	 * machines should be marked for termination.
+	 */
+	@Test
+	public void disposableMachinesShouldBeMarkedForTermination() {
+		Machine disposable1 = makeMachine(1, nowOffset(-3600),
+				MachineState.RUNNING, MembershipStatus.disposable());
+		Machine disposable2 = makeMachine(2, nowOffset(-3600),
+				MachineState.RUNNING, MembershipStatus.disposable());
+
+		MachinePool pool = makePool(UtcTime.now(),
+				asList(disposable1, disposable2));
+		TerminationQueue termq = new TerminationQueue();
+		ResizePlanner planner = new ResizePlanner(pool, termq, OLDEST_INSTANCE,
+				INSTANCE_HOUR_MARGIN);
+		assertThat(planner.getNetSize(), is(0));
+
+		// same desired size
+		ResizePlan plan = planner.calculateResizePlan(0);
+		// not possible, since there aren't enough evictable candidates
+		assertTrue(plan.hasScaleInActions());
+		// assertTrue(plan.isScaleOut());
+
+		// assertThat(plan.getToRequest(), is(1));
+		assertThat(terminationMarked(plan),
+				is(asList(disposable1, disposable2)));
 	}
 
 	@Test(expected = IllegalArgumentException.class)

@@ -23,7 +23,7 @@ import com.elastisys.scale.commons.json.JsonUtils;
  * Verifies the behavior of the {@link OpenStackPoolDriver} with respect to
  * configuration.
  */
-public class TestOpenStackScalingGroupConfiguration {
+public class TestOpenStackPoolDriverConfiguration {
 
 	private OpenstackClient mockClient = mock(OpenstackClient.class);
 	/** Object under test. */

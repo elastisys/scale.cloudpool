@@ -53,15 +53,17 @@ public class TestMachine {
 				ServiceState.BOOTING, now, Arrays.asList("1.2.3.4"),
 				Arrays.asList("1.2.3.5"));
 
-		// with meta data
+		// with meta data and membership status
 		JsonObject metadata = JsonUtils
 				.parseJsonString("{'a': 1, 'b': 2, c: {'d': 4}}");
 		Machine withMetadata = new Machine("i-1", MachineState.RUNNING,
-				ServiceState.UNKNOWN, UtcTime.parse("2014-01-10T08:00:00Z"),
-				ips("1.2.3.4"), ips("1.2.3.5"), metadata);
+				new MembershipStatus(true, false), ServiceState.UNKNOWN,
+				UtcTime.parse("2014-01-10T08:00:00Z"), ips("1.2.3.4"),
+				ips("1.2.3.5"), metadata);
 		Machine withMetadataClone = new Machine("i-1", MachineState.RUNNING,
-				ServiceState.UNKNOWN, UtcTime.parse("2014-01-10T08:00:00Z"),
-				ips("1.2.3.4"), ips("1.2.3.5"), metadata);
+				new MembershipStatus(true, false), ServiceState.UNKNOWN,
+				UtcTime.parse("2014-01-10T08:00:00Z"), ips("1.2.3.4"),
+				ips("1.2.3.5"), metadata);
 
 		assertEquals(noLaunchTime, noLaunchTimeClone);
 		assertEquals(withIps, withIpsClone);
@@ -116,15 +118,17 @@ public class TestMachine {
 				ServiceState.BOOTING, now, Arrays.asList("1.2.3.4"),
 				Arrays.asList("1.2.3.5"));
 
-		// with meta data
+		// with meta data and membership status
 		JsonObject metadata = JsonUtils
 				.parseJsonString("{'a': 1, 'b': 2, c: {'d': 4}}");
 		Machine withMetadata = new Machine("i-1", MachineState.RUNNING,
-				ServiceState.UNKNOWN, UtcTime.parse("2014-01-10T08:00:00Z"),
-				ips("1.2.3.4"), ips("1.2.3.5"), metadata);
+				new MembershipStatus(true, false), ServiceState.UNKNOWN,
+				UtcTime.parse("2014-01-10T08:00:00Z"), ips("1.2.3.4"),
+				ips("1.2.3.5"), metadata);
 		Machine withMetadataClone = new Machine("i-1", MachineState.RUNNING,
-				ServiceState.UNKNOWN, UtcTime.parse("2014-01-10T08:00:00Z"),
-				ips("1.2.3.4"), ips("1.2.3.5"), metadata);
+				new MembershipStatus(true, false), ServiceState.UNKNOWN,
+				UtcTime.parse("2014-01-10T08:00:00Z"), ips("1.2.3.4"),
+				ips("1.2.3.5"), metadata);
 
 		assertEquals(withMetadata.hashCode(), withMetadataClone.hashCode());
 		assertEquals(withIps.hashCode(), withIpsClone.hashCode());
@@ -163,6 +167,18 @@ public class TestMachine {
 				null, null, ips("1.2.3.4"));
 		assertThat(noIpAddresses.getPublicIps(), is(ips()));
 		assertThat(noIpAddresses.getPrivateIps(), is(ips("1.2.3.4")));
+	}
+
+	/**
+	 * Make sure the default {@link MembershipStatus} is set when none is
+	 * specified on construction.
+	 */
+	@Test
+	public void createWithoutMembershipStatus() {
+		Machine defaultMembershipStatus = new Machine("i-1",
+				MachineState.REQUESTED, null, null, null);
+		assertThat(defaultMembershipStatus.getMembershipStatus(),
+				is(MembershipStatus.defaultStatus()));
 	}
 
 	/**

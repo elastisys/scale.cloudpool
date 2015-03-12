@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.ec2.driver;
 
+import static com.elastisys.scale.commons.json.JsonUtils.toJson;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
@@ -19,6 +20,7 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.commons.functions.InstanceToMachine;
@@ -207,6 +209,28 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 	}
 
 	@Override
+	public void setMembershipStatus(String machineId,
+			MembershipStatus membershipStatus) throws NotFoundException,
+			CloudPoolDriverException {
+		checkState(isConfigured(), "attempt to use unconfigured Ec2PoolDriver");
+
+		// verify that machine exists in group
+		getMachineOrFail(machineId);
+
+		try {
+			Tag tag = createTag(ScalingTags.MEMBERSHIP_STATUS_TAG,
+					JsonUtils.toString(toJson(membershipStatus)));
+			tagInstance(machineId, Arrays.asList(tag));
+		} catch (Exception e) {
+			Throwables.propagateIfInstanceOf(e, NotFoundException.class);
+			throw new CloudPoolDriverException(String.format(
+					"failed to set membership status for instance %s: %s",
+					machineId, e.getMessage()), e);
+		}
+
+	}
+
+	@Override
 	public String getPoolName() {
 		checkState(isConfigured(), "attempt to use unconfigured Ec2PoolDriver");
 		return this.poolName.get();
@@ -268,13 +292,12 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 		Tag nameTag = createTag(Constants.NAME_TAG, instanceName);
 
 		// tag new instance with cloud pool
-		Tag cloudPoolTag = createTag(ScalingTags.CLOUD_POOL_TAG,
-				getPoolName());
+		Tag cloudPoolTag = createTag(ScalingTags.CLOUD_POOL_TAG, getPoolName());
 		return Arrays.asList(nameTag, cloudPoolTag);
 	}
 
 	/**
-	 * Set tags on a started instance.
+	 * Set a collection of tags on a machine instance.
 	 *
 	 * @param instanceId
 	 *            The id of the instance to tag.

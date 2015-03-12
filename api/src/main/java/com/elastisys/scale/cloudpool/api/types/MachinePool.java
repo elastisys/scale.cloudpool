@@ -1,6 +1,5 @@
 package com.elastisys.scale.cloudpool.api.types;
 
-import static com.elastisys.scale.cloudpool.api.types.Machine.isActive;
 import static com.elastisys.scale.cloudpool.api.types.Machine.toShortFormat;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.filter;
@@ -68,27 +67,15 @@ public class MachinePool {
 	}
 
 	/**
-	 * Returns all allocated {@link Machine}s in the pool with a service state
-	 * of {@link ServiceState#OUT_OF_SERVICE}.
+	 * Returns all active {@link Machine}s in the pool. See
+	 * {@link Machine#isActiveMember()}.
 	 *
 	 * @return
 	 */
-	public List<Machine> getOutOfServiceMachines() {
-		Iterable<Machine> outOfServiceMachines = filter(getAllocatedMachines(),
-				Machine.withServiceState(ServiceState.OUT_OF_SERVICE));
-		return Lists.newArrayList(outOfServiceMachines);
-	}
-
-	/**
-	 * Returns all <i>effective</i> {@link Machine}s in the pool. See
-	 * {@link Machine#isEffectiveMember()}.
-	 *
-	 * @return
-	 */
-	public List<Machine> getEffectiveMachines() {
-		Iterable<Machine> effectiveMachines = filter(getMachines(),
-				Machine.isEffectiveMember());
-		return Lists.newArrayList(effectiveMachines);
+	public List<Machine> getActiveMachines() {
+		Iterable<Machine> activeMachines = filter(getMachines(),
+				Machine.isActiveMember());
+		return Lists.newArrayList(activeMachines);
 	}
 
 	/**
@@ -101,17 +88,6 @@ public class MachinePool {
 		Iterable<Machine> allocatedMachines = filter(getMachines(),
 				Machine.isAllocated());
 		return Lists.newArrayList(allocatedMachines);
-	}
-
-	/**
-	 * Returns all <i>active</i> {@link Machine}s in the pool. See
-	 * {@link Machine#isActive()}.
-	 *
-	 * @return
-	 */
-	public List<Machine> getActiveMachines() {
-		Iterable<Machine> activeMachines = filter(getMachines(), isActive());
-		return Lists.newArrayList(activeMachines);
 	}
 
 	/**

@@ -3,9 +3,9 @@ package com.elastisys.scale.cloudpool.api.types;
 /**
  * The range of permissible service states that a {@link Machine} can take on.
  * <p/>
- * The <i>service state</i>, is the operational state of the service. This is
- * different from the {@link MachineState}, which is the execution state of the
- * {@link Machine} reported by the infrastructure.
+ * The <i>service state</i>, is the operational state of the service running on
+ * the machine. This is different from the {@link MachineState}, which is the
+ * execution state of the {@link Machine} as reported by the infrastructure.
  */
 public enum ServiceState {
 	/**

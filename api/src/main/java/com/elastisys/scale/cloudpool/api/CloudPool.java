@@ -4,6 +4,7 @@ import com.elastisys.scale.cloudpool.api.restapi.CloudPoolHandler;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.commons.json.schema.JsonValidator;
@@ -89,21 +90,22 @@ public interface CloudPool {
 	 * Note, that the response may include machines in any {@link MachineState},
 	 * even machines that are in the process of terminating.
 	 * <p/>
-	 * The only machines that are to be considered <i>active</i> members of the
-	 * pool are machines in machine state {@link MachineState#PENDING} or
-	 * {@link MachineState#RUNNING} that are <b>not</b> in service state
-	 * {@link ServiceState#OUT_OF_SERVICE}.
+	 * The {@link MembershipStatus} of a machine in an allocated/started state
+	 * determines if it is to be considered an active member of the pool.The
+	 * <i>active size</i> of the machine pool should be interpreted as the
+	 * number of allocated machines (in any of the non-terminal machine states
+	 * {@code REQUESTED}, {@code PENDING} or {@code RUNNING} that have not been
+	 * marked with an inactive {@link MembershipStatus}. See
+	 * {@link Machine#isActiveMember()}.
 	 * <p/>
 	 * The service state should be set to UNKNOWN for all machine instances for
 	 * which no service state has been reported (see
 	 * {@link #setServiceState(String, ServiceState)}).
 	 * <p/>
-	 * The <i>effective size</i> of the machine pool should be interpreted as
-	 * the number of allocated machines (in any of the non-terminal states:
-	 * {@link MachineState#REQUESTED}, {@link MachineState#PENDING}, or
-	 * {@link MachineState#RUNNING}) that have not been marked
-	 * {@link ServiceState#OUT_OF_SERVICE}. See
-	 * {@link Machine#isEffectiveMember()}.
+	 * Similarly, the {@link MembershipStatus} should be set to
+	 * {@link MembershipStatus#defaultStatus()} for all machine instances for
+	 * which no membership status has been reported (see
+	 * {@link #setMembershipStatus(String, MembershipStatus)}).
 	 *
 	 * @return A list of cloud pool members.
 	 *
@@ -166,12 +168,10 @@ public interface CloudPool {
 
 	/**
 	 * Sets the service state of a given machine pool member. Setting the
-	 * service state has no side-effects, unless the service state is set to
-	 * {@link ServiceState#OUT_OF_SERVICE}, in which case a replacement machine
-	 * will be launched (since {@link ServiceState#OUT_OF_SERVICE} machines are
-	 * not considered effective members of the pool). An out-of-service machine
-	 * can later be taken back into service by another call to this method to
-	 * re-set its service state.
+	 * service state does not have any functional implications on the pool
+	 * member, but should be seen as way to supply operational information about
+	 * the service running on the machine to third-party services (such as load
+	 * balancers).
 	 *
 	 * @param machineId
 	 *            The id of the machine whose service state is to be updated.
@@ -183,6 +183,24 @@ public interface CloudPool {
 	 *             If the operation could not be completed.
 	 */
 	void setServiceState(String machineId, ServiceState serviceState)
+			throws NotFoundException, CloudPoolException;
+
+	/**
+	 * Sets the membership status of a given pool member.
+	 * <p/>
+	 * The membership status for a machine can be set to protect the machine
+	 * from being terminated (by setting its evictability status) and/or to mark
+	 * a machine as being in need of replacement by flagging it as an inactive
+	 * pool member.
+	 *
+	 * @param machineId
+	 *            The id of the machine whose status is to be updated.
+	 * @param membershipStatus
+	 *            The {@link MembershipStatus} to set.
+	 * @throws NotFoundException
+	 * @throws CloudPoolException
+	 */
+	void setMembershipStatus(String machineId, MembershipStatus membershipStatus)
 			throws NotFoundException, CloudPoolException;
 
 	/**

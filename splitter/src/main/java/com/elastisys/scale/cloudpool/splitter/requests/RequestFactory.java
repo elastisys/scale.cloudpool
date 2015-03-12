@@ -4,6 +4,7 @@ import java.util.concurrent.Callable;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.splitter.Splitter;
@@ -72,6 +73,20 @@ public interface RequestFactory {
 	 */
 	Callable<Void> newSetServiceStateRequest(PrioritizedCloudPool cloudPool,
 			String machineId, ServiceState serviceState);
+
+	/**
+	 * Creates a {@link Callable} that calls
+	 * {@link CloudPool#setMembershipStatus(String, MembershipStatus)} on the
+	 * remote cloud pool.
+	 *
+	 * @param cloudPool
+	 * @param machineId
+	 * @param membershipStatus
+	 * @return
+	 */
+	Callable<Void> newSetMembershipStatusRequest(
+			PrioritizedCloudPool cloudPool, String machineId,
+			MembershipStatus membershipStatus);
 
 	/**
 	 * Creates a {@link Callable} that calls

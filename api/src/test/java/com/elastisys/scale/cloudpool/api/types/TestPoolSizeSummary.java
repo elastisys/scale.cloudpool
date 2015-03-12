@@ -15,12 +15,12 @@ public class TestPoolSizeSummary {
 	public void basicSanity() {
 		int desiredSize = 4;
 		int allocated = 3;
-		int outOfService = 2;
+		int active = 2;
 		PoolSizeSummary summary = new PoolSizeSummary(desiredSize, allocated,
-				outOfService);
+				active);
 		assertThat(summary.getDesiredSize(), is(desiredSize));
 		assertThat(summary.getAllocated(), is(allocated));
-		assertThat(summary.getOutOfService(), is(outOfService));
+		assertThat(summary.getActive(), is(active));
 	}
 
 	@Test
@@ -37,11 +37,11 @@ public class TestPoolSizeSummary {
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void outOfServiceMachinesCannotOutnumberAllocated() {
+	public void activeMachinesCannotOutnumberAllocated() {
 		int desiredSize = 4;
 		int allocated = 3;
-		int outOfService = 4;
-		new PoolSizeSummary(desiredSize, allocated, outOfService);
+		int active = 4;
+		new PoolSizeSummary(desiredSize, allocated, active);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -55,7 +55,7 @@ public class TestPoolSizeSummary {
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void negativeOutOfService() {
+	public void negativeActive() {
 		new PoolSizeSummary(2, 1, -1);
 	}
 

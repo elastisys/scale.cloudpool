@@ -27,11 +27,13 @@ import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.restapi.types.DetachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetDesiredSizeRequest;
+import com.elastisys.scale.cloudpool.api.restapi.types.SetMembershipStatusRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetServiceStateRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.TerminateMachineRequest;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.api.types.TestUtils;
@@ -69,7 +71,7 @@ public class TestCloudPoolHandlerDispatch {
 		List<String> privateIps = asList("1.2.3.5");
 		JsonObject metadata = parseJsonString("{\"id\": \"i-1\"}");
 		Machine machine = new Machine("i-1", MachineState.PENDING,
-				ServiceState.BOOTING,
+				MembershipStatus.defaultStatus(), ServiceState.BOOTING,
 				UtcTime.parse("2014-01-13T11:00:00.000Z"), publicIps,
 				privateIps, metadata);
 		MachinePool pool = TestUtils.pool(
@@ -383,7 +385,65 @@ public class TestCloudPoolHandlerDispatch {
 		assertEquals(response.getStatus(),
 				Status.INTERNAL_SERVER_ERROR.getStatusCode());
 		assertThat(response.getEntity(), instanceOf(ErrorType.class));
-
 	}
 
+	/**
+	 * Verify proper delegation of {@code setMembershipStatus} to backing
+	 * {@link CloudPool}.
+	 */
+	@Test
+	public void testSetMembershipStatusDispatch() throws Exception {
+		// set up mock response
+		doNothing().when(this.cloudPoolMock).setMembershipStatus("i-1",
+				MembershipStatus.awaitingService());
+
+		// call rest endpoint and verify proper dispatching to mock
+		Response response = this.restEndpoint.setMembershipStatus(
+				"i-1",
+				new SetMembershipStatusRequest(MembershipStatus
+						.awaitingService()));
+		assertEquals(response.getStatus(), Status.OK.getStatusCode());
+	}
+
+	/**
+	 * Verify proper handling of {@code setMembershipStatus} calls when a
+	 * {@link NotFoundException} is thrown from the backing {@link CloudPool} .
+	 */
+	@Test
+	public void testSetMembershipStatusDispatchOnNotFoundError()
+			throws Exception {
+		// set up mock response
+		doThrow(NotFoundException.class).when(this.cloudPoolMock)
+				.setMembershipStatus("i-X", MembershipStatus.awaitingService());
+
+		// call rest endpoint and verify proper dispatching to mock
+		Response response = this.restEndpoint.setMembershipStatus(
+				"i-X",
+				new SetMembershipStatusRequest(MembershipStatus
+						.awaitingService()));
+		assertEquals(response.getStatus(), Status.NOT_FOUND.getStatusCode());
+		assertThat(response.getEntity(), instanceOf(ErrorType.class));
+	}
+
+	/**
+	 * Verify proper handling of {@code setMembershipStatus} calls when an
+	 * internal error is thrown from the backing {@link CloudPool} .
+	 */
+	@Test
+	public void testSetMembershipStatusDispatchOnInternalError()
+			throws Exception {
+		// set up mock response
+		doThrow(new RuntimeException("cloud api outage")).when(
+				this.cloudPoolMock).setMembershipStatus("i-X",
+				MembershipStatus.awaitingService());
+
+		// call rest endpoint and verify proper dispatching to mock
+		Response response = this.restEndpoint.setMembershipStatus(
+				"i-X",
+				new SetMembershipStatusRequest(MembershipStatus
+						.awaitingService()));
+		assertEquals(response.getStatus(),
+				Status.INTERNAL_SERVER_ERROR.getStatusCode());
+		assertThat(response.getEntity(), instanceOf(ErrorType.class));
+	}
 }

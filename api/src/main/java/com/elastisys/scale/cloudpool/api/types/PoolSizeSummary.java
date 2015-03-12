@@ -21,21 +21,21 @@ public class PoolSizeSummary {
 	private final int allocated;
 	/**
 	 * The number of machines in the pool that are marked
-	 * {@link ServiceState#OUT_OF_SERVICE}.
+	 * {@link MembershipStatus#isActive()}.
 	 */
-	private final int outOfService;
+	private final int active;
 
-	public PoolSizeSummary(int desiredSize, int allocated, int outOfService) {
+	public PoolSizeSummary(int desiredSize, int allocated, int active) {
 		checkArgument(desiredSize >= 0, "desiredSize must be >= 0");
 		checkArgument(allocated >= 0, "allocated must be >= 0");
-		checkArgument(outOfService >= 0, "outOfService must be >= 0");
+		checkArgument(active >= 0, "active must be >= 0");
 
-		checkArgument(allocated >= outOfService,
-				"outOfService cannot be greater than allocated");
+		checkArgument(allocated >= active,
+				"active cannot be greater than allocated");
 
 		this.desiredSize = desiredSize;
 		this.allocated = allocated;
-		this.outOfService = outOfService;
+		this.active = active;
 	}
 
 	/**
@@ -59,18 +59,17 @@ public class PoolSizeSummary {
 
 	/**
 	 * Returns the number of machines in the pool that are marked
-	 * {@link ServiceState#OUT_OF_SERVICE}.
+	 * {@link MembershipStatus#isActive()}.
 	 *
 	 * @return
 	 */
-	public int getOutOfService() {
-		return this.outOfService;
+	public int getActive() {
+		return this.active;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hashCode(this.desiredSize, this.allocated,
-				this.outOfService);
+		return Objects.hashCode(this.desiredSize, this.allocated, this.active);
 	}
 
 	@Override
@@ -79,7 +78,7 @@ public class PoolSizeSummary {
 			PoolSizeSummary that = (PoolSizeSummary) obj;
 			return Objects.equal(this.desiredSize, that.desiredSize)
 					&& Objects.equal(this.allocated, that.allocated)
-					&& Objects.equal(this.outOfService, that.outOfService);
+					&& Objects.equal(this.active, that.active);
 		}
 		return super.equals(obj);
 	}
@@ -88,7 +87,7 @@ public class PoolSizeSummary {
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
 				.add("desiredSize", this.desiredSize)
-				.add("allocated", this.allocated)
-				.add("outOfService", this.outOfService).toString();
+				.add("allocated", this.allocated).add("active", this.active)
+				.toString();
 	}
 }

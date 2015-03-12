@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig;
@@ -216,6 +217,32 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 			Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
 			String message = format(
 					"failed to tag service state on server \"%s\": %s",
+					machineId, e.getMessage());
+			throw new CloudPoolDriverException(message, e);
+		}
+	}
+
+	@Override
+	public void setMembershipStatus(String machineId,
+			MembershipStatus membershipStatus) throws NotFoundException,
+			CloudPoolDriverException {
+		checkState(isConfigured(), "attempt to use unconfigured driver");
+
+		// verify that machine exists in group
+		getMachineOrFail(machineId);
+
+		try {
+			LOG.debug("membership status {} reported for {}", membershipStatus,
+					machineId);
+			// set serviceState as tag on machine instance
+			Map<String, String> tags = ImmutableMap.of(
+					Constants.MEMBERSHIP_STATUS_TAG,
+					JsonUtils.toString(JsonUtils.toJson(membershipStatus)));
+			this.client.tagServer(machineId, tags);
+		} catch (Exception e) {
+			Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
+			String message = format(
+					"failed to tag membership status on server \"%s\": %s",
 					machineId, e.getMessage());
 			throw new CloudPoolDriverException(message, e);
 		}

@@ -22,9 +22,11 @@ import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
+import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.AlertSettings;
@@ -383,14 +385,13 @@ public class BaseCloudPool implements CloudPool {
 		if (this.desiredSize.get() != null) {
 			return;
 		}
-		// exclude out-of-service instances since they aren't actually part
-		// of the desiredSize (they have been replaced with stand-ins)
-		int effectiveSize = pool.getEffectiveMachines().size();
+		// exclude inactive instances since they aren't actually part
+		// of the desiredSize (they are to be replaced)
+		int effectiveSize = pool.getActiveMachines().size();
 		int allocated = pool.getAllocatedMachines().size();
-		int outOfService = pool.getOutOfServiceMachines().size();
 		this.desiredSize.set(effectiveSize);
-		LOG.info("initial desiredSize is {} (allocated: {}, outOfService: {})",
-				this.desiredSize, allocated, outOfService);
+		LOG.info("initial desiredSize is {} (allocated: {}, effective: {})",
+				this.desiredSize, allocated, effectiveSize);
 	}
 
 	private void stop() {
@@ -432,8 +433,7 @@ public class BaseCloudPool implements CloudPool {
 
 		MachinePool pool = getMachinePool();
 		return new PoolSizeSummary(this.desiredSize.get(), pool
-				.getAllocatedMachines().size(), pool.getOutOfServiceMachines()
-				.size());
+				.getAllocatedMachines().size(), pool.getActiveMachines().size());
 	}
 
 	/**
@@ -530,6 +530,19 @@ public class BaseCloudPool implements CloudPool {
 				machineId);
 		this.cloudDriver.setServiceState(machineId, serviceState);
 		serviceStateAlert(machineId, serviceState);
+	}
+
+	@Override
+	public void setMembershipStatus(String machineId,
+			MembershipStatus membershipStatus) throws NotFoundException,
+			CloudPoolException {
+		checkState(getConfiguration().isPresent(),
+				"cloud pool needs to be configured before use");
+
+		LOG.debug("membership status {} assigned to {}", membershipStatus,
+				machineId);
+		this.cloudDriver.setMembershipStatus(machineId, membershipStatus);
+		membershipStatusAlert(machineId, membershipStatus);
 	}
 
 	/**
@@ -642,19 +655,20 @@ public class BaseCloudPool implements CloudPool {
 		// Clean out obsolete machines from termination queue. Note: this also
 		// cleans out machines that have been taken out of service after being
 		// scheduled for termination.
-		int poolSize = pool.getEffectiveMachines().size();
-		this.terminationQueue.filter(pool.getEffectiveMachines());
+		int poolSize = pool.getActiveMachines().size();
+		this.terminationQueue.filter(pool.getActiveMachines());
 		ResizePlanner resizePlanner = new ResizePlanner(pool,
 				this.terminationQueue, scaleInConfig()
 						.getVictimSelectionPolicy(), scaleInConfig()
 						.getInstanceHourMargin());
-		int netSize = resizePlanner.getEffectiveSize();
+		int netSize = resizePlanner.getNetSize();
 
 		ResizePlan resizePlan = resizePlanner.calculateResizePlan(newSize);
-		if (resizePlan.isScaleUp()) {
+		if (resizePlan.hasScaleOutActions()) {
 			List<Machine> startedMachines = scaleOut(poolSize, resizePlan);
 			poolSize += startedMachines.size();
-		} else if (resizePlan.isScaleDown()) {
+		}
+		if (resizePlan.hasScaleInActions()) {
 			List<ScheduledTermination> terminations = resizePlan
 					.getToTerminate();
 			LOG.info("scheduling {} server(s) for termination",
@@ -666,7 +680,8 @@ public class BaseCloudPool implements CloudPool {
 						termination.getTerminationTime());
 			}
 			LOG.debug("termination queue: {}", this.terminationQueue);
-		} else {
+		}
+		if (resizePlan.noChanges()) {
 			LOG.info("pool is already properly sized ({})", netSize);
 		}
 		// effectuate scheduled terminations that are (over)due
@@ -829,6 +844,7 @@ public class BaseCloudPool implements CloudPool {
 	 * set.
 	 *
 	 * @param machineId
+	 * @param state
 	 */
 	private void serviceStateAlert(String machineId, ServiceState state) {
 		Map<String, String> tags = ImmutableMap.of();
@@ -836,6 +852,23 @@ public class BaseCloudPool implements CloudPool {
 				"Service state set to %s for machine %s.", state.name(),
 				machineId);
 		this.eventBus.post(new Alert(AlertTopics.SERVICE_STATE.name(),
+				AlertSeverity.INFO, UtcTime.now(), message, tags));
+	}
+
+	/**
+	 * Post an {@link Alert} that a pool member had its {@link MembershipStatus}
+	 * set.
+	 *
+	 * @param machineId
+	 * @param membershipStatus
+	 */
+	private void membershipStatusAlert(String machineId,
+			MembershipStatus membershipStatus) {
+		Map<String, String> tags = ImmutableMap.of();
+		String message = String.format(
+				"Membership status set to %s for machine %s.",
+				membershipStatus, machineId);
+		this.eventBus.post(new Alert(AlertTopics.MEMBERSHIP_STATUS.name(),
 				AlertSeverity.INFO, UtcTime.now(), message, tags));
 	}
 

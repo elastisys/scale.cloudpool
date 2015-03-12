@@ -68,14 +68,6 @@ public class ResizePlan {
 		checkArgument(this.toSpare >= 0, "negative number of machines to spare");
 		checkArgument(this.toRequest >= 0,
 				"negative number of additional machines to request");
-
-		// check for contradictory values
-		int decrease = this.toTerminate.size();
-		int increase = this.toSpare + this.toRequest;
-		if ((decrease > 0) && (increase > 0)) {
-			throw new IllegalArgumentException("resize plan is ambigous: "
-					+ "suggests both increasing and decreasing pool");
-		}
 	}
 
 	/**
@@ -108,25 +100,33 @@ public class ResizePlan {
 	}
 
 	/**
-	 * Indicate if this {@link ResizePlan} represents a scale-up (adding of
-	 * capacity) of the machine pool.
+	 * Indicate if this {@link ResizePlan} suggests scale-out actions.
 	 *
-	 * @return <code>true</code> if this {@link ResizePlan} reperesents a
-	 *         scale-up. <code>false</code> otherwise.
+	 * @return <code>true</code> if this {@link ResizePlan} suggests that
+	 *         scale-out actions are to be taken.
 	 */
-	public boolean isScaleUp() {
+	public boolean hasScaleOutActions() {
 		return (this.toRequest > 0) || (this.toSpare > 0);
 	}
 
 	/**
-	 * Indicate if this {@link ResizePlan} represents a scale-down (down-size of
-	 * capacity) of the machine pool.
+	 * Indicate if this {@link ResizePlan} suggests scale-in actions.
 	 *
-	 * @return <code>true</code> if this {@link ResizePlan} reperesents a
-	 *         scale-down. <code>false</code> otherwise.
+	 * @return <code>true</code> if this {@link ResizePlan} suggests that
+	 *         scale-in actions are to be taken.
 	 */
-	public boolean isScaleDown() {
+	public boolean hasScaleInActions() {
 		return !this.toTerminate.isEmpty();
+	}
+
+	/**
+	 * <code>true</code> if this {@link ResizePlan} neither suggests any
+	 * scale-in nor any scale-out actions.
+	 *
+	 * @return
+	 */
+	public boolean noChanges() {
+		return !hasScaleInActions() && !hasScaleOutActions();
 	}
 
 	@Override

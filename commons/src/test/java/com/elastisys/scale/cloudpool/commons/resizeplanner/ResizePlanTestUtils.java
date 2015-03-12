@@ -7,9 +7,8 @@ import org.joda.time.DateTime;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
-import com.elastisys.scale.cloudpool.commons.resizeplanner.ResizePlan;
-import com.elastisys.scale.cloudpool.commons.resizeplanner.ResizePlanner;
 import com.elastisys.scale.cloudpool.commons.termqueue.ScheduledTermination;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.collect.Lists;
@@ -42,7 +41,8 @@ public class ResizePlanTestUtils {
 
 	/**
 	 * Creates a {@link Machine} with a given identifier index, launch time and
-	 * machine state. The service state is set to {@link ServiceState#UNKNOWN}.
+	 * machine state. The membership state is set to
+	 * {@link MembershipStatus#defaultStatus()}.
 	 *
 	 * @param idIndex
 	 *            The identifier sequence number of the machine.
@@ -56,7 +56,7 @@ public class ResizePlanTestUtils {
 	public static Machine makeMachine(int idIndex, DateTime launchTime,
 			MachineState machineState) {
 		return makeMachine(idIndex, launchTime, machineState,
-				ServiceState.UNKNOWN);
+				MembershipStatus.defaultStatus());
 	}
 
 	/**
@@ -70,16 +70,17 @@ public class ResizePlanTestUtils {
 	 *            and represent a machine that hasn't started (yet).
 	 * @param machineState
 	 *            The {@link MachineState}.
-	 * @param serviceState
-	 *            The {@link ServiceState}.
+	 * @param membershipStatus
+	 *            The {@link MembershipStatus}.
 	 * @return
 	 */
 	public static Machine makeMachine(int idIndex, DateTime launchTime,
-			MachineState machineState, ServiceState serviceState) {
+			MachineState machineState, MembershipStatus membershipStatus) {
 		List<String> publicIps = Lists.newArrayList();
 		List<String> privateIps = Lists.newArrayList();
-		return new Machine("instance-" + idIndex, machineState, serviceState,
-				launchTime, publicIps, privateIps);
+		return new Machine("instance-" + idIndex, machineState,
+				membershipStatus, ServiceState.UNKNOWN, launchTime, publicIps,
+				privateIps, null);
 	}
 
 	/**

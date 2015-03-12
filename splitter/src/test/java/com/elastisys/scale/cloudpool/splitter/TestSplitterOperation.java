@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.splitter.config.PoolSizeCalculator;
@@ -186,7 +187,7 @@ public class TestSplitterOperation {
 		setupMockPools(config.getBackendPools(), pool1, pool2, pool3);
 		this.splitter.configure(toJson(config));
 		assertThat(this.splitter.getPoolSize(),
-				is(new PoolSizeSummary(5, 5, 0)));
+				is(new PoolSizeSummary(5, 5, 5)));
 	}
 
 	/**
@@ -641,6 +642,70 @@ public class TestSplitterOperation {
 		// carry out calls
 		this.splitter.configure(toJson(config));
 		this.splitter.setServiceState("i-X", ServiceState.IN_SERVICE);
+	}
+
+	/**
+	 * Test setting membership status on a member instance of one of the child
+	 * pools.
+	 */
+	@Test
+	public void setMembershipStatus() {
+		SplitterConfig config = config(50, 30, 20);
+		// set up mock pool
+		setupMockPools(config.getBackendPools(), pool(machine(1)),
+				pool(machine(2)), pool(machine(3)));
+		PrioritizedCloudPool pool1 = config.getBackendPools().get(0);
+		PrioritizedCloudPool pool2 = config.getBackendPools().get(1);
+		PrioritizedCloudPool pool3 = config.getBackendPools().get(2);
+
+		// pool2 will accept a new status for i-3
+		MembershipStatus status = MembershipStatus.blessed();
+		when(this.requests.newSetMembershipStatusRequest(pool1, "i-3", status))
+				.thenReturn(failingRequest(404, "not found"));
+		when(this.requests.newSetMembershipStatusRequest(pool2, "i-3", status))
+				.thenReturn(succesfulRequest());
+		when(this.requests.newSetMembershipStatusRequest(pool3, "i-3", status))
+				.thenReturn(failingRequest(404, "not found"));
+
+		// carry out calls
+		this.splitter.configure(toJson(config));
+		this.splitter.setMembershipStatus("i-3", status);
+
+		// verify that request factory was called with expected arguments
+		verify(this.requests).newSetMembershipStatusRequest(pool1, "i-3",
+				status);
+		verify(this.requests).newSetMembershipStatusRequest(pool2, "i-3",
+				status);
+		verify(this.requests).newSetMembershipStatusRequest(pool3, "i-3",
+				status);
+	}
+
+	/**
+	 * Verify that an error is raised on an attempt to set service state for a
+	 * machine that isn't recognized as a member in any of the child pools.
+	 */
+	@Test(expected = CloudPoolException.class)
+	public void setMembershipStatusOnNonGroupMember() {
+		SplitterConfig config = config(50, 30, 20);
+		// set up mock pool
+		setupMockPools(config.getBackendPools(), pool(machine(1)),
+				pool(machine(2)), pool(machine(3)));
+		PrioritizedCloudPool pool1 = config.getBackendPools().get(0);
+		PrioritizedCloudPool pool2 = config.getBackendPools().get(1);
+		PrioritizedCloudPool pool3 = config.getBackendPools().get(2);
+
+		// none of the child pools will accept a new status for i-3
+		MembershipStatus status = MembershipStatus.blessed();
+		when(this.requests.newSetMembershipStatusRequest(pool1, "i-3", status))
+				.thenReturn(failingRequest(404, "not found"));
+		when(this.requests.newSetMembershipStatusRequest(pool2, "i-3", status))
+				.thenReturn(failingRequest(404, "not found"));
+		when(this.requests.newSetMembershipStatusRequest(pool3, "i-3", status))
+				.thenReturn(failingRequest(404, "not found"));
+
+		// carry out calls
+		this.splitter.configure(toJson(config));
+		this.splitter.setMembershipStatus("i-3", status);
 	}
 
 	/**

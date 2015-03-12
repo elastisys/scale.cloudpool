@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.autoscaling.driver;
 
+import static com.elastisys.scale.commons.json.JsonUtils.toJson;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Lists.transform;
@@ -18,6 +19,7 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AutoScalingClient;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
@@ -275,7 +277,29 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 					machineId, e.getMessage());
 			throw new CloudPoolDriverException(message, e);
 		}
-	};
+	}
+
+	@Override
+	public void setMembershipStatus(String machineId,
+			MembershipStatus membershipStatus) throws NotFoundException,
+			CloudPoolDriverException {
+		checkState(isConfigured(), "attempt to use unconfigured driver");
+
+		// verify that machine exists in group
+		getMachineOrFail(machineId);
+
+		try {
+			Tag tag = new Tag().withKey(ScalingTags.MEMBERSHIP_STATUS_TAG)
+					.withValue(JsonUtils.toString(toJson(membershipStatus)));
+			this.client.tagInstance(machineId, Arrays.asList(tag));
+		} catch (Exception e) {
+			Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
+			String message = format(
+					"failed to tag membership status on server \"%s\": %s",
+					machineId, e.getMessage());
+			throw new CloudPoolDriverException(message, e);
+		}
+	}
 
 	/**
 	 * Retrieves a particular member instance from the scaling group or throws

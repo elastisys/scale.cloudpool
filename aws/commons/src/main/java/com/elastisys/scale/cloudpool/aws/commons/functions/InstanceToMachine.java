@@ -9,6 +9,7 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.commons.json.JsonUtils;
@@ -59,6 +60,16 @@ public class InstanceToMachine implements Function<Instance, Machine> {
 			privateIps.add(privateIp);
 		}
 
+		// extract membership status if status tag is present on instance
+		MembershipStatus membershipStatus = MembershipStatus.defaultStatus();
+		Optional<String> membershipStatusTag = getTagValue(instance,
+				ScalingTags.MEMBERSHIP_STATUS_TAG);
+		if (membershipStatusTag.isPresent()) {
+			membershipStatus = JsonUtils.toObject(
+					JsonUtils.parseJsonString(membershipStatusTag.get()),
+					MembershipStatus.class);
+		}
+
 		// set the service state if a service state tag is present on instance
 		ServiceState serviceState = ServiceState.UNKNOWN;
 		Optional<String> serviceStateTag = getTagValue(instance,
@@ -68,8 +79,8 @@ public class InstanceToMachine implements Function<Instance, Machine> {
 		}
 
 		JsonObject metadata = JsonUtils.toJson(instance).getAsJsonObject();
-		return new Machine(id, machineState, serviceState, launchtime,
-				publicIps, privateIps, metadata);
+		return new Machine(id, machineState, membershipStatus, serviceState,
+				launchtime, publicIps, privateIps, metadata);
 	}
 
 	/**

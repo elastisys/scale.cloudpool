@@ -200,8 +200,8 @@ public class TestMachineFunctions {
 		DateTime now = UtcTime.now();
 		JsonObject metadata = JsonUtils.parseJsonString("{\"id\": \"i-1\"}");
 		Machine m1 = new Machine("i-2", MachineState.RUNNING,
-				ServiceState.UNKNOWN, now, ips("1.2.3.4"), ips("1.2.3.5"),
-				metadata);
+				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, now,
+				ips("1.2.3.4"), ips("1.2.3.5"), metadata);
 
 		assertFalse(Machine.toShortFormat().apply(m1).contains("metadata"));
 	}

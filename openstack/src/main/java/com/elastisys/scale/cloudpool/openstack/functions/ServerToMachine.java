@@ -11,6 +11,7 @@ import org.joda.time.DateTimeZone;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.openstack.driver.Constants;
 import com.elastisys.scale.commons.json.JsonUtils;
@@ -72,14 +73,25 @@ public class ServerToMachine implements Function<Server, Machine> {
 				publicIps.add(ip);
 			}
 		}
+
+		// extract membership status if tag has been set on server
+		MembershipStatus membershipStatus = MembershipStatus.defaultStatus();
+		if (server.getMetadata().containsKey(Constants.MEMBERSHIP_STATUS_TAG)) {
+			membershipStatus = JsonUtils.toObject(
+					JsonUtils.parseJsonString(server.getMetadata().get(
+							Constants.MEMBERSHIP_STATUS_TAG)),
+					MembershipStatus.class);
+		}
+
+		// extract service state if tag has been set on server
 		ServiceState serviceState = ServiceState.UNKNOWN;
 		if (server.getMetadata().containsKey(Constants.SERVICE_STATE_TAG)) {
 			serviceState = ServiceState.valueOf(server.getMetadata().get(
 					Constants.SERVICE_STATE_TAG));
 		}
 		JsonObject metadata = JsonUtils.toJson(server).getAsJsonObject();
-		return new Machine(server.getId(), machineState, serviceState,
-				launchTime, publicIps, privateIps, metadata);
+		return new Machine(server.getId(), machineState, membershipStatus,
+				serviceState, launchTime, publicIps, privateIps, metadata);
 	}
 
 }

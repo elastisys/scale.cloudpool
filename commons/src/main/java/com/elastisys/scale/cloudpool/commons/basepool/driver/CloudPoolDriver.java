@@ -6,6 +6,7 @@ import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig;
@@ -70,26 +71,24 @@ public interface CloudPoolDriver {
 	 * Returns a list of the members of the cloud pool.
 	 * <p/>
 	 * Note, that the response may include machines in any {@link MachineState},
-	 * even machines that are in the process of terminating. The only machines
-	 * that are to be considered <i>active</i> members of the cloud pool are
-	 * machines in machine state {@link MachineState#PENDING} or
-	 * {@link MachineState#RUNNING} that are <b>not</b> in service state
-	 * {@link ServiceState#OUT_OF_SERVICE}.
+	 * even machines that are in the process of terminating.
 	 * <p/>
-	 * The service state should be set to {@link ServiceState#UNKNOWN} for all
-	 * machine instances for which no service state has been reported (see
+	 * The {@link MembershipStatus} of a machine in an allocated/started machine
+	 * state determines if it is to be considered an active member of the
+	 * pool.The <i>active size</i> of the machine pool should be interpreted as
+	 * the number of allocated machines (in any of the non-terminal machine
+	 * states {@code REQUESTED}, {@code PENDING} or {@code RUNNING} that have
+	 * not been marked with an inactive {@link MembershipStatus}. See
+	 * {@link Machine#isActiveMember()}.
+	 * <p/>
+	 * The service state should be set to UNKNOWN for all machine instances for
+	 * which no service state has been reported (see
 	 * {@link #setServiceState(String, ServiceState)}).
-	 * <p/>
-	 * The <i>effective size</i> of the cloud pool should be interpreted as the
-	 * number of allocated machines (in any of the non-terminal states:
-	 * {@link MachineState#REQUESTED}, {@link MachineState#PENDING}, or
-	 * {@link MachineState#RUNNING}) that have not been marked
-	 * {@link ServiceState#OUT_OF_SERVICE}. See
-	 * {@link Machine#isEffectiveMember()}.
 	 *
 	 * @return The current members of the cloud pool.
 	 *
 	 * @throws CloudPoolDriverException
+	 *             If the operation could not be completed.
 	 */
 	public List<Machine> listMachines() throws CloudPoolDriverException;
 
@@ -172,18 +171,15 @@ public interface CloudPoolDriver {
 			CloudPoolDriverException;
 
 	/**
-	 * Sets the service state of a given cloud pool member. Setting the service
-	 * state has no side-effects, unless the service state is set to
-	 * {@link ServiceState#OUT_OF_SERVICE}, in which case a replacement machine
-	 * will be launched (since {@link ServiceState#OUT_OF_SERVICE} machines are
-	 * not considered effective members of the cloud pool). An out-of-service
-	 * machine can later be taken back into service by another call to this
-	 * method to re-set its service state.
+	 * Sets the service state of a given machine pool member. Setting the
+	 * service state does not have any functional implications on the pool
+	 * member, but should be seen as way to supply operational information about
+	 * the service running on the machine to third-party services (such as load
+	 * balancers).
 	 * <p/>
 	 * The specific mechanism to mark pool members state, which may depend on
 	 * the features offered by the particular cloud API, is left to the
 	 * implementation but could, for example, make use of tags.
-	 *
 	 *
 	 * @param machineId
 	 *            The id of the machine whose service state is to be updated.
@@ -196,6 +192,31 @@ public interface CloudPoolDriver {
 	 */
 	public void setServiceState(String machineId, ServiceState serviceState)
 			throws NotFoundException, CloudPoolDriverException;
+
+	/**
+	 * Sets the membership status of a given pool member.
+	 * <p/>
+	 * The membership status for a machine can be set to protect the machine
+	 * from being terminated (by setting its evictability status) and/or to
+	 * mark a machine as being in need of replacement by flagging it as an
+	 * inactive pool member.
+	 * <p/>
+	 * The specific mechanism to mark pool members' status, which may depend on
+	 * the features offered by the particular cloud API, is left to the
+	 * implementation but could, for example, make use of tags.
+	 *
+	 * @param machineId
+	 *            The id of the machine whose status is to be updated.
+	 * @param membershipStatus
+	 *            The {@link MembershipStatus} to set.
+	 * @throws NotFoundException
+	 *             If the machine is not a member of the cloud pool.
+	 * @throws CloudPoolDriverException
+	 *             If the operation could not be completed.
+	 */
+	public void setMembershipStatus(String machineId,
+			MembershipStatus membershipStatus) throws NotFoundException,
+			CloudPoolDriverException;
 
 	/**
 	 * Returns the logical name of the managed machine pool.

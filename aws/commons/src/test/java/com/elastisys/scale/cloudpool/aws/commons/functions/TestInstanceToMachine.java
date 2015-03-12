@@ -19,9 +19,9 @@ import com.amazonaws.services.ec2.model.MonitoringState;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
-import com.elastisys.scale.cloudpool.aws.commons.functions.InstanceToMachine;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
@@ -57,6 +57,8 @@ public class TestInstanceToMachine {
 		assertThat(machine.getId(), is(instance.getInstanceId()));
 		assertThat(machine.getLaunchtime(), is(launchTime));
 		assertThat(machine.getMachineState(), is(MachineState.RUNNING));
+		assertThat(machine.getMembershipStatus(),
+				is(MembershipStatus.defaultStatus()));
 		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
 		assertThat(machine.getPublicIps().size(), is(1));
 		assertThat(machine.getPublicIps().get(0),
@@ -86,6 +88,8 @@ public class TestInstanceToMachine {
 		assertThat(machine.getId(), is(instance.getInstanceId()));
 		assertThat(machine.getLaunchtime(), is(launchTime));
 		assertThat(machine.getMachineState(), is(MachineState.RUNNING));
+		assertThat(machine.getMembershipStatus(),
+				is(MembershipStatus.defaultStatus()));
 		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
 		assertThat(machine.getPublicIps().size(), is(0));
 		assertThat(machine.getPrivateIps().size(), is(1));
@@ -112,6 +116,8 @@ public class TestInstanceToMachine {
 		assertThat(machine.getId(), is(instance.getInstanceId()));
 		assertThat(machine.getLaunchtime(), is(launchTime));
 		assertThat(machine.getMachineState(), is(MachineState.RUNNING));
+		assertThat(machine.getMembershipStatus(),
+				is(MembershipStatus.defaultStatus()));
 		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
 		assertThat(machine.getPublicIps().size(), is(1));
 		assertThat(machine.getPublicIps().get(0),
@@ -132,6 +138,22 @@ public class TestInstanceToMachine {
 
 		Machine machine = convert(instance);
 		assertThat(machine.getServiceState(), is(ServiceState.OUT_OF_SERVICE));
+	}
+
+	@Test
+	public void convertWithMembershipStatusTag() {
+		MembershipStatus status = MembershipStatus.awaitingService();
+		String statusJsonString = JsonUtils.toString(JsonUtils.toJson(status));
+		Tag membershipStatusTag = new Tag().withKey(
+				ScalingTags.MEMBERSHIP_STATUS_TAG).withValue(statusJsonString);
+		Instance instance = new Instance()
+				.withInstanceId("i-1")
+				.withState(
+						new InstanceState().withName(InstanceStateName.Running))
+				.withTags(membershipStatusTag);
+
+		Machine machine = convert(instance);
+		assertThat(machine.getMembershipStatus(), is(status));
 	}
 
 	public Machine convert(Instance instance) {

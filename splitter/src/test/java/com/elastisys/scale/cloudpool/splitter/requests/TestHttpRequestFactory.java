@@ -29,6 +29,7 @@ import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.server.CloudPoolOptions;
 import com.elastisys.scale.cloudpool.api.server.CloudPoolServer;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.splitter.config.PrioritizedCloudPool;
@@ -99,8 +100,8 @@ public class TestHttpRequestFactory {
 		when(cloudPoolMock.getMachinePool()).thenReturn(pool);
 
 		// call cloud pool
-		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100,
-				"localhost", httpsPort);
+		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100, "localhost",
+				httpsPort);
 		Callable<MachinePool> request = new HttpRequestFactory()
 				.newGetMachinePoolRequest(cloudPool);
 		assertThat(request.call(), is(pool));
@@ -117,8 +118,8 @@ public class TestHttpRequestFactory {
 				cloudPoolMock).getMachinePool();
 
 		// call cloud pool
-		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100,
-				"localhost", httpsPort);
+		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100, "localhost",
+				httpsPort);
 		Callable<MachinePool> request = new HttpRequestFactory()
 				.newGetMachinePoolRequest(cloudPool);
 		try {
@@ -139,8 +140,8 @@ public class TestHttpRequestFactory {
 		when(cloudPoolMock.getPoolSize()).thenReturn(poolSize);
 
 		// call cloud pool
-		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100,
-				"localhost", httpsPort);
+		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100, "localhost",
+				httpsPort);
 		Callable<PoolSizeSummary> request = new HttpRequestFactory()
 				.newGetPoolSizeRequest(cloudPool);
 		assertThat(request.call(), is(poolSize));
@@ -157,8 +158,8 @@ public class TestHttpRequestFactory {
 				cloudPoolMock).getPoolSize();
 
 		// call cloud pool
-		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100,
-				"localhost", httpsPort);
+		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100, "localhost",
+				httpsPort);
 		Callable<PoolSizeSummary> request = new HttpRequestFactory()
 				.newGetPoolSizeRequest(cloudPool);
 		try {
@@ -178,8 +179,8 @@ public class TestHttpRequestFactory {
 		doNothing().when(cloudPoolMock).setDesiredSize(5);
 
 		// call cloud pool
-		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100,
-				"localhost", httpsPort);
+		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100, "localhost",
+				httpsPort);
 		Callable<Void> request = new HttpRequestFactory()
 				.newSetDesiredSizeRequest(cloudPool, 5);
 		request.call();
@@ -196,8 +197,8 @@ public class TestHttpRequestFactory {
 				cloudPoolMock).setDesiredSize(5);
 
 		// call cloud pool
-		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100,
-				"localhost", httpsPort);
+		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100, "localhost",
+				httpsPort);
 		Callable<Void> request = new HttpRequestFactory()
 				.newSetDesiredSizeRequest(cloudPool, 5);
 		try {
@@ -217,8 +218,8 @@ public class TestHttpRequestFactory {
 		doNothing().when(cloudPoolMock).terminateMachine("i-1", true);
 
 		// call cloud pool
-		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100,
-				"localhost", httpsPort);
+		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100, "localhost",
+				httpsPort);
 		Callable<Void> request = new HttpRequestFactory()
 				.newTerminateMachineRequest(cloudPool, "i-1", true);
 		request.call();
@@ -235,8 +236,8 @@ public class TestHttpRequestFactory {
 				cloudPoolMock).terminateMachine("i-1", true);
 
 		// call cloud pool
-		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100,
-				"localhost", httpsPort);
+		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100, "localhost",
+				httpsPort);
 		Callable<Void> request = new HttpRequestFactory()
 				.newTerminateMachineRequest(cloudPool, "i-1", true);
 		try {
@@ -257,8 +258,8 @@ public class TestHttpRequestFactory {
 				ServiceState.IN_SERVICE);
 
 		// call cloud pool
-		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100,
-				"localhost", httpsPort);
+		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100, "localhost",
+				httpsPort);
 		Callable<Void> request = new HttpRequestFactory()
 				.newSetServiceStateRequest(cloudPool, "i-1",
 						ServiceState.IN_SERVICE);
@@ -276,11 +277,52 @@ public class TestHttpRequestFactory {
 				cloudPoolMock).setServiceState("i-1", ServiceState.BOOTING);
 
 		// call cloud pool
-		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100,
-				"localhost", httpsPort);
+		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100, "localhost",
+				httpsPort);
 		Callable<Void> request = new HttpRequestFactory()
 				.newSetServiceStateRequest(cloudPool, "i-1",
 						ServiceState.BOOTING);
+		try {
+			request.call();
+			fail("call should fail!");
+		} catch (CloudPoolException e) {
+			Throwable cause = e.getCause();
+			assertThat(cause, is(instanceOf(HttpResponseException.class)));
+			assertThat(HttpResponseException.class.cast(cause).getStatusCode(),
+					is(500));
+		}
+	}
+
+	@Test
+	public void setMembershipStatusRequest() throws Exception {
+		MembershipStatus status = MembershipStatus.blessed();
+		// prepare mock to receive call
+		doNothing().when(cloudPoolMock).setMembershipStatus("i-1", status);
+
+		// call cloud pool
+		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100, "localhost",
+				httpsPort);
+		Callable<Void> request = new HttpRequestFactory()
+				.newSetMembershipStatusRequest(cloudPool, "i-1", status);
+		request.call();
+
+		// verify that mock received call
+		verify(cloudPoolMock).setMembershipStatus("i-1", status);
+		verifyNoMoreInteractions(cloudPoolMock);
+	}
+
+	@Test
+	public void setMembershipStatusRequestOnError() throws Exception {
+		MembershipStatus status = MembershipStatus.blessed();
+		// prepare mock to fail
+		doThrow(new CloudPoolException("something went wrong!")).when(
+				cloudPoolMock).setMembershipStatus("i-1", status);
+
+		// call cloud pool
+		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100, "localhost",
+				httpsPort);
+		Callable<Void> request = new HttpRequestFactory()
+				.newSetMembershipStatusRequest(cloudPool, "i-1", status);
 		try {
 			request.call();
 			fail("call should fail!");
@@ -298,8 +340,8 @@ public class TestHttpRequestFactory {
 		doNothing().when(cloudPoolMock).attachMachine("i-1");
 
 		// call cloud pool
-		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100,
-				"localhost", httpsPort);
+		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100, "localhost",
+				httpsPort);
 		Callable<Void> request = new HttpRequestFactory()
 				.newAttachMachineRequest(cloudPool, "i-1");
 		request.call();
@@ -316,8 +358,8 @@ public class TestHttpRequestFactory {
 				cloudPoolMock).attachMachine("i-1");
 
 		// call cloud pool
-		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100,
-				"localhost", httpsPort);
+		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100, "localhost",
+				httpsPort);
 		Callable<Void> request = new HttpRequestFactory()
 				.newAttachMachineRequest(cloudPool, "i-1");
 		try {
@@ -337,8 +379,8 @@ public class TestHttpRequestFactory {
 		doNothing().when(cloudPoolMock).detachMachine("i-1", false);
 
 		// call cloud pool
-		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100,
-				"localhost", httpsPort);
+		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100, "localhost",
+				httpsPort);
 		Callable<Void> request = new HttpRequestFactory()
 				.newDetachMachineRequest(cloudPool, "i-1", false);
 		request.call();
@@ -355,8 +397,8 @@ public class TestHttpRequestFactory {
 				cloudPoolMock).detachMachine("i-1", true);
 
 		// call cloud pool
-		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100,
-				"localhost", httpsPort);
+		PrioritizedCloudPool cloudPool = prioritizedCloudPool(100, "localhost",
+				httpsPort);
 		Callable<Void> request = new HttpRequestFactory()
 				.newDetachMachineRequest(cloudPool, "i-1", true);
 		try {

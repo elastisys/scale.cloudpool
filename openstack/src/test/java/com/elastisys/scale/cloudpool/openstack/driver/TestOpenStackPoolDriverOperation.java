@@ -1,6 +1,7 @@
 package com.elastisys.scale.cloudpool.openstack.driver;
 
 import static com.elastisys.scale.cloudpool.openstack.driver.Constants.CLOUD_POOL_TAG;
+import static com.elastisys.scale.cloudpool.openstack.driver.Constants.MEMBERSHIP_STATUS_TAG;
 import static com.elastisys.scale.cloudpool.openstack.driver.Constants.SERVICE_STATE_TAG;
 import static com.elastisys.scale.cloudpool.openstack.driver.MachinesMatcher.machines;
 import static com.elastisys.scale.cloudpool.openstack.driver.TestUtils.config;
@@ -31,34 +32,34 @@ import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
-import com.elastisys.scale.cloudpool.openstack.driver.Constants;
-import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriver;
 import com.elastisys.scale.cloudpool.openstack.driver.client.OpenstackClient;
+import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.collect.ImmutableMap;
 
 /**
  * Verifies the behavior of the {@link OpenStackPoolDriver} as it operates.
  */
-public class TestOpenStackScalingGroupOperation {
+public class TestOpenStackPoolDriverOperation {
 	private static final Logger LOG = LoggerFactory
-			.getLogger(TestOpenStackScalingGroupOperation.class);
+			.getLogger(TestOpenStackPoolDriverOperation.class);
 
 	private static final String GROUP_NAME = "MyScalingGroup";
 
 	private OpenstackClient mockClient = mock(OpenstackClient.class);
 	/** Object under test. */
-	private OpenStackPoolDriver scalingGroup;
+	private OpenStackPoolDriver poolDriver;
 
 	@Before
 	public void onSetup() {
-		this.scalingGroup = new OpenStackPoolDriver(this.mockClient);
-		this.scalingGroup.configure(TestUtils.config(GROUP_NAME, true));
+		this.poolDriver = new OpenStackPoolDriver(this.mockClient);
+		this.poolDriver.configure(TestUtils.config(GROUP_NAME, true));
 	}
 
 	/**
@@ -69,21 +70,21 @@ public class TestOpenStackScalingGroupOperation {
 	public void listMachines() throws CloudPoolDriverException {
 		// empty scaling group
 		setUpMockedScalingGroup(GROUP_NAME, servers());
-		assertThat(this.scalingGroup.listMachines(), is(machines()));
-		verify(this.mockClient).getServers(Constants.CLOUD_POOL_TAG,
-				GROUP_NAME);
+		assertThat(this.poolDriver.listMachines(), is(machines()));
+		verify(this.mockClient)
+				.getServers(Constants.CLOUD_POOL_TAG, GROUP_NAME);
 
 		// non-empty group
 		setUpMockedScalingGroup(GROUP_NAME,
 				servers(memberServer("i-1", Status.ACTIVE)));
-		assertThat(this.scalingGroup.listMachines(), is(machines("i-1")));
+		assertThat(this.poolDriver.listMachines(), is(machines("i-1")));
 
 		// group with machines in different states
 		List<Server> members = servers(memberServer("i-1", Status.ACTIVE),
 				memberServer("i-2", Status.BUILD),
 				memberServer("i-3", Status.DELETED));
 		setUpMockedScalingGroup(GROUP_NAME, members);
-		List<Machine> machines = this.scalingGroup.listMachines();
+		List<Machine> machines = this.poolDriver.listMachines();
 		assertThat(machines, is(machines("i-1", "i-2", "i-3")));
 		// verify that cloud-specific metadata is included for each machine
 		assertTrue(machines.get(0).getMetadata().has("id"));
@@ -98,9 +99,9 @@ public class TestOpenStackScalingGroupOperation {
 	@Test(expected = CloudPoolDriverException.class)
 	public void listMachinesOnError() throws CloudPoolDriverException {
 		// set up Amazon API call to fail
-		when(this.mockClient.getServers(CLOUD_POOL_TAG, GROUP_NAME))
-				.thenThrow(new RuntimeException("API unreachable"));
-		this.scalingGroup.listMachines();
+		when(this.mockClient.getServers(CLOUD_POOL_TAG, GROUP_NAME)).thenThrow(
+				new RuntimeException("API unreachable"));
+		this.poolDriver.listMachines();
 	}
 
 	/**
@@ -117,9 +118,9 @@ public class TestOpenStackScalingGroupOperation {
 		// scale up from 0 -> 1
 		List<Server> servers = servers();
 		FakeOpenstackClient fakeClient = new FakeOpenstackClient(servers);
-		this.scalingGroup = new OpenStackPoolDriver(fakeClient);
-		this.scalingGroup.configure(config);
-		List<Machine> startedMachines = this.scalingGroup.startMachines(1,
+		this.poolDriver = new OpenStackPoolDriver(fakeClient);
+		this.poolDriver.configure(config);
+		List<Machine> startedMachines = this.poolDriver.startMachines(1,
 				scaleUpConfig);
 		assertThat(startedMachines, is(machines("i-1")));
 		// verify that group/name tag was set on instance
@@ -130,9 +131,9 @@ public class TestOpenStackScalingGroupOperation {
 		// scale up from 1 -> 2
 		servers = servers(memberServer("i-1", Status.ACTIVE));
 		fakeClient = new FakeOpenstackClient(servers);
-		this.scalingGroup = new OpenStackPoolDriver(fakeClient);
-		this.scalingGroup.configure(config);
-		startedMachines = this.scalingGroup.startMachines(1, scaleUpConfig);
+		this.poolDriver = new OpenStackPoolDriver(fakeClient);
+		this.poolDriver.configure(config);
+		startedMachines = this.poolDriver.startMachines(1, scaleUpConfig);
 		assertThat(startedMachines, is(machines("i-2")));
 		// verify that group/name tag was set on instance
 		assertThat(membershipTag(fakeClient.getServer("i-2")), is(GROUP_NAME));
@@ -141,9 +142,9 @@ public class TestOpenStackScalingGroupOperation {
 		servers = servers(memberServer("i-1", Status.ACTIVE),
 				memberServer("i-2", Status.BUILD));
 		fakeClient = new FakeOpenstackClient(servers);
-		this.scalingGroup = new OpenStackPoolDriver(fakeClient);
-		this.scalingGroup.configure(config);
-		startedMachines = this.scalingGroup.startMachines(2, scaleUpConfig);
+		this.poolDriver = new OpenStackPoolDriver(fakeClient);
+		this.poolDriver.configure(config);
+		startedMachines = this.poolDriver.startMachines(2, scaleUpConfig);
 		assertThat(startedMachines, is(machines("i-3", "i-4")));
 		// verify that group/name tag was set on instance
 		assertThat(membershipTag(fakeClient.getServer("i-3")), is(GROUP_NAME));
@@ -163,9 +164,9 @@ public class TestOpenStackScalingGroupOperation {
 		// scale up from 0 -> 1
 		List<Server> servers = servers();
 		FakeOpenstackClient fakeClient = new FakeOpenstackClient(servers);
-		this.scalingGroup = new OpenStackPoolDriver(fakeClient);
-		this.scalingGroup.configure(config);
-		List<Machine> startedMachines = this.scalingGroup.startMachines(1,
+		this.poolDriver = new OpenStackPoolDriver(fakeClient);
+		this.poolDriver.configure(config);
+		List<Machine> startedMachines = this.poolDriver.startMachines(1,
 				scaleUpConfig);
 		assertThat(startedMachines, is(machines("i-1")));
 		// verify that group/name tag was set on instance
@@ -193,7 +194,7 @@ public class TestOpenStackScalingGroupOperation {
 
 		// should raise an exception
 		try {
-			this.scalingGroup.startMachines(1, scaleUpConfig);
+			this.poolDriver.startMachines(1, scaleUpConfig);
 			fail("startMachines expected to fail");
 		} catch (StartMachinesException e) {
 			assertThat(e.getRequestedMachines(), is(1));
@@ -215,12 +216,12 @@ public class TestOpenStackScalingGroupOperation {
 		int numLaunchesBeforeFailure = 1;
 		FakeOpenstackClient fakeClient = new FailingFakeOpenstackClient(
 				servers(), numLaunchesBeforeFailure);
-		this.scalingGroup = new OpenStackPoolDriver(fakeClient);
-		this.scalingGroup.configure(config);
+		this.poolDriver = new OpenStackPoolDriver(fakeClient);
+		this.poolDriver.configure(config);
 
 		// should raise an exception on second attempt to launch
 		try {
-			this.scalingGroup.startMachines(2, scaleUpConfig);
+			this.poolDriver.startMachines(2, scaleUpConfig);
 			fail("startMachines expected to fail");
 		} catch (StartMachinesException e) {
 			assertThat(e.getRequestedMachines(), is(2));
@@ -236,15 +237,15 @@ public class TestOpenStackScalingGroupOperation {
 	public void terminate() throws Exception {
 		BaseCloudPoolConfig config = config(GROUP_NAME, true);
 
-		this.scalingGroup = new OpenStackPoolDriver(new FakeOpenstackClient(
+		this.poolDriver = new OpenStackPoolDriver(new FakeOpenstackClient(
 				servers(memberServer("i-1", Status.ACTIVE),
 						memberServer("i-2", Status.BUILD))));
-		this.scalingGroup.configure(config);
-		this.scalingGroup.terminateMachine("i-1");
-		assertThat(this.scalingGroup.listMachines(), is(machines("i-2")));
+		this.poolDriver.configure(config);
+		this.poolDriver.terminateMachine("i-1");
+		assertThat(this.poolDriver.listMachines(), is(machines("i-2")));
 
-		this.scalingGroup.terminateMachine("i-2");
-		assertThat(this.scalingGroup.listMachines(), is(machines()));
+		this.poolDriver.terminateMachine("i-2");
+		assertThat(this.poolDriver.listMachines(), is(machines()));
 	}
 
 	/**
@@ -258,7 +259,7 @@ public class TestOpenStackScalingGroupOperation {
 		doThrow(new RuntimeException("API unreachable")).when(this.mockClient)
 				.terminateServer("i-1");
 
-		this.scalingGroup.terminateMachine("i-1");
+		this.poolDriver.terminateMachine("i-1");
 	}
 
 	/**
@@ -270,7 +271,7 @@ public class TestOpenStackScalingGroupOperation {
 		setUpMockedScalingGroup(GROUP_NAME,
 				servers(memberServer("i-1", Status.ACTIVE)));
 
-		this.scalingGroup.terminateMachine("i-2");
+		this.poolDriver.terminateMachine("i-2");
 	}
 
 	/**
@@ -281,11 +282,11 @@ public class TestOpenStackScalingGroupOperation {
 	public void detach() {
 		FakeOpenstackClient fakeClient = new FakeOpenstackClient(
 				servers(memberServer("i-1", Status.ACTIVE)));
-		this.scalingGroup = new OpenStackPoolDriver(fakeClient);
-		this.scalingGroup.configure(config(GROUP_NAME, true));
+		this.poolDriver = new OpenStackPoolDriver(fakeClient);
+		this.poolDriver.configure(config(GROUP_NAME, true));
 		assertThat(membershipTag(fakeClient.getServer("i-1")), is(GROUP_NAME));
 
-		this.scalingGroup.detachMachine("i-1");
+		this.poolDriver.detachMachine("i-1");
 		assertThat(membershipTag(fakeClient.getServer("i-1")), is(nullValue()));
 	}
 
@@ -298,7 +299,7 @@ public class TestOpenStackScalingGroupOperation {
 		setUpMockedScalingGroup(GROUP_NAME,
 				servers(memberServer("i-1", Status.ACTIVE)));
 
-		this.scalingGroup.detachMachine("i-2");
+		this.poolDriver.detachMachine("i-2");
 	}
 
 	/**
@@ -312,7 +313,7 @@ public class TestOpenStackScalingGroupOperation {
 		doThrow(new RuntimeException("API unreachable")).when(this.mockClient)
 				.untagServer("i-1", Arrays.asList(CLOUD_POOL_TAG));
 
-		this.scalingGroup.detachMachine("i-1");
+		this.poolDriver.detachMachine("i-1");
 	}
 
 	/**
@@ -323,11 +324,11 @@ public class TestOpenStackScalingGroupOperation {
 	public void attach() {
 		FakeOpenstackClient fakeClient = new FakeOpenstackClient(
 				servers(nonMemberServer("i-1", Status.ACTIVE)));
-		this.scalingGroup = new OpenStackPoolDriver(fakeClient);
-		this.scalingGroup.configure(config(GROUP_NAME, true));
+		this.poolDriver = new OpenStackPoolDriver(fakeClient);
+		this.poolDriver.configure(config(GROUP_NAME, true));
 		assertThat(membershipTag(fakeClient.getServer("i-1")), is(nullValue()));
 
-		this.scalingGroup.attachMachine("i-1");
+		this.poolDriver.attachMachine("i-1");
 		assertThat(membershipTag(fakeClient.getServer("i-1")), is(GROUP_NAME));
 	}
 
@@ -339,10 +340,10 @@ public class TestOpenStackScalingGroupOperation {
 	public void attachNonExistingMachine() {
 		FakeOpenstackClient fakeClient = new FakeOpenstackClient(
 				servers(nonMemberServer("i-1", Status.ACTIVE)));
-		this.scalingGroup = new OpenStackPoolDriver(fakeClient);
-		this.scalingGroup.configure(config(GROUP_NAME, true));
+		this.poolDriver = new OpenStackPoolDriver(fakeClient);
+		this.poolDriver.configure(config(GROUP_NAME, true));
 
-		this.scalingGroup.attachMachine("i-2");
+		this.poolDriver.attachMachine("i-2");
 	}
 
 	/**
@@ -354,10 +355,9 @@ public class TestOpenStackScalingGroupOperation {
 		setUpMockedScalingGroup(GROUP_NAME,
 				servers(nonMemberServer("i-1", Status.ACTIVE)));
 		doThrow(new RuntimeException("API unreachable")).when(this.mockClient)
-				.tagServer("i-1",
-						ImmutableMap.of(CLOUD_POOL_TAG, GROUP_NAME));
+				.tagServer("i-1", ImmutableMap.of(CLOUD_POOL_TAG, GROUP_NAME));
 
-		this.scalingGroup.attachMachine("i-1");
+		this.poolDriver.attachMachine("i-1");
 	}
 
 	/**
@@ -369,16 +369,16 @@ public class TestOpenStackScalingGroupOperation {
 	public void setServiceState() {
 		FakeOpenstackClient fakeClient = new FakeOpenstackClient(
 				servers(memberServer("i-1", Status.ACTIVE)));
-		this.scalingGroup = new OpenStackPoolDriver(fakeClient);
-		this.scalingGroup.configure(config(GROUP_NAME, true));
+		this.poolDriver = new OpenStackPoolDriver(fakeClient);
+		this.poolDriver.configure(config(GROUP_NAME, true));
 		assertThat(serviceStateTag(fakeClient.getServer("i-1")),
 				is(nullValue()));
 
-		this.scalingGroup.setServiceState("i-1", ServiceState.BOOTING);
+		this.poolDriver.setServiceState("i-1", ServiceState.BOOTING);
 		assertThat(serviceStateTag(fakeClient.getServer("i-1")),
 				is(ServiceState.BOOTING.name()));
 
-		this.scalingGroup.setServiceState("i-1", ServiceState.IN_SERVICE);
+		this.poolDriver.setServiceState("i-1", ServiceState.IN_SERVICE);
 		assertThat(serviceStateTag(fakeClient.getServer("i-1")),
 				is(ServiceState.IN_SERVICE.name()));
 	}
@@ -392,7 +392,7 @@ public class TestOpenStackScalingGroupOperation {
 		setUpMockedScalingGroup(GROUP_NAME,
 				servers(memberServer("i-1", Status.ACTIVE)));
 
-		this.scalingGroup.setServiceState("i-2", ServiceState.IN_SERVICE);
+		this.poolDriver.setServiceState("i-2", ServiceState.IN_SERVICE);
 	}
 
 	/**
@@ -410,7 +410,66 @@ public class TestOpenStackScalingGroupOperation {
 						ImmutableMap.of(SERVICE_STATE_TAG,
 								ServiceState.IN_SERVICE.name()));
 
-		this.scalingGroup.setServiceState("i-1", ServiceState.IN_SERVICE);
+		this.poolDriver.setServiceState("i-1", ServiceState.IN_SERVICE);
+	}
+
+	/**
+	 * Verifies that a
+	 * {@link CloudPoolDriver#setMembershipStatus(String, MembershipStatus)}
+	 * stores the status by setting a tag on the server.
+	 */
+	@Test
+	public void setMembershipStatus() {
+		FakeOpenstackClient fakeClient = new FakeOpenstackClient(
+				servers(memberServer("i-1", Status.ACTIVE)));
+		this.poolDriver = new OpenStackPoolDriver(fakeClient);
+		this.poolDriver.configure(config(GROUP_NAME, true));
+		assertThat(serviceStateTag(fakeClient.getServer("i-1")),
+				is(nullValue()));
+
+		MembershipStatus status = MembershipStatus.awaitingService();
+		String statusAsJson = JsonUtils.toString(JsonUtils.toJson(status));
+		this.poolDriver.setMembershipStatus("i-1", status);
+		assertThat(membershipStatusTag(fakeClient.getServer("i-1")),
+				is(statusAsJson));
+
+		MembershipStatus otherStatus = MembershipStatus.blessed();
+		String otherStatusAsJson = JsonUtils.toString(JsonUtils
+				.toJson(otherStatus));
+		this.poolDriver.setMembershipStatus("i-1", otherStatus);
+		assertThat(membershipStatusTag(fakeClient.getServer("i-1")),
+				is(otherStatusAsJson));
+	}
+
+	/**
+	 * It should not be possible to set membership status on a server that is
+	 * not recognized as a group member.
+	 */
+	@Test(expected = NotFoundException.class)
+	public void setMembershipStatusOnNonGroupMember() {
+		setUpMockedScalingGroup(GROUP_NAME,
+				servers(memberServer("i-1", Status.ACTIVE)));
+
+		this.poolDriver.setMembershipStatus("i-2", MembershipStatus.blessed());
+	}
+
+	/**
+	 * A {@link CloudPoolDriverException} should be thrown on failure to tag the
+	 * membership status of a group instance.
+	 */
+	@Test(expected = CloudPoolDriverException.class)
+	public void setMembershipStatusOnError() {
+		setUpMockedScalingGroup(GROUP_NAME,
+				servers(memberServer("i-1", Status.ACTIVE)));
+
+		MembershipStatus status = MembershipStatus.awaitingService();
+		String statusAsJson = JsonUtils.toString(JsonUtils.toJson(status));
+
+		doThrow(new RuntimeException("API unreachable")).when(this.mockClient)
+				.tagServer("i-1",
+						ImmutableMap.of(MEMBERSHIP_STATUS_TAG, statusAsJson));
+
+		this.poolDriver.setMembershipStatus("i-1", status);
 	}
 
 	private void setUpMockedScalingGroup(String groupName,
@@ -443,6 +502,16 @@ public class TestOpenStackScalingGroupOperation {
 	 */
 	private static String serviceStateTag(Server server) {
 		return server.getMetadata().get(SERVICE_STATE_TAG);
+	}
+
+	/**
+	 * Gets the service state tag ({@link Constants#MEMBERSHIP_STATUS_TAG}) for
+	 * a {@link Server} or <code>null</code> if none is set.
+	 *
+	 * @param server
+	 */
+	private static String membershipStatusTag(Server server) {
+		return server.getMetadata().get(Constants.MEMBERSHIP_STATUS_TAG);
 	}
 
 	private static Map<String, String> groupMemberTags() {

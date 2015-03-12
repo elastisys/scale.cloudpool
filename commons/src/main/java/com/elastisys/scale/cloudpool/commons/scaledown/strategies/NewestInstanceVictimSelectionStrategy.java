@@ -3,8 +3,8 @@ package com.elastisys.scale.cloudpool.commons.scaledown.strategies;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Collection;
 import java.util.Comparator;
-import java.util.List;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionStrategy;
@@ -22,7 +22,7 @@ public enum NewestInstanceVictimSelectionStrategy implements
 	INSTANCE;
 
 	@Override
-	public Machine selectVictim(List<Machine> candidates)
+	public Machine selectVictim(Collection<Machine> candidates)
 			throws IllegalArgumentException {
 		checkNotNull(candidates, "null candidate set");
 		checkArgument(!candidates.isEmpty(), "empty candidate set");

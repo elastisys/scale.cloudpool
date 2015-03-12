@@ -17,11 +17,11 @@ import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.restapi.types.DetachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetDesiredSizeRequest;
+import com.elastisys.scale.cloudpool.api.restapi.types.SetMembershipStatusRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetServiceStateRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.TerminateMachineRequest;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
-import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.rest.types.ErrorType;
 import com.google.gson.JsonObject;
@@ -239,12 +239,10 @@ public class CloudPoolHandler {
 
 	/**
 	 * Sets the service state of a given machine pool member. Setting the
-	 * service state has no side-effects, unless the service state is set to
-	 * {@link ServiceState#OUT_OF_SERVICE}, in which case a replacement machine
-	 * will be launched (since {@link ServiceState#OUT_OF_SERVICE} machines are
-	 * not considered effective members of the pool). An out-of-service machine
-	 * can later be taken back into service by another call to this method to
-	 * re-set its service state.
+	 * service state does not have any functional implications on the pool
+	 * member, but should be seen as way to supply operational information about
+	 * the service running on the machine to third-party services (such as load
+	 * balancers).
 	 *
 	 * @param machineId
 	 *            The machine whose service state is to be set.
@@ -272,6 +270,31 @@ public class CloudPoolHandler {
 		} catch (Exception e) {
 			String message = String.format(
 					"failure to process POST /pool/%s/serviceState: %s",
+					machineId, e.getMessage());
+			log.error(message, e);
+			return Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(new ErrorType(message, e)).build();
+		}
+	}
+
+	@POST
+	@Path("/pool/{machine}/membershipStatus")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response setMembershipStatus(@PathParam("machine") String machineId,
+			SetMembershipStatusRequest request) {
+		log.info("POST /pool/{}/membershipStatus", machineId);
+		try {
+			this.cloudPool.setMembershipStatus(machineId,
+					request.getMembershipStatus());
+			return Response.ok().build();
+		} catch (NotFoundException e) {
+			String message = "unrecognized machine: " + e.getMessage();
+			return Response.status(Status.NOT_FOUND)
+					.entity(new ErrorType(message, e)).build();
+		} catch (Exception e) {
+			String message = String.format(
+					"failure to process POST /pool/%s/membershipStatus: %s",
 					machineId, e.getMessage());
 			log.error(message, e);
 			return Response.status(Status.INTERNAL_SERVER_ERROR)

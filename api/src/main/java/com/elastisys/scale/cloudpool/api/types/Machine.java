@@ -28,9 +28,23 @@ import com.google.gson.JsonObject;
 /**
  * Represents a machine that is a member of a {@link MachinePool} managed by a
  * {@link CloudPool}.
+ * <p/>
+ * As explained in the <a
+ * href="http://cloudpoolrestapi.readthedocs.org/en/latest/api.html">cloud pool
+ * REST API</a>, a {@link Machine} has three different states of interest:
+ * <ul>
+ * <li>The <i>machine state</i>, being the execution state of the machine as
+ * reported by the cloud API.</li>
+ * <li>The <i>membership status</i>, indicating if the machine is to be given
+ * special treatment in the pool. This includes protecting it from termination
+ * and/or marking it in need of a replacement.</li>
+ * <li>The <i>service state</i>, being the operational state of the service
+ * running on the machine.</li>
+ * </ul>
  *
  *
  * @see MachinePool
+ * @see CloudPool
  */
 public class Machine {
 
@@ -49,7 +63,14 @@ public class Machine {
 	 * If the {@link CloudPool} is not aware of the service state for a machine,
 	 * this field is set to {@link ServiceState#UNKNOWN}.
 	 */
-	private ServiceState serviceState;
+	private final ServiceState serviceState;
+
+	/**
+	 * The membership status indicates if this pool member needs to be given
+	 * special treatment. This includes protecting it from termination and/or
+	 * marking it in need of a replacement.
+	 */
+	private final MembershipStatus membershipStatus;
 
 	/**
 	 * The launch time of the {@link Machine} if it has been launched. This
@@ -76,7 +97,8 @@ public class Machine {
 
 	/**
 	 * Constructs a new {@link Machine} with {@link ServiceState#UNKNOWN}
-	 * service state and without any cloud-specific machine meta data.
+	 * service state, without any cloud-specific machine meta data and with
+	 * default {@link MembershipStatus}..
 	 *
 	 * @param id
 	 *            The identifier of the {@link Machine} .
@@ -99,20 +121,21 @@ public class Machine {
 	 */
 	public Machine(String id, MachineState state, DateTime launchtime,
 			List<String> publicIps, List<String> privateIps) {
-		this(id, state, ServiceState.UNKNOWN, launchtime, publicIps,
-				privateIps, null);
+		this(id, state, MembershipStatus.defaultStatus(), ServiceState.UNKNOWN,
+				launchtime, publicIps, privateIps, null);
 	}
 
 	/**
 	 * Constructs a new {@link Machine} without any cloud-specific machine meta
-	 * data.
+	 * data and with default {@link MembershipStatus}.
 	 *
 	 * @param id
 	 *            The identifier of the {@link Machine}.
 	 * @param machineState
 	 *            The execution state of the {@link Machine}.
 	 * @param serviceState
-	 *            The operational state of the service.
+	 *            The operational state of the service running on the
+	 *            {@link Machine}.
 	 * @param launchtime
 	 *            The launch time of the {@link Machine} if it has been
 	 *            launched. This attribute may be <code>null</code>, depending
@@ -131,8 +154,8 @@ public class Machine {
 	public Machine(String id, MachineState machineState,
 			ServiceState serviceState, DateTime launchtime,
 			List<String> publicIps, List<String> privateIps) {
-		this(id, machineState, serviceState, launchtime, publicIps, privateIps,
-				null);
+		this(id, machineState, MembershipStatus.defaultStatus(), serviceState,
+				launchtime, publicIps, privateIps, null);
 	}
 
 	/**
@@ -142,8 +165,11 @@ public class Machine {
 	 *            The identifier of the {@link Machine}.
 	 * @param machineState
 	 *            The execution state of the {@link Machine}.
+	 * @param membershipStatus
+	 *            The pool membership status of this {@link Machine}.
 	 * @param serviceState
-	 *            The operational state of the service.
+	 *            The operational state of the service running on the
+	 *            {@link Machine}.
 	 * @param launchtime
 	 *            The launch time of the {@link Machine} if it has been
 	 *            launched. This attribute may be <code>null</code>, depending
@@ -163,14 +189,17 @@ public class Machine {
 	 *            {@link Machine}. May be <code>null</code>.
 	 */
 	public Machine(String id, MachineState machineState,
-			ServiceState serviceState, DateTime launchtime,
-			List<String> publicIps, List<String> privateIps, JsonObject metadata) {
+			MembershipStatus membershipStatus, ServiceState serviceState,
+			DateTime launchtime, List<String> publicIps,
+			List<String> privateIps, JsonObject metadata) {
 		checkNotNull(id, "missing id");
 		checkNotNull(machineState, "missing machineState");
+		checkNotNull(membershipStatus, "missing membershipStatus");
 		checkNotNull(serviceState, "missing serviceState");
 
 		this.id = id;
 		this.machineState = machineState;
+		this.membershipStatus = membershipStatus;
 		this.serviceState = serviceState;
 		this.launchtime = launchtime;
 		this.publicIps = Optional.fromNullable(publicIps).or(
@@ -201,10 +230,19 @@ public class Machine {
 	/**
 	 * Sets the execution state of the {@link Machine}.
 	 *
+	 * @param machineState
+	 */
+	public void setMachineState(MachineState machineState) {
+		this.machineState = machineState;
+	}
+
+	/**
+	 * Returns the pool membership status of this {@link Machine}.
+	 *
 	 * @return
 	 */
-	public void setMachineState(MachineState state) {
-		this.machineState = state;
+	public MembershipStatus getMembershipStatus() {
+		return this.membershipStatus;
 	}
 
 	/**
@@ -214,15 +252,6 @@ public class Machine {
 	 */
 	public ServiceState getServiceState() {
 		return this.serviceState;
-	}
-
-	/**
-	 * Sets the service state of the {@link Machine}.
-	 *
-	 * @param serviceState
-	 */
-	public void setServiceState(ServiceState serviceState) {
-		this.serviceState = serviceState;
 	}
 
 	/**
@@ -270,10 +299,9 @@ public class Machine {
 
 	@Override
 	public int hashCode() {
-		return Objects
-				.hashCode(this.id, this.machineState, this.serviceState,
-						this.launchtime, this.publicIps, this.privateIps,
-						this.metadata);
+		return Objects.hashCode(this.id, this.machineState,
+				this.membershipStatus, this.serviceState, this.launchtime,
+				this.publicIps, this.privateIps, this.metadata);
 	}
 
 	@Override
@@ -290,6 +318,8 @@ public class Machine {
 			}
 			return Objects.equal(this.id, that.id)
 					&& Objects.equal(this.machineState, that.machineState)
+					&& Objects.equal(this.membershipStatus,
+							that.membershipStatus)
 					&& Objects.equal(this.serviceState, that.serviceState)
 					&& launchtimesEqual
 					&& Objects.equal(this.publicIps, that.publicIps)
@@ -303,6 +333,7 @@ public class Machine {
 	public String toString() {
 		return MoreObjects.toStringHelper(this).add("id", this.id)
 				.add("machineState", this.machineState)
+				.add("membershipStatus", this.membershipStatus)
 				.add("serviceState", this.serviceState)
 				.add("launchtime", this.launchtime)
 				.add("publicIps", this.publicIps)
@@ -365,25 +396,8 @@ public class Machine {
 	}
 
 	/**
-	 * Returns a {@link Predicate} that returns <code>true</code> when passed a
-	 * {@link Machine} in a given {@link ServiceState}.
-	 *
-	 * @param serviceState
-	 *            The {@link ServiceState} for which this {@link Predicate} will
-	 *            return <code>true</code>.
-	 * @return
-	 */
-	public static Predicate<? super Machine> withServiceState(
-			ServiceState serviceState) {
-		return new MachineWithServiceState(serviceState);
-	}
-
-	/**
 	 * A {@link Predicate} that returns <code>true</code> when passed a
 	 * {@link Machine} in a given {@link MachineState}.
-	 *
-	 *
-	 *
 	 */
 	public static class MachineWithState implements Predicate<Machine> {
 		private final MachineState state;
@@ -396,24 +410,6 @@ public class Machine {
 		@Override
 		public boolean apply(Machine machine) {
 			return machine.getMachineState() == this.state;
-		}
-	}
-
-	/**
-	 * A {@link Predicate} that returns <code>true</code> when passed a
-	 * {@link Machine} in a given {@link ServiceState}.
-	 */
-	public static class MachineWithServiceState implements Predicate<Machine> {
-		private final ServiceState serviceState;
-
-		public MachineWithServiceState(ServiceState serviceState) {
-			checkNotNull(serviceState);
-			this.serviceState = serviceState;
-		}
-
-		@Override
-		public boolean apply(Machine machine) {
-			return machine.getServiceState() == this.serviceState;
 		}
 	}
 
@@ -465,16 +461,15 @@ public class Machine {
 
 	/**
 	 * Returns a {@link Predicate} that returns <code>true</code> when passed a
-	 * {@link Machine} that contributes to the effective size of the machine
-	 * pool, meaning that it has been allocated from the underlying
-	 * infrastructure ({@link MachineState#REQUESTED},
-	 * {@link MachineState#PENDING} or {@link MachineState#RUNNING}) and is not
-	 * marked {@link ServiceState#OUT_OF_SERVICE}.
+	 * {@link Machine} that is an active pool member -- it has been allocated
+	 * from the underlying infrastructure ({@link MachineState#REQUESTED},
+	 * {@link MachineState#PENDING} or {@link MachineState#RUNNING}) and is an
+	 * active pool member ({@link MembershipStatus#isActive()}).
 	 *
 	 * @return
 	 */
-	public static Predicate<? super Machine> isEffectiveMember() {
-		return new EffectiveMemberPredicate();
+	public static Predicate<Machine> isActiveMember() {
+		return new ActiveMemberPredicate();
 	}
 
 	/**
@@ -485,40 +480,43 @@ public class Machine {
 	 *
 	 * @return
 	 */
-	public static Predicate<? super Machine> isAllocated() {
+	public static Predicate<Machine> isAllocated() {
 		return new AllocatedMachinePredicate();
 	}
 
 	/**
-	 * Returns a {@link Predicate} that returns <code>true</code> when passed a
-	 * {@link Machine} that is active, as indicated by it being in one of the
-	 * machine states {@link MachineState#PENDING} or
-	 * {@link MachineState#RUNNING} while <b>not</b> being in service state
-	 * {@link ServiceState#OUT_OF_SERVICE}.
+	 * Returns a {@link Predicate} that returns <code>true</code> for any
+	 * {@link Machine} with an evictable {@link MembershipStatus}.
 	 *
 	 * @return
 	 */
-	public static Predicate<? super Machine> isActive() {
-		return new MachineActivePredicate();
+	public static Predicate<Machine> isEvictable() {
+		return new EvictableMemberPredicate();
 	}
 
 	/**
 	 * A {@link Predicate} that returns <code>true</code> when passed a
-	 * {@link Machine} that contributes to the effective size of the machine
-	 * pool, meaning that it has been allocated from the underlying
-	 * infrastructure ({@link MachineState#REQUESTED},
-	 * {@link MachineState#PENDING} or {@link MachineState#RUNNING}) and is not
-	 * marked {@link ServiceState#OUT_OF_SERVICE}.
+	 * {@link Machine} with an evictable {@link MembershipStatus}.
 	 */
-	public static class EffectiveMemberPredicate implements Predicate<Machine> {
-		private static final Set<MachineState> allocatedStates = Sets
-				.newHashSet(MachineState.REQUESTED, MachineState.PENDING,
-						MachineState.RUNNING);
-
+	public static class EvictableMemberPredicate implements Predicate<Machine> {
 		@Override
 		public boolean apply(Machine machine) {
-			return allocatedStates.contains(machine.getMachineState())
-					&& (machine.getServiceState() != ServiceState.OUT_OF_SERVICE);
+			return machine.getMembershipStatus().isEvictable();
+		}
+	}
+
+	/**
+	 * A {@link Predicate} that returns <code>true</code> when passed a
+	 * {@link Machine} that is an active pool member -- it has been allocated
+	 * from the underlying infrastructure ({@link MachineState#REQUESTED},
+	 * {@link MachineState#PENDING} or {@link MachineState#RUNNING}) and is an
+	 * active pool member ({@link MembershipStatus#isActive()}).
+	 */
+	public static class ActiveMemberPredicate implements Predicate<Machine> {
+		@Override
+		public boolean apply(Machine machine) {
+			return isAllocated().apply(machine)
+					&& (machine.getMembershipStatus().isActive());
 		}
 	}
 
@@ -540,31 +538,10 @@ public class Machine {
 	}
 
 	/**
-	 * A {@link Predicate} that returns <code>true</code> when passed a
-	 * {@link Machine} that is active, as indicated by it being in one of the
-	 * machine states {@link MachineState#PENDING} or
-	 * {@link MachineState#RUNNING} while <b>not</b> being in service state
-	 * {@link ServiceState#OUT_OF_SERVICE}.
-	 */
-	public static class MachineActivePredicate implements Predicate<Machine> {
-		private static final Set<MachineState> activeStates = Sets.newHashSet(
-				MachineState.PENDING, MachineState.RUNNING);
-
-		@Override
-		public boolean apply(Machine machine) {
-			return machine.getLaunchtime() != null
-					&& activeStates.contains(machine.getMachineState())
-					&& (machine.getServiceState() != ServiceState.OUT_OF_SERVICE);
-		}
-	}
-
-	/**
 	 * A {@link Function} that for a given {@link Machine} calculates when the
 	 * started its most recent hour.
 	 * <p/>
 	 * The {@link Machine} must have its launch time set.
-	 *
-	 *
 	 */
 	public static class InstanceHourStart implements
 			Function<Machine, DateTime> {
@@ -669,14 +646,16 @@ public class Machine {
 			Function<Machine, String> {
 
 		@Override
-		public String apply(Machine input) {
+		public String apply(Machine machine) {
 			return MoreObjects.toStringHelper("Machine")
-					.add("id", input.getId())
-					.add("machineState", input.getMachineState().name())
-					.add("serviceState", input.getServiceState().name())
-					.add("launchtime", input.getLaunchtime())
-					.add("publicIps", input.getPublicIps())
-					.add("privateIps", input.getPrivateIps()).toString();
+					.add("id", machine.getId())
+					.add("machineState", machine.getMachineState().name())
+					.add("membershipStatus", machine.getMembershipStatus())
+					.add("serviceState", machine.getServiceState().name())
+					.add("launchtime", machine.getLaunchtime())
+					.add("publicIps", machine.getPublicIps())
+					.add("privateIps", machine.getPrivateIps()).toString();
 		}
 	}
+
 }

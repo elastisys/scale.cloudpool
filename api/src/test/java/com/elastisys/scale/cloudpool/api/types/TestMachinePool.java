@@ -83,46 +83,6 @@ public class TestMachinePool {
 	}
 
 	/**
-	 * Exercise {@link MachinePool#getActiveMachines()}
-	 */
-	@Test
-	public void testGetActiveMachines() {
-		DateTime now = UtcTime.now();
-
-		// on empty pool
-		MachinePool pool = MachinePool.emptyPool(now);
-		assertThat(pool.getActiveMachines().size(), is(0));
-
-		// on a pool with a mix of machines in different states
-		Machine requested1 = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, null, null, null);
-		Machine requested2 = new Machine("i-2", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, null, null, null);
-		Machine pending1 = new Machine("i-3", MachineState.PENDING,
-				ServiceState.BOOTING, now, null, null);
-		Machine running1 = new Machine("i-4", MachineState.RUNNING,
-				ServiceState.IN_SERVICE, now, asList("1.2.3.4"), null);
-		Machine running2 = new Machine("i-5", MachineState.RUNNING,
-				ServiceState.UNHEALTHY, now, asList("1.2.3.4"), null);
-		Machine running3 = new Machine("i-5.1", MachineState.RUNNING,
-				ServiceState.OUT_OF_SERVICE, now, asList("1.2.3.5"), null);
-		Machine terminating = new Machine("i-6", MachineState.TERMINATING,
-				ServiceState.UNKNOWN, now, null, null);
-		Machine terminated1 = new Machine("i-7", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, null, null);
-		Machine terminated2 = new Machine("i-8", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, null, null);
-		pool = new MachinePool(Arrays.asList(requested1, requested2, pending1,
-				running1, running2, running3, terminating, terminated1,
-				terminated2), now);
-		// verify active machines: 1 pending + 2 running that aren't
-		// OUT_OF_SERVICE
-		assertThat(pool.getActiveMachines().size(), is(3));
-		assertThat(pool.getActiveMachines(),
-				is(asList(pending1, running1, running2)));
-	}
-
-	/**
 	 * Exercise {@link MachinePool#getAllocatedMachines()}
 	 */
 	@Test
@@ -164,7 +124,7 @@ public class TestMachinePool {
 	}
 
 	/**
-	 * Exercise {@link MachinePool#getEffectiveMachines()}
+	 * Exercise {@link MachinePool#getActiveMachines()}
 	 */
 	@Test
 	public void testGetEffectiveMachines() {
@@ -172,21 +132,28 @@ public class TestMachinePool {
 
 		// on empty pool
 		MachinePool pool = MachinePool.emptyPool(now);
-		assertThat(pool.getEffectiveMachines().size(), is(0));
+		assertThat(pool.getActiveMachines().size(), is(0));
 
 		// on a pool with a mix of machines in different states
 		Machine requested1 = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, null, null, null);
+				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, null,
+				null, null, null);
 		Machine requested2 = new Machine("i-2", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, null, null, null);
+				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, null,
+				null, null, null);
 		Machine pending1 = new Machine("i-3", MachineState.PENDING,
-				ServiceState.BOOTING, now, null, null);
+				MembershipStatus.defaultStatus(), ServiceState.BOOTING, now,
+				null, null, null);
+
 		Machine running1 = new Machine("i-4", MachineState.RUNNING,
-				ServiceState.IN_SERVICE, now, asList("1.2.3.4"), null);
+				MembershipStatus.blessed(), ServiceState.IN_SERVICE, now,
+				asList("1.2.3.4"), null, null);
 		Machine running2 = new Machine("i-5", MachineState.RUNNING,
-				ServiceState.UNHEALTHY, now, asList("1.2.3.4"), null);
+				MembershipStatus.defaultStatus(), ServiceState.UNHEALTHY, now,
+				asList("1.2.3.4"), null, null);
 		Machine running3 = new Machine("i-5.1", MachineState.RUNNING,
-				ServiceState.OUT_OF_SERVICE, now, asList("1.2.3.5"), null);
+				MembershipStatus.awaitingService(),
+				ServiceState.OUT_OF_SERVICE, now, asList("1.2.3.5"), null, null);
 		Machine terminating = new Machine("i-6", MachineState.TERMINATING,
 				ServiceState.UNKNOWN, now, null, null);
 		Machine terminated1 = new Machine("i-7", MachineState.TERMINATED,
@@ -197,49 +164,11 @@ public class TestMachinePool {
 				running1, running2, running3, terminating, terminated1,
 				terminated2), now);
 		// verify effective machines: 2 requested + 1 pending + 2 running that
-		// aren't OUT_OF_SERVICE
-		assertThat(pool.getEffectiveMachines().size(), is(5));
+		// don't have an inactive membership status
+		assertThat(pool.getActiveMachines().size(), is(5));
 		assertThat(
-				pool.getEffectiveMachines(),
+				pool.getActiveMachines(),
 				is(asList(requested1, requested2, pending1, running1, running2)));
-	}
-
-	/**
-	 * Exercise {@link MachinePool#getOutOfServiceMachines()}
-	 */
-	@Test
-	public void testGetOutOfServiceMachines() {
-		DateTime now = UtcTime.now();
-
-		// on empty pool
-		MachinePool pool = MachinePool.emptyPool(now);
-		assertThat(pool.getOutOfServiceMachines().size(), is(0));
-
-		// on a pool with a mix of machines in different states
-		Machine requested1 = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, null, null, null);
-		Machine requested2 = new Machine("i-2", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, null, null, null);
-		Machine pending1 = new Machine("i-3", MachineState.PENDING,
-				ServiceState.BOOTING, now, null, null);
-		Machine running1 = new Machine("i-4", MachineState.RUNNING,
-				ServiceState.IN_SERVICE, now, asList("1.2.3.4"), null);
-		Machine running2 = new Machine("i-5", MachineState.RUNNING,
-				ServiceState.UNHEALTHY, now, asList("1.2.3.4"), null);
-		Machine running3 = new Machine("i-5.1", MachineState.RUNNING,
-				ServiceState.OUT_OF_SERVICE, now, asList("1.2.3.5"), null);
-		Machine terminating = new Machine("i-6", MachineState.TERMINATING,
-				ServiceState.UNKNOWN, now, null, null);
-		Machine terminated1 = new Machine("i-7", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, null, null);
-		Machine terminated2 = new Machine("i-8", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, null, null);
-		pool = new MachinePool(Arrays.asList(requested1, requested2, pending1,
-				running1, running2, running3, terminating, terminated1,
-				terminated2), now);
-		// verify out-of-service machines: 1 running
-		assertThat(pool.getOutOfServiceMachines().size(), is(1));
-		assertThat(pool.getOutOfServiceMachines(), is(asList(running3)));
 	}
 
 	/**
@@ -381,7 +310,7 @@ public class TestMachinePool {
 	@Test
 	public void parseSingleMachinePoolFromJson() throws IOException {
 		Machine machine1 = new Machine("m1", MachineState.PENDING,
-				ServiceState.IN_SERVICE,
+				MembershipStatus.defaultStatus(), ServiceState.IN_SERVICE,
 				UtcTime.parse("2014-01-13T11:00:00.000Z"), ips("1.2.3.4"),
 				ips("1.2.3.5"), parseJsonString("{\"k1\": \"v1\"}"));
 		MachinePool expectedPool = pool(
@@ -401,7 +330,7 @@ public class TestMachinePool {
 	@Test
 	public void convertSingleMachinePoolToJson() throws IOException {
 		Machine machine1 = new Machine("m1", MachineState.PENDING,
-				ServiceState.IN_SERVICE,
+				MembershipStatus.defaultStatus(), ServiceState.IN_SERVICE,
 				UtcTime.parse("2014-01-13T11:00:00.000Z"), ips("1.2.3.4"),
 				ips("1.2.3.5"), parseJsonString("{\"k1\": \"v1\"}"));
 		MachinePool pool = pool(UtcTime.parse("2014-01-13T12:00:00.000Z"),
@@ -421,7 +350,7 @@ public class TestMachinePool {
 	@Test
 	public void parseMultiMachinePoolFromJson() throws IOException {
 		Machine machine1 = new Machine("m1", MachineState.RUNNING,
-				ServiceState.IN_SERVICE,
+				new MembershipStatus(true, false), ServiceState.IN_SERVICE,
 				UtcTime.parse("2014-01-13T11:00:00.000Z"), ips("1.2.3.4"),
 				ips(), parseJsonString("{\"k1\": \"v1\"}"));
 		Machine machine2 = machine("m2", MachineState.REQUESTED, null, null,
@@ -444,7 +373,7 @@ public class TestMachinePool {
 	@Test
 	public void convertMultiMachinePoolToJson() throws IOException {
 		Machine machine1 = new Machine("m1", MachineState.RUNNING,
-				ServiceState.IN_SERVICE,
+				new MembershipStatus(true, false), ServiceState.IN_SERVICE,
 				UtcTime.parse("2014-01-13T11:00:00.000Z"), ips("1.2.3.4"),
 				ips(), parseJsonString("{\"k1\": \"v1\"}"));
 		Machine machine2 = new Machine("m2", MachineState.REQUESTED,

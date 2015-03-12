@@ -28,6 +28,7 @@ import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.splitter.config.PrioritizedCloudPool;
@@ -257,8 +258,7 @@ public class Splitter implements CloudPool {
 
 		MachinePool pool = getMachinePool();
 		return new PoolSizeSummary(this.desiredSize, pool
-				.getAllocatedMachines().size(), pool.getOutOfServiceMachines()
-				.size());
+				.getAllocatedMachines().size(), pool.getActiveMachines().size());
 	}
 
 	@Override
@@ -339,6 +339,33 @@ public class Splitter implements CloudPool {
 							+ "state on '%s': %s", machineId, e.getMessage());
 			throw new CloudPoolException(message, e);
 		}
+	}
+
+	@Override
+	public void setMembershipStatus(String machineId,
+			MembershipStatus membershipStatus) throws NotFoundException,
+			CloudPoolException {
+		checkState(isConfigured(), "cannot use before being configured");
+
+		LOG.debug("setting membership status {} for {} ...", membershipStatus,
+				machineId);
+		// dispatch call to every cloudpool and make sure one call is
+		// successful
+		List<Callable<Void>> requests = Lists.newArrayList();
+		for (PrioritizedCloudPool pool : pools()) {
+			requests.add(this.requestFactory.newSetMembershipStatusRequest(
+					pool, machineId, membershipStatus));
+		}
+		try {
+			int mustComplete = 1;
+			inParallel(requests, mustComplete);
+		} catch (Exception e) {
+			String message = format(
+					"no child pool accepted call to set membership "
+							+ "status on '%s': %s", machineId, e.getMessage());
+			throw new CloudPoolException(message, e);
+		}
+
 	}
 
 	@Override
@@ -527,12 +554,12 @@ public class Splitter implements CloudPool {
 		}
 		// exclude out-of-service instances since they aren't actually part
 		// of the desiredSize (they have been replaced with stand-ins)
-		int effectiveSize = pool.getEffectiveMachines().size();
+		int effectiveSize = pool.getActiveMachines().size();
 		int allocated = pool.getAllocatedMachines().size();
-		int outOfService = pool.getOutOfServiceMachines().size();
+		int active = pool.getActiveMachines().size();
 		this.desiredSize = effectiveSize;
-		LOG.info("initial desiredSize is {} (allocated: {}, outOfService: {})",
-				this.desiredSize, allocated, outOfService);
+		LOG.info("initial desiredSize is {} (allocated: {}, active: {})",
+				this.desiredSize, allocated, active);
 	}
 
 	/**
