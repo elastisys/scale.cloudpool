@@ -1,0 +1,43 @@
+{
+  "cloudPool": {
+    "name": "${CLOUD_POOL_NAME}",
+    "driverConfig": {
+      "awsAccessKeyId": "${AWS_ACCESS_KEY_ID}",
+      "awsSecretAccessKey": "${AWS_SECRET_ACCESS_KEY}",
+      "region": "${AWS_REGION}",
+      "bidPrice": "${BID_PRICE}",
+      "bidReplacementPeriod": 60,
+      "danglingInstanceCleanupPeriod": 60      
+    }
+  },
+  "scaleOutConfig": {
+    "size": "${INSTANCE_TYPE}",
+    "image": "${IMAGE_NAME}",
+    "keyPair": "${INSTANCE_KEY_PAIR}",
+    "securityGroups": ["${SECURITY_GROUP}"],
+    "bootScript": [
+      "#!/bin/bash",
+      "# TODO: insert boot script here"
+    ]
+  },
+  "scaleInConfig": {
+    "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
+    "instanceHourMargin": 300
+  },
+  "alerts": {
+    "subject": "[elastisys:scale] cloud pool alert for ${CLOUD_POOL_NAME}",
+    "recipients": ["${EMAIL_ADDRESS}"],
+    "sender": "noreply@elastisys.com",
+    "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
+    "mailServer": {
+      "smtpHost": "${EMAIL_SERVER}",
+      "smtpPort": 465,
+      "authentication": {
+        "userName": "${EMAIL_USER}", 
+        "password": "{EMAIL_PASSWORD}"
+      },
+      "useSsl": true
+    }
+  },
+  "poolUpdatePeriod": 60            
+}  

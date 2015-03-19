@@ -22,9 +22,10 @@ import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
+import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.commons.functions.InstanceToMachine;
-import com.elastisys.scale.cloudpool.aws.ec2.driver.client.Ec2Client;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.CloudPoolConfig;
@@ -87,7 +88,8 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 			config.validate();
 			this.config.set(config);
 			this.poolName.set(poolConfig.getName());
-			this.client.configure(config);
+			this.client.configure(config.getAwsAccessKeyId(),
+					config.getAwsSecretAccessKey(), config.getRegion());
 		} catch (Exception e) {
 			throw new CloudPoolDriverException(format(
 					"failed to apply configuration: %s", e.getMessage()), e);
@@ -101,7 +103,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 		try {
 			// filter instances on cloud pool tag
 			Filter filter = new Filter().withName(
-					Constants.CLOUD_POOL_TAG_FILTER_KEY).withValues(
+					ScalingFilters.CLOUD_POOL_TAG_FILTER).withValues(
 					getPoolName());
 			List<Instance> instances = this.client.getInstances(asList(filter));
 			return Lists.transform(instances, new InstanceToMachine());
@@ -150,7 +152,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 		} catch (Exception e) {
 			String message = format("failed to terminate instance \"%s\": %s",
 					machineId, e.getMessage());
-			throw new CloudPoolDriverException(message);
+			throw new CloudPoolDriverException(message, e);
 		}
 	}
 
@@ -158,6 +160,9 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 	public void attachMachine(String machineId) throws NotFoundException,
 			CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured Ec2PoolDriver");
+
+		// verify that machine exists
+		this.client.getInstanceMetadata(machineId);
 
 		try {
 			Tag tag = createTag(ScalingTags.CLOUD_POOL_TAG, getPoolName());
@@ -180,7 +185,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 
 		Tag membershipTag = createTag(ScalingTags.CLOUD_POOL_TAG, getPoolName());
 		try {
-			this.client.untagInstance(machineId, asList(membershipTag));
+			this.client.untagResource(machineId, asList(membershipTag));
 		} catch (Exception e) {
 			throw new CloudPoolDriverException(String.format(
 					"failed to remove tag '%s' from instance %s: %s",
@@ -289,7 +294,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 		// assign a name to the instance
 		String instanceName = String.format("%s-%s", getPoolName(),
 				instance.getInstanceId());
-		Tag nameTag = createTag(Constants.NAME_TAG, instanceName);
+		Tag nameTag = createTag(ScalingTags.INSTANCE_NAME_TAG, instanceName);
 
 		// tag new instance with cloud pool
 		Tag cloudPoolTag = createTag(ScalingTags.CLOUD_POOL_TAG, getPoolName());
@@ -309,7 +314,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 	 */
 	private Instance tagInstance(String instanceId, List<Tag> tags)
 			throws NotFoundException, CloudPoolDriverException {
-		this.client.tagInstance(instanceId, tags);
+		this.client.tagResource(instanceId, tags);
 		return this.client.getInstanceMetadata(instanceId);
 	}
 

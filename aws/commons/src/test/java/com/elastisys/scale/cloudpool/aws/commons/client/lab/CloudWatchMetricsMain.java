@@ -14,7 +14,7 @@ import com.amazonaws.services.cloudwatch.model.Datapoint;
 import com.amazonaws.services.cloudwatch.model.Dimension;
 import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsRequest;
 import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsResult;
-import com.elastisys.scale.cloudpool.aws.commons.client.CloudWatchClient;
+import com.elastisys.scale.cloudpool.aws.commons.client.CloudWatchApiClient;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.collect.Lists;
 
@@ -25,7 +25,7 @@ public class CloudWatchMetricsMain extends AbstractClient {
 	public static void main(String[] args) throws Exception {
 		logger.info(format("Contacting CloudWatch region %s", region));
 
-		CloudWatchClient client = new CloudWatchClient(
+		CloudWatchApiClient client = new CloudWatchApiClient(
 				new PropertiesCredentials(credentialsFile), region);
 		// ListMetricsResult metrics = client.getApi().listMetrics(
 		// new ListMetricsRequest().withMetricName("CPUUtilization"));

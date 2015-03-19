@@ -7,15 +7,15 @@ import org.joda.time.DateTime;
 import org.junit.Test;
 
 import com.amazonaws.services.ec2.model.Instance;
-import com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions;
+import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Function;
 
 /**
  * Exercises the {@link AwsEc2Functions}.
- * 
- * 
+ *
+ *
  */
 public class TestAwsEc2Functions {
 
@@ -23,6 +23,13 @@ public class TestAwsEc2Functions {
 	public void testToInstanceId() {
 		assertThat(AwsEc2Functions.toInstanceId()
 				.apply(ec2Instance("i-123456")), is("i-123456"));
+	}
+
+	@Test
+	public void testToSpotRequestId() {
+		assertThat(
+				AwsEc2Functions.toSpotRequestId().apply(
+						spotInstanceRequest("sir-1234567")), is("sir-1234567"));
 	}
 
 	@Test
@@ -49,6 +56,10 @@ public class TestAwsEc2Functions {
 				.parse("2013-06-01T12:30:00Z"))), is(3600L));
 		assertThat(remainingTimeFunction.apply(ec2Instance(DateTime
 				.parse("2013-06-01T11:30:00Z"))), is(3600L));
+	}
+
+	private SpotInstanceRequest spotInstanceRequest(String withId) {
+		return new SpotInstanceRequest().withSpotInstanceRequestId(withId);
 	}
 
 	private Instance ec2Instance(String withInstanceId) {

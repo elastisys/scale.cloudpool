@@ -8,7 +8,7 @@
   </parent>
   <artifactId>cloudpool.aws.autoscaling</artifactId>
   <packaging>jar</packaging>
-  <name>elastisys:scale :: cloudpool :: AWS :: Auto Scaling Group</name>
+  <name>elastisys:scale :: cloudpool :: aws :: auto scaling</name>
   <description>
     A cloud pool capable of managing the capacity of AWS Auto Scaling Groups.
     This build module produces an all-in-one "server and application" executable

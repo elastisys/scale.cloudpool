@@ -13,7 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
-import com.elastisys.scale.cloudpool.aws.ec2.driver.client.Ec2Client;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
@@ -45,7 +45,7 @@ public class TestEc2PoolDriverConfiguration {
 		assertThat(this.driver.config(), is(expectedConfig));
 
 		// verify that configuration was passed on to cloud client
-		verify(this.mockClient).configure(expectedConfig);
+		verify(this.mockClient).configure("ABC", "XYZ", "us-west-1");
 	}
 
 	@Test

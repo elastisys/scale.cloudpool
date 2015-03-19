@@ -234,7 +234,7 @@ Here are some examples illustrating basic interactions with the cloud pool endpo
          https://localhost:8443/config
     ```
 
- 4. Retrieve the current machine pool (all open spot instance requests):
+ 4. Retrieve the current machine pool:
 
     ```
     curl -v --insecure <authparams> -X GET https://localhost:8443/pool

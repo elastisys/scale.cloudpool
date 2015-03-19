@@ -8,7 +8,7 @@
   </parent>
   <artifactId>cloudpool.aws.ec2</artifactId>
   <packaging>jar</packaging>
-  <name>elastisys:scale :: cloudpool :: AWS :: EC2</name> 
+  <name>elastisys:scale :: cloudpool :: aws :: ec2</name> 
   <description>
     A cloud pool capable of managing a scaling group of EC2 instances.
     This build module produces an all-in-one "server and application" executable

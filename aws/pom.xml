@@ -8,13 +8,14 @@
   </parent>
   <artifactId>cloudpool.aws</artifactId>
   <packaging>pom</packaging>
-  <name>elastisys:scale :: cloudpool :: AWS</name>
+  <name>elastisys:scale :: cloudpool :: aws</name>
   <description>AWS cloud pool modules.</description>
 
   <modules>
     <module>commons</module>
     <module>autoscaling</module>
     <module>ec2</module>
+    <module>spot</module>
   </modules>
 
 </project>

@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.cloudwatch;
 
 import com.amazonaws.auth.AWSCredentials;
-import com.elastisys.scale.cloudpool.aws.commons.client.CloudWatchClient;
+import com.elastisys.scale.cloudpool.aws.commons.client.CloudWatchApiClient;
 import com.elastisys.scale.cloudpool.aws.commons.requests.AmazonRequest;
 
 /**
@@ -15,7 +15,7 @@ import com.elastisys.scale.cloudpool.aws.commons.requests.AmazonRequest;
 public abstract class AmazonCloudWatchRequest<R> extends AmazonRequest<R> {
 
 	/** AWS CloudWatch API client. */
-	private final CloudWatchClient client;
+	private final CloudWatchApiClient client;
 
 	/**
 	 * Constructs a new {@link AmazonCloudWatchRequest}.
@@ -27,7 +27,7 @@ public abstract class AmazonCloudWatchRequest<R> extends AmazonRequest<R> {
 	 */
 	public AmazonCloudWatchRequest(AWSCredentials awsCredentials, String region) {
 		super(awsCredentials, region);
-		this.client = new CloudWatchClient(getAwsCredentials(), getRegion());
+		this.client = new CloudWatchApiClient(getAwsCredentials(), getRegion());
 	}
 
 	/**
@@ -35,7 +35,7 @@ public abstract class AmazonCloudWatchRequest<R> extends AmazonRequest<R> {
 	 * 
 	 * @return
 	 */
-	public CloudWatchClient getClient() {
+	public CloudWatchApiClient getClient() {
 		return this.client;
 	}
 

@@ -16,9 +16,6 @@ import com.google.common.collect.Lists;
 /**
  * A {@link Callable} task that, when executed, applies {@link Tag}s to an EC2
  * resource (such as an instance) in a given region.
- *
- *
- *
  */
 public class TagEc2Resource extends AmazonEc2Request<Void> {
 	static Logger LOG = LoggerFactory.getLogger(TagEc2Resource.class);
@@ -45,7 +42,7 @@ public class TagEc2Resource extends AmazonEc2Request<Void> {
 	@Override
 	public Void call() {
 		for (Tag tag : this.tags) {
-			LOG.debug("setting {}={} tag on instance {}", tag.getKey(),
+			LOG.debug("setting {}={} tag on resource {}", tag.getKey(),
 					tag.getValue(), this.resourceId);
 		}
 

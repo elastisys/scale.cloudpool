@@ -13,9 +13,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
+import jersey.repackaged.com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -266,8 +269,10 @@ public class BaseCloudPool implements CloudPool {
 		this.eventBus = eventBus;
 
 		this.jsonSchema = JsonUtils.parseJsonResource("basepool-schema.json");
-		this.executorService = Executors
-				.newScheduledThreadPool(MAX_CONCURRENCY);
+		ThreadFactory threadFactory = new ThreadFactoryBuilder()
+				.setDaemon(true).setNameFormat("cloudpool-%d").build();
+		this.executorService = Executors.newScheduledThreadPool(
+				MAX_CONCURRENCY, threadFactory);
 
 		this.config = Atomics.newReference();
 		this.started = new AtomicBoolean(false);
@@ -671,11 +676,11 @@ public class BaseCloudPool implements CloudPool {
 		if (resizePlan.hasScaleInActions()) {
 			List<ScheduledTermination> terminations = resizePlan
 					.getToTerminate();
-			LOG.info("scheduling {} server(s) for termination",
+			LOG.info("scheduling {} machine(s) for termination",
 					terminations.size());
 			for (ScheduledTermination termination : terminations) {
 				this.terminationQueue.add(termination);
-				LOG.debug("scheduling server {} for termination at {}",
+				LOG.debug("scheduling machine {} for termination at {}",
 						termination.getInstance().getId(),
 						termination.getTerminationTime());
 			}

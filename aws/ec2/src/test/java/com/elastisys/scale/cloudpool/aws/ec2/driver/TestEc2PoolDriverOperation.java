@@ -36,8 +36,9 @@ import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
+import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
-import com.elastisys.scale.cloudpool.aws.ec2.driver.client.Ec2Client;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
@@ -56,8 +57,8 @@ public class TestEc2PoolDriverOperation {
 	private static final String POOL_NAME = "MyScalingPool";
 
 	private static final Filter POOL_MEMBER_QUERY_FILTER = new Filter()
-			.withName(Constants.CLOUD_POOL_TAG_FILTER_KEY)
-			.withValues(POOL_NAME);
+			.withName(ScalingFilters.CLOUD_POOL_TAG_FILTER).withValues(
+					POOL_NAME);
 
 	private Ec2Client mockClient = mock(Ec2Client.class);
 	/** Object under test. */
@@ -295,7 +296,7 @@ public class TestEc2PoolDriverOperation {
 		List<Tag> poolTag = Arrays.asList(new Tag().withKey(CLOUD_POOL_TAG)
 				.withValue(POOL_NAME));
 		doThrow(new RuntimeException("API unreachable")).when(this.mockClient)
-				.untagInstance("i-1", poolTag);
+				.untagResource("i-1", poolTag);
 
 		this.driver.detachMachine("i-1");
 	}
@@ -344,7 +345,7 @@ public class TestEc2PoolDriverOperation {
 		List<Tag> poolTag = Arrays.asList(new Tag().withKey(CLOUD_POOL_TAG)
 				.withValue(POOL_NAME));
 		doThrow(new RuntimeException("API unreachable")).when(this.mockClient)
-				.tagInstance("i-1", poolTag);
+				.tagResource("i-1", poolTag);
 
 		this.driver.attachMachine("i-1");
 	}
@@ -396,7 +397,7 @@ public class TestEc2PoolDriverOperation {
 		List<Tag> serviceStateTag = asList(new Tag().withKey(SERVICE_STATE_TAG)
 				.withValue(IN_SERVICE.name()));
 		doThrow(new RuntimeException("API unreachable")).when(this.mockClient)
-				.tagInstance("i-1", serviceStateTag);
+				.tagResource("i-1", serviceStateTag);
 
 		this.driver.setServiceState("i-1", IN_SERVICE);
 	}
@@ -455,7 +456,7 @@ public class TestEc2PoolDriverOperation {
 		List<Tag> tag = asList(new Tag().withKey(
 				ScalingTags.MEMBERSHIP_STATUS_TAG).withValue(statusAsJson));
 		doThrow(new RuntimeException("API unreachable")).when(this.mockClient)
-				.tagInstance("i-1", tag);
+				.tagResource("i-1", tag);
 
 		this.driver.setMembershipStatus("i-1", status);
 	}

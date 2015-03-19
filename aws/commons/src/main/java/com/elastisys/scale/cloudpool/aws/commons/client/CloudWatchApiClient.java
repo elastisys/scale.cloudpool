@@ -4,12 +4,12 @@ import java.io.Closeable;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.services.autoscaling.AmazonAutoScaling;
-import com.amazonaws.services.autoscaling.AmazonAutoScalingClient;
+import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
+import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
 
 /**
- * An Amazon EC2 Autoscaling client that connects to and operates against a
- * specific AWS region.
+ * An Amazon CloudWatch client that connects to and operates against a specific
+ * AWS region.
  * <p/>
  * Regions are logically isolated from each other, so for example, a client
  * created to connect to region us-east-1 won't be able to see resources created
@@ -26,18 +26,18 @@ import com.amazonaws.services.autoscaling.AmazonAutoScalingClient;
  *
  *
  */
-public class AutoScalingClient implements Closeable {
+public class CloudWatchApiClient implements Closeable {
 
 	/** The AWS region that this client operates against. */
 	private final String region;
 	/**
-	 * The {@link AmazonAutoScaling} client through which API operations can be
+	 * The {@link AmazonCloudWatch} client through which API operations can be
 	 * invoked.
 	 */
-	private final AmazonAutoScaling api;
+	private final AmazonCloudWatch api;
 
 	/**
-	 * Constructs a new {@link AutoScalingClient} that operates against a given
+	 * Constructs a new {@link CloudWatchApiClient} that operates against a given
 	 * AWS region.
 	 *
 	 * @param awsCredentials
@@ -45,12 +45,12 @@ public class AutoScalingClient implements Closeable {
 	 * @param region
 	 *            The AWS region that this client operates against.
 	 */
-	public AutoScalingClient(AWSCredentials awsCredentials, String region) {
+	public CloudWatchApiClient(AWSCredentials awsCredentials, String region) {
 		this(awsCredentials, region, new ClientConfiguration());
 	}
 
 	/**
-	 * Constructs a new {@link AutoScalingClient} that operates against a given
+	 * Constructs a new {@link CloudWatchApiClient} that operates against a given
 	 * AWS region.
 	 *
 	 * @param awsCredentials
@@ -60,15 +60,15 @@ public class AutoScalingClient implements Closeable {
 	 * @param clientConfiguration
 	 *            Any HTTP client configuration to customize API invocations.
 	 */
-	public AutoScalingClient(AWSCredentials awsCredentials, String region,
+	public CloudWatchApiClient(AWSCredentials awsCredentials, String region,
 			ClientConfiguration clientConfiguration) {
 		// limit the time-to-live of the JVM's DNS cache (in seconds)
 		java.security.Security.setProperty("networkaddress.cache.ttl", "60");
 
 		this.region = region;
-		this.api = new AmazonAutoScalingClient(awsCredentials,
+		this.api = new AmazonCloudWatchClient(awsCredentials,
 				clientConfiguration);
-		String endpoint = "autoscaling." + region + ".amazonaws.com";
+		String endpoint = "monitoring." + region + ".amazonaws.com";
 		this.api.setEndpoint(endpoint);
 	}
 
@@ -82,12 +82,12 @@ public class AutoScalingClient implements Closeable {
 	}
 
 	/**
-	 * Returns the {@link AmazonAutoScaling} client through which API operations
+	 * Returns the {@link AmazonCloudWatch} client through which API operations
 	 * can be invoked.
 	 *
 	 * @return
 	 */
-	public AmazonAutoScaling getApi() {
+	public AmazonCloudWatch getApi() {
 		return this.api;
 	}
 
@@ -98,4 +98,5 @@ public class AutoScalingClient implements Closeable {
 	public void close() {
 		this.api.shutdown();
 	}
+
 }

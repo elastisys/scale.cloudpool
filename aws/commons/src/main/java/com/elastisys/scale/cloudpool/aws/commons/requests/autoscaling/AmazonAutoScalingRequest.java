@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling;
 
 import com.amazonaws.auth.AWSCredentials;
-import com.elastisys.scale.cloudpool.aws.commons.client.AutoScalingClient;
+import com.elastisys.scale.cloudpool.aws.commons.client.AutoScalingApiClient;
 import com.elastisys.scale.cloudpool.aws.commons.requests.AmazonRequest;
 import com.elastisys.scale.cloudpool.aws.commons.requests.elb.AmazonElbRequest;
 
@@ -15,7 +15,7 @@ import com.elastisys.scale.cloudpool.aws.commons.requests.elb.AmazonElbRequest;
  */
 public abstract class AmazonAutoScalingRequest<R> extends AmazonRequest<R> {
 	/** AWS Auto Scaling API client. */
-	private final AutoScalingClient client;
+	private final AutoScalingApiClient client;
 
 	/**
 	 * Constructs a new {@link AmazonElbRequest}.
@@ -27,7 +27,7 @@ public abstract class AmazonAutoScalingRequest<R> extends AmazonRequest<R> {
 	 */
 	public AmazonAutoScalingRequest(AWSCredentials awsCredentials, String region) {
 		super(awsCredentials, region);
-		this.client = new AutoScalingClient(getAwsCredentials(), getRegion());
+		this.client = new AutoScalingApiClient(getAwsCredentials(), getRegion());
 	}
 
 	/**
@@ -35,7 +35,7 @@ public abstract class AmazonAutoScalingRequest<R> extends AmazonRequest<R> {
 	 * 
 	 * @return
 	 */
-	public AutoScalingClient getClient() {
+	public AutoScalingApiClient getClient() {
 		return this.client;
 	}
 

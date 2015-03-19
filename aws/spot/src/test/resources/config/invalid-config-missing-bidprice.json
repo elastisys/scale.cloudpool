@@ -1,0 +1,27 @@
+{
+    "cloudPool": {
+      "name": "spot-cluster",
+      "driverConfig": {
+        "awsAccessKeyId": "ABC",
+        "awsSecretAccessKey": "XYZ",
+        "region": "us-west-1"
+
+      }
+    },
+    "scaleOutConfig": {
+      "size": "m1.small",
+      "image": "ami-018c9568",
+      "keyPair": "instancekey",
+      "securityGroups": ["webserver"],
+      "bootScript": [
+        "#!/bin/bash",
+        "sudo apt-get update -qy",
+        "sudo apt-get install -qy apache2"
+      ]
+    },
+    "scaleInConfig": {
+      "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
+      "instanceHourMargin": 0
+    },
+    "poolUpdatePeriod": 60            
+}  

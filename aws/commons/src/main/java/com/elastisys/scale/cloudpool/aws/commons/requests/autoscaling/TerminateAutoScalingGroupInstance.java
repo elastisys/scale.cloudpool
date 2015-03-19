@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.autoscaling.model.TerminateInstanceInAutoScalingGroupRequest;
 import com.amazonaws.services.ec2.model.Instance;
-import com.elastisys.scale.cloudpool.aws.commons.client.Ec2Client;
+import com.elastisys.scale.cloudpool.aws.commons.client.Ec2ApiClient;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstance;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
@@ -49,7 +49,7 @@ public class TerminateAutoScalingGroupInstance extends
 
 	private void awaitTermination(String instanceId) {
 		String name = String.format("await-terminal-state{%s}", instanceId);
-		try (Ec2Client ec2Client = new Ec2Client(getAwsCredentials(),
+		try (Ec2ApiClient ec2Client = new Ec2ApiClient(getAwsCredentials(),
 				getRegion())) {
 			Callable<Instance> stateRequester = new GetInstance(
 					getAwsCredentials(), getRegion(), instanceId);

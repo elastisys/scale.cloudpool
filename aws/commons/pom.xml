@@ -8,7 +8,7 @@
   </parent>
   <artifactId>cloudpool.aws.commons</artifactId>
   <packaging>jar</packaging>
-  <name>elastisys:scale :: cloudpool :: AWS :: commons</name>
+  <name>elastisys:scale :: cloudpool :: aws :: commons</name>
   <description>
     Common utility classes for building Amazon AWS-based cloud pools.    
   </description>
@@ -23,6 +23,11 @@
       <artifactId>cloudpool.api</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>cloudpool.commons</artifactId>
+      <version>${project.version}</version>
+    </dependency>    
     <dependency>
       <groupId>com.elastisys.scale</groupId>
       <artifactId>commons.net</artifactId>

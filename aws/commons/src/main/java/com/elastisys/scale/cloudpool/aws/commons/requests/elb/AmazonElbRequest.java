@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.elb;
 
 import com.amazonaws.auth.AWSCredentials;
-import com.elastisys.scale.cloudpool.aws.commons.client.LoadBalancingClient;
+import com.elastisys.scale.cloudpool.aws.commons.client.LoadBalancingApiClient;
 import com.elastisys.scale.cloudpool.aws.commons.requests.AmazonRequest;
 
 /**
@@ -15,7 +15,7 @@ import com.elastisys.scale.cloudpool.aws.commons.requests.AmazonRequest;
 public abstract class AmazonElbRequest<R> extends AmazonRequest<R> {
 
 	/** AWS Elastic Load Balancer API client. */
-	private final LoadBalancingClient client;
+	private final LoadBalancingApiClient client;
 
 	/**
 	 * Constructs a new {@link AmazonElbRequest}.
@@ -27,7 +27,7 @@ public abstract class AmazonElbRequest<R> extends AmazonRequest<R> {
 	 */
 	public AmazonElbRequest(AWSCredentials awsCredentials, String region) {
 		super(awsCredentials, region);
-		this.client = new LoadBalancingClient(getAwsCredentials(), getRegion());
+		this.client = new LoadBalancingApiClient(getAwsCredentials(), getRegion());
 	}
 
 	/**
@@ -35,7 +35,7 @@ public abstract class AmazonElbRequest<R> extends AmazonRequest<R> {
 	 * 
 	 * @return
 	 */
-	public LoadBalancingClient getClient() {
+	public LoadBalancingApiClient getClient() {
 		return this.client;
 	}
 }

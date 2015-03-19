@@ -3,22 +3,23 @@ package com.elastisys.scale.cloudpool.aws.commons.functions;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 
 /**
  * A factory class for {@link Function}s relating to the Amazon API.
- * 
- * 
- * 
+ *
+ *
+ *
  */
 public class AwsEc2Functions {
 
 	/**
 	 * Returns a {@link Function} that for a given EC2 {@link Instance} input
-	 * returns its identity.
-	 * 
+	 * returns its id.
+	 *
 	 * @return
 	 */
 	public static Function<Instance, String> toInstanceId() {
@@ -26,10 +27,20 @@ public class AwsEc2Functions {
 	}
 
 	/**
+	 * Returns a {@link Function} that for a given EC2
+	 * {@link SpotInstanceRequest} input returns its id.
+	 *
+	 * @return
+	 */
+	public static Function<SpotInstanceRequest, String> toSpotRequestId() {
+		return new ToSpotRequestId();
+	}
+
+	/**
 	 * Returns a {@link Function} that for a given {@link Instance} calculates
 	 * the remaining time (in seconds) of the instance's last started billing
 	 * hour.
-	 * 
+	 *
 	 * @param timeSource
 	 * @return
 	 */
@@ -40,8 +51,6 @@ public class AwsEc2Functions {
 	/**
 	 * A {@link Function} that for a given {@link Instance} input returns its
 	 * identity.
-	 * 
-	 * 
 	 */
 	public static class ToInstanceId implements Function<Instance, String> {
 		@Override
@@ -55,8 +64,6 @@ public class AwsEc2Functions {
 	 * A {@link Function} that for a given
 	 * {@link com.amazonaws.services.autoscaling.model.Instance} input returns
 	 * the name of its identifier.
-	 * 
-	 * 
 	 */
 	public static class ToAutoScalingInstanceId implements
 			Function<com.amazonaws.services.autoscaling.model.Instance, String> {
@@ -69,10 +76,21 @@ public class AwsEc2Functions {
 	}
 
 	/**
+	 * A {@link Function} that for a given {@link SpotInstanceRequest} input
+	 * returns its identity.
+	 */
+	public static class ToSpotRequestId implements
+			Function<SpotInstanceRequest, String> {
+		@Override
+		public String apply(SpotInstanceRequest request) {
+			Preconditions.checkNotNull(request, "null spot instance request");
+			return request.getSpotInstanceRequestId();
+		}
+	}
+
+	/**
 	 * A {@link Function} that for a given {@link Instance} calculates the
 	 * remaining time (in seconds) of the instance's last started billing hour.
-	 * 
-	 * 
 	 */
 	public static class RemainingBillingHourTime implements
 			Function<Instance, Long> {
@@ -80,7 +98,7 @@ public class AwsEc2Functions {
 		/**
 		 * Calculates the remaining time (in seconds) of the instance's last
 		 * started billing hour.
-		 * 
+		 *
 		 * @param instance
 		 * @return
 		 */

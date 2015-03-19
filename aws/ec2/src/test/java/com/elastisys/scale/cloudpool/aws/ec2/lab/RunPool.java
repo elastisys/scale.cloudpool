@@ -9,8 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.impl.AwsEc2Client;
 import com.elastisys.scale.cloudpool.aws.ec2.driver.Ec2PoolDriver;
-import com.elastisys.scale.cloudpool.aws.ec2.driver.client.AwsEc2Client;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.AlertSettings;

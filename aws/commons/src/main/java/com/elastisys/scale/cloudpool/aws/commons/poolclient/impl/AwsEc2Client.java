@@ -1,4 +1,4 @@
-package com.elastisys.scale.cloudpool.aws.ec2.driver.client;
+package com.elastisys.scale.cloudpool.aws.commons.poolclient.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -8,20 +8,20 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CreateInstance;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstance;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstances;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TagEc2Resource;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TerminateInstance;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.UntagEc2Resource;
-import com.elastisys.scale.cloudpool.aws.ec2.driver.Ec2PoolDriver;
-import com.elastisys.scale.cloudpool.aws.ec2.driver.Ec2PoolDriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
 import com.google.common.base.Joiner;
 import com.google.common.util.concurrent.Atomics;
@@ -31,24 +31,32 @@ import com.google.common.util.concurrent.Atomics;
  */
 public class AwsEc2Client implements Ec2Client {
 
-	static Logger LOG = LoggerFactory.getLogger(Ec2PoolDriver.class);
+	private static Logger LOG = LoggerFactory.getLogger(AwsEc2Client.class);
 
-	/** Scaling Group configuration. */
-	private final AtomicReference<Ec2PoolDriverConfig> config;
+	private final AtomicReference<String> awsAccessKeyId;
+	private final AtomicReference<String> awsSecretAccessKey;
+	private final AtomicReference<String> region;
 
 	public AwsEc2Client() {
-		this.config = Atomics.newReference();
+		this.awsAccessKeyId = Atomics.newReference();
+		this.awsSecretAccessKey = Atomics.newReference();
+		this.region = Atomics.newReference();
 	}
 
 	@Override
-	public void configure(Ec2PoolDriverConfig configuration) {
-		checkArgument(configuration != null, "null configuration");
-		this.config.set(configuration);
-
+	public void configure(String awsAccessKeyId, String awsSecretAccessKey,
+			String region) {
+		checkArgument(awsAccessKeyId != null, "no awsAccessKeyId given");
+		checkArgument(awsSecretAccessKey != null, "no awsSecretAccessKey given");
+		checkArgument(region != null, "no region given");
+		this.awsAccessKeyId.set(awsAccessKeyId);
+		this.awsSecretAccessKey.set(awsSecretAccessKey);
+		this.region.set(region);
 	}
 
 	@Override
-	public List<Instance> getInstances(List<Filter> filters) {
+	public List<Instance> getInstances(List<Filter> filters)
+			throws AmazonClientException {
 		checkArgument(isConfigured(), "can't use client before it's configured");
 
 		List<Instance> instances = new GetInstances(awsCredentials(), region())
@@ -58,14 +66,15 @@ public class AwsEc2Client implements Ec2Client {
 
 	@Override
 	public Instance getInstanceMetadata(String instanceId)
-			throws NotFoundException {
+			throws NotFoundException, AmazonClientException {
 		checkArgument(isConfigured(), "can't use client before it's configured");
 
 		return new GetInstance(awsCredentials(), region(), instanceId).call();
 	}
 
 	@Override
-	public Instance launchInstance(ScaleOutConfig provisioningDetails) {
+	public Instance launchInstance(ScaleOutConfig provisioningDetails)
+			throws AmazonClientException {
 		checkArgument(isConfigured(), "can't use client before it's configured");
 
 		// no particular availability zone
@@ -84,30 +93,25 @@ public class AwsEc2Client implements Ec2Client {
 	}
 
 	@Override
-	public void tagInstance(String instanceId, List<Tag> tags)
-			throws NotFoundException {
+	public void tagResource(String resourceId, List<Tag> tags)
+			throws AmazonClientException {
 		checkArgument(isConfigured(), "can't use client before it's configured");
 
-		// verify that instance exists
-		getInstanceMetadata(instanceId);
-
-		new TagEc2Resource(awsCredentials(), region(), instanceId, tags).call();
+		new TagEc2Resource(awsCredentials(), region(), resourceId, tags).call();
 	}
 
 	@Override
-	public void untagInstance(String instanceId, List<Tag> tags)
-			throws NotFoundException {
+	public void untagResource(String resourceId, List<Tag> tags)
+			throws AmazonClientException {
 		checkArgument(isConfigured(), "can't use client before it's configured");
 
-		// verify that instance exists
-		getInstanceMetadata(instanceId);
-
-		new UntagEc2Resource(awsCredentials(), region(), instanceId, tags)
+		new UntagEc2Resource(awsCredentials(), region(), resourceId, tags)
 				.call();
 	}
 
 	@Override
-	public void terminateInstance(String instanceId) throws NotFoundException {
+	public void terminateInstance(String instanceId) throws NotFoundException,
+			AmazonClientException {
 		checkArgument(isConfigured(), "can't use client before it's configured");
 
 		// verify that instance exists
@@ -116,20 +120,27 @@ public class AwsEc2Client implements Ec2Client {
 		new TerminateInstance(awsCredentials(), region(), instanceId).call();
 	}
 
-	private Ec2PoolDriverConfig config() {
-		return this.config.get();
-	}
-
 	private boolean isConfigured() {
-		return config() != null;
+		return this.awsAccessKeyId.get() != null
+				&& this.awsSecretAccessKey.get() != null && this.region != null;
 	}
 
-	private AWSCredentials awsCredentials() {
-		return new BasicAWSCredentials(config().getAwsAccessKeyId(), config()
-				.getAwsSecretAccessKey());
+	/**
+	 * Returns the {@link AWSCredentials} that this client is configured to use.
+	 *
+	 * @return
+	 */
+	protected AWSCredentials awsCredentials() {
+		return new BasicAWSCredentials(this.awsAccessKeyId.get(),
+				this.awsSecretAccessKey.get());
 	}
 
-	private String region() {
-		return config().getRegion();
+	/**
+	 * Returns the AWS region that this client is configured to operate against.
+	 *
+	 * @return
+	 */
+	protected String region() {
+		return this.region.get();
 	}
 }

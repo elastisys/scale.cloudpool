@@ -2,8 +2,8 @@ package com.elastisys.scale.cloudpool.aws.ec2.server;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.server.CloudPoolServer;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.impl.AwsEc2Client;
 import com.elastisys.scale.cloudpool.aws.ec2.driver.Ec2PoolDriver;
-import com.elastisys.scale.cloudpool.aws.ec2.driver.client.AwsEc2Client;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 

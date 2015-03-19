@@ -4,12 +4,12 @@ import java.io.Closeable;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
-import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
+import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.AmazonEC2Client;
 
 /**
- * An Amazon CloudWatch client that connects to and operates against a specific
- * AWS region.
+ * An Amazon EC2 client that connects to and operates against a specific AWS
+ * region.
  * <p/>
  * Regions are logically isolated from each other, so for example, a client
  * created to connect to region us-east-1 won't be able to see resources created
@@ -26,32 +26,31 @@ import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
  *
  *
  */
-public class CloudWatchClient implements Closeable {
+public class Ec2ApiClient implements Closeable {
 
 	/** The AWS region that this client operates against. */
 	private final String region;
 	/**
-	 * The {@link AmazonCloudWatch} client through which API operations can be
-	 * invoked.
+	 * The {@link AmazonEC2} client through which API operations can be invoked.
 	 */
-	private final AmazonCloudWatch api;
+	private final AmazonEC2 api;
 
 	/**
-	 * Constructs a new {@link CloudWatchClient} that operates against a given
-	 * AWS region.
+	 * Constructs a new {@link Ec2ApiClient} that operates against a given AWS
+	 * region.
 	 *
 	 * @param awsCredentials
 	 *            The AWS credentials used to connect to the AWS account.
 	 * @param region
 	 *            The AWS region that this client operates against.
 	 */
-	public CloudWatchClient(AWSCredentials awsCredentials, String region) {
+	public Ec2ApiClient(AWSCredentials awsCredentials, String region) {
 		this(awsCredentials, region, new ClientConfiguration());
 	}
 
 	/**
-	 * Constructs a new {@link CloudWatchClient} that operates against a given
-	 * AWS region.
+	 * Constructs a new {@link Ec2ApiClient} that operates against a given AWS
+	 * region.
 	 *
 	 * @param awsCredentials
 	 *            The AWS credentials used to connect to the AWS account.
@@ -60,16 +59,15 @@ public class CloudWatchClient implements Closeable {
 	 * @param clientConfiguration
 	 *            Any HTTP client configuration to customize API invocations.
 	 */
-	public CloudWatchClient(AWSCredentials awsCredentials, String region,
+	public Ec2ApiClient(AWSCredentials awsCredentials, String region,
 			ClientConfiguration clientConfiguration) {
 		// limit the time-to-live of the JVM's DNS cache (in seconds)
 		java.security.Security.setProperty("networkaddress.cache.ttl", "60");
 
 		this.region = region;
-		this.api = new AmazonCloudWatchClient(awsCredentials,
-				clientConfiguration);
-		String endpoint = "monitoring." + region + ".amazonaws.com";
-		this.api.setEndpoint(endpoint);
+		this.api = new AmazonEC2Client(awsCredentials, clientConfiguration);
+		String ec2Endpoint = "ec2." + region + ".amazonaws.com";
+		this.api.setEndpoint(ec2Endpoint);
 	}
 
 	/**
@@ -82,12 +80,12 @@ public class CloudWatchClient implements Closeable {
 	}
 
 	/**
-	 * Returns the {@link AmazonCloudWatch} client through which API operations
-	 * can be invoked.
+	 * Returns the {@link AmazonEC2} client through which API operations can be
+	 * invoked.
 	 *
 	 * @return
 	 */
-	public AmazonCloudWatch getApi() {
+	public AmazonEC2 getApi() {
 		return this.api;
 	}
 
@@ -98,5 +96,4 @@ public class CloudWatchClient implements Closeable {
 	public void close() {
 		this.api.shutdown();
 	}
-
 }

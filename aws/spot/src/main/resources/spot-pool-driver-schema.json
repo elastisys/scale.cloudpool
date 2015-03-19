@@ -1,0 +1,36 @@
+{
+  "id": "http://elastisys.com/spot-pool-driver-schema#",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "configuration schema for an AWS spot instance CloudPoolDriver",
+  "type": "object",
+  "properties": {
+    "awsAccessKeyId": {  
+      "description": "The access key id of the AWS account.", 
+      "type": "string"
+    },
+    "awsSecretAccessKey": {  
+      "description": "The secret access key of the AWS account.", 
+      "type": "string"
+    },
+    "region": { 
+      "description": "The particular AWS region to connect to. For example, 'us-east-1'.", 
+      "type": "string" 
+    },
+    "bidPrice": { 
+      "description": "The bid price (maximum price to pay for an instance hour in dollars) to use when requesting spot instances.",
+      "type": "number",
+      "minimum": 0      
+    },
+    "bidReplacementPeriod": {
+      "description": "The delay (in seconds) between two successive runs of replacing spot requests with an out-dated bid price. Default: 120.",
+      "type": "number",
+      "minimum": 0      
+    },
+    "danglingInstanceCleanupPeriod": {
+      "description": "The delay (in seconds) between two successive runs of terminating instances that are running, but whose spot requests were canceled. Default: 120.",
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "required": ["awsAccessKeyId", "awsSecretAccessKey", "region", "bidPrice"]
+}
