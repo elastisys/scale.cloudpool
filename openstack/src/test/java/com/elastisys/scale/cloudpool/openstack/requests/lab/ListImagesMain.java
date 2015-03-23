@@ -2,18 +2,21 @@ package com.elastisys.scale.cloudpool.openstack.requests.lab;
 
 import java.util.List;
 
-import org.jclouds.openstack.nova.v2_0.domain.Image;
+import org.openstack4j.model.compute.Image;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.openstack.requests.ListImagesRequest;
 
-public class ListImagesMain extends AbstractClient {
-	public static void main(String[] args) throws Exception {
+public class ListImagesMain {
+	private static Logger LOG = LoggerFactory.getLogger(ListImagesMain.class);
 
-		ListImagesRequest request = new ListImagesRequest(getAccountConfig());
-		List<Image> images = request.call();
-		logger.info("{} available images", images.size());
+	public static void main(String[] args) {
+		List<Image> images = new ListImagesRequest(
+				DriverConfigLoader.loadDefault()).call();
+		LOG.info("{} server image(s) found", images.size());
 		for (Image image : images) {
-			logger.info("flavor: {}", image);
+			LOG.info("image: {}", image);
 		}
 	}
 }

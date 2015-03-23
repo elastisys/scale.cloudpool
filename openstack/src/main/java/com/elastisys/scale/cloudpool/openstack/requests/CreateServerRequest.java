@@ -5,24 +5,24 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.List;
 import java.util.Map;
 
-import org.jclouds.openstack.nova.v2_0.NovaApi;
-import org.jclouds.openstack.nova.v2_0.domain.Flavor;
-import org.jclouds.openstack.nova.v2_0.domain.Image;
-import org.jclouds.openstack.nova.v2_0.domain.Server;
-import org.jclouds.openstack.nova.v2_0.domain.ServerCreated;
-import org.jclouds.openstack.nova.v2_0.features.ServerApi;
-import org.jclouds.openstack.nova.v2_0.options.CreateServerOptions;
+import org.openstack4j.api.OSClient;
+import org.openstack4j.api.compute.ServerService;
+import org.openstack4j.model.compute.Flavor;
+import org.openstack4j.model.compute.Image;
+import org.openstack4j.model.compute.Server;
+import org.openstack4j.model.compute.ServerCreate;
+import org.openstack4j.model.compute.builder.ServerCreateBuilder;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
-import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
 import com.google.common.base.Optional;
+import com.google.common.io.BaseEncoding;
 
 /**
- * An Openstack Nova (compute) request that, when executed, creates a new server
- * instance.
+ * An request that, when executed, creates a new server instance.
  */
-public class CreateServerRequest extends AbstractNovaRequest<Server> {
+public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 
 	/** The name to assign to the new server. */
 	private final String serverName;
@@ -46,7 +46,7 @@ public class CreateServerRequest extends AbstractNovaRequest<Server> {
 	/**
 	 * Creates a new {@link CreateServerRequest}.
 	 *
-	 * @param account
+	 * @param accessConfig
 	 *            Connection details for a particular OpenStack account.
 	 * @param serverName
 	 *            The name to assign to the new server.
@@ -64,11 +64,11 @@ public class CreateServerRequest extends AbstractNovaRequest<Server> {
 	 * @param metadata
 	 *            Any meta data tags to assign to the new server.
 	 */
-	public CreateServerRequest(OpenStackPoolDriverConfig account,
+	public CreateServerRequest(OpenStackPoolDriverConfig accessConfig,
 			String serverName, String flavorName, String imageName,
 			String keyPair, List<String> securityGroups,
 			Optional<String> userData, Map<String, String> metadata) {
-		super(account);
+		super(accessConfig);
 
 		checkNotNull(serverName, "server name cannot be null");
 		checkNotNull(flavorName, "flavor name cannot be null");
@@ -88,20 +88,29 @@ public class CreateServerRequest extends AbstractNovaRequest<Server> {
 	}
 
 	@Override
-	public Server doRequest(NovaApi api) {
-		CreateServerOptions serverOptions = new CreateServerOptions();
-		serverOptions.keyPairName(this.keyPair);
-		serverOptions.securityGroupNames(this.securityGroups);
-		serverOptions.metadata(this.metadata);
-		if (this.userData.isPresent()) {
-			serverOptions.userData(this.userData.get().getBytes());
+	public Server doRequest(OSClient api) {
+		ServerService serverService = api.compute().servers();
+
+		ServerCreateBuilder serverCreateBuilder = serverService.serverBuilder()
+				.name(this.serverName).flavor(getFlavorId())
+				.image(getImageId()).keypairName(this.keyPair)
+				.addMetadata(this.metadata);
+
+		for (String securityGroup : this.securityGroups) {
+			serverCreateBuilder.addSecurityGroup(securityGroup);
 		}
 
-		// create server
-		ServerApi serverApi = api.getServerApiForZone(getAccount().getRegion());
-		ServerCreated serverCreated = serverApi.create(this.serverName,
-				getImageId(), getFlavorId(), serverOptions);
-		return serverApi.get(serverCreated.getId());
+		if (this.userData.isPresent()) {
+			String base64UserData = BaseEncoding.base64().encode(
+					this.userData.get().getBytes());
+			serverCreateBuilder.userData(base64UserData);
+		}
+
+		ServerCreate serverCreate = serverCreateBuilder.build();
+		Server server = serverService.boot(serverCreate);
+		// first call to boot only seem to return a stripped Server object
+		// (missing fields such as status). re-fetch it before returning.
+		return serverService.get(server.getId());
 	}
 
 	/**
@@ -118,7 +127,7 @@ public class CreateServerRequest extends AbstractNovaRequest<Server> {
 			CloudPoolDriverException {
 		List<Flavor> flavors;
 		try {
-			flavors = new ListSizesRequest(getAccount()).call();
+			flavors = new ListSizesRequest(getAccessConfig()).call();
 		} catch (Exception e) {
 			throw new CloudPoolDriverException(String.format(
 					"failed to fetch the list of available flavors: %s",
@@ -132,7 +141,7 @@ public class CreateServerRequest extends AbstractNovaRequest<Server> {
 		throw new IllegalArgumentException(String.format(
 				"failed to create server: no flavor with "
 						+ "name \"%s\" exists in region \"%s\"",
-				this.flavorName, getAccount().getRegion()));
+				this.flavorName, getAccessConfig().getRegion()));
 	}
 
 	/**
@@ -147,9 +156,10 @@ public class CreateServerRequest extends AbstractNovaRequest<Server> {
 	 */
 	private String getImageId() throws IllegalArgumentException,
 			CloudPoolDriverException {
+
 		List<Image> images;
 		try {
-			images = new ListImagesRequest(getAccount()).call();
+			images = new ListImagesRequest(getAccessConfig()).call();
 		} catch (Exception e) {
 			throw new CloudPoolDriverException(String.format(
 					"failed to fetch the list of available images: %s",
@@ -163,7 +173,7 @@ public class CreateServerRequest extends AbstractNovaRequest<Server> {
 		throw new IllegalArgumentException(String.format(
 				"failed to create server: no image with "
 						+ "name \"%s\" exists in region \"%s\"",
-				this.imageName, getAccount().getRegion()));
+				this.imageName, getAccessConfig().getRegion()));
 	}
 
 }

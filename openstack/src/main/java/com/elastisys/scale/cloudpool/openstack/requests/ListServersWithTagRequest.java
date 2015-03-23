@@ -6,24 +6,17 @@ import static com.google.common.collect.Lists.newArrayList;
 
 import java.util.List;
 
-import org.jclouds.openstack.nova.v2_0.NovaApi;
-import org.jclouds.openstack.nova.v2_0.domain.Server;
-import org.jclouds.openstack.nova.v2_0.features.ServerApi;
+import org.openstack4j.api.OSClient;
+import org.openstack4j.model.compute.Server;
 
-import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriverConfig;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.Lists;
+import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
 
 /**
- * An OpenStack request task that, when executed, retrieves all servers with a
- * certain meta data tag. Note that this task returns servers that are in any
- * state (for example, running, booting, terminating).
- *
- * 
- *
+ * An OpenStack request task that, when executed, retrieves all {@link Server}s
+ * with a certain meta data tag.
  */
 public class ListServersWithTagRequest extends
-		AbstractNovaRequest<List<Server>> {
+		AbstractOpenstackRequest<List<Server>> {
 
 	/** A meta data tag that must be present on returned servers. */
 	private final String tag;
@@ -35,7 +28,7 @@ public class ListServersWithTagRequest extends
 	/**
 	 * Constructs a new {@link ListServersWithTagRequest} task.
 	 *
-	 * @param account
+	 * @param accessConfig
 	 *            Account login credentials for a particular OpenStack endpoint.
 	 * @param tag
 	 *            A meta data tag that must be present on returned servers.
@@ -43,22 +36,17 @@ public class ListServersWithTagRequest extends
 	 *            The value for the meta data tag that must be present on
 	 *            returned servers.
 	 */
-	public ListServersWithTagRequest(OpenStackPoolDriverConfig account,
+	public ListServersWithTagRequest(OpenStackPoolDriverConfig accessConfig,
 			String tag, String tagValue) {
-		super(account);
+		super(accessConfig);
 		this.tag = tag;
 		this.tagValue = tagValue;
 
 	}
 
 	@Override
-	public List<Server> doRequest(NovaApi api) {
-		List<Server> response = Lists.newArrayList();
-		ServerApi serverApi = api.getServerApiForZone(getAccount().getRegion());
-		FluentIterable<? extends Server> servers = serverApi.listInDetail()
-				.concat();
-		response.addAll(newArrayList(filter(servers,
-				withTag(this.tag, this.tagValue))));
-		return response;
+	public List<Server> doRequest(OSClient api) {
+		List<? extends Server> servers = api.compute().servers().list();
+		return newArrayList(filter(servers, withTag(this.tag, this.tagValue)));
 	}
 }

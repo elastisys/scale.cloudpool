@@ -1,19 +1,20 @@
 package com.elastisys.scale.cloudpool.openstack.requests.lab;
 
-import org.jclouds.openstack.nova.v2_0.domain.Server;
+import org.openstack4j.model.compute.Server;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.openstack.requests.GetServerRequest;
 
-public class GetServerMain extends AbstractClient {
+public class GetServerMain {
+	private static Logger LOG = LoggerFactory.getLogger(GetServerMain.class);
 
-	// TODO: set to the identifier (UUID) of the server to get
-	private static final String serverId = "2633184d-15cd-4899-9b9c-9019cb40a77b";
+	/** TODO: set to server uuid */
+	private static final String serverId = "47d3376e-e6e0-4ebd-8ba5-add5d67a6c8e";
 
-	public static void main(String[] args) throws Exception {
-		logger.info("getting server: {}", serverId);
-		GetServerRequest request = new GetServerRequest(getAccountConfig(),
-				serverId);
-		Server server = request.call();
-		logger.info("got server: {}", server);
+	public static void main(String[] args) {
+		Server server = new GetServerRequest(DriverConfigLoader.loadDefault(),
+				serverId).call();
+		LOG.info("got server: {}", server);
 	}
 }

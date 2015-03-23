@@ -6,12 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.jclouds.openstack.nova.v2_0.domain.Server;
-import org.jclouds.scriptbuilder.domain.OsFamily;
+import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
-import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
 import com.elastisys.scale.cloudpool.openstack.requests.AssignFloatingIpRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.CreateServerRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.DeleteServerMetadataRequest;
@@ -19,7 +18,6 @@ import com.elastisys.scale.cloudpool.openstack.requests.DeleteServerRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.GetServerRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.ListServersWithTagRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.UpdateServerMetadataRequest;
-import com.elastisys.scale.cloudpool.openstack.utils.jclouds.ScriptUtils;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.Atomics;
@@ -62,9 +60,8 @@ public class StandardOpenstackClient implements OpenstackClient {
 			ScaleOutConfig provisioningDetails, Map<String, String> tags) {
 		checkArgument(isConfigured(), "can't use client before it's configured");
 
-		String userData = ScriptUtils.renderScript(
-				Joiner.on("\n").join(provisioningDetails.getBootScript()),
-				OsFamily.UNIX);
+		String userData = Joiner.on("\n").join(
+				provisioningDetails.getBootScript());
 		CreateServerRequest request = new CreateServerRequest(config(),
 				serverName, provisioningDetails.getSize(),
 				provisioningDetails.getImage(),

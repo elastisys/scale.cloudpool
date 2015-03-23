@@ -5,18 +5,18 @@ import static java.lang.String.format;
 
 import java.util.List;
 
-import org.jclouds.openstack.nova.v2_0.NovaApi;
-import org.jclouds.openstack.nova.v2_0.domain.Server;
-import org.jclouds.openstack.nova.v2_0.features.ServerApi;
+import org.openstack4j.api.OSClient;
+import org.openstack4j.api.compute.ServerService;
+import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
 
 /**
- * An Openstack Nova (compute) request that, when executed, deletes selected
- * tags from the server's metadata.
+ * An Openstack request that, when executed, deletes selected tags from a
+ * {@link Server}'s metadata.
  */
-public class DeleteServerMetadataRequest extends AbstractNovaRequest<Void> {
+public class DeleteServerMetadataRequest extends AbstractOpenstackRequest<Void> {
 
 	/** The id of the server whose metadata is to be updated. */
 	private final String serverId;
@@ -28,7 +28,7 @@ public class DeleteServerMetadataRequest extends AbstractNovaRequest<Void> {
 	/**
 	 * Constructs a {@link DeleteServerMetadataRequest}.
 	 *
-	 * @param account
+	 * @param accessConfig
 	 *            Account login credentials for a particular OpenStack Nova
 	 *            endpoint.
 	 * @param serverId
@@ -36,9 +36,9 @@ public class DeleteServerMetadataRequest extends AbstractNovaRequest<Void> {
 	 * @param metadataKeysToDelete
 	 *            Meta data tags to be removed from the server.
 	 */
-	public DeleteServerMetadataRequest(OpenStackPoolDriverConfig account,
+	public DeleteServerMetadataRequest(OpenStackPoolDriverConfig accessConfig,
 			String serverId, List<String> metadataKeysToDelete) {
-		super(account);
+		super(accessConfig);
 
 		checkNotNull(serverId, "server id cannot be null");
 		checkNotNull(metadataKeysToDelete, "metadata keys cannot be null");
@@ -48,8 +48,8 @@ public class DeleteServerMetadataRequest extends AbstractNovaRequest<Void> {
 	}
 
 	@Override
-	public Void doRequest(NovaApi api) throws NotFoundException {
-		ServerApi serverApi = api.getServerApiForZone(getAccount().getRegion());
+	public Void doRequest(OSClient api) throws NotFoundException {
+		ServerService serverApi = api.compute().servers();
 		Server server = serverApi.get(this.serverId);
 		if (server == null) {
 			throw new NotFoundException(format(
@@ -58,7 +58,7 @@ public class DeleteServerMetadataRequest extends AbstractNovaRequest<Void> {
 		}
 		// delete tags
 		for (String metadataKey : this.metadataKeysToDelete) {
-			serverApi.deleteMetadata(this.serverId, metadataKey);
+			serverApi.deleteMetadataItem(this.serverId, metadataKey);
 		}
 
 		return null;

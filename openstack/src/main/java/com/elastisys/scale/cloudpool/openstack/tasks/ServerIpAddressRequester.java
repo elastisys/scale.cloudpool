@@ -2,11 +2,10 @@ package com.elastisys.scale.cloudpool.openstack.tasks;
 
 import java.util.concurrent.Callable;
 
-import org.jclouds.openstack.nova.v2_0.domain.Address;
-import org.jclouds.openstack.nova.v2_0.features.ServerApi;
+import org.openstack4j.api.OSClient;
+import org.openstack4j.model.compute.Addresses;
 
 import com.elastisys.scale.commons.net.retryable.Retryable;
-import com.google.common.collect.Multimap;
 
 /**
  * A {@link Requester} that returns the IP addresses for a given Openstack
@@ -18,28 +17,27 @@ import com.google.common.collect.Multimap;
  * @see Retryable
  * @see RetryUntilAssignedIpAddress
  */
-public class ServerIpAddressRequester implements
-		Callable<Multimap<String, Address>> {
+public class ServerIpAddressRequester implements Callable<Addresses> {
 
-	private final ServerApi serverApi;
+	private final OSClient api;
 	private final String serverId;
 
 	/**
 	 * Constructs a new {@link ServerIpAddressRequester} task.
 	 *
-	 * @param serverApi
-	 *            The Openstack Nova {@link ServerApi}.
+	 * @param api
+	 *            An Openstack API client.
 	 * @param serverId
 	 *            The identifier of the server instance whose IP addresses are
 	 *            to be retrieved.
 	 */
-	public ServerIpAddressRequester(ServerApi serverApi, String serverId) {
-		this.serverApi = serverApi;
+	public ServerIpAddressRequester(OSClient api, String serverId) {
+		this.api = api;
 		this.serverId = serverId;
 	}
 
 	@Override
-	public Multimap<String, Address> call() throws Exception {
-		return this.serverApi.get(this.serverId).getAddresses();
+	public Addresses call() throws Exception {
+		return this.api.compute().servers().get(this.serverId).getAddresses();
 	}
 }

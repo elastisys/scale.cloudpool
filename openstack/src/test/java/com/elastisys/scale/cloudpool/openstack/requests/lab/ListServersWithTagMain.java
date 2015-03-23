@@ -2,27 +2,22 @@ package com.elastisys.scale.cloudpool.openstack.requests.lab;
 
 import java.util.List;
 
-import org.jclouds.openstack.nova.v2_0.domain.Server;
+import org.openstack4j.model.compute.Server;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.openstack.requests.ListServersWithTagRequest;
 
-public class ListServersWithTagMain extends AbstractClient {
+public class ListServersWithTagMain {
+	private static Logger LOG = LoggerFactory
+			.getLogger(ListServersWithTagMain.class);
 
-	// TODO: set to tag value that must be present on returned servers
-	private static final String tag = "elastic-pool";
-	// TODO: set to tag that must be present on returned servers
-	private static final String tagValue = "mypool";
-
-	public static void main(String[] args) throws Exception {
-		ListServersWithTagRequest task = new ListServersWithTagRequest(
-				getAccountConfig(), tag, tagValue);
-		List<Server> servers = task.call();
-		for (Server server : servers) {
-			System.out.println(server);
-			System.out.println("  created at: " + server.getCreated());
-			System.out.println("  metadata: " + server.getMetadata());
-			System.out.println("  access ip: " + server.getAccessIPv4());
-			System.out.println("  ip: " + server.getAddresses());
+	public static void main(String[] args) {
+		List<Server> taggedServers = new ListServersWithTagRequest(
+				DriverConfigLoader.loadDefault(), "key1", "value1").call();
+		LOG.info("{} tagged server(s) found", taggedServers.size());
+		for (Server server : taggedServers) {
+			LOG.info("server: {}", server);
 		}
 	}
 }

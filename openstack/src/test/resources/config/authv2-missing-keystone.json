@@ -1,0 +1,31 @@
+{
+    "cloudPool": {
+      "name": "my-scaling-pool",
+      "driverConfig": {
+        "auth": {  
+          
+          "v2Credentials": {
+            "tenantName": "tenant",
+            "userName": "clouduser",
+            "password": "cloudpass"
+          }
+        },    
+        "region": "RegionTwo", 
+        "assignFloatingIp": false
+      }
+    },
+    "scaleOutConfig": {
+      "size": "m1.small", 
+      "image": "Ubuntu Server 12.04",
+      "keyPair": "openstack_p11",
+      "securityGroups": ["web"],               
+      "bootScript": [
+        "sudo apt-get update",
+        "sudo apt-get install -y --force-yes apache2"
+      ]
+    },
+    "scaleInConfig": {
+      "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
+      "instanceHourMargin": 0
+    }
+}  

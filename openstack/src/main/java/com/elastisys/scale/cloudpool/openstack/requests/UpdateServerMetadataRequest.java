@@ -6,18 +6,18 @@ import static java.lang.String.format;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jclouds.openstack.nova.v2_0.NovaApi;
-import org.jclouds.openstack.nova.v2_0.domain.Server;
-import org.jclouds.openstack.nova.v2_0.features.ServerApi;
+import org.openstack4j.api.OSClient;
+import org.openstack4j.api.compute.ServerService;
+import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
 
 /**
- * An Openstack Nova (compute) request that, when executed, updates the metadata
- * tags of a server instance.
+ * An request that, when executed, updates the metadata tags of a {@link Server}
+ * instance.
  */
-public class UpdateServerMetadataRequest extends AbstractNovaRequest<Void> {
+public class UpdateServerMetadataRequest extends AbstractOpenstackRequest<Void> {
 
 	/** The id of the server whose metadata is to be updated. */
 	private final String serverId;
@@ -30,7 +30,7 @@ public class UpdateServerMetadataRequest extends AbstractNovaRequest<Void> {
 	/**
 	 * Constructs a {@link UpdateServerMetadataRequest}.
 	 *
-	 * @param account
+	 * @param accessConfig
 	 *            Account login credentials for a particular OpenStack Nova
 	 *            endpoint.
 	 * @param serverId
@@ -39,9 +39,9 @@ public class UpdateServerMetadataRequest extends AbstractNovaRequest<Void> {
 	 *            Meta data tags to be copied to the server. Any meta data keys
 	 *            that already exist on the node will be overwritten.
 	 */
-	public UpdateServerMetadataRequest(OpenStackPoolDriverConfig account,
+	public UpdateServerMetadataRequest(OpenStackPoolDriverConfig accessConfig,
 			String serverId, Map<String, String> metadata) {
-		super(account);
+		super(accessConfig);
 
 		checkNotNull(serverId, "server id cannot be null");
 		checkNotNull(metadata, "metadata map cannot be null");
@@ -51,8 +51,8 @@ public class UpdateServerMetadataRequest extends AbstractNovaRequest<Void> {
 	}
 
 	@Override
-	public Void doRequest(NovaApi api) throws NotFoundException {
-		ServerApi serverApi = api.getServerApiForZone(getAccount().getRegion());
+	public Void doRequest(OSClient api) throws NotFoundException {
+		ServerService serverApi = api.compute().servers();
 		Server server = serverApi.get(this.serverId);
 		if (server == null) {
 			throw new NotFoundException(format(
@@ -62,7 +62,7 @@ public class UpdateServerMetadataRequest extends AbstractNovaRequest<Void> {
 		// set tags
 		Map<String, String> tags = new HashMap<>(server.getMetadata());
 		tags.putAll(this.metadata);
-		serverApi.setMetadata(this.serverId, tags);
+		serverApi.updateMetadata(this.serverId, tags);
 		return null;
 	}
 }

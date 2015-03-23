@@ -1,3 +1,0 @@
-# lists directory content that is *not* to be uploaded to the docker
-# daemon on image building.
-*~

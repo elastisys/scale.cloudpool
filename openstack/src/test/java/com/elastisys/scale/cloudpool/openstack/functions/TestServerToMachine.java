@@ -5,29 +5,27 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jersey.repackaged.com.google.common.collect.Lists;
-
-import org.jclouds.openstack.nova.v2_0.domain.Address;
-import org.jclouds.openstack.nova.v2_0.domain.Server;
-import org.jclouds.openstack.nova.v2_0.domain.Server.Status;
-import org.jclouds.openstack.v2_0.domain.Resource;
 import org.joda.time.DateTime;
 import org.junit.Test;
+import org.openstack4j.model.compute.Server;
+import org.openstack4j.model.compute.Server.Status;
+import org.openstack4j.openstack.compute.domain.NovaAddresses;
+import org.openstack4j.openstack.compute.domain.NovaAddresses.NovaAddress;
+import org.openstack4j.openstack.compute.domain.NovaServer;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.openstack.driver.Constants;
+import com.elastisys.scale.cloudpool.openstack.functions.ServerToMachine;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Multimap;
 
 /**
  * Exercises {@link ServerToMachine}.
@@ -38,10 +36,10 @@ public class TestServerToMachine {
 	public void convertServerWithPublicAndPrivateIpAddresses() {
 		DateTime now = UtcTime.now();
 
-		Address privateIp = Address.createV4("10.11.12.2");
-		Address publicIp = Address.createV4("130.239.48.193");
-		List<Address> ipAddresses = Lists.newArrayList(privateIp, publicIp);
-		Server server = server(Status.ACTIVE, now, ipAddresses);
+		NovaAddresses addresses = new NovaAddresses();
+		addresses.add("private", novaAddress("10.11.12.2"));
+		addresses.add("public", novaAddress("130.239.48.193"));
+		Server server = server(Status.ACTIVE, now, addresses);
 
 		Machine machine = new ServerToMachine().apply(server);
 		assertThat(machine.getId(), is(server.getId()));
@@ -50,8 +48,8 @@ public class TestServerToMachine {
 				is(MembershipStatus.defaultStatus()));
 		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
 		assertThat(machine.getLaunchtime().toDate(), is(server.getCreated()));
-		assertThat(machine.getPublicIps(), is(asList(publicIp.getAddr())));
-		assertThat(machine.getPrivateIps(), is(asList(privateIp.getAddr())));
+		assertThat(machine.getPublicIps(), is(asList("130.239.48.193")));
+		assertThat(machine.getPrivateIps(), is(asList("10.11.12.2")));
 		assertThat(machine.getMetadata(), is(JsonUtils.toJson(server)));
 	}
 
@@ -59,9 +57,9 @@ public class TestServerToMachine {
 	public void convertServerWithoutPublicIpAddress() {
 		DateTime now = UtcTime.now();
 
-		Address privateIp = Address.createV4("10.11.12.2");
-		List<Address> ipAddresses = Lists.newArrayList(privateIp);
-		Server server = server(Status.ACTIVE, now, ipAddresses);
+		NovaAddresses addresses = new NovaAddresses();
+		addresses.add("private", novaAddress("10.11.12.2"));
+		Server server = server(Status.ACTIVE, now, addresses);
 
 		Machine machine = new ServerToMachine().apply(server);
 		assertThat(machine.getId(), is(server.getId()));
@@ -72,7 +70,7 @@ public class TestServerToMachine {
 		assertThat(machine.getLaunchtime().toDate(), is(server.getCreated()));
 		List<String> empty = asList();
 		assertThat(machine.getPublicIps(), is(empty));
-		assertThat(machine.getPrivateIps(), is(asList(privateIp.getAddr())));
+		assertThat(machine.getPrivateIps(), is(asList("10.11.12.2")));
 		assertThat(machine.getMetadata(), is(JsonUtils.toJson(server)));
 	}
 
@@ -80,13 +78,12 @@ public class TestServerToMachine {
 	public void convertServerWithServiceStateTag() {
 		DateTime now = UtcTime.now();
 
-		Address privateIp = Address.createV4("10.11.12.2");
-		Address publicIp = Address.createV4("130.239.48.193");
-		List<Address> ipAddresses = Lists.newArrayList(privateIp, publicIp);
+		NovaAddresses addresses = new NovaAddresses();
+		addresses.add("private", novaAddress("10.11.12.2"));
+		addresses.add("public", novaAddress("130.239.48.193"));
 		Map<String, String> tags = ImmutableMap.of(SERVICE_STATE_TAG,
 				ServiceState.OUT_OF_SERVICE.name());
-		Server server = serverWithMetadata(Status.ACTIVE, now, ipAddresses,
-				tags);
+		Server server = serverWithMetadata(Status.ACTIVE, now, addresses, tags);
 
 		Machine machine = new ServerToMachine().apply(server);
 		assertThat(machine.getServiceState(), is(ServiceState.OUT_OF_SERVICE));
@@ -96,47 +93,59 @@ public class TestServerToMachine {
 	public void convertServerWithMembershipStatusTag() {
 		DateTime now = UtcTime.now();
 
-		Address privateIp = Address.createV4("10.11.12.2");
-		Address publicIp = Address.createV4("130.239.48.193");
-		List<Address> ipAddresses = Lists.newArrayList(privateIp, publicIp);
-
+		NovaAddresses addresses = new NovaAddresses();
+		addresses.add("private", novaAddress("10.11.12.2"));
+		addresses.add("public", novaAddress("130.239.48.193"));
 		MembershipStatus status = MembershipStatus.blessed();
 		String statusAsJson = JsonUtils.toString(JsonUtils.toJson(status));
-
 		Map<String, String> tags = ImmutableMap.of(
 				Constants.MEMBERSHIP_STATUS_TAG, statusAsJson);
-		Server server = serverWithMetadata(Status.ACTIVE, now, ipAddresses,
-				tags);
+		Server server = serverWithMetadata(Status.ACTIVE, now, addresses, tags);
 
 		Machine machine = new ServerToMachine().apply(server);
 		assertThat(machine.getMembershipStatus(), is(status));
 	}
 
 	private Server server(Status status, DateTime launchTime,
-			Collection<Address> ipAddresses) {
-		Multimap<String, Address> ips = ArrayListMultimap.create();
-		// it seems as though jclouds set both private and floating IP addresses
-		// under the 'private' key
-		ips.putAll("private", ipAddresses);
+			NovaAddresses ipAddresses) {
 
-		return Server.builder().tenantId("tenantId").id("serverId")
-				.userId("userId").created(launchTime.toDate()).addresses(ips)
-				.image(Resource.builder().id("imageId").build())
-				.flavor(Resource.builder().id("flavorId").build())
-				.status(status).build();
+		NovaServer server = new NovaServer();
+		server.id = "serverId";
+		server.created = launchTime.toDate();
+		server.addresses = ipAddresses;
+		server.status = status;
+		server.metadata = new HashMap<String, String>();
+		return server;
 	}
 
 	private Server serverWithMetadata(Status status, DateTime launchTime,
-			Collection<Address> ipAddresses, Map<String, String> metadata) {
-		Multimap<String, Address> ips = ArrayListMultimap.create();
-		// it seems as though jclouds set both private and floating IP addresses
-		// under the 'private' key
-		ips.putAll("private", ipAddresses);
+			NovaAddresses ipAddresses, Map<String, String> metadata) {
 
-		return Server.builder().tenantId("tenantId").id("serverId")
-				.userId("userId").created(launchTime.toDate()).addresses(ips)
-				.image(Resource.builder().id("imageId").build())
-				.flavor(Resource.builder().id("flavorId").build())
-				.status(status).metadata(metadata).build();
+		NovaServer server = new NovaServer();
+		server.id = "serverId";
+		server.created = launchTime.toDate();
+		server.addresses = ipAddresses;
+		server.status = status;
+		server.metadata = metadata;
+		return server;
+	}
+
+	/**
+	 * Returns a {@link NovaAddress} object representing a given IP address.
+	 *
+	 * @param ip
+	 * @return
+	 */
+	private NovaAddress novaAddress(String ip) {
+		// Since the NovaAddress class has no constructor/setters and private
+		// members, we generate an instance from JSON.
+		String dummyMacAddr = "01:23:45:67:89:ab";
+		int version = 4;
+		String type = "floating"; // can be floating or fixed
+		String asJson = String.format("{\"macAddr\": \"%s\", "
+				+ "\"version\": %d, " + "\"addr\": \"%s\", "
+				+ "\"type\": \"%s\"}", dummyMacAddr, version, ip, type);
+		return JsonUtils.toObject(JsonUtils.parseJsonString(asJson),
+				NovaAddress.class);
 	}
 }

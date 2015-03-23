@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.jclouds.openstack.nova.v2_0.domain.Server;
+import org.openstack4j.model.compute.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +27,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.openstack.driver.client.OpenstackClient;
+import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
 import com.elastisys.scale.cloudpool.openstack.functions.ServerToMachine;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.schema.JsonValidator;
@@ -37,8 +38,7 @@ import com.google.common.util.concurrent.Atomics;
 import com.google.gson.JsonObject;
 
 /**
- * A {@link CloudPoolDriver} implementation that operates against the OpenStack
- * cloud API.
+ * A {@link CloudPoolDriver} implementation that operates against OpenStack.
  *
  * @see BaseCloudPool
  */
@@ -93,8 +93,9 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 			this.client.configure(config);
 		} catch (Exception e) {
 			Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
-			throw new CloudPoolDriverException(String.format(
-					"failed to apply configuration: %s", e.getMessage()), e);
+			throw new CloudPoolDriverException(
+					format("failed to apply driver configuration: %s",
+							e.getMessage()), e);
 		}
 	}
 

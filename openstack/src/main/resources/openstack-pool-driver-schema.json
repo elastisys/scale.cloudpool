@@ -2,32 +2,60 @@
   "id": "http://elastisys.com/openstack-pool-driver-schema#",
   "$schema": "http://json-schema.org/draft-04/schema#",
   "description": "configuration schema for the OpenStackPoolDriver",
+  
+  "definitions": {
+    "auth": {
+        "type": "object",
+        "description": "Declares how to authenticate to the Keystone API, using either version 2 or version 3 of the API.",
+        "properties": {
+            "allOf": [
+                { "keystoneUrl": { "type": "string" } },        
+                { "oneOf": [
+                      { "$ref": "#/definitions/v2Credentials" },
+                      { "$ref": "#/definitions/v3Credentials" }
+                  ]
+                }                 
+            ]
+        }
+    },
+    "v2Credentials": {
+        "type": "object",
+        "description": "Password-credentials for authenticating using version 2 of the Keystone API.",
+        "properties": {
+            "tenantName": { "type": "string" },
+            "userName": { "type": "string" },
+            "password": { "type": "string" }
+        },
+        "required": [ "tenantName", "userName", "password" ]
+    },
+    "v3Credentials": {
+        "type": "object",
+        "description": "Password-credentials for authenticating using version 3 of the Keystone API.",
+        "properties": {
+            "scope": { 
+                "oneOf": [
+                    { "type": "object", "properties": { "projectId": { "type": "string" } }, "required": ["projectId"] },
+                    { "type": "object", "properties": { "domainId": { "type": "string" } }, "required": ["domainId"] }
+                ] 
+            },
+            "userId": { "type": "string" },
+            "password": { "type": "string" }
+        },
+        "required": [ "scope", "userId", "password" ]
+    }
+  },  
+  
   "type": "object",
   "properties": {
-    "keystoneEndpoint": { 
-      "description": "Endpoint URL of the OpenStack authentication service (Keystone). For example, http://172.16.0.1:5000/v2.0.", 
-      "type": "string" 
-    },        
+    "$ref": "#/definitions/auth",
     "region": {
       "description": "The particular OpenStack region (out of the ones available in Keystone's service catalog) to connect to. For example, RegionOne.", 
       "type":  "string" 
     },      
-    "tenantName": {
-      "description": "OpenStack account tenant name.", 
-      "type": "string" 
-    },
-    "userName": {  
-      "description": "OpenStack account user.", 
-      "type": "string"
-    },
-    "password": {  
-      "description": "OpenStack account password.", 
-      "type": "string"
-    },
     "assignFloatingIp": {
-       "description": "Set to true if a floating IP address should be allocated to launched servers. Default: true.", 
+       "description": "Optionally set to indicate if a floating IP address should be allocated to launched servers. Default: true.", 
        "type": "boolean"
     }
   },
-  "required": ["keystoneEndpoint","region","tenantName", "userName", "password"]
+  "required": ["auth", "region"]
 }

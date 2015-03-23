@@ -1,13 +1,11 @@
 package com.elastisys.scale.cloudpool.openstack.functions;
 
-import java.util.Collection;
 import java.util.List;
 
-import org.jclouds.openstack.nova.v2_0.domain.Address;
-import org.jclouds.openstack.nova.v2_0.domain.Server;
-import org.jclouds.util.InetAddresses2.IsPrivateIPAddress;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.openstack4j.model.compute.Address;
+import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
@@ -22,9 +20,6 @@ import com.google.gson.JsonObject;
 /**
  * Translates a {@link Server} from the OpenStack API to its {@link Machine}
  * counterpart.
- *
- *
- *
  */
 public class ServerToMachine implements Function<Server, Machine> {
 
@@ -62,15 +57,20 @@ public class ServerToMachine implements Function<Server, Machine> {
 				DateTimeZone.UTC);
 
 		List<String> publicIps = Lists.newArrayList();
-		List<String> privateIps = Lists.newArrayList();
+		if (server.getAddresses().getAddresses("public") != null) {
+			List<? extends Address> publicIpAddresses = server.getAddresses()
+					.getAddresses("public");
+			for (Address publicIp : publicIpAddresses) {
+				publicIps.add(publicIp.getAddr());
+			}
+		}
 
-		Collection<Address> ipAddresses = server.getAddresses().values();
-		for (Address ipAddress : ipAddresses) {
-			String ip = ipAddress.getAddr();
-			if (IsPrivateIPAddress.INSTANCE.apply(ip)) {
-				privateIps.add(ip);
-			} else {
-				publicIps.add(ip);
+		List<String> privateIps = Lists.newArrayList();
+		if (server.getAddresses().getAddresses("private") != null) {
+			List<? extends Address> privateIpAddresses = server.getAddresses()
+					.getAddresses("private");
+			for (Address privateIp : privateIpAddresses) {
+				privateIps.add(privateIp.getAddr());
 			}
 		}
 

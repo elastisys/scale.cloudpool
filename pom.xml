@@ -54,6 +54,7 @@
 
     <!-- scale.commons version to use -->
     <commons.version>2.0.1</commons.version>
+    <openstack4j.version>2.0.2</openstack4j.version>
   </properties>
 
   <dependencyManagement>
@@ -93,7 +94,16 @@
         <artifactId>commons.util</artifactId>
         <version>${commons.version}</version>
       </dependency>
-
+      <dependency>
+        <groupId>org.pacesys</groupId>
+        <artifactId>openstack4j-core</artifactId>
+        <version>${openstack4j.version}</version>        
+      </dependency>
+      <dependency>
+        <groupId>org.pacesys.openstack4j.connectors</groupId>
+        <artifactId>openstack4j-httpclient</artifactId>
+        <version>${openstack4j.version}</version>        
+      </dependency>
     </dependencies>
   </dependencyManagement>
 

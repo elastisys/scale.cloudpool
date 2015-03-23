@@ -3,8 +3,8 @@ package com.elastisys.scale.cloudpool.openstack.functions;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import org.jclouds.openstack.nova.v2_0.domain.Server.Status;
 import org.junit.Test;
+import org.openstack4j.model.compute.Server.Status;
 
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.openstack.functions.StatusToMachineState;
@@ -37,7 +37,7 @@ public class TestStatusToMachineState {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testConvertUnrecognizedStatus() {
-		convert(Status.SHELVED_OFFLOADED);
+		convert(Status.UNRECOGNIZED);
 	}
 
 	private static MachineState convert(Status state) {

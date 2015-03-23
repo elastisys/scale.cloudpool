@@ -8,9 +8,9 @@
   </parent>
   <artifactId>cloudpool.openstack</artifactId>
   <packaging>jar</packaging>
-  <name>elastisys:scale :: cloudpool :: OpenStack</name>
+  <name>elastisys:scale :: cloudpool :: openstack</name>
   <description>
-    A cloud pool capable of managing a scaling group of OpenStack servers.
+    A cloud pool capable of managing a pool of OpenStack servers.
     This build module produces an all-in-one "server and application" executable
     jar file. When executed, it starts an embedded web server that publishes 
     the cloud pool REST API endpoint.
@@ -22,6 +22,16 @@
   </properties>
 
   <dependencies>
+    <!-- Openstack API access -->
+    <dependency>
+      <groupId>org.pacesys</groupId>
+      <artifactId>openstack4j-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.pacesys.openstack4j.connectors</groupId>
+      <artifactId>openstack4j-httpclient</artifactId>
+    </dependency>
+
     <!-- Common cloud pool API/server classes -->
     <dependency>
       <groupId>com.elastisys.scale</groupId>
@@ -34,15 +44,7 @@
       <artifactId>cloudpool.commons</artifactId>
       <version>${project.version}</version>
     </dependency>    
-    <!-- Openstack API access -->
-    <dependency>
-      <groupId>org.apache.jclouds.api</groupId>
-      <artifactId>openstack-nova</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.jclouds.driver</groupId>
-      <artifactId>jclouds-slf4j</artifactId>
-    </dependency>
+    
 
     <!-- UTC Time -->
     <dependency>

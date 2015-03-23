@@ -2,16 +2,13 @@ package com.elastisys.scale.cloudpool.openstack.requests.lab;
 
 import com.elastisys.scale.cloudpool.openstack.requests.DeleteServerRequest;
 
-public class DeleteServerMain extends AbstractClient {
+public class DeleteServerMain {
 
-	// TODO: set to the identifier (UUID) of the server to delete
-	private static final String serverId = "5ef972e9-6420-41c2-b25e-3cfbefe01148";
+	/** TODO: set to server uuid */
+	private static final String serverId = "47d3376e-e6e0-4ebd-8ba5-add5d67a6c8e";
 
-	public static void main(String[] args) throws Exception {
-		logger.info("deleting server: {}", serverId);
-		DeleteServerRequest request = new DeleteServerRequest(
-				getAccountConfig(), serverId);
-		request.call();
-		logger.info("deleted server: {}", serverId);
+	public static void main(String[] args) {
+		new DeleteServerRequest(DriverConfigLoader.loadDefault(), serverId)
+				.call();
 	}
 }

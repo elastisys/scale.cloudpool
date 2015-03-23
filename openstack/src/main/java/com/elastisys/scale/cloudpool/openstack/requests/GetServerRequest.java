@@ -1,11 +1,10 @@
 package com.elastisys.scale.cloudpool.openstack.requests;
 
-import org.jclouds.openstack.nova.v2_0.NovaApi;
-import org.jclouds.openstack.nova.v2_0.domain.Server;
-import org.jclouds.openstack.nova.v2_0.features.ServerApi;
+import org.openstack4j.api.OSClient;
+import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
 
 /**
  * A request that, when called, requests meta data about a particular
@@ -14,7 +13,7 @@ import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriverConfig;
  * If the requested {@link Server} cannot be found, an
  * {@link IllegalArgumentException} is raised.
  */
-public class GetServerRequest extends AbstractNovaRequest<Server> {
+public class GetServerRequest extends AbstractOpenstackRequest<Server> {
 
 	/** The identifier of the server to get. */
 	private String serverId;
@@ -25,13 +24,12 @@ public class GetServerRequest extends AbstractNovaRequest<Server> {
 	}
 
 	@Override
-	public Server doRequest(NovaApi api) throws NotFoundException {
-		ServerApi serverApi = api.getServerApiForZone(getAccount().getRegion());
-		Server server = serverApi.get(this.serverId);
+	public Server doRequest(OSClient api) throws NotFoundException {
+		Server server = api.compute().servers().get(this.serverId);
 		if (server == null) {
 			throw new NotFoundException(String.format("failed to retrieve "
-					+ "server '%s' in region %s", this.serverId, getAccount()
-					.getRegion()));
+					+ "server '%s' in region %s", this.serverId,
+					getAccessConfig().getRegion()));
 		}
 		return server;
 	}

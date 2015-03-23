@@ -2,20 +2,19 @@ package com.elastisys.scale.cloudpool.openstack.requests;
 
 import java.util.List;
 
-import org.jclouds.openstack.nova.v2_0.NovaApi;
-import org.jclouds.openstack.nova.v2_0.domain.Flavor;
+import org.openstack4j.api.OSClient;
+import org.openstack4j.model.compute.Flavor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriverConfig;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
+import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
+import com.google.common.collect.ImmutableList;
 
 /**
  * An OpenStack request task that, when executed, retrieves all available
- * instance sizes, (or "server flavors" ).
+ * instance sizes (or "server flavors" in OpenStack lingo).
  */
-public class ListSizesRequest extends AbstractNovaRequest<List<Flavor>> {
+public class ListSizesRequest extends AbstractOpenstackRequest<List<Flavor>> {
 	static Logger LOG = LoggerFactory.getLogger(ListSizesRequest.class);
 
 	/**
@@ -30,12 +29,8 @@ public class ListSizesRequest extends AbstractNovaRequest<List<Flavor>> {
 	}
 
 	@Override
-	public List<Flavor> doRequest(NovaApi api) {
-		List<Flavor> flavors = Lists.newArrayList();
-		Iterable<? extends Flavor> regionFlavors = api
-				.getFlavorApiForZone(getAccount().getRegion()).listInDetail()
-				.concat();
-		Iterables.addAll(flavors, regionFlavors);
-		return flavors;
+	public List<Flavor> doRequest(OSClient api) {
+		List<? extends Flavor> flavors = api.compute().flavors().list();
+		return ImmutableList.copyOf(flavors);
 	}
 }

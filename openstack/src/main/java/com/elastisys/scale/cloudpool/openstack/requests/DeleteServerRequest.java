@@ -1,32 +1,30 @@
 package com.elastisys.scale.cloudpool.openstack.requests;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import java.util.List;
-
-import org.jclouds.openstack.nova.v2_0.NovaApi;
-import org.jclouds.openstack.nova.v2_0.domain.FloatingIP;
-import org.jclouds.openstack.nova.v2_0.domain.Server;
-import org.jclouds.openstack.nova.v2_0.extensions.FloatingIPApi;
-import org.jclouds.openstack.nova.v2_0.features.ServerApi;
+import org.openstack4j.api.OSClient;
+import org.openstack4j.api.compute.ComputeFloatingIPService;
+import org.openstack4j.api.compute.ServerService;
+import org.openstack4j.model.compute.ActionResponse;
+import org.openstack4j.model.compute.FloatingIP;
+import org.openstack4j.model.compute.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
-import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
 import com.google.common.base.Predicates;
 
 /**
- * OpenStack task that, when executed, deletes a server instance, releases any
+ * OpenStack task that, when executed, deletes a {@link Server}, releases any
  * allocated floating IP addresses and waits for the server to be terminated
  * (since this may not be immediate due to eventual consistency).
  */
-public class DeleteServerRequest extends AbstractNovaRequest<Void> {
+public class DeleteServerRequest extends AbstractOpenstackRequest<Void> {
 	static final Logger LOG = LoggerFactory
 			.getLogger(DeleteServerRequest.class);
 
@@ -47,21 +45,20 @@ public class DeleteServerRequest extends AbstractNovaRequest<Void> {
 	}
 
 	@Override
-	public Void doRequest(NovaApi api) throws NotFoundException {
+	public Void doRequest(OSClient api) throws NotFoundException {
 		// look for victim server in all regions
-		ServerApi serverApi = api.getServerApiForZone(getAccount().getRegion());
+		ServerService serverApi = api.compute().servers();
 		Server victimServer = serverApi.get(this.victimId);
-
 		if (victimServer == null) {
 			throw new NotFoundException(format(
 					"a victim server with id '%s' could not be found "
-							+ "in region %s", this.victimId, getAccount()
+							+ "in region %s", this.victimId, getAccessConfig()
 							.getRegion()));
 		}
 
-		releaseFloatingIps(api, getAccount().getRegion(), victimServer);
-		boolean wasDeleted = serverApi.delete(this.victimId);
-		if (!wasDeleted) {
+		releaseFloatingIps(api, victimServer);
+		ActionResponse response = serverApi.delete(this.victimId);
+		if (!response.isSuccess()) {
 			throw new CloudPoolDriverException(
 					"failed to delete victim server " + this.victimId);
 		}
@@ -80,7 +77,7 @@ public class DeleteServerRequest extends AbstractNovaRequest<Void> {
 		String taskName = String.format("termination-waiter{%s}", serverId);
 
 		ServerExistsRequest serverExistsRequester = new ServerExistsRequest(
-				getAccount(), serverId);
+				getAccessConfig(), serverId);
 		int fixedDelay = 5;
 		int maxRetries = 12;
 		Retryable<Boolean> awaitTermination = Retryers.fixedDelayRetryer(
@@ -91,36 +88,27 @@ public class DeleteServerRequest extends AbstractNovaRequest<Void> {
 	}
 
 	/**
-	 * Attempts to release any floating IP addresses associated with a server.
+	 * Releases any floating IP addresses associated with a {@link Server}.
 	 *
 	 * @param api
-	 *            The {@link NovaApi}.
-	 * @param region
-	 *            The region that the server is located in.
+	 *            An OpenStack API client.
 	 * @param server
 	 *            The server for which to release any assigned floating IP
 	 *            address(es).
 	 */
-	private void releaseFloatingIps(NovaApi api, String region, Server server) {
-		LOG.debug("releasing any floating IP addresses associated with '{}'",
+	private void releaseFloatingIps(OSClient api, Server server) {
+		LOG.debug("releasing floating IP addresses associated with {}",
 				server.getName());
-		if (!api.getFloatingIPExtensionForZone(region).isPresent()) {
-			LOG.debug("no floating IP API in region '{}', "
-					+ "not attempting to release floating IPs.", region);
-			return;
-		}
-		// attempt to release any floating IP addresses associated with
-		// server
-		FloatingIPApi floatingIpApi = api.getFloatingIPExtensionForZone(region)
-				.get();
-		List<FloatingIP> floatingIps = newArrayList(floatingIpApi.list());
-		for (FloatingIP floatingIP : floatingIps) {
-			if (server.getId().equals(floatingIP.getInstanceId())) {
+		ComputeFloatingIPService floatingIpApi = api.compute().floatingIps();
+
+		for (FloatingIP floatingIp : floatingIpApi.list()) {
+			String assignedTo = floatingIp.getInstanceId();
+			if (assignedTo != null && assignedTo.equals(server.getId())) {
 				LOG.debug("releasing floating IP {} from '{}'",
-						floatingIP.getIp(), server.getName());
-				floatingIpApi.removeFromServer(floatingIP.getIp(),
-						server.getId());
-				floatingIpApi.delete(floatingIP.getId());
+						floatingIp.getFloatingIpAddress(), server.getName());
+				floatingIpApi.removeFloatingIP(server,
+						floatingIp.getFloatingIpAddress());
+				floatingIpApi.deallocateIP(floatingIp.getId());
 			}
 		}
 	}

@@ -1,136 +1,126 @@
 package com.elastisys.scale.cloudpool.openstack.requests;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import java.util.List;
-
-import org.jclouds.openstack.nova.v2_0.NovaApi;
-import org.jclouds.openstack.nova.v2_0.domain.Address;
-import org.jclouds.openstack.nova.v2_0.domain.FloatingIP;
-import org.jclouds.openstack.nova.v2_0.domain.Server;
-import org.jclouds.openstack.nova.v2_0.extensions.FloatingIPApi;
-import org.jclouds.openstack.nova.v2_0.features.ServerApi;
+import org.openstack4j.api.OSClient;
+import org.openstack4j.api.compute.ComputeFloatingIPService;
+import org.openstack4j.model.compute.Addresses;
+import org.openstack4j.model.compute.FloatingIP;
+import org.openstack4j.model.compute.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriverConfig;
-import com.elastisys.scale.cloudpool.openstack.faults.FloatingIpAddressException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
+import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
 import com.elastisys.scale.cloudpool.openstack.tasks.ServerIpAddressRequester;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
 import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
 
 /**
  * A request that, when called, tries to assign a floating IP address to a
  * {@link Server}. The return value of the task is the assigned IP address.
  * <p/>
- * If no IP address could be assigned, a {@link FloatingIpAddressException} is
+ * If no IP address could be assigned, a {@link CloudPoolDriverException} is
  * thrown.
- *
- *
- *
  */
-public class AssignFloatingIpRequest extends AbstractNovaRequest<String> {
+public class AssignFloatingIpRequest extends AbstractOpenstackRequest<String> {
 	static final Logger LOG = LoggerFactory
 			.getLogger(AssignFloatingIpRequest.class);
 
 	private final Server server;
 
-	public AssignFloatingIpRequest(OpenStackPoolDriverConfig account,
+	public AssignFloatingIpRequest(OpenStackPoolDriverConfig accessConfig,
 			Server server) {
-		super(account);
+		super(accessConfig);
 		this.server = server;
 	}
 
 	@Override
-	public String doRequest(NovaApi api) throws FloatingIpAddressException {
+	public String doRequest(OSClient api) throws CloudPoolDriverException {
 		try {
 			return assignFloatingIp(api, this.server);
 		} catch (Exception e) {
-			throw new FloatingIpAddressException(format(
+			throw new CloudPoolDriverException(format(
 					"failed to assign floating IP "
 							+ "address to server \"%s\": %s",
 					this.server.getId(), e.getMessage()), e);
 		}
 	}
 
-	private String assignFloatingIp(NovaApi api, Server server)
+	private String assignFloatingIp(OSClient api, Server server)
 			throws Exception {
 		LOG.debug("assigning a floating IP address to {} ...", server.getId());
-		ServerApi serverApi = api.getServerApiForZone(getAccount().getRegion());
-		// In OpenStack Grizzly, it appears like server must have a private IP
-		// address before a floating IP can be assigned
-		waitForPrivateIpAddress(serverApi, server);
+		// It appears as though a server must have a private IP address before a
+		// floating IP can be assigned
+		waitForPrivateIpAddress(api, server.getId());
 
-		FloatingIPApi floatingIPApi = api.getFloatingIPExtensionForZone(
-				getAccount().getRegion()).get();
-		List<FloatingIP> floatingIps = newArrayList(floatingIPApi.list());
-		List<FloatingIP> freeFloatingIps = getFreeFloatingIps(floatingIps);
-		if (freeFloatingIps.isEmpty()) {
-			freeFloatingIps.add(floatingIPApi.create());
+		ComputeFloatingIPService floatingIpApi = api.compute().floatingIps();
+		FloatingIP floatingIp = acquireFloatingIp(floatingIpApi);
+		String ipAddress = floatingIp.getFloatingIpAddress();
+		LOG.debug("assigning floating IP {} to server {}", ipAddress,
+				server.getId());
+		floatingIpApi.addFloatingIP(server, ipAddress);
+		return ipAddress;
+	}
+
+	/**
+	 * Tries to allocate a free floating IP address. Throws a
+	 * {@link CloudPoolDriverException} on failure to do so.
+	 *
+	 * @param floatingIpApi
+	 * @return
+	 */
+	private FloatingIP acquireFloatingIp(ComputeFloatingIPService floatingIpApi)
+			throws CloudPoolDriverException {
+		for (String floatingIpPool : floatingIpApi.getPoolNames()) {
+			LOG.debug("checking floating IP pool {}", floatingIpPool);
+			try {
+				return floatingIpApi.allocateIP(floatingIpPool);
+			} catch (Exception e) {
+				LOG.debug("failed to allocate floating IP from {}: {}",
+						floatingIpPool, e.getMessage());
+			}
 		}
-		if (freeFloatingIps.isEmpty()) {
-			throw new FloatingIpAddressException(
-					"no floating IP address(es) available");
-		}
-		FloatingIP ipToAllocate = Iterables.getLast(freeFloatingIps);
-		String ip = ipToAllocate.getIp();
-		LOG.debug("assigning floating ip {} to server {}", ip, server.getId());
-		floatingIPApi.addToServer(ip, server.getId());
-		return ip;
+		throw new CloudPoolDriverException(
+				"failed to allocate floating IP address for server");
 	}
 
 	/**
 	 * Waits for a given server to be assigned a private IP address.
 	 *
-	 * @param serverApi
-	 * @param server
+	 * @param api
+	 * @param serverId
 	 * @return The IP address(es) of the server.
 	 * @throws Exception
 	 */
-	private Multimap<String, Address> waitForPrivateIpAddress(
-			ServerApi serverApi, Server server) throws Exception {
-		String taskName = String
-				.format("ip-address-waiter{%s}", server.getId());
+	private Addresses waitForPrivateIpAddress(OSClient api, String serverId)
+			throws Exception {
+		String taskName = String.format("ip-address-waiter{%s}", serverId);
 		ServerIpAddressRequester serverIpRequester = new ServerIpAddressRequester(
-				serverApi, server.getId());
+				api, serverId);
 		int fixedDelay = 6;
 		int maxRetries = 10;
-		Retryable<Multimap<String, Address>> retryer = Retryers
-				.fixedDelayRetryer(taskName, serverIpRequester, fixedDelay,
-						SECONDS, maxRetries, ipAddressAssigned());
+		Retryable<Addresses> retryer = Retryers.fixedDelayRetryer(taskName,
+				serverIpRequester, fixedDelay, SECONDS, maxRetries,
+				ipAddressAssigned());
 
 		return retryer.call();
 	}
 
-	private Predicate<Multimap<String, Address>> ipAddressAssigned() {
-		return new Predicate<Multimap<String, Address>>() {
+	/**
+	 * Returns a {@link Predicate} that is satisfied by any {@link Addresses}
+	 * object that contains at least one IP address.
+	 *
+	 * @return
+	 */
+	private Predicate<Addresses> ipAddressAssigned() {
+		return new Predicate<Addresses>() {
 			@Override
-			public boolean apply(Multimap<String, Address> addresses) {
-				return !addresses.isEmpty();
+			public boolean apply(Addresses addresses) {
+				return !addresses.getAddresses().isEmpty();
 			}
 		};
-	}
-
-	/**
-	 * Filters out all allocated addresses from a collection of floating IPs.
-	 *
-	 * @param floatingIps
-	 *            A list of floating IP addresses.
-	 * @return All unassigned floating IP addresses from the list.
-	 */
-	private List<FloatingIP> getFreeFloatingIps(List<FloatingIP> floatingIps) {
-		List<FloatingIP> unassigned = Lists.newArrayList();
-		for (FloatingIP floatingIP : floatingIps) {
-			if (floatingIP.getInstanceId() == null) {
-				unassigned.add(floatingIP);
-			}
-		}
-		return unassigned;
 	}
 }

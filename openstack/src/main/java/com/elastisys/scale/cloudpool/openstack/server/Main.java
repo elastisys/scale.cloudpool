@@ -14,8 +14,8 @@ import com.elastisys.scale.cloudpool.openstack.driver.client.StandardOpenstackCl
 public class Main {
 
 	public static void main(String[] args) throws Exception {
-		CloudPoolDriver openstackScalingGroup = new OpenStackPoolDriver(
+		CloudPoolDriver openstackDriver = new OpenStackPoolDriver(
 				new StandardOpenstackClient());
-		CloudPoolServer.main(new BaseCloudPool(openstackScalingGroup), args);
+		CloudPoolServer.main(new BaseCloudPool(openstackDriver), args);
 	}
 }

@@ -3,21 +3,20 @@ package com.elastisys.scale.cloudpool.openstack.predicates;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Date;
 import java.util.Map;
 
-import org.jclouds.openstack.nova.v2_0.domain.Server;
-import org.jclouds.openstack.nova.v2_0.domain.Server.Status;
-import org.jclouds.openstack.v2_0.domain.Resource;
 import org.junit.Test;
+import org.openstack4j.model.compute.Server;
+import org.openstack4j.model.compute.Server.Status;
+import org.openstack4j.openstack.compute.domain.NovaServer;
 
 import com.elastisys.scale.cloudpool.openstack.predicates.ServerPredicates;
 import com.google.common.collect.ImmutableMap;
 
 /**
  * Exercises the {@link ServerPredicates} class.
- * 
- * 
+ *
+ *
  */
 public class TestServerPredicates {
 
@@ -28,24 +27,24 @@ public class TestServerPredicates {
 
 	@Test(expected = NullPointerException.class)
 	public void testWithTagOnNullTagValue() {
-		ServerPredicates.withTag("scaling-group", null);
+		ServerPredicates.withTag("elastisys:cloudPool", null);
 	}
 
 	@Test
 	public void testWithTag() {
 		Map<String, String> wrongTag = ImmutableMap
 				.of("wrong-group", "mygroup");
-		Map<String, String> wrongTagValue = ImmutableMap.of("scaling-group",
-				"another-group");
-		Map<String, String> matchingTag = ImmutableMap.of("scaling-group",
-				"mygroup");
+		Map<String, String> wrongTagValue = ImmutableMap.of(
+				"elastisys:cloudPool", "another-group");
+		Map<String, String> matchingTag = ImmutableMap.of(
+				"elastisys:cloudPool", "mygroup");
 
-		assertFalse(ServerPredicates.withTag("scaling-group", "mygroup").apply(
-				server(wrongTag)));
-		assertFalse(ServerPredicates.withTag("scaling-group", "mygroup").apply(
-				server(wrongTagValue)));
-		assertTrue(ServerPredicates.withTag("scaling-group", "mygroup").apply(
-				server(matchingTag)));
+		assertFalse(ServerPredicates.withTag("elastisys:cloudPool", "mygroup")
+				.apply(server(wrongTag)));
+		assertFalse(ServerPredicates.withTag("elastisys:cloudPool", "mygroup")
+				.apply(server(wrongTagValue)));
+		assertTrue(ServerPredicates.withTag("elastisys:cloudPool", "mygroup")
+				.apply(server(matchingTag)));
 	}
 
 	@Test(expected = NullPointerException.class)
@@ -78,19 +77,17 @@ public class TestServerPredicates {
 	}
 
 	private Server server(Status status) {
-		return Server.builder().tenantId("tenantId").id("serverId")
-				.userId("userId").created(new Date())
-				.image(Resource.builder().id("imageId").build())
-				.flavor(Resource.builder().id("flavorId").build())
-				.status(status).build();
+		NovaServer server = new NovaServer();
+		server.id = "serverId";
+		server.status = status;
+		return server;
 	}
 
 	private Server server(Map<String, String> metadataTags) {
-		return Server.builder().tenantId("tenantId").id("serverId")
-				.userId("userId").created(new Date())
-				.image(Resource.builder().id("imageId").build())
-				.flavor(Resource.builder().id("flavorId").build())
-				.status(Status.ACTIVE).metadata(metadataTags).build();
+		NovaServer server = new NovaServer();
+		server.id = "serverId";
+		server.metadata = metadataTags;
+		return server;
 	}
 
 }

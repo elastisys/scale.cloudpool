@@ -3,15 +3,15 @@ package com.elastisys.scale.cloudpool.openstack.driver.client;
 import java.util.List;
 import java.util.Map;
 
-import org.jclouds.openstack.nova.v2_0.domain.Server;
+import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriver;
-import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
 
 /**
- * A simplified client interface towards the OpenStack API that only provides
+ * A simplified client interface towards the OpenStack API, which only provides
  * the functionality needed by the {@link OpenStackPoolDriver}.
  * <p/>
  * The {@link #configure} method must be called before calling any other

@@ -4,30 +4,30 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.jclouds.openstack.nova.v2_0.domain.Server;
-import org.jclouds.scriptbuilder.domain.OsFamily;
+import org.openstack4j.model.compute.Server;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.openstack.requests.CreateServerRequest;
-import com.elastisys.scale.cloudpool.openstack.utils.jclouds.ScriptUtils;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 
-public class CreateServerMain extends AbstractClient {
+public class CreateServerMain {
+	private static Logger LOG = LoggerFactory.getLogger(CreateServerMain.class);
 
 	public static void main(String[] args) throws Exception {
-		Map<String, String> metadata = ImmutableMap.of("scaling-group",
+		Map<String, String> metadata = ImmutableMap.of("elastisys:cloudPool",
 				"cluster");
-		List<String> bootScript = Arrays.asList("sudo apt-get update",
-				"sudo apt-get install -y apache2");
-		String userData = ScriptUtils.renderScript(
-				Joiner.on("\n").join(bootScript), OsFamily.UNIX);
+		List<String> bootScript = Arrays.asList("#!/bin/bash",
+				"sudo apt-get update", "sudo apt-get install -y apache2");
+		String userData = Joiner.on("\n").join(bootScript);
 
 		CreateServerRequest request = new CreateServerRequest(
-				getAccountConfig(), "server1", "m1.small",
-				"Ubuntu Server 12.04", "openstack_p11", Arrays.asList("web"),
-				Optional.of(userData), metadata);
+				DriverConfigLoader.loadDefault(), "server1", "m1.small",
+				"Ubuntu Server 14.04 64 bit", "instancekey",
+				Arrays.asList("web"), Optional.of(userData), metadata);
 		Server createdServer = request.call();
-		logger.info("created server: {}", createdServer);
+		LOG.info("created server: {}", createdServer);
 	}
 }

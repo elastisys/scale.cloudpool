@@ -1,0 +1,33 @@
+{
+    "cloudPool": {
+      "name": "my-scaling-pool2",
+      "driverConfig": {
+        "auth": {  
+          "keystoneUrl": "http://nova.host.com:5000/v3",  
+          "v3Credentials": {
+            "scope": {
+
+            },
+            "userId": "user_id",
+            "password": "secret"
+          }            
+        },    
+        "region": "RegionTwo", 
+        "assignFloatingIp": false
+      }
+    },
+    "scaleOutConfig": {
+      "size": "m1.small", 
+      "image": "Ubuntu Server 12.04",
+      "keyPair": "openstack_p11",
+      "securityGroups": ["web"],               
+      "bootScript": [
+        "sudo apt-get update",
+        "sudo apt-get install -y --force-yes apache2"
+      ]
+    },
+    "scaleInConfig": {
+      "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
+      "instanceHourMargin": 0
+    }
+}  

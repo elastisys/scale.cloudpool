@@ -2,9 +2,6 @@ package com.elastisys.scale.cloudpool.openstack.driver;
 
 /**
  * Various constants for the {@link OpenStackCloudClient}.
- *
- *
- *
  */
 public class Constants {
 
