@@ -36,7 +36,7 @@ public class RunPool {
 	// TODO: set launch configuration parameters for new group instances
 	private static final String size = "m1.small";
 	private static final String image = "Ubuntu Server 14.04 64 bit";
-	private static final List<String> bootScript = Arrays.asList(
+	private static final List<String> bootScript = Arrays.asList("#!/bin/bash",
 			"sudo apt-get update", "sudo apt-get install -y apache2");
 	private static final String keyPair = System.getenv("OS_INSTANCE_KEYPAIR");
 	private static final List<String> securityGroups = Arrays.asList("web");
