@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.openstack4j.core.transport.internal.HttpLoggingFilter;
 import org.openstack4j.model.compute.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ public class CreateServerMain {
 				"sudo apt-get update", "sudo apt-get install -y apache2");
 		String userData = Joiner.on("\n").join(bootScript);
 
+		HttpLoggingFilter.toggleLogging(true);
 		CreateServerRequest request = new CreateServerRequest(
 				DriverConfigLoader.loadDefault(), "server1", "m1.small",
 				"Ubuntu Server 14.04 64 bit", "instancekey",
