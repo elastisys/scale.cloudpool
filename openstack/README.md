@@ -77,7 +77,7 @@ The configuration keys have the following meaning:
       - ``auth``: Specifies how to authenticate against the OpenStack identity service (Keystone).
         - ``keystoneEndpoint``: Endpoint URL of the Keystone service. For example, http://172.16.0.1:5000/v2.0."
         - ``v2Credentials``: Credentials for using version 2 of the [identity HTTP API](http://docs.openstack.org/developer/keystone/http-api.html#history).
-          See the section on ``Authentication mechanisms`` below for other supported authentication schemes. 
+          See the section on authentication mechanisms below for other supported authentication schemes. 
           - ``tenantName``: OpenStack account tenant name.
           - ``userName``: OpenStack account user
           - ``password``: OpenStack account password
@@ -142,8 +142,6 @@ A configuration excerpt for a project-scoped authentication is shown here:
             "password": "secret"
         }
     },
-    "region": "RegionOne", 
-    "assignFloatingIp": true
     ...
 ```
 
@@ -165,8 +163,6 @@ following can be used:
             "password": "secret"
         }
     },
-    "region": "RegionOne", 
-    "assignFloatingIp": true
     ...
 ```
 
