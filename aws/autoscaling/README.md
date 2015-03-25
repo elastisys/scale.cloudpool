@@ -82,7 +82,7 @@ The configuration keys have the following meaning:
     - ``securityGroups``: Not applicable.
     - ``bootScript``: Not applicable.
   - ``scaleInConfig``: Describes how to decommission servers (on scale-in).
-    - ``victimSelectionPolicy``: Policy for selecting which spot instance to 
+    - ``victimSelectionPolicy``: Policy for selecting which instance to 
       terminate. Allowed values: ``NEWEST_INSTANCE``, ``OLDEST_INSTANCE``, 
       ``CLOSEST_TO_INSTANCE_HOUR``.
     - ``instanceHourMargin``: How many seconds prior to the next instance hour 
@@ -108,8 +108,8 @@ The configuration keys have the following meaning:
         is false (disabled).
   - ``poolUpdatePeriod`` (optional): The time interval (in seconds) between 
     periodical pool size updates. A pool size update may involve terminating 
-    termination-due instances and placing new spot requests to replace 
-    terminated spot requests. Default: 60.
+    termination-due instances and placing instance requests to replace 
+    terminated instances. Default: 60.
 
 
 ## Usage

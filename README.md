@@ -85,7 +85,7 @@ Below is a sample configuration document for the ``cloudpool.aws.ec2``:
       "instanceHourMargin": 300
     },
     "alerts": {
-      "subject": "[elastisys:scale] cloud pool alert for MySpotScalingPool",
+      "subject": "[elastisys:scale] cloud pool alert for MyEc2InstnaceScalingPool",
       "recipients": ["receiver@destination.com"],
       "sender": "noreply@elastisys.com",
       "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
@@ -104,9 +104,9 @@ The configuration document declares how the cloud pool:
 
   - should configure its cloud-specific `CloudPoolDriver` class to allow it to communicate with its cloud API (the ``driverConfig`` key).
 
-  - provisions new instances when the pool needs to grow (the ``scaleOutConfig`` key).
+  - provisions new machines when the pool needs to grow (the ``scaleOutConfig`` key).
 
-  - decommissions instances when the pool needs to shrink (the ``scaleInConfig`` key).
+  - decommissions machines when the pool needs to shrink (the ``scaleInConfig`` key).
 
   - alerts system administrators (via email) of resize operations, error conditions, etc (the ``alerts`` key).
 
@@ -120,7 +120,7 @@ In a little more detail, the configuration keys have the following meaning:
 
     - ``name``: The logical name of managed machine pool. The exact way of 
       identifying pool members may differ between implementations, but 
-      instance tags could, for example, be used.
+      machine tags could, for example, be used.
 
     - ``driverConfig``: `CloudPoolDriver`-specific JSON configuration document, the 
       contents of which depends on the particular ``CloudPoolDriver``-implementation 
@@ -135,20 +135,20 @@ In a little more detail, the configuration keys have the following meaning:
 
     - ``image``: The name of the machine image used to boot new servers.
 
-    - ``keyPair``: The name of the key pair to use for new machine instances.
+    - ``keyPair``: The name of the key pair to use for new machines.
 
-    - ``securityGroups``: The security group(s) to use for new machine instances.
+    - ``securityGroups``: The security group(s) to use for new machines.
 
-    - ``bootScript``: The script to run after first boot of a new instance.
+    - ``bootScript``: The script to run after first boot of a new machine.
 
   - ``scaleInConfig``: Describes how to decommission servers (on scale-in).
 
-    - ``victimSelectionPolicy``: Policy for selecting which spot instance to 
+    - ``victimSelectionPolicy``: Policy for selecting which machine to 
       terminate. Allowed values: ``NEWEST_INSTANCE``, ``OLDEST_INSTANCE``, 
       ``CLOSEST_TO_INSTANCE_HOUR``.
 
     - ``instanceHourMargin``: How many seconds prior to the next instance hour 
-      an acquired machine instance should be scheduled for termination. This 
+      an acquired machine should be scheduled for termination. This 
       should be set to a conservative and safe value to prevent the machine 
       from being billed for an additional hour. A value of zero is used to 
       specify immediate termination when a scale-down is ordered.
@@ -181,8 +181,8 @@ In a little more detail, the configuration keys have the following meaning:
 
   - ``poolUpdatePeriod`` (optional): The time interval (in seconds) between 
     periodical pool size updates. A pool size update may involve terminating 
-    termination-due instances and placing new spot requests to replace 
-    terminated spot requests. Default: 60.
+    termination-due machines and placing new machine requests to replace 
+    terminated machines. Default: 60.
 
 
 License

@@ -78,10 +78,10 @@ The configuration keys have the following meaning:
     - ``keyPair``: The AWS EC2 [key pair](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
       used to launch new machine instances.
     - ``securityGroups``: The list of [security groups](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html)
-      to apply to a new spot instance.
+      to apply to a new instance.
     - ``bootScript``: The script to run after first boot of a new instance.
   - ``scaleInConfig``: Describes how to decommission servers (on scale-down).
-    - ``victimSelectionPolicy``: Policy for selecting which spot instance to 
+    - ``victimSelectionPolicy``: Policy for selecting which instance to 
       terminate. Allowed values: ``NEWEST_INSTANCE``, ``OLDEST_INSTANCE``, 
       ``CLOSEST_TO_INSTANCE_HOUR``.
     - ``instanceHourMargin``: How many seconds prior to the next instance hour 
@@ -107,8 +107,8 @@ The configuration keys have the following meaning:
         is false (disabled).
   - ``poolUpdatePeriod`` (optional): The time interval (in seconds) between 
     periodical pool size updates. A pool size update may involve terminating 
-    termination-due instances and placing new spot requests to replace 
-    terminated spot requests. Default: 60.
+    termination-due instances and placing new instance requests to replace 
+    terminated instances. Default: 60.
 
 
 ## Usage

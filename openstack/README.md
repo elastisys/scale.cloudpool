@@ -2,8 +2,8 @@
 
 The [elastisys:scale](http://elastisys.com/scale) OpenStack 
 [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest/)
-manages a pool of OpenStack instances. Pool members are identified by a 
-configurable tag and instances are continuously provisioned/decommissioned to 
+manages a pool of OpenStack servers. Pool members are identified by a 
+configurable tag and servers are continuously provisioned/decommissioned to 
 keep the pool's actual size in sync with the desired size that the cloud 
 pool has been instructed to maintain.
 
@@ -72,7 +72,7 @@ The configuration keys have the following meaning:
 
   - ``cloudPool``: Describes how to identify/manage pool members 
     and connect to the cloud provider.
-    - ``name``: The logical name of the managed machine pool. All server instances with this 
+    - ``name``: The logical name of the managed machine pool. All servers with this 
       tag are to be considered members of the pool.
       - ``auth``: Specifies how to authenticate against the OpenStack identity service (Keystone).
         - ``keystoneEndpoint``: Endpoint URL of the Keystone service. For example, http://172.16.0.1:5000/v2.0."
@@ -88,11 +88,11 @@ The configuration keys have the following meaning:
   - ``scaleOutConfig``: Describes how to provision additional servers (on scale-up).
     - ``size``: The name of the server type to launch. For example, ``m1.medium``.
     - ``image``: The name of the machine image used to boot new servers.
-    - ``keyPair``: The name of the key pair to use for new machine instances.
-    - ``securityGroups``: The security group(s) to use for new machine instances.
-    - ``bootScript``: The script to run after first boot of a new instance.
+    - ``keyPair``: The name of the key pair to use for new servers.
+    - ``securityGroups``: The security group(s) to use for new servers.
+    - ``bootScript``: The script to run after first boot of a new server.
   - ``scaleInConfig``: Describes how to decommission servers (on scale-down).
-    - ``victimSelectionPolicy``: Policy for selecting which spot instance to 
+    - ``victimSelectionPolicy``: Policy for selecting which server to 
       terminate. Allowed values: ``NEWEST_INSTANCE``, ``OLDEST_INSTANCE``, 
       ``CLOSEST_TO_INSTANCE_HOUR``.
     - ``instanceHourMargin``: How many seconds prior to the next instance hour 
@@ -118,8 +118,8 @@ The configuration keys have the following meaning:
         is false (disabled).
   - ``poolUpdatePeriod`` (optional): The time interval (in seconds) between 
     periodical pool size updates. A pool size update may involve terminating 
-    termination-due instances and placing new spot requests to replace 
-    terminated spot requests. Default: 60.
+    termination-due servers and placing new server requests to replace 
+    terminated servers. Default: 60.
 
 
 ## Supported Authentication Schemes
