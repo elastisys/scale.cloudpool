@@ -22,7 +22,6 @@ import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.openstack.driver.Constants;
-import com.elastisys.scale.cloudpool.openstack.functions.ServerToMachine;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.collect.ImmutableMap;
@@ -37,8 +36,9 @@ public class TestServerToMachine {
 		DateTime now = UtcTime.now();
 
 		NovaAddresses addresses = new NovaAddresses();
-		addresses.add("private", novaAddress("10.11.12.2"));
-		addresses.add("public", novaAddress("130.239.48.193"));
+		addresses.add("Default network", novaAddress("10.11.12.2", "fixed"));
+		addresses.add("Default network",
+				novaAddress("130.239.48.193", "floating"));
 		Server server = server(Status.ACTIVE, now, addresses);
 
 		Machine machine = new ServerToMachine().apply(server);
@@ -58,7 +58,7 @@ public class TestServerToMachine {
 		DateTime now = UtcTime.now();
 
 		NovaAddresses addresses = new NovaAddresses();
-		addresses.add("private", novaAddress("10.11.12.2"));
+		addresses.add("private", novaAddress("10.11.12.2", "fixed"));
 		Server server = server(Status.ACTIVE, now, addresses);
 
 		Machine machine = new ServerToMachine().apply(server);
@@ -79,8 +79,8 @@ public class TestServerToMachine {
 		DateTime now = UtcTime.now();
 
 		NovaAddresses addresses = new NovaAddresses();
-		addresses.add("private", novaAddress("10.11.12.2"));
-		addresses.add("public", novaAddress("130.239.48.193"));
+		addresses.add("private", novaAddress("10.11.12.2", "fixed"));
+		addresses.add("private", novaAddress("130.239.48.193", "floating"));
 		Map<String, String> tags = ImmutableMap.of(SERVICE_STATE_TAG,
 				ServiceState.OUT_OF_SERVICE.name());
 		Server server = serverWithMetadata(Status.ACTIVE, now, addresses, tags);
@@ -94,8 +94,8 @@ public class TestServerToMachine {
 		DateTime now = UtcTime.now();
 
 		NovaAddresses addresses = new NovaAddresses();
-		addresses.add("private", novaAddress("10.11.12.2"));
-		addresses.add("public", novaAddress("130.239.48.193"));
+		addresses.add("private", novaAddress("10.11.12.2", "fixed"));
+		addresses.add("private", novaAddress("130.239.48.193", "floating"));
 		MembershipStatus status = MembershipStatus.blessed();
 		String statusAsJson = JsonUtils.toString(JsonUtils.toJson(status));
 		Map<String, String> tags = ImmutableMap.of(
@@ -134,14 +134,17 @@ public class TestServerToMachine {
 	 * Returns a {@link NovaAddress} object representing a given IP address.
 	 *
 	 * @param ip
+	 *            The IP address
+	 * @param type
+	 *            The type of IP address. Can be either "fixed" (i.e. private)
+	 *            or "floating" (i.e. public).
 	 * @return
 	 */
-	private NovaAddress novaAddress(String ip) {
+	private NovaAddress novaAddress(String ip, String type) {
 		// Since the NovaAddress class has no constructor/setters and private
 		// members, we generate an instance from JSON.
 		String dummyMacAddr = "01:23:45:67:89:ab";
 		int version = 4;
-		String type = "floating"; // can be floating or fixed
 		String asJson = String.format("{\"macAddr\": \"%s\", "
 				+ "\"version\": %d, " + "\"addr\": \"%s\", "
 				+ "\"type\": \"%s\"}", dummyMacAddr, version, ip, type);

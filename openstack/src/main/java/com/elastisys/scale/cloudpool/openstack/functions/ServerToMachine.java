@@ -1,6 +1,8 @@
 package com.elastisys.scale.cloudpool.openstack.functions;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -22,6 +24,9 @@ import com.google.gson.JsonObject;
  * counterpart.
  */
 public class ServerToMachine implements Function<Server, Machine> {
+
+	/** {@link Address} type that denotes a floating (public) IP address. */
+	private static final String FLOATING = "floating";
 
 	/**
 	 * Converts a {@link Server} to its {@link Machine} representation.
@@ -56,21 +61,21 @@ public class ServerToMachine implements Function<Server, Machine> {
 		DateTime launchTime = new DateTime(server.getCreated(),
 				DateTimeZone.UTC);
 
+		// collect public (floating) and private (fixed) IP addresses assigned
+		// to server
 		List<String> publicIps = Lists.newArrayList();
-		if (server.getAddresses().getAddresses("public") != null) {
-			List<? extends Address> publicIpAddresses = server.getAddresses()
-					.getAddresses("public");
-			for (Address publicIp : publicIpAddresses) {
-				publicIps.add(publicIp.getAddr());
-			}
-		}
-
 		List<String> privateIps = Lists.newArrayList();
-		if (server.getAddresses().getAddresses("private") != null) {
-			List<? extends Address> privateIpAddresses = server.getAddresses()
-					.getAddresses("private");
-			for (Address privateIp : privateIpAddresses) {
-				privateIps.add(privateIp.getAddr());
+		Map<String, List<? extends Address>> serverAddresses = server
+				.getAddresses().getAddresses();
+		for (Entry<String, List<? extends Address>> networkAddresses : serverAddresses
+				.entrySet()) {
+			List<? extends Address> addresses = networkAddresses.getValue();
+			for (Address address : addresses) {
+				if (address.getType().equals(FLOATING)) {
+					publicIps.add(address.getAddr());
+				} else {
+					privateIps.add(address.getAddr());
+				}
 			}
 		}
 
@@ -93,5 +98,4 @@ public class ServerToMachine implements Function<Server, Machine> {
 		return new Machine(server.getId(), machineState, membershipStatus,
 				serviceState, launchTime, publicIps, privateIps, metadata);
 	}
-
 }
