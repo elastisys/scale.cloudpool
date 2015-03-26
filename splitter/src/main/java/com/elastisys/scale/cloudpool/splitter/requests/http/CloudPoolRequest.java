@@ -17,6 +17,21 @@ import com.elastisys.scale.commons.net.http.client.AuthenticatedHttpClient;
  */
 public abstract class CloudPoolRequest<T> implements Callable<T> {
 
+	/**
+	 * The default timeout in milliseconds until a connection is established. A
+	 * timeout value of zero is interpreted as an infinite timeout. A negative
+	 * value is interpreted as undefined (system default).
+	 */
+	private static final int DEFAULT_CONNECTION_TIMEOUT = 60000;
+	/**
+	 * The default socket timeout ({@code SO_TIMEOUT}) in milliseconds, which is
+	 * the timeout for waiting for data or, put differently, a maximum period
+	 * inactivity between two consecutive data packets). A timeout value of zero
+	 * is interpreted as an infinite timeout. A negative value is interpreted as
+	 * undefined (system default).
+	 */
+	private static final int DEFAULT_SOCKET_TIMEOUT = 180000;
+
 	/** The targeted cloud pool. */
 	private final PrioritizedCloudPool cloudPool;
 
@@ -56,7 +71,8 @@ public abstract class CloudPoolRequest<T> implements Callable<T> {
 		try {
 			AuthenticatedHttpClient client = new AuthenticatedHttpClient(
 					cloudPool().getBasicCredentials(), cloudPool()
-							.getCertificateCredentials());
+							.getCertificateCredentials(),
+					DEFAULT_CONNECTION_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 			return execute(client);
 		} catch (Exception e) {
 			String requestClassName = getClass().getSimpleName();
