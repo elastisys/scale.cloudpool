@@ -857,7 +857,7 @@ public class BaseCloudPool implements CloudPool {
 				"Service state set to %s for machine %s.", state.name(),
 				machineId);
 		this.eventBus.post(new Alert(AlertTopics.SERVICE_STATE.name(),
-				AlertSeverity.INFO, UtcTime.now(), message, tags));
+				AlertSeverity.DEBUG, UtcTime.now(), message, tags));
 	}
 
 	/**
@@ -874,7 +874,7 @@ public class BaseCloudPool implements CloudPool {
 				"Membership status set to %s for machine %s.",
 				membershipStatus, machineId);
 		this.eventBus.post(new Alert(AlertTopics.MEMBERSHIP_STATUS.name(),
-				AlertSeverity.INFO, UtcTime.now(), message, tags));
+				AlertSeverity.DEBUG, UtcTime.now(), message, tags));
 	}
 
 	/**
