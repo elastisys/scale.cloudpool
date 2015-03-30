@@ -11,9 +11,9 @@ import static com.elastisys.scale.cloudpool.commons.basepool.BasePoolTestUtils.m
 import static com.elastisys.scale.cloudpool.commons.basepool.IsAlert.isAlert;
 import static com.elastisys.scale.cloudpool.commons.basepool.IsAttachAlert.isAttachAlert;
 import static com.elastisys.scale.cloudpool.commons.basepool.IsDetachAlert.isDetachAlert;
-import static com.elastisys.scale.cloudpool.commons.basepool.IsResizeAlert.isResizeAlert;
 import static com.elastisys.scale.cloudpool.commons.basepool.IsSetMembershipStatusAlert.isMembershipStatusAlert;
 import static com.elastisys.scale.cloudpool.commons.basepool.IsSetServiceStateAlert.isSetServiceStateAlert;
+import static com.elastisys.scale.cloudpool.commons.basepool.IsStartAlert.isStartAlert;
 import static com.elastisys.scale.cloudpool.commons.basepool.IsTerminationAlert.isTerminationAlert;
 import static com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertTopics.RESIZE;
 import static com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy.NEWEST_INSTANCE;
@@ -213,7 +213,8 @@ public class TestBaseCloudPoolOperation {
 		verify(this.driverMock).startMachines(1, scaleUpConfig());
 
 		// verify event posted on event bus
-		verify(this.eventBusMock).post(argThat(isResizeAlert(3, 4)));
+		verify(this.eventBusMock).post(
+				argThat(IsStartAlert.isStartAlert("i-5")));
 	}
 
 	@Test
@@ -245,7 +246,8 @@ public class TestBaseCloudPoolOperation {
 		verify(this.driverMock).startMachines(2, scaleUpConfig());
 
 		// verify event posted on event bus
-		verify(this.eventBusMock).post(argThat(isResizeAlert(3, 5)));
+		verify(this.eventBusMock).post(argThat(isStartAlert("i-5", "i-6")));
+
 	}
 
 	/**
@@ -285,7 +287,7 @@ public class TestBaseCloudPoolOperation {
 		verify(this.driverMock).startMachines(1, scaleUpConfig());
 
 		// verify event posted on event bus
-		verify(this.eventBusMock).post(argThat(isResizeAlert(3, 4)));
+		verify(this.eventBusMock).post(argThat(isStartAlert("sir-5")));
 	}
 
 	/**
@@ -375,7 +377,8 @@ public class TestBaseCloudPoolOperation {
 		verify(this.driverMock).startMachines(2, scaleUpConfig());
 
 		// verify event posted on event bus
-		verify(this.eventBusMock).post(argThat(isResizeAlert(3, 4)));
+		verify(this.eventBusMock).post(argThat(isStartAlert("i-5")));
+
 		// verify that an error event was posted on event bus
 		verify(this.eventBusMock).post(argThat(isAlert(RESIZE.name(), ERROR)));
 	}
@@ -408,7 +411,7 @@ public class TestBaseCloudPoolOperation {
 		// machine
 		verify(this.driverMock).terminateMachine("i-3");
 		// verify event posted on event bus
-		verify(this.eventBusMock).post(argThat(isResizeAlert(3, 2)));
+		verify(this.eventBusMock).post(argThat(isTerminationAlert("i-3")));
 
 		assertThat(this.cloudPool.desiredSize(), is(2));
 	}
@@ -441,7 +444,7 @@ public class TestBaseCloudPoolOperation {
 		// machine
 		verify(this.driverMock).terminateMachine("i-1");
 		// verify event posted on event bus
-		verify(this.eventBusMock).post(argThat(isResizeAlert(3, 2)));
+		verify(this.eventBusMock).post(argThat(isTerminationAlert("i-1")));
 
 		assertThat(this.cloudPool.desiredSize(), is(2));
 	}
@@ -475,7 +478,8 @@ public class TestBaseCloudPoolOperation {
 		verify(this.driverMock).terminateMachine("i-3");
 		verify(this.driverMock).terminateMachine("i-2");
 		// verify event posted on event bus
-		verify(this.eventBusMock).post(argThat(isResizeAlert(3, 1)));
+		verify(this.eventBusMock).post(
+				argThat(isTerminationAlert("i-2", "i-3")));
 
 		assertThat(this.cloudPool.desiredSize(), is(1));
 	}
@@ -591,7 +595,7 @@ public class TestBaseCloudPoolOperation {
 		verify(this.eventBusMock, atMost(1)).post(
 				argThat(isAlert(RESIZE.name(), ERROR)));
 		// verify that termination of i-2 succeeded
-		verify(this.eventBusMock).post(argThat(isResizeAlert(3, 2)));
+		verify(this.eventBusMock).post(argThat(isTerminationAlert("i-2")));
 
 		assertThat(this.cloudPool.desiredSize(), is(1));
 	}
@@ -640,7 +644,9 @@ public class TestBaseCloudPoolOperation {
 		this.cloudPool.updateMachinePool();
 		// ... now termination should have been ordered
 		verify(this.driverMock).terminateMachine("i-1");
-		verify(this.eventBusMock).post(argThat(isResizeAlert(1, 0)));
+		// verify event posted on event bus
+		verify(this.eventBusMock).post(
+				argThat(IsTerminationAlert.isTerminationAlert("i-1")));
 
 		assertThat(this.cloudPool.desiredSize(), is(0));
 	}
@@ -712,7 +718,8 @@ public class TestBaseCloudPoolOperation {
 		// verify that cloud driver was asked to start one additional machine
 		verify(this.driverMock).startMachines(1, scaleUpConfig());
 		// verify event posted on event bus
-		verify(this.eventBusMock).post(argThat(isResizeAlert(2, 3)));
+		verify(this.eventBusMock).post(argThat(isStartAlert("i-5")));
+
 	}
 
 	/**
@@ -746,7 +753,8 @@ public class TestBaseCloudPoolOperation {
 		// machine
 		verify(this.driverMock).terminateMachine("i-3");
 		// verify event posted on event bus
-		verify(this.eventBusMock).post(argThat(isResizeAlert(3, 2)));
+		verify(this.eventBusMock).post(argThat(isTerminationAlert("i-3")));
+
 		assertThat(this.cloudPool.desiredSize(), is(2));
 	}
 
@@ -824,7 +832,8 @@ public class TestBaseCloudPoolOperation {
 		// was not selected for termination
 		verify(this.driverMock).terminateMachine("i-2");
 		// verify event posted on event bus
-		verify(this.eventBusMock).post(argThat(isResizeAlert(2, 1)));
+		verify(this.eventBusMock).post(argThat(isTerminationAlert("i-2")));
+
 		assertThat(this.cloudPool.desiredSize(), is(1));
 	}
 
@@ -862,7 +871,7 @@ public class TestBaseCloudPoolOperation {
 		// verify that cloud driver was asked to start one additional machine
 		verify(this.driverMock).startMachines(1, scaleUpConfig());
 		// verify event posted on event bus
-		verify(this.eventBusMock).post(argThat(isResizeAlert(1, 2)));
+		verify(this.eventBusMock).post(argThat(isStartAlert("i-3")));
 	}
 
 	/**

@@ -14,11 +14,11 @@ import org.hamcrest.TypeSafeMatcher;
 import com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertTopics;
 import com.elastisys.scale.commons.net.smtp.alerter.Alert;
 
-public class IsTerminationAlert extends TypeSafeMatcher<Alert> {
+public class IsStartAlert extends TypeSafeMatcher<Alert> {
 
 	private final List<String> machineIds;
 
-	public IsTerminationAlert(List<String> machineIds) {
+	public IsStartAlert(List<String> machineIds) {
 		this.machineIds = machineIds;
 	}
 
@@ -30,11 +30,10 @@ public class IsTerminationAlert extends TypeSafeMatcher<Alert> {
 		for (String machineId : this.machineIds) {
 			System.out.println(someAlert);
 			Map<String, String> alertTags = someAlert.getTags();
-			if (alertTags == null
-					|| !alertTags.containsKey("terminatedMachines")) {
+			if (alertTags == null || !alertTags.containsKey("startedMachines")) {
 				return false;
 			}
-			if (!alertTags.get("terminatedMachines").contains(machineId)) {
+			if (!alertTags.get("startedMachines").contains(machineId)) {
 				return false;
 			}
 		}
@@ -43,12 +42,12 @@ public class IsTerminationAlert extends TypeSafeMatcher<Alert> {
 
 	@Override
 	public void describeTo(Description description) {
-		description.appendText(String.format("termination alert for %s",
+		description.appendText(String.format("start alert for %s",
 				this.machineIds));
 	}
 
 	@Factory
-	public static <T> Matcher<Alert> isTerminationAlert(String... machineIds) {
-		return new IsTerminationAlert(Arrays.asList(machineIds));
+	public static <T> Matcher<Alert> isStartAlert(String... machineIds) {
+		return new IsStartAlert(Arrays.asList(machineIds));
 	}
 }

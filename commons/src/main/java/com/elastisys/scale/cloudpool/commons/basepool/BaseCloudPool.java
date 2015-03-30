@@ -657,10 +657,6 @@ public class BaseCloudPool implements CloudPool {
 		MachinePool pool = getMachinePool();
 		LOG.debug("current pool members: {}",
 				Lists.transform(pool.getMachines(), Machine.toShortFormat()));
-		// Clean out obsolete machines from termination queue. Note: this also
-		// cleans out machines that have been taken out of service after being
-		// scheduled for termination.
-		int poolSize = pool.getActiveMachines().size();
 		this.terminationQueue.filter(pool.getActiveMachines());
 		ResizePlanner resizePlanner = new ResizePlanner(pool,
 				this.terminationQueue, scaleInConfig()
@@ -670,8 +666,7 @@ public class BaseCloudPool implements CloudPool {
 
 		ResizePlan resizePlan = resizePlanner.calculateResizePlan(newSize);
 		if (resizePlan.hasScaleOutActions()) {
-			List<Machine> startedMachines = scaleOut(poolSize, resizePlan);
-			poolSize += startedMachines.size();
+			scaleOut(resizePlan);
 		}
 		if (resizePlan.hasScaleInActions()) {
 			List<ScheduledTermination> terminations = resizePlan
@@ -690,13 +685,10 @@ public class BaseCloudPool implements CloudPool {
 			LOG.info("pool is already properly sized ({})", netSize);
 		}
 		// effectuate scheduled terminations that are (over)due
-		List<Machine> terminated = terminateOverdueMachines();
-		if (!terminated.isEmpty()) {
-			scaleInAlert(poolSize, terminated);
-		}
+		terminateOverdueMachines();
 	}
 
-	private List<Machine> scaleOut(int originalPoolSize, ResizePlan resizePlan)
+	private List<Machine> scaleOut(ResizePlan resizePlan)
 			throws StartMachinesException {
 		LOG.info("sparing {} machine(s) from termination, "
 				+ "placing {} new request(s)", resizePlan.getToSpare(),
@@ -706,12 +698,12 @@ public class BaseCloudPool implements CloudPool {
 		try {
 			List<Machine> startedMachines = this.cloudDriver.startMachines(
 					resizePlan.getToRequest(), scaleOutConfig());
-			scaleOutAlert(originalPoolSize, startedMachines);
+			startAlert(startedMachines);
 			return startedMachines;
 		} catch (StartMachinesException e) {
 			// may have failed part-way through. notify of machines that were
 			// started before error occurred.
-			scaleOutAlert(originalPoolSize, e.getStartedMachines());
+			startAlert(e.getStartedMachines());
 			throw e;
 		}
 	}
@@ -746,27 +738,27 @@ public class BaseCloudPool implements CloudPool {
 						AlertSeverity.WARN, UtcTime.now(), message));
 			}
 		}
+		if (!terminated.isEmpty()) {
+			terminationAlert(terminated);
+		}
 
 		return terminated;
 	}
 
 	/**
-	 * Post an {@link Alert} that the pool has grown.
+	 * Post an {@link Alert} that new machines have been started in the pool.
 	 *
-	 * @param oldSize
-	 *            The previous size of the pool.
 	 * @param startedMachines
 	 *            The new machine instances that have been started.
 	 */
-	private void scaleOutAlert(Integer oldSize, List<Machine> startedMachines) {
+	private void startAlert(List<Machine> startedMachines) {
 		if (startedMachines.isEmpty()) {
 			return;
 		}
 
-		int newSize = oldSize + startedMachines.size();
 		String message = String.format(
-				"size of cloud pool \"%s\" changed from %d to %d", poolName(),
-				oldSize, newSize);
+				"%d machine(s) were started in cloud pool \"%s\"",
+				startedMachines.size(), poolName());
 		LOG.info(message);
 		Map<String, String> tags = Maps.newHashMap();
 		List<String> startedMachineIds = Lists.newArrayList();
@@ -779,18 +771,16 @@ public class BaseCloudPool implements CloudPool {
 	}
 
 	/**
-	 * Post an {@link Alert} that the cloud pool has shrunk.
+	 * Post an {@link Alert} that the members have been terminated from the
+	 * pool.
 	 *
-	 * @param oldSize
-	 *            The previous size of the pool.
 	 * @param terminatedMachines
 	 *            The machine instances that were terminated.
 	 */
-	private void scaleInAlert(Integer oldSize, List<Machine> terminatedMachines) {
-		int newSize = oldSize - terminatedMachines.size();
+	private void terminationAlert(List<Machine> terminatedMachines) {
 		String message = String.format(
-				"size of pool \"%s\" changed from %d to %d", poolName(),
-				oldSize, newSize);
+				"%d machine(s) were terminated in cloud pool \"%s\"",
+				terminatedMachines.size(), poolName());
 		LOG.info(message);
 		Map<String, String> tags = Maps.newHashMap();
 		List<String> terminatedMachineIds = Lists.newArrayList();
