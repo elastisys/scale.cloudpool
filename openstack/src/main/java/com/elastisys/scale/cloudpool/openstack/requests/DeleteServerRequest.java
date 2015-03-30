@@ -3,10 +3,18 @@ package com.elastisys.scale.cloudpool.openstack.requests;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+import jersey.repackaged.com.google.common.collect.Lists;
+import jersey.repackaged.com.google.common.collect.Maps;
+
 import org.openstack4j.api.OSClient;
 import org.openstack4j.api.compute.ComputeFloatingIPService;
 import org.openstack4j.api.compute.ServerService;
 import org.openstack4j.model.compute.ActionResponse;
+import org.openstack4j.model.compute.Address;
 import org.openstack4j.model.compute.FloatingIP;
 import org.openstack4j.model.compute.Server;
 import org.slf4j.Logger;
@@ -100,10 +108,11 @@ public class DeleteServerRequest extends AbstractOpenstackRequest<Void> {
 		LOG.debug("releasing floating IP addresses associated with {}",
 				server.getName());
 		ComputeFloatingIPService floatingIpApi = api.compute().floatingIps();
-
-		for (FloatingIP floatingIp : floatingIpApi.list()) {
-			String assignedTo = floatingIp.getInstanceId();
-			if (assignedTo != null && assignedTo.equals(server.getId())) {
+		Map<String, FloatingIP> tenantFloatingIps = tenantFloatingIps(floatingIpApi);
+		Collection<String> serverIps = serverIps(server);
+		for (String serverIp : serverIps) {
+			if (tenantFloatingIps.containsKey(serverIp)) {
+				FloatingIP floatingIp = tenantFloatingIps.get(serverIp);
 				LOG.debug("releasing floating IP {} from '{}'",
 						floatingIp.getFloatingIpAddress(), server.getName());
 				floatingIpApi.removeFloatingIP(server,
@@ -111,5 +120,40 @@ public class DeleteServerRequest extends AbstractOpenstackRequest<Void> {
 				floatingIpApi.deallocateIP(floatingIp.getId());
 			}
 		}
+	}
+
+	/**
+	 * Returns the collection of IP addresses (both public and private)
+	 * associated with a {@link Server}.
+	 *
+	 * @param server
+	 * @return
+	 */
+	private Collection<String> serverIps(Server server) {
+		List<String> serverIps = Lists.newLinkedList();
+		for (List<? extends Address> addressGroup : server.getAddresses()
+				.getAddresses().values()) {
+			for (Address address : addressGroup) {
+				serverIps.add(address.getAddr());
+			}
+		}
+		return serverIps;
+	}
+
+	/**
+	 * Returns all floating IP addresses allocated to the tenant.
+	 *
+	 * @param floatingIpApi
+	 * @return A {@link Map} of floating IP addresses, where keys are IP
+	 *         addresses and values are {@link FloatingIP} objects.
+	 */
+	private Map<String, FloatingIP> tenantFloatingIps(
+			ComputeFloatingIPService floatingIpApi) {
+		Map<String, FloatingIP> ipToFloatingIp = Maps.newHashMap();
+		List<? extends FloatingIP> floatingIps = floatingIpApi.list();
+		for (FloatingIP floatingIP : floatingIps) {
+			ipToFloatingIp.put(floatingIP.getFloatingIpAddress(), floatingIP);
+		}
+		return ipToFloatingIp;
 	}
 }
