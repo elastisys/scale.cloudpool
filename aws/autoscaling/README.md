@@ -66,7 +66,7 @@ The `awsaspool` is configured with a JSON document such as the following:
 
 The configuration keys have the following meaning:
 
-  - ``scalingGroup``: Describes how to identify/manage scaling group members 
+  - ``cloudPool``: Describes how to identify/manage cloud pool members 
     and connect to the cloud provider.
     - ``name``: The name of the managed Auto Scaling Group.
     - ``awsAccessKeyId``: Your [AWS Access Key ID](https://aws-portal.amazon.com/gp/aws/securityCredentials). 
@@ -166,33 +166,17 @@ If you want to build the image yourself, issue the following commands:
 ### Running a container from the image
 Once the docker image is built for the cloud pool, it can be run with:
 
-    docker run -d -p 2222:22 -p 8443:443 elastisys/awsaspool:<version>
+    docker run -d -p 8443:443 elastisys/awsaspool:<version>
 
-This will publish the container's SSH port on host port 2222 and the 
-cloud pool's HTTPS port on host port 8443. The container includes a 
-privileged user named `elastisys` (password: `secret`).
-
-However, password logins are diabled for that user, so if you want to be able to 
-log in over SSH some extra effort is needed. More specifically, an ${SSH_KEY} 
-environment variable needs to be passed to the container at run-time. The variable 
-should be set to the contain a public key (such as ~/.ssh/id_rsa.pub). The key 
-will be set in the container's /home/elastisys/.ssh/authorized_keys and therefore 
-allow ssh logins by the owner of the corresponding private key. As an example, 
-the container could be run as follows:
-
-    docker run -d -p 2222:22 -p 8443:443 \
-           -e "SSH_KEY=$(cat ~/.ssh/id_rsa.pub)" \
-           elastisys/awsaspool:<version>
-
-You will then be able to log in to the started container with:
-
-    ssh -i ~/.ssh/id_rsa -p 2222 elastisys@localhost
-
+This will publish the container's HTTPS port on host port 8443.
 
 
 
 ### Debugging a running container
-The simplest way to debug a running container is to log into it over SSH
+The simplest way to debug a running container is to get a shell session via
+  
+    docker exec -it <container-id/name> /bin/bash
+
 and check out the log files under `/var/log/elastisys`. Configurations are
 located under `/etc/elastisys` and binaries under `/opt/elastisys`.
 

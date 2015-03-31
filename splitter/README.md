@@ -134,34 +134,20 @@ If you want to build the image yourself, issue the following commands:
 ### Running a container from the image
 Once the docker image is built for the cloud pool, it can be run with:
 
-    docker run -d -p 2222:22 -p 8443:443 elastisys/splitterpool:<version>
+    docker run -d -p 8443:443 elastisys/splitterpool:<version>
 
-This will publish the container's SSH port on host port 2222 and the 
-cloud pool's HTTPS port on host port 8443. The container includes a 
-privileged user named `elastisys` (password: `secret`).
-
-However, password logins are diabled for that user, so if you want to be able to 
-log in over SSH some extra effort is needed. More specifically, an ${SSH_KEY} 
-environment variable needs to be passed to the container at run-time. The variable 
-should be set to the contain a public key (such as ~/.ssh/id_rsa.pub). The key 
-will be set in the container's /home/elastisys/.ssh/authorized_keys and therefore 
-allow ssh logins by the owner of the corresponding private key. As an example, 
-the container could be run as follows:
-
-    docker run -d -p 2222:22 -p 8443:443 \
-           -e "SSH_KEY=$(cat ~/.ssh/id_rsa.pub)" \
-           elastisys/splitterpool:<version>
-
-You will then be able to log in to the started container with:
-
-    ssh -i ~/.ssh/id_rsa -p 2222 elastisys@localhost
+This will publish the container's HTTPS port on host port 8443.
 
 
 
 ### Debugging a running container
-The simplest way to debug a running container is to log into it over SSH
+The simplest way to debug a running container is to get a shell session via
+  
+    docker exec -it <container-id/name> /bin/bash
+
 and check out the log files under `/var/log/elastisys`. Configurations are
 located under `/etc/elastisys` and binaries under `/opt/elastisys`.
+
 
 
 
