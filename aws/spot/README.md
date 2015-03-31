@@ -1,6 +1,6 @@
 # AWS Spot Instance cloud pool
 
-The [elastisys:scale](http://elastisys.com/scale) AWS Spot Instance 
+The [elastisys](http://elastisys.com/) AWS Spot Instance 
 [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest/)
 manages a pool of AWS spot  instances. Pool members are identified by a 
 configurable tag and instances are continuously provisioned/decommissioned to 
@@ -8,7 +8,7 @@ keep the pool's actual size in sync with the desired size that the cloud
 pool has been instructed to maintain.
 
 The cloud pool publishes a REST API that follows the general contract of an
-[elastisys:scale](http://elastisys.com/scale) cloud pool, through which
+[elastisys](http://elastisys.com/) cloud pool, through which
 a client (for example, an autoscaler) can manage the pool. For the complete API 
 reference, the reader is referred to the 
 [cloud pool API documentation](http://cloudpoolrestapi.readthedocs.org/en/latest/).
@@ -46,7 +46,7 @@ The `spotpool` is configured with a JSON document such as the following:
       "instanceHourMargin": 300
     },
     "alerts": {
-      "subject": "[elastisys:scale] cloud pool alert for MyScalingPool",
+      "subject": "[elastisys] cloud pool alert for MyScalingPool",
       "recipients": ["receiver@destination.com"],
       "sender": "noreply@elastisys.com",
       "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
@@ -73,13 +73,13 @@ The configuration keys have the following meaning:
     - ``region``: The [AWS region](http://docs.aws.amazon.com/general/latest/gr/rande.html) to connect to.
     - ``bidPrice``: The bid price (maximum price to pay for an instance hour in dollars) to use when 
       requesting spot instances.
-  - ``scaleOutConfig``: Describes how to provision additional servers (on scale-up).
+  - ``scaleOutConfig``: Describes how to provision additional servers (on scale-out).
     - ``size``: The name of the server type to launch. For example, ``m1.medium``.
     - ``image``: The name of the machine image used to boot new servers.
     - ``keyPair``: The name of the key pair to use for new machine instances.
     - ``securityGroups``: The security group(s) to use for new machine instances.
     - ``bootScript``: The script to run after first boot of a new instance.
-  - ``scaleInConfig``: Describes how to decommission servers (on scale-down).
+  - ``scaleInConfig``: Describes how to decommission servers (on scale-in).
     - ``victimSelectionPolicy``: Policy for selecting which spot instance to 
       terminate. Allowed values: ``NEWEST_INSTANCE``, ``OLDEST_INSTANCE``, 
       ``CLOSEST_TO_INSTANCE_HOUR``.
@@ -87,7 +87,7 @@ The configuration keys have the following meaning:
       an acquired machine instance should be scheduled for termination. This 
       should be set to a conservative and safe value to prevent the machine 
       from being billed for an additional hour. A value of zero is used to 
-      specify immediate termination when a scale-down is ordered.
+      specify immediate termination when a scale-in is ordered.
   - ``alerts``: Configuration that describes how to send email alerts.
     - ``subject``: The subject line to use in sent mails (Subject).
     - ``recipients``: The receiver list (a list of recipient email addresses).

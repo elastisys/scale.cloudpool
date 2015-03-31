@@ -1,6 +1,6 @@
-# AWS OpenStack cloud pool
+# OpenStack cloud pool
 
-The [elastisys:scale](http://elastisys.com/scale) OpenStack 
+The [elastisys](http://elastisys.com/) OpenStack 
 [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest/)
 manages a pool of OpenStack servers. Pool members are identified by a 
 configurable tag and servers are continuously provisioned/decommissioned to 
@@ -8,7 +8,7 @@ keep the pool's actual size in sync with the desired size that the cloud
 pool has been instructed to maintain.
 
 The cloud pool publishes a REST API that follows the general contract of an
-[elastisys:scale](http://elastisys.com/scale) cloud pool, through which
+[elastisys](http://elastisys.com/) cloud pool, through which
 a client (for example, an autoscaler) can manage the pool. For the complete API 
 reference, the reader is referred to the 
 [cloud pool API documentation](http://cloudpoolrestapi.readthedocs.org/en/latest/).
@@ -52,7 +52,7 @@ The `openstackpool` is configured with a JSON document such as the following:
       "instanceHourMargin": 300
     },
     "alerts": {
-      "subject": "[elastisys:scale] cloud pool alert for MyScalingPool",
+      "subject": "[elastisys] cloud pool alert for MyScalingPool",
       "recipients": ["receiver@destination.com"],
       "sender": "noreply@elastisys.com",
       "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
@@ -99,7 +99,7 @@ The configuration keys have the following meaning:
       an acquired machine instance should be scheduled for termination. This 
       should be set to a conservative and safe value to prevent the machine 
       from being billed for an additional hour. A value of zero is used to 
-      specify immediate termination when a scale-down is ordered.
+      specify immediate termination when a scale-in is ordered.
   - ``alerts``: Configuration that describes how to send email alerts.
     - ``subject``: The subject line to use in sent mails (Subject).
     - ``recipients``: The receiver list (a list of recipient email addresses).
