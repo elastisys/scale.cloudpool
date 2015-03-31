@@ -2,7 +2,7 @@ package com.elastisys.scale.cloudpool.commons.resizeplanner;
 
 import static com.elastisys.scale.cloudpool.api.types.Machine.isActiveMember;
 import static com.elastisys.scale.cloudpool.api.types.Machine.isEvictable;
-import static com.elastisys.scale.cloudpool.api.types.Machine.withState;
+import static com.elastisys.scale.cloudpool.api.types.Machine.inState;
 import static com.elastisys.scale.cloudpool.api.types.MachineState.REQUESTED;
 import static com.elastisys.scale.commons.util.time.UtcTime.now;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -212,7 +212,7 @@ public class ResizePlanner {
 
 		// Favor termination of REQUESTED machines (since these are likely
 		// to not yet incur cost). Terminate them immediately.
-		Iterable<Machine> requested = filter(candidates, withState(REQUESTED));
+		Iterable<Machine> requested = filter(candidates, inState(REQUESTED));
 		Iterator<Machine> requestedMachines = requested.iterator();
 		while ((excessMachines > 0) && requestedMachines.hasNext()) {
 			toTerminate.add(new ScheduledTermination(requestedMachines.next(),

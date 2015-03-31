@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.api.types;
 import static com.elastisys.scale.cloudpool.api.types.TestUtils.ips;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -239,5 +240,39 @@ public class TestMachine {
 		assertThat(Machine.sort(asList(third, first, second), earliestFirst),
 				is(asList(first, second, third)));
 
+	}
+
+	/**
+	 * Tests {@link Machine} copying through the
+	 * {@link Machine#withMetadata(JsonObject)} method.
+	 */
+	@Test
+	public void testWithMetadata() {
+		JsonObject metadata = JsonUtils
+				.parseJsonString("{'a': 1, 'b': 2, c: {'d': 4}}");
+		Machine original = new Machine("i-1", MachineState.RUNNING,
+				new MembershipStatus(true, false), ServiceState.UNKNOWN,
+				UtcTime.parse("2014-01-10T08:00:00Z"), ips("1.2.3.4"),
+				ips("1.2.3.5"), metadata);
+
+		// other metadata
+		JsonObject otherMetadata = JsonUtils
+				.parseJsonString("{'d': 1, 'e': 2}");
+		Machine copy = original.withMetadata(otherMetadata);
+		// all fields should be equal except metadata
+		assertThat(copy.getId(), is(original.getId()));
+		assertThat(copy.getMachineState(), is(original.getMachineState()));
+		assertThat(copy.getMembershipStatus(),
+				is(original.getMembershipStatus()));
+		assertThat(copy.getServiceState(), is(original.getServiceState()));
+		assertThat(copy.getLaunchtime(), is(original.getLaunchtime()));
+		assertThat(copy.getPublicIps(), is(original.getPublicIps()));
+		assertThat(copy.getPrivateIps(), is(original.getPrivateIps()));
+		assertFalse(copy.getMetadata().equals(original.getMetadata()));
+		assertThat(copy.getMetadata(), is(otherMetadata));
+
+		// should be possible to set null metadata
+		copy = original.withMetadata(null);
+		assertThat(copy.getMetadata(), is(nullValue()));
 	}
 }

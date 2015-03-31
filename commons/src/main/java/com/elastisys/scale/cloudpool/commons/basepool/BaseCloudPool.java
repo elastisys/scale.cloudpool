@@ -59,6 +59,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.Atomics;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 /**
@@ -566,7 +567,7 @@ public class BaseCloudPool implements CloudPool {
 			SmtpServerSettings mailServerSettings = alertsConfig
 					.getMailServer().toSmtpServerSettings();
 			this.smtpAlerter.set(new EmailAlerter(mailServerSettings,
-					sendSettings, standardAlertTags()));
+					sendSettings, standardAlertMetadata()));
 			this.eventBus.register(this.smtpAlerter.get());
 		}
 	}
@@ -577,15 +578,16 @@ public class BaseCloudPool implements CloudPool {
 	 *
 	 * @return
 	 */
-	private Map<String, String> standardAlertTags() {
-		Map<String, String> standardTags = Maps.newHashMap();
+	private Map<String, JsonElement> standardAlertMetadata() {
+		Map<String, JsonElement> standardTags = Maps.newHashMap();
 		List<String> ipv4Addresses = Lists.newArrayList();
 		for (InetAddress inetAddr : HostUtils.hostIpv4Addresses()) {
 			ipv4Addresses.add(inetAddr.getHostAddress());
 		}
 		String ipAddresses = Joiner.on(", ").join(ipv4Addresses);
-		standardTags.put("cloudPoolIps", ipAddresses);
-		standardTags.put("pool", config().getCloudPool().getName());
+		standardTags.put("cloudPoolEndpointIps", JsonUtils.toJson(ipAddresses));
+		standardTags.put("cloudPoolName",
+				JsonUtils.toJson(config().getCloudPool().getName()));
 		return standardTags;
 	}
 
@@ -656,7 +658,7 @@ public class BaseCloudPool implements CloudPool {
 
 		MachinePool pool = getMachinePool();
 		LOG.debug("current pool members: {}",
-				Lists.transform(pool.getMachines(), Machine.toShortFormat()));
+				Lists.transform(pool.getMachines(), Machine.toShortString()));
 		this.terminationQueue.filter(pool.getActiveMachines());
 		ResizePlanner resizePlanner = new ResizePlanner(pool,
 				this.terminationQueue, scaleInConfig()
@@ -751,21 +753,21 @@ public class BaseCloudPool implements CloudPool {
 	 * @param startedMachines
 	 *            The new machine instances that have been started.
 	 */
-	private void startAlert(List<Machine> startedMachines) {
+	void startAlert(List<Machine> startedMachines) {
 		if (startedMachines.isEmpty()) {
 			return;
 		}
 
 		String message = String.format(
-				"%d machine(s) were started in cloud pool \"%s\"",
+				"%d machine(s) were started in cloud pool %s",
 				startedMachines.size(), poolName());
 		LOG.info(message);
-		Map<String, String> tags = Maps.newHashMap();
-		List<String> startedMachineIds = Lists.newArrayList();
-		for (Machine startedMachine : startedMachines) {
-			startedMachineIds.add(startedMachine.getId());
-		}
-		tags.put("startedMachines", Joiner.on(", ").join(startedMachineIds));
+		Map<String, JsonElement> tags = Maps.newHashMap();
+		List<String> startedMachineIds = Lists.transform(startedMachines,
+				Machine.toId());
+		tags.put("startedMachines",
+				JsonUtils.toJson(Joiner.on(", ").join(startedMachineIds)));
+		tags.put("poolMembers", poolMembersTag());
 		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
 				AlertSeverity.INFO, UtcTime.now(), message, tags));
 	}
@@ -777,18 +779,17 @@ public class BaseCloudPool implements CloudPool {
 	 * @param terminatedMachines
 	 *            The machine instances that were terminated.
 	 */
-	private void terminationAlert(List<Machine> terminatedMachines) {
+	void terminationAlert(List<Machine> terminatedMachines) {
 		String message = String.format(
-				"%d machine(s) were terminated in cloud pool \"%s\"",
+				"%d machine(s) were terminated in cloud pool %s",
 				terminatedMachines.size(), poolName());
 		LOG.info(message);
-		Map<String, String> tags = Maps.newHashMap();
-		List<String> terminatedMachineIds = Lists.newArrayList();
-		for (Machine terminatedMachine : terminatedMachines) {
-			terminatedMachineIds.add(terminatedMachine.getId());
-		}
+		Map<String, JsonElement> tags = Maps.newHashMap();
+		List<String> terminatedMachineIds = Lists.transform(terminatedMachines,
+				Machine.toId());
 		tags.put("terminatedMachines",
-				Joiner.on(", ").join(terminatedMachineIds));
+				JsonUtils.toJson(Joiner.on(", ").join(terminatedMachineIds)));
+		tags.put("poolMembers", poolMembersTag());
 		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
 				AlertSeverity.INFO, UtcTime.now(), message, tags));
 	}
@@ -798,9 +799,10 @@ public class BaseCloudPool implements CloudPool {
 	 *
 	 * @param machineId
 	 */
-	private void terminationAlert(String machineId) {
-		Map<String, String> tags = ImmutableMap.of("terminatedMachines",
-				machineId);
+	void terminationAlert(String machineId) {
+		Map<String, JsonElement> tags = Maps.newHashMap();
+		tags.put("terminatedMachines", JsonUtils.toJson(machineId));
+		tags.put("poolMembers", poolMembersTag());
 		String message = String.format("Terminated machine %s.", machineId);
 		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
 				AlertSeverity.INFO, UtcTime.now(), message, tags));
@@ -811,9 +813,9 @@ public class BaseCloudPool implements CloudPool {
 	 *
 	 * @param machineId
 	 */
-	private void attachAlert(String machineId) {
-		Map<String, String> tags = ImmutableMap.of("attachedMachines",
-				machineId);
+	void attachAlert(String machineId) {
+		Map<String, JsonElement> tags = ImmutableMap.of("attachedMachines",
+				JsonUtils.toJson(machineId));
 		String message = String.format("Attached machine %s to pool.",
 				machineId);
 		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
@@ -825,9 +827,9 @@ public class BaseCloudPool implements CloudPool {
 	 *
 	 * @param machineId
 	 */
-	private void detachAlert(String machineId) {
-		Map<String, String> tags = ImmutableMap.of("detachedMachines",
-				machineId);
+	void detachAlert(String machineId) {
+		Map<String, JsonElement> tags = ImmutableMap.of("detachedMachines",
+				JsonUtils.toJson(machineId));
 		String message = String.format("Detached machine %s from pool.",
 				machineId);
 		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
@@ -841,8 +843,8 @@ public class BaseCloudPool implements CloudPool {
 	 * @param machineId
 	 * @param state
 	 */
-	private void serviceStateAlert(String machineId, ServiceState state) {
-		Map<String, String> tags = ImmutableMap.of();
+	void serviceStateAlert(String machineId, ServiceState state) {
+		Map<String, JsonElement> tags = ImmutableMap.of();
 		String message = String.format(
 				"Service state set to %s for machine %s.", state.name(),
 				machineId);
@@ -857,14 +859,28 @@ public class BaseCloudPool implements CloudPool {
 	 * @param machineId
 	 * @param membershipStatus
 	 */
-	private void membershipStatusAlert(String machineId,
+	void membershipStatusAlert(String machineId,
 			MembershipStatus membershipStatus) {
-		Map<String, String> tags = ImmutableMap.of();
+		Map<String, JsonElement> tags = ImmutableMap.of();
 		String message = String.format(
 				"Membership status set to %s for machine %s.",
 				membershipStatus, machineId);
 		this.eventBus.post(new Alert(AlertTopics.MEMBERSHIP_STATUS.name(),
 				AlertSeverity.DEBUG, UtcTime.now(), message, tags));
+	}
+
+	private JsonElement poolMembersTag() {
+		try {
+			List<Machine> poolMembers = listMachines();
+			// exclude metadata field (noisy)
+			List<Machine> shortFormatMembers = Lists.transform(poolMembers,
+					Machine.toShortFormat());
+			return JsonUtils.toJson(shortFormatMembers);
+		} catch (Exception e) {
+			LOG.warn("failed to retrieve pool members: {}", e.getMessage());
+			return JsonUtils.toJson(String.format("N/A (call failed: %s)",
+					e.getMessage()));
+		}
 	}
 
 	/**

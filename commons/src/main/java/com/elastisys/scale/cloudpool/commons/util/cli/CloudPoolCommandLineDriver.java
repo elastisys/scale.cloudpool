@@ -128,7 +128,7 @@ public class CloudPoolCommandLineDriver {
 			} else {
 				// exclude metadata
 				System.out.println(Joiner.on("\n").join(
-						Lists.transform(machines, Machine.toShortFormat())));
+						Lists.transform(machines, Machine.toShortString())));
 			}
 			break;
 		}

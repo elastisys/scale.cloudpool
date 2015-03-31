@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudpool.api.types;
 
-import static com.elastisys.scale.cloudpool.api.types.Machine.toShortFormat;
+import static com.elastisys.scale.cloudpool.api.types.Machine.toShortString;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Lists.transform;
@@ -135,7 +135,7 @@ public class MachinePool {
 
 	@Override
 	public String toString() {
-		List<String> shortPool = transform(this.machines, toShortFormat());
+		List<String> shortPool = transform(this.machines, toShortString());
 		return MoreObjects.toStringHelper(this)
 				.add("timestamp", this.timestamp).add("machines", shortPool)
 				.toString();

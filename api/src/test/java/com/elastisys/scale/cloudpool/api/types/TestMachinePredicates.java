@@ -32,16 +32,16 @@ public class TestMachinePredicates {
 	 * Verifies the {@link MachineWithState} {@link Predicate}.
 	 */
 	@Test
-	public void testMachineWithStatePredicate() {
+	public void testMachineInStatePredicate() {
 		DateTime now = UtcTime.now();
 		Machine m1 = new Machine("id", MachineState.REQUESTED, now, null, null);
 		Machine m2 = new Machine("id", MachineState.RUNNING, now,
 				ips("1.2.3.4"), ips("1.2.3.5"));
 		Machine m3 = new Machine("id", MachineState.PENDING, now, null, null);
 
-		assertFalse(Machine.withState(MachineState.RUNNING).apply(m1));
-		assertTrue(Machine.withState(MachineState.RUNNING).apply(m2));
-		assertFalse(Machine.withState(MachineState.RUNNING).apply(m3));
+		assertFalse(Machine.inState(MachineState.RUNNING).apply(m1));
+		assertTrue(Machine.inState(MachineState.RUNNING).apply(m2));
+		assertFalse(Machine.inState(MachineState.RUNNING).apply(m3));
 	}
 
 	/**

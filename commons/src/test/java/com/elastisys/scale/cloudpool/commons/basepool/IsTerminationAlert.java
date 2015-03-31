@@ -13,6 +13,7 @@ import org.hamcrest.TypeSafeMatcher;
 
 import com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertTopics;
 import com.elastisys.scale.commons.net.smtp.alerter.Alert;
+import com.google.gson.JsonElement;
 
 public class IsTerminationAlert extends TypeSafeMatcher<Alert> {
 
@@ -28,13 +29,13 @@ public class IsTerminationAlert extends TypeSafeMatcher<Alert> {
 			return false;
 		}
 		for (String machineId : this.machineIds) {
-			System.out.println(someAlert);
-			Map<String, String> alertTags = someAlert.getTags();
+			Map<String, JsonElement> alertTags = someAlert.getMetadata();
 			if (alertTags == null
 					|| !alertTags.containsKey("terminatedMachines")) {
 				return false;
 			}
-			if (!alertTags.get("terminatedMachines").contains(machineId)) {
+			if (!alertTags.get("terminatedMachines").getAsString()
+					.contains(machineId)) {
 				return false;
 			}
 		}

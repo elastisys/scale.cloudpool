@@ -20,6 +20,7 @@ import static com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPol
 import static com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy.OLDEST_INSTANCE;
 import static com.elastisys.scale.commons.net.smtp.alerter.AlertSeverity.ERROR;
 import static com.elastisys.scale.commons.net.smtp.alerter.AlertSeverity.WARN;
+import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -1201,6 +1202,31 @@ public class TestBaseCloudPoolOperation {
 		verify(this.driverMock).detachMachine("i-1");
 		// verify event posted on event bus
 		verify(this.eventBusMock).post(argThat(isDetachAlert("i-1")));
+	}
+
+	/**
+	 * Verify that a termination alert gets sent even though the pool members
+	 * cannot be retrieved (for example, due to temporary limited cloud provider
+	 * API accessability).
+	 */
+	@Test
+	public void sendTerminationAlertOnFailureToFetchMachinePool()
+			throws CloudPoolException {
+		// set up initial pool
+		DateTime now = UtcTime.now();
+		Machine running1 = machine("i-1", RUNNING);
+		when(this.driverMock.listMachines()).thenReturn(machines(running1));
+		this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
+
+		// next listing of machines will fail
+		doThrow(new RuntimeException("api outage")).when(this.driverMock)
+				.listMachines();
+
+		// terminate and verify that alert gets sent despite failing to retrieve
+		// pool members
+		this.cloudPool.terminationAlert(asList(machine("i-1", RUNNING,
+				now.minus(1))));
+		verify(this.eventBusMock).post(argThat(isTerminationAlert("i-1")));
 	}
 
 	@Test(expected = IllegalStateException.class)

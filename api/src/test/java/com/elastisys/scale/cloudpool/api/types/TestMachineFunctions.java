@@ -4,6 +4,7 @@ import static com.elastisys.scale.cloudpool.api.types.TestUtils.ips;
 import static com.elastisys.scale.cloudpool.api.types.TestUtils.machine;
 import static com.elastisys.scale.cloudpool.api.types.TestUtils.secondsBetween;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 
@@ -196,6 +197,17 @@ public class TestMachineFunctions {
 	}
 
 	@Test
+	public void testToShortMachineString() {
+		DateTime now = UtcTime.now();
+		JsonObject metadata = JsonUtils.parseJsonString("{\"id\": \"i-1\"}");
+		Machine m1 = new Machine("i-2", MachineState.RUNNING,
+				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, now,
+				ips("1.2.3.4"), ips("1.2.3.5"), metadata);
+
+		assertFalse(Machine.toShortString().apply(m1).contains("metadata"));
+	}
+
+	@Test
 	public void testToShortMachineFormat() {
 		DateTime now = UtcTime.now();
 		JsonObject metadata = JsonUtils.parseJsonString("{\"id\": \"i-1\"}");
@@ -203,6 +215,16 @@ public class TestMachineFunctions {
 				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, now,
 				ips("1.2.3.4"), ips("1.2.3.5"), metadata);
 
-		assertFalse(Machine.toShortFormat().apply(m1).contains("metadata"));
+		Machine m1Stripped = Machine.toShortFormat().apply(m1);
+		// all fields should be equal except metadata which should be null
+		assertThat(m1Stripped.getId(), is(m1.getId()));
+		assertThat(m1Stripped.getMachineState(), is(m1.getMachineState()));
+		assertThat(m1Stripped.getMembershipStatus(),
+				is(m1.getMembershipStatus()));
+		assertThat(m1Stripped.getServiceState(), is(m1.getServiceState()));
+		assertThat(m1Stripped.getLaunchtime(), is(m1.getLaunchtime()));
+		assertThat(m1Stripped.getPublicIps(), is(m1.getPublicIps()));
+		assertThat(m1Stripped.getPrivateIps(), is(m1.getPrivateIps()));
+		assertThat(m1Stripped.getMetadata(), is(nullValue()));
 	}
 }

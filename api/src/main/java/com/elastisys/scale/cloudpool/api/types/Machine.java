@@ -342,6 +342,21 @@ public class Machine {
 	}
 
 	/**
+	 * Creates a copy of this {@link Machine} with a different value for the
+	 * metadata field.
+	 *
+	 * @param metadata
+	 *            Metadata to set for the {@link Machine} copy, or
+	 *            <code>null</code> if no metadata is desired.
+	 * @return A copy
+	 */
+	public Machine withMetadata(JsonObject metadata) {
+		return new Machine(this.id, this.machineState, this.membershipStatus,
+				this.serviceState, this.launchtime, this.publicIps,
+				this.privateIps, metadata);
+	}
+
+	/**
 	 * Returns a transformation {@link Function} that given a {@link Machine}
 	 * extracts its {@link MachineState}.
 	 *
@@ -391,7 +406,7 @@ public class Machine {
 	 *            return <code>true</code>.
 	 * @return
 	 */
-	public static Predicate<? super Machine> withState(MachineState state) {
+	public static Predicate<? super Machine> inState(MachineState state) {
 		return new MachineWithState(state);
 	}
 
@@ -633,8 +648,31 @@ public class Machine {
 	 *
 	 * @return
 	 */
-	public static Function<Machine, String> toShortFormat() {
+	public static Function<Machine, Machine> toShortFormat() {
 		return new ToShortMachineFormat();
+	}
+
+	/**
+	 * A {@link Function} that, for a given {@link Machine}, returns a clone of
+	 * the {@link Machine} that excludes the meta data field of the original
+	 * {@link Machine}.
+	 */
+	public static class ToShortMachineFormat implements
+			Function<Machine, Machine> {
+
+		@Override
+		public Machine apply(Machine machine) {
+			return machine.withMetadata(null);
+		}
+	}
+
+	/**
+	 * Factory method for the {@link ToShortMachineString} {@link Function}.
+	 *
+	 * @return
+	 */
+	public static Function<Machine, String> toShortString() {
+		return new ToShortMachineString();
 	}
 
 	/**
@@ -642,13 +680,12 @@ public class Machine {
 	 * representation that excludes any {@link Machine} meta data (which can
 	 * produce quite some log noise).
 	 */
-	public static class ToShortMachineFormat implements
+	public static class ToShortMachineString implements
 			Function<Machine, String> {
 
 		@Override
 		public String apply(Machine machine) {
-			return MoreObjects.toStringHelper("Machine")
-					.add("id", machine.getId())
+			return MoreObjects.toStringHelper("").add("id", machine.getId())
 					.add("machineState", machine.getMachineState().name())
 					.add("membershipStatus", machine.getMembershipStatus())
 					.add("serviceState", machine.getServiceState().name())
@@ -657,5 +694,4 @@ public class Machine {
 					.add("privateIps", machine.getPrivateIps()).toString();
 		}
 	}
-
 }
