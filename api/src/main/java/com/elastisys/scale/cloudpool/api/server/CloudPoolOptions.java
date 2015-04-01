@@ -55,7 +55,7 @@ public class CloudPoolOptions {
 	@Option(name = "--config", metaVar = "FILE", usage = "Initial cloud pool configuration file (JSON-formatted).")
 	public String config = null;
 
-	@Option(name = "--config-handler", usage = "Publish a /config handler that allows configuration to be queried and updated. In addition, /config/schema will listen for GET requests to serve the schema for valid configurations. Default: False.")
+	@Option(name = "--config-handler", usage = "Publish a /config handler that allows configuration to be queried and updated. Default: False.")
 	public boolean enableConfigHandler = false;
 
 	@Option(name = "--exit-handler", usage = "Publish an /exit handler that shuts down the server on 'GET /exit'. Default: False.")

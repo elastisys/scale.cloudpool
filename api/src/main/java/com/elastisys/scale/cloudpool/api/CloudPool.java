@@ -7,7 +7,6 @@ import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
-import com.elastisys.scale.commons.json.schema.JsonValidator;
 import com.google.common.base.Optional;
 import com.google.gson.JsonObject;
 
@@ -39,18 +38,6 @@ import com.google.gson.JsonObject;
 public interface CloudPool {
 
 	/**
-	 * Returns a JSON Schema that describes the structure of valid JSON
-	 * configuration documents for this {@link CloudPool}.
-	 * <p/>
-	 * In case this {@link CloudPool} doesn't publish a JSON Schema,
-	 * {@link Optional#absent()} is returned.
-	 *
-	 * @return A JSON Schema if one is supplied by this {@link CloudPool},
-	 *         {@link Optional#absent()} otherwise.
-	 */
-	Optional<JsonObject> getConfigurationSchema();
-
-	/**
 	 * Updates the configuration for this {@link CloudPool}.
 	 * <p/>
 	 * The configuration is passed as a JSON object. It is up to the
@@ -58,13 +45,6 @@ public interface CloudPool {
 	 * as well as to reload internal data structures, restart periodical tasks
 	 * or perform whatever changes are needed for the new configuration to take
 	 * effect.
-	 * <p/>
-	 * In case the {@link CloudPool} publishes a JSON Schema (see
-	 * {@link #getConfigurationSchema()}), it should make sure that the received
-	 * configuration is a valid instance of the JSON Schema.
-	 * {@link JsonValidator} can be used for this purpose.
-	 *
-	 * @see JsonValidator
 	 *
 	 * @param configuration
 	 *            The JSON configuration to be set.

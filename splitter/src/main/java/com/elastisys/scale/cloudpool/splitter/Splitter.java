@@ -37,8 +37,6 @@ import com.elastisys.scale.cloudpool.splitter.poolcalculators.PoolSizeCalculatio
 import com.elastisys.scale.cloudpool.splitter.requests.RequestFactory;
 import com.elastisys.scale.cloudpool.splitter.requests.http.HttpRequestFactory;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.json.schema.JsonValidator;
-import com.elastisys.scale.commons.json.schema.JsonValidatorException;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
@@ -97,9 +95,6 @@ public class Splitter implements CloudPool {
 	private static final Logger LOG = LoggerFactory.getLogger(Splitter.class);
 	/** Maximum concurrency in the {@link #executor}. */
 	private static final int MAX_CONCURRENCY = 20;
-	/** JSON Schema describing valid configurations for the cloud pool. */
-	public static final JsonObject CONFIG_SCHEMA = JsonUtils
-			.parseJsonResource("splitter-config-schema.json");
 
 	/** The configuration set for the {@link Splitter}. */
 	private final AtomicReference<SplitterConfig> config;
@@ -154,11 +149,6 @@ public class Splitter implements CloudPool {
 	}
 
 	@Override
-	public Optional<JsonObject> getConfigurationSchema() {
-		return Optional.of(CONFIG_SCHEMA);
-	}
-
-	@Override
 	public void configure(JsonObject configuration)
 			throws IllegalArgumentException, CloudPoolException {
 		SplitterConfig config = validate(configuration);
@@ -174,12 +164,11 @@ public class Splitter implements CloudPool {
 
 	private SplitterConfig validate(JsonObject configuration) {
 		try {
-			JsonValidator.validate(CONFIG_SCHEMA, configuration);
 			SplitterConfig config = JsonUtils.toObject(configuration,
 					SplitterConfig.class);
 			config.validate();
 			return config;
-		} catch (JsonValidatorException e) {
+		} catch (Exception e) {
 			Throwables.propagateIfInstanceOf(e, IllegalArgumentException.class);
 			throw new IllegalArgumentException(String.format(
 					"failed to validate configuration: %s", e.getMessage()), e);

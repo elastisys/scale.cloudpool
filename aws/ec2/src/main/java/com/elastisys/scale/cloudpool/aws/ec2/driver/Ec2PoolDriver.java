@@ -34,10 +34,8 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.json.schema.JsonValidator;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Atomics;
-import com.google.gson.JsonObject;
 
 /**
  * A {@link CloudPoolDriver} implementation that operates against the AWS EC2
@@ -46,10 +44,6 @@ import com.google.gson.JsonObject;
  * @see BaseCloudPool
  */
 public class Ec2PoolDriver implements CloudPoolDriver {
-
-	/** JSON Schema describing valid {@link Ec2PoolDriverConfig} instances. */
-	private static final JsonObject JSON_SCHEMA = JsonUtils
-			.parseJsonResource("ec2-pool-driver-schema.json");
 
 	static Logger LOG = LoggerFactory.getLogger(Ec2PoolDriver.class);
 
@@ -80,8 +74,6 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 		CloudPoolConfig poolConfig = configuration.getCloudPool();
 		checkArgument(poolConfig != null, "missing cloudPool config");
 		try {
-			// validate against client config schema
-			JsonValidator.validate(JSON_SCHEMA, poolConfig.getDriverConfig());
 			// parse and validate cloud login configuration
 			Ec2PoolDriverConfig config = JsonUtils.toObject(
 					poolConfig.getDriverConfig(), Ec2PoolDriverConfig.class);

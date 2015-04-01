@@ -32,11 +32,9 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.json.schema.JsonValidator;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Atomics;
-import com.google.gson.JsonObject;
 
 /**
  * A {@link CloudPoolDriver} implementation that manages an AWS Auto Scaling
@@ -53,10 +51,6 @@ import com.google.gson.JsonObject;
  */
 public class AwsAsPoolDriver implements CloudPoolDriver {
 	static Logger LOG = LoggerFactory.getLogger(AwsAsPoolDriver.class);
-
-	/** JSON Schema describing valid configuration documents. */
-	private static final JsonObject CONFIG_SCHEMA = JsonUtils
-			.parseJsonResource("awsas-cloudpool-driver-schema.json");
 
 	public static final String REQUESTED_ID_PREFIX = "i-requested";
 
@@ -89,8 +83,6 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 		checkArgument(poolConfig != null, "missing cloudPool config");
 
 		try {
-			// validate against client config schema
-			JsonValidator.validate(CONFIG_SCHEMA, poolConfig.getDriverConfig());
 			// parse and validate cloud login configuration
 			AwsAsPoolDriverConfig config = JsonUtils.toObject(
 					poolConfig.getDriverConfig(), AwsAsPoolDriverConfig.class);

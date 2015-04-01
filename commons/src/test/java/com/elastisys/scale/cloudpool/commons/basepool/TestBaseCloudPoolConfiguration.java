@@ -38,15 +38,6 @@ public class TestBaseCloudPoolConfiguration {
 	}
 
 	@Test
-	public void testGetConfigurationSchema() {
-		Optional<JsonObject> schema = this.cloudPool.getConfigurationSchema();
-
-		assertTrue(schema.isPresent());
-		assertEquals(schema.get(),
-				JsonUtils.parseJsonResource("basepool-schema.json"));
-	}
-
-	@Test
 	public void testConfigureWithValidConfig() throws CloudPoolException {
 		String configFile = "config/valid-cloudpool-config-minimal.json";
 		JsonObject validConfig = JsonUtils.parseJsonResource(configFile);
@@ -60,6 +51,21 @@ public class TestBaseCloudPoolConfiguration {
 				BaseCloudPoolConfig.class);
 		// ensure that the Login config is passed through to the ScalingGroup
 		verify(this.driverMock).configure(actualConfig);
+	}
+
+	@Test
+	public void testConfigureWithSmtpAlerts() throws Exception {
+		// TODO
+	}
+
+	@Test
+	public void testConfigureWithHttpAlerts() {
+		// TODO
+	}
+
+	@Test
+	public void testConfigureWithSmtpAndHttpAlerts() {
+		// TODO
 	}
 
 	/**

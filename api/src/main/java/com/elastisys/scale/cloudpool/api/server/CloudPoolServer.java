@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.restapi.CloudPoolHandler;
 import com.elastisys.scale.cloudpool.api.restapi.ConfigHandler;
-import com.elastisys.scale.cloudpool.api.restapi.ConfigSchemaHandler;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.rest.responsehandlers.ExitHandler;
 import com.elastisys.scale.commons.rest.server.JaxRsApplication;
@@ -121,7 +120,6 @@ public class CloudPoolServer {
 		if (options.enableConfigHandler) {
 			// optionally deploy config handler and config schema handler
 			application.addHandler(new ConfigHandler(cloudPool));
-			application.addHandler(new ConfigSchemaHandler(cloudPool));
 		}
 
 		if (options.enableExitHandler) {

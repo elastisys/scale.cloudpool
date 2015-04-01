@@ -33,8 +33,6 @@ import org.mockito.Matchers;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.api.server.CloudPoolOptions;
-import com.elastisys.scale.cloudpool.api.server.CloudPoolServer;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
@@ -187,48 +185,6 @@ public class TestRestApi {
 				.request(MediaType.APPLICATION_JSON).post(Entity.json(config));
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
-	}
-
-	/**
-	 * Verifies a {@code 200} response on a successful {@code GET /config}.
-	 */
-	@Test
-	public void testGetConfigSchema() throws IOException {
-		// set up mocked cloud pool response
-		String schemaDoc = "{\"setting\": \"true\"}";
-		Optional<JsonObject> schema = Optional.of(JsonUtils
-				.parseJsonString(schemaDoc));
-		when(cloudPool.getConfigurationSchema()).thenReturn(schema);
-
-		// run test
-		Client client = RestClients.httpsNoAuth();
-		Response response = client.target(getUrl("/config/schema")).request()
-				.get();
-		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
-		assertThat(response.readEntity(JsonObject.class), is(schema.get()));
-
-		// verify dispatch from REST server to cloud pool
-		verify(cloudPool).getConfigurationSchema();
-		verifyNoMoreInteractions(cloudPool);
-	}
-
-	/**
-	 * An unexpected cloud pool error on {@code GET /config/schema} should give
-	 * a {@code 500} response.
-	 */
-	@Test
-	public void testGetConfigSchemaOnCloudPoolError() throws IOException {
-		// set up mocked cloud pool response
-		doThrow(new IllegalStateException("something went wrong!")).when(
-				cloudPool).getConfigurationSchema();
-
-		Client client = RestClients.httpsNoAuth();
-		Response response = client.target(getUrl("/config/schema")).request()
-				.get();
-		assertThat(response.getStatus(),
-				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
-		assertThat(response.readEntity(String.class),
-				containsString("something went wrong"));
 	}
 
 	/**

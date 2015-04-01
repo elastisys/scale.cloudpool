@@ -43,13 +43,12 @@ import com.elastisys.scale.cloudpool.commons.resizeplanner.ResizePlanner;
 import com.elastisys.scale.cloudpool.commons.termqueue.ScheduledTermination;
 import com.elastisys.scale.cloudpool.commons.termqueue.TerminationQueue;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.json.schema.JsonValidator;
+import com.elastisys.scale.commons.net.alerter.Alert;
+import com.elastisys.scale.commons.net.alerter.AlertSeverity;
+import com.elastisys.scale.commons.net.alerter.smtp.EmailAlerter;
+import com.elastisys.scale.commons.net.alerter.smtp.EmailAlerterConfig;
 import com.elastisys.scale.commons.net.host.HostUtils;
 import com.elastisys.scale.commons.net.smtp.SmtpServerSettings;
-import com.elastisys.scale.commons.net.smtp.alerter.Alert;
-import com.elastisys.scale.commons.net.smtp.alerter.AlertSeverity;
-import com.elastisys.scale.commons.net.smtp.alerter.EmailAlerter;
-import com.elastisys.scale.commons.net.smtp.alerter.SendSettings;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
@@ -198,11 +197,6 @@ public class BaseCloudPool implements CloudPool {
 	/** A cloud-specific management driver for the cloud pool. */
 	private CloudPoolDriver cloudDriver = null;
 
-	/**
-	 * The JSON Schema that describes the range of allowed configuration
-	 * documents for the {@link BaseCloudPool}.
-	 */
-	private final JsonObject jsonSchema;
 	/** The currently set configuration. */
 	private final AtomicReference<BaseCloudPoolConfig> config;
 	/** {@link ExecutorService} handling execution of "background jobs". */
@@ -269,7 +263,6 @@ public class BaseCloudPool implements CloudPool {
 		this.cloudDriver = cloudDriver;
 		this.eventBus = eventBus;
 
-		this.jsonSchema = JsonUtils.parseJsonResource("basepool-schema.json");
 		ThreadFactory threadFactory = new ThreadFactoryBuilder()
 				.setDaemon(true).setNameFormat("cloudpool-%d").build();
 		this.executorService = Executors.newScheduledThreadPool(
@@ -301,7 +294,6 @@ public class BaseCloudPool implements CloudPool {
 	private BaseCloudPoolConfig validate(JsonObject jsonConfig)
 			throws CloudPoolException {
 		try {
-			JsonValidator.validate(this.jsonSchema, jsonConfig);
 			BaseCloudPoolConfig configuration = JsonUtils.toObject(jsonConfig,
 					BaseCloudPoolConfig.class);
 			configuration.validate();
@@ -312,11 +304,6 @@ public class BaseCloudPool implements CloudPool {
 					"failed to validate cloud pool configuration: "
 							+ e.getMessage(), e);
 		}
-	}
-
-	@Override
-	public Optional<JsonObject> getConfigurationSchema() {
-		return Optional.of(this.jsonSchema);
 	}
 
 	@Override
@@ -561,7 +548,7 @@ public class BaseCloudPool implements CloudPool {
 		AlertSettings alertsConfig = configuration.getAlerts();
 		if (alertsConfig != null) {
 			LOG.debug("configuring SMTP alerter.");
-			SendSettings sendSettings = new SendSettings(
+			EmailAlerterConfig sendSettings = new EmailAlerterConfig(
 					alertsConfig.getRecipients(), alertsConfig.getSender(),
 					alertsConfig.getSubject(), alertsConfig.getSeverityFilter());
 			SmtpServerSettings mailServerSettings = alertsConfig

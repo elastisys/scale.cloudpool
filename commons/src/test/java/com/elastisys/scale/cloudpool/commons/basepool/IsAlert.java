@@ -5,8 +5,8 @@ import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
-import com.elastisys.scale.commons.net.smtp.alerter.Alert;
-import com.elastisys.scale.commons.net.smtp.alerter.AlertSeverity;
+import com.elastisys.scale.commons.net.alerter.Alert;
+import com.elastisys.scale.commons.net.alerter.AlertSeverity;
 import com.google.common.base.Objects;
 
 public class IsAlert extends TypeSafeMatcher<Alert> {

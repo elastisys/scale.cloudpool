@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.commons.basepool.alerts;
 
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
-import com.elastisys.scale.commons.net.smtp.alerter.Alert;
+import com.elastisys.scale.commons.net.alerter.Alert;
 
 /**
  * A list of {@link Alert} message topics that can be emitted by an

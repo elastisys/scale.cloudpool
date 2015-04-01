@@ -18,8 +18,8 @@ import static com.elastisys.scale.cloudpool.commons.basepool.IsTerminationAlert.
 import static com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertTopics.RESIZE;
 import static com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy.NEWEST_INSTANCE;
 import static com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy.OLDEST_INSTANCE;
-import static com.elastisys.scale.commons.net.smtp.alerter.AlertSeverity.ERROR;
-import static com.elastisys.scale.commons.net.smtp.alerter.AlertSeverity.WARN;
+import static com.elastisys.scale.commons.net.alerter.AlertSeverity.ERROR;
+import static com.elastisys.scale.commons.net.alerter.AlertSeverity.WARN;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;

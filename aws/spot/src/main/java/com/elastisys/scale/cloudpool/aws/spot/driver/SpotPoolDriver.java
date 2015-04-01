@@ -56,7 +56,6 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.json.schema.JsonValidator;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Atomics;
@@ -156,10 +155,6 @@ import com.google.gson.JsonObject;
 public class SpotPoolDriver implements CloudPoolDriver {
 	private static Logger LOG = LoggerFactory.getLogger(SpotPoolDriver.class);
 
-	/** JSON Schema describing valid {@link SpotPoolDriverConfig} instances. */
-	private static final JsonObject CONFIG_SCHEMA = JsonUtils
-			.parseJsonResource("spot-pool-driver-schema.json");
-
 	/** Maximum number of threads to run in {@link #threadPool}. */
 	private static final int MAX_THREADS = 5;
 
@@ -195,8 +190,6 @@ public class SpotPoolDriver implements CloudPoolDriver {
 		checkArgument(driverConfig != null, "missing driverConfig");
 
 		try {
-			// validate driver config against schema
-			JsonValidator.validate(CONFIG_SCHEMA, driverConfig);
 			SpotPoolDriverConfig newDriverConfig = JsonUtils.toObject(
 					driverConfig, SpotPoolDriverConfig.class);
 			newDriverConfig.validate();

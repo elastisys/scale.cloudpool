@@ -3,7 +3,6 @@ package com.elastisys.scale.cloudpool.splitter;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import org.junit.Before;
@@ -55,13 +54,6 @@ public class TestConfiguringSplitter {
 	public void defaultRequestFactory() {
 		assertThat(new Splitter().getRequestFactory(),
 				is(instanceOf(HttpRequestFactory.class)));
-	}
-
-	@Test
-	public void getConfigSchema() {
-		Optional<JsonObject> schema = this.splitter.getConfigurationSchema();
-		assertTrue(schema.isPresent());
-		assertThat(schema.get(), is(Splitter.CONFIG_SCHEMA));
 	}
 
 	@Test

@@ -10,7 +10,7 @@ import org.hamcrest.TypeSafeMatcher;
 
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertTopics;
-import com.elastisys.scale.commons.net.smtp.alerter.Alert;
+import com.elastisys.scale.commons.net.alerter.Alert;
 
 public class IsSetMembershipStatusAlert extends TypeSafeMatcher<Alert> {
 

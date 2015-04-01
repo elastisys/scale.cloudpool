@@ -30,12 +30,10 @@ import com.elastisys.scale.cloudpool.openstack.driver.client.OpenstackClient;
 import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
 import com.elastisys.scale.cloudpool.openstack.functions.ServerToMachine;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.json.schema.JsonValidator;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Atomics;
-import com.google.gson.JsonObject;
 
 /**
  * A {@link CloudPoolDriver} implementation that operates against OpenStack.
@@ -45,12 +43,6 @@ import com.google.gson.JsonObject;
 public class OpenStackPoolDriver implements CloudPoolDriver {
 	private static Logger LOG = LoggerFactory
 			.getLogger(OpenStackPoolDriver.class);
-
-	/**
-	 * JSON Schema describing valid {@link OpenStackPoolDriverConfig} instances.
-	 */
-	private static final JsonObject CONFIG_SCHEMA = JsonUtils
-			.parseJsonResource("openstack-pool-driver-schema.json");
 
 	/** OpenStack client API configuration. */
 	private final AtomicReference<OpenStackPoolDriverConfig> config;
@@ -80,9 +72,6 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 		checkArgument(cloudPoolConfig != null, "missing cloudPool config");
 
 		try {
-			// validate against client config schema
-			JsonValidator.validate(CONFIG_SCHEMA,
-					cloudPoolConfig.getDriverConfig());
 			// parse and validate cloud login configuration
 			OpenStackPoolDriverConfig config = JsonUtils.toObject(
 					cloudPoolConfig.getDriverConfig(),
