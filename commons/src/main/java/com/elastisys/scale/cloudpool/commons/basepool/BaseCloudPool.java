@@ -88,8 +88,9 @@ import com.google.gson.JsonObject;
  * {@code scaleOutConfig} key).</li>
  * <li>decommissions instances when the pool needs to shrink (the
  * {@code scaleInConfig} key).</li>
- * <li>alerts system administrators (via email) of interesting events: resize
- * operations, error conditions, etc (the {@code alerts} key).</li>
+ * <li>alerts system administrators (via email) or other systems (via webhooks)
+ * of interesting events: resize operations, error conditions, etc (the
+ * {@code alerts} key).</li>
  * </ul>
  * A configuration document may look as follows:
  *
@@ -119,15 +120,28 @@ import com.google.gson.JsonObject;
  *     "instanceHourMargin": 0
  *   },
  *   "alerts": {
- *     "subject": "[elastisys:scale] cloud pool alert for MyScalingPool",
- *     "recipients": ["receiver@destination.com"],
- *     "sender": "noreply@elastisys.com",
- *     "mailServer": {
- *       "smtpHost": "mail.server.com",
- *       "smtpPort": 465,
- *       "authentication": {"userName": "john", "password": "secret"},
- *       "useSsl": True
- *     }
+ *     "smtp": [
+ *       {
+ *         "subject": "[elastisys:scale] cloud pool alert for MyScalingPool",
+ *         "recipients": ["receiver@destination.com"],
+ *         "sender": "noreply@elastisys.com",
+ *         "smtpClientConfig": {
+ *           "smtpHost": "mail.server.com",
+ *           "smtpPort": 465,
+ *           "authentication": {"userName": "john", "password": "secret"},
+ *           "useSsl": True
+ *         }
+ *       }
+ *     ],
+ *     "http": [
+ *       {
+ *         "destinationUrls": ["https://some.host1:443/"],
+ *         "severityFilter": "ERROR|FATAL",
+ *         "auth": {
+ *           "basicCredentials": { "username": "user1", "password": "secret1" }
+ *         }
+ *       }
+ *     ]
  *   },
  *   "poolUpdatePeriod": 60
  * }
@@ -183,8 +197,8 @@ import com.google.gson.JsonObject;
  *
  * <h3>Alerts:</h3>
  *
- * If an alerts attribute is present in the configuration, the
- * {@link BaseCloudPool} will send alert emails to notify selected recipients of
+ * If email and/or HTTP webhook alerts have been configured, the
+ * {@link BaseCloudPool} will send alerts to notify selected recipients of
  * interesting events (such as error conditions, scale-ups/scale-downs, etc).
  *
  * @see CloudPoolDriver

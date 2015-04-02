@@ -48,16 +48,35 @@ The `awsaspool` is configured with a JSON document such as the following:
       "instanceHourMargin": 300
     },
     "alerts": {
-      "subject": "[elastisys:scale] scaling group alert for MyScalingGroup",
-      "recipients": ["receiver@destination.com"],
-      "sender": "noreply@elastisys.com",
-      "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
-      "mailServer": {
-        "smtpHost": "smtp.host.com",
-        "smtpPort": 465,
-        "authentication": {"userName": "johndoe", "password": "secret" },
-        "useSsl": true
-      }
+      "smtp": [
+        {
+          "subject": "[elastisys:scale] cloud pool alert for MyScalingPool",
+          "recipients": ["receiver@destination.com"],
+          "sender": "noreply@elastisys.com",
+          "smtpClientConfig": {
+            "smtpHost": "mail.server.com",
+            "smtpPort": 465,
+            "authentication": {"userName": "john", "password": "secret"},
+            "useSsl": True
+          }
+        }
+      ],
+      "http": [
+        {
+          "destinationUrls": ["https://some.host1:443/"],
+          "severityFilter": "ERROR|FATAL",
+          "auth": {
+            "basicCredentials": { "username": "user1", "password": "secret1" }
+          }
+        },
+        {       
+          "destinationUrls": ["https://some.host2:443/"],
+          "severityFilter": "INFO|WARN", 
+          "auth": {
+            "certificateCredentials": { "keystorePath": "src/test/resources/security/client_keystore.p12", "keystorePassword": "secret" }
+          }
+        }        
+      ]
     },
     "poolUpdatePeriod": 120
   }
@@ -90,22 +109,37 @@ The configuration keys have the following meaning:
       should be set to a conservative and safe value to prevent the machine 
       from being billed for an additional hour. A value of zero is used to 
       specify immediate termination when a scale-down is ordered.
-  - ``alerts``: Configuration that describes how to send email alerts.
-    - ``subject``: The subject line to use in sent mails (Subject).
-    - ``recipients``: The receiver list (a list of recipient email addresses).
-    - ``sender``: The sender email address to use in sent mails (From).
-    - ``severityFilter``: A regular expression used to filter alerts. Alerts 
-      with a severity (one of ``DEBUG``, ``INFO``, ``NOTICE``, ``WARN``, 
-      ``ERROR``, ``FATAL``) that doesn't match the filter expression are 
-      suppressed and not sent. Default: ``.*``.
-    - ``mailServer``: Connection settings for the SMTP server through which emails 
-      are to be sent.
-      - ``smtpHost``: SMTP server host name/IP address.
-      - ``smtpPort``: SMTP server port. Default is 25.
-      - ``authentication``: Optional username/password to authenticate with SMTP
-        server. If left out, authentication is disabled.
-      - ``useSsl``: Enables/disables the use of SSL for SMTP connections. Default 
-        is false (disabled).
+
+  - ``alerts``: Configuration that describes how to send alerts via email or HTTP(S) webhooks.
+    - ``smtp``: a list of email alert senders
+      - ``subject``: The subject line to use in sent mails (Subject).
+      - ``recipients``: The receiver list (a list of recipient email addresses).
+      - ``sender``: The sender email address to use in sent mails (From).
+      - ``severityFilter``: A regular expression used to filter alerts. Alerts 
+        with a severity (one of ``DEBUG``, ``INFO``, ``NOTICE``, ``WARN``, 
+        ``ERROR``, ``FATAL``) that doesn't match the filter expression are 
+        suppressed and not sent. Default: ``.*``.
+        - ``smtpClientConfig``: Connection settings for the SMTP client.
+          - ``smtpHost``: SMTP server host name/IP address.
+          - ``smtpPort``: SMTP server port. Default is 25.
+          - ``authentication``: Optional username/password to authenticate with SMTP
+            server. If left out, authentication is disabled.
+          - ``useSsl``: Enables/disables the use of SSL for SMTP connections. Default 
+            is false (disabled).
+    - ``http``: a list of HTTP(S) webhook alert senders, which will ``POST`` alerts
+       to the specified endpoint using the (optional) configured authentication 
+       credentials.
+      - ``destinationUrls``: The list of destination endpoint URLs.
+      - ``severityFilter``: A regular expression used to filter alerts. Alerts 
+        with a severity (one of ``DEBUG``, ``INFO``, ``NOTICE``, ``WARN``, 
+        ``ERROR``, ``FATAL``) that doesn't match the filter expression are 
+        suppressed and not sent. Default: ``.*``.
+      - ``auth``: Authentication credentials. Can specify either ``basicCredentials``
+        or ``certificateCredentials`` or both.
+        - ``basicCredentials``: ``username`` and ``password`` to use for BASIC-style
+          authentication.
+        - ``certificateCredentials``: ``keystorePath`` and ``keystorePassword``
+          for client certificate-based authentication.
   - ``poolUpdatePeriod`` (optional): The time interval (in seconds) between 
     periodical pool size updates. A pool size update may involve terminating 
     termination-due instances and placing instance requests to replace 
