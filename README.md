@@ -2,7 +2,7 @@ scale.cloudpool
 ===============
 
 The ``scale.cloudpool`` project contains Java-based 
-[elastisys:scale](http://elastisys.com/scale) 
+[elastisys](http://elastisys.com/) 
 [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) implementations 
 for different cloud providers:
 
@@ -85,7 +85,7 @@ Below is a sample configuration document for the ``cloudpool.aws.ec2``:
       "instanceHourMargin": 300
     },
     "alerts": {
-      "subject": "[elastisys:scale] cloud pool alert for MyEc2InstnaceScalingPool",
+      "subject": "[elastisys] cloud pool alert for MyEc2InstanceScalingPool",
       "recipients": ["receiver@destination.com"],
       "sender": "noreply@elastisys.com",
       "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
@@ -151,7 +151,7 @@ In a little more detail, the configuration keys have the following meaning:
       an acquired machine should be scheduled for termination. This 
       should be set to a conservative and safe value to prevent the machine 
       from being billed for an additional hour. A value of zero is used to 
-      specify immediate termination when a scale-down is ordered.
+      specify immediate termination when a scale-in is ordered.
 
   - ``alerts``: Configuration that describes how to send email alerts.
  

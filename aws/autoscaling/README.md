@@ -1,6 +1,6 @@
 # AWS AutoScaling cloud pool
 
-The [elastisys:scale](http://elastisys.com/scale) AWS AutoScaling 
+The [elastisys](http://elastisys.com/) AWS AutoScaling 
 [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest/)
 manages an AWS Auto Scaling Group. The size of the AWS Auto Scaling Group
 is adjusted over the AWS Auto Scaling API, according to the desired size 
@@ -14,7 +14,7 @@ needed, is also assumed to be taken care of, for example, via Elastic Load
 Balancer or with a custom-made load balancing solution.
 
 The cloud pool publishes a REST API that follows the general contract of an
-[elastisys:scale](http://elastisys.com/scale) cloud pool, through which
+[elastisys](http://elastisys.com/) cloud pool, through which
 a client (for example, an autoscaler) can manage the pool. For the complete API 
 reference, the reader is referred to the 
 [cloud pool API documentation](http://cloudpoolrestapi.readthedocs.org/en/latest/).
@@ -109,7 +109,6 @@ The configuration keys have the following meaning:
       should be set to a conservative and safe value to prevent the machine 
       from being billed for an additional hour. A value of zero is used to 
       specify immediate termination when a scale-down is ordered.
-
   - ``alerts``: Configuration that describes how to send alerts via email or HTTP(S) webhooks.
     - ``smtp``: a list of email alert senders
       - ``subject``: The subject line to use in sent mails (Subject).
