@@ -30,19 +30,32 @@
     "instanceHourMargin": 300
   },
   "alerts": {
-    "subject": "[elastisys:scale] cloud pool alert for ${CLOUD_POOL_NAME}",
-    "recipients": ["${EMAIL_ADDRESS}"],
-    "sender": "noreply@elastisys.com",
-    "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
-    "mailServer": {
-      "smtpHost": "${EMAIL_SERVER}",
-      "smtpPort": 465,
-      "authentication": {
-        "userName": "${EMAIL_USER}", 
-        "password": "{EMAIL_PASSWORD}"
-      },
-      "useSsl": true
-    }
+    "smtp": [
+      {
+        "subject": "[elastisys:scale] cloud pool alert for ${CLOUD_POOL_NAME}",    
+        "recipients": ["${EMAIL_ADDRESS}"],
+        "sender": "noreply@elastisys.com",
+        "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
+        "smtpClientConfig": {
+          "smtpHost": "${EMAIL_SERVER}",
+          "smtpPort": 465,
+          "authentication": {
+            "userName": "${EMAIL_USER}", 
+            "password": "${EMAIL_PASSWORD}"
+          },
+          "useSsl": true
+        }
+      }
+    ],
+    "http": [
+      {
+        "destinationUrls": ["${WEBHOOK_URL}"],
+        "severityFilter": "INFO|WARN|ERROR|FATAL", 
+        "auth": {
+          "basicCredentials": { "username": "${USERNAME}", "password": "${PASSWORD}" }
+        }      
+      }    
+    ]
   },
   "poolUpdatePeriod": 60            
 }  
