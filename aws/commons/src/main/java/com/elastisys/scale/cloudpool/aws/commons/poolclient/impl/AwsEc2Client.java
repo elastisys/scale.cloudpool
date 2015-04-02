@@ -22,7 +22,7 @@ import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstances;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TagEc2Resource;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TerminateInstance;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.UntagEc2Resource;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.google.common.base.Joiner;
 import com.google.common.util.concurrent.Atomics;
 

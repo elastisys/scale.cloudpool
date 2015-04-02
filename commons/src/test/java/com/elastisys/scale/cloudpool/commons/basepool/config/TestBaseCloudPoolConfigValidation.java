@@ -1,7 +1,4 @@
-package com.elastisys.scale.cloudpool.commons.basepool;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+package com.elastisys.scale.cloudpool.commons.basepool.config;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -10,18 +7,20 @@ import java.util.List;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.AlertSettings;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.CloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.MailServerSettings;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleInConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.net.smtp.ClientAuthentication;
+import com.elastisys.scale.commons.net.alerter.http.HttpAlerterConfig;
+import com.elastisys.scale.commons.net.alerter.http.HttpAuthConfig;
+import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerterConfig;
+import com.elastisys.scale.commons.net.smtp.SmtpClientAuthentication;
+import com.elastisys.scale.commons.net.smtp.SmtpClientConfig;
+import com.elastisys.scale.commons.net.ssl.BasicCredentials;
 import com.google.gson.JsonObject;
 
 /**
- * Tests validation of {@link BaseCloudPoolConfig}s.
+ * Tests validation of {@link BaseCloudPoolConfig}s. This involves validating
+ * {@link BaseCloudPoolConfig}s with missing fields, which may for example occur
+ * when deserializing from JSON.
  */
 public class TestBaseCloudPoolConfigValidation {
 
@@ -35,31 +34,6 @@ public class TestBaseCloudPoolConfigValidation {
 	public void withAlertConfig() throws CloudPoolException {
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
 				scaleInConfig(), alertConfig(), null).validate();
-	}
-
-	@Test
-	public void withAlertConfigWithDefaultSeverityFilter()
-			throws CloudPoolException {
-		// no explicity severity filter => default severity filter
-		String defaultSeverity = null;
-		AlertSettings alertSettings = new AlertSettings("subject",
-				Arrays.asList("recipient@dest.com"), "sender@source.com",
-				defaultSeverity, mailServer());
-
-		BaseCloudPoolConfig config = new BaseCloudPoolConfig(cloudPoolConfig(),
-				scaleOutConfig(), scaleInConfig(), alertSettings, null);
-		assertThat(config.getAlerts().getSeverityFilter(),
-				is(AlertSettings.DEFAULT_SEVERITY_FILTER));
-		config.validate();
-	}
-
-	// illegal config: invalid severity filter
-	@Test(expected = CloudPoolException.class)
-	public void withIllegalAlertsSeverityFilter() throws CloudPoolException {
-		AlertSettings alerts = alertConfig();
-		setPrivateField(alerts, "severityFilter", "**");
-		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
-				scaleInConfig(), alerts, null).validate();
 	}
 
 	// illegal config: missing /cloudPool
@@ -139,87 +113,136 @@ public class TestBaseCloudPoolConfigValidation {
 				scaleInConfig(), alertConfig(), null).validate();
 	}
 
-	// illegal config: missing /alerts/subject
+	// illegal config: missing /alerts/smtp[0]/subject
 	@Test(expected = CloudPoolException.class)
-	public void missingAlertsSubject() throws CloudPoolException {
-		AlertSettings alerts = alertConfig();
-		setPrivateField(alerts, "subject", null);
+	public void missingSmtpSubject() throws CloudPoolException {
+		AlertsConfig alerts = alertConfig();
+		setPrivateField(alerts.getSmtpAlerters().get(0), "subject", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
 				scaleInConfig(), alerts, null).validate();
 	}
 
-	// illegal config: missing /alerts/recipients
+	// illegal config: missing /alerts/smtp[0]/recipients
 	@Test(expected = CloudPoolException.class)
-	public void missingAlertsRecipients() throws CloudPoolException {
-		AlertSettings alerts = alertConfig();
-		setPrivateField(alerts, "recipients", null);
+	public void missingSmtpRecipients() throws CloudPoolException {
+		AlertsConfig alerts = alertConfig();
+		setPrivateField(alerts.getSmtpAlerters().get(0), "recipients", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
 				scaleInConfig(), alerts, null).validate();
 	}
 
-	// illegal config: missing /alerts/sender
+	// illegal config: missing /alerts/smtp[0]/sender
 	@Test(expected = CloudPoolException.class)
-	public void missingAlertsSender() throws CloudPoolException {
-		AlertSettings alerts = alertConfig();
-		setPrivateField(alerts, "sender", null);
+	public void missingSmtpSender() throws CloudPoolException {
+		AlertsConfig alerts = alertConfig();
+		setPrivateField(alerts.getSmtpAlerters().get(0), "sender", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
 				scaleInConfig(), alerts, null).validate();
 	}
 
-	// illegal config: missing /alerts/mailServer
+	// illegal config: missing /alerts/smtp[0]/smtpClientConfig
 	@Test(expected = CloudPoolException.class)
-	public void missingAlertsMailServer() throws CloudPoolException {
-		AlertSettings alerts = alertConfig();
-		setPrivateField(alerts, "mailServer", null);
+	public void missingSmtpClientConfig() throws CloudPoolException {
+		AlertsConfig alerts = alertConfig();
+		setPrivateField(alerts.getSmtpAlerters().get(0), "smtpClientConfig",
+				null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
 				scaleInConfig(), alerts, null).validate();
 	}
 
-	// illegal config: missing /alerts/mailServer/smtpHost
+	// illegal config: missing /alerts/smtp[0]/smtpClientConfig/smtpHost
 	@Test(expected = CloudPoolException.class)
-	public void missingAlertsMailServerSmtpHost() throws CloudPoolException {
-		AlertSettings alerts = alertConfig();
-		setPrivateField(alerts.getMailServer(), "smtpHost", null);
+	public void missingSmtpHost() throws CloudPoolException {
+		AlertsConfig alerts = alertConfig();
+		setPrivateField(alerts.getSmtpAlerters().get(0).getSmtpClientConfig(),
+				"smtpHost", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
 				scaleInConfig(), alerts, null).validate();
 	}
 
-	// illegal config: missing /alerts/mailServer/authentication/userName
+	// illegal config: missing
+	// /alerts/smtp[0]/smtpClientConfig/authentication/userName
 	@Test(expected = CloudPoolException.class)
-	public void missingAlertsMailServerAuthenticationUsername()
-			throws CloudPoolException {
-		AlertSettings alerts = alertConfig();
-		ClientAuthentication authentication = alerts.getMailServer()
-				.getAuthentication();
-		setPrivateField(authentication, "userName", null);
+	public void missingSmtpAuthenticationUsername() throws CloudPoolException {
+		AlertsConfig alerts = alertConfig();
+		SmtpClientAuthentication authentication = alerts.getSmtpAlerters()
+				.get(0).getSmtpClientConfig().getAuthentication();
+		setPrivateField(authentication, "username", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
 				scaleInConfig(), alerts, null).validate();
 	}
 
-	// illegal config: missing /alerts/mailServer/authentication/password
+	// illegal config: missing
+	// /alerts/smtp[0]/smtpClientConfig/authentication/password
 	@Test(expected = CloudPoolException.class)
-	public void missingAlertsMailServerAuthenticationPassword()
-			throws CloudPoolException {
-		AlertSettings alerts = alertConfig();
-		ClientAuthentication authentication = alerts.getMailServer()
-				.getAuthentication();
+	public void missingSmtpAuthenticationPassword() throws CloudPoolException {
+		AlertsConfig alerts = alertConfig();
+		SmtpClientAuthentication authentication = alerts.getSmtpAlerters()
+				.get(0).getSmtpClientConfig().getAuthentication();
 		setPrivateField(authentication, "password", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
 				scaleInConfig(), alerts, null).validate();
 	}
 
-	private AlertSettings alertConfig() {
-		return new AlertSettings("subject",
-				Arrays.asList("recipient@dest.com"), "sender@source.com",
-				"ERROR|FATAL", mailServer());
+	// illegal config: missing /alerts/http[0]/destinationUrls
+	@Test(expected = CloudPoolException.class)
+	public void missingHttpDestinationUrls() throws CloudPoolException {
+		AlertsConfig alerts = alertConfig();
+		HttpAlerterConfig httpAlerter = alerts.getHttpAlerters().get(0);
+		setPrivateField(httpAlerter, "destinationUrls", null);
+		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
+				scaleInConfig(), alerts, null).validate();
 	}
 
-	private MailServerSettings mailServer() {
-		return new MailServerSettings("smtpHost", 587, smtpAuth(), true);
+	// illegal config: missing /alerts/http[0]/auth/basicCredentials/username
+	@Test(expected = CloudPoolException.class)
+	public void missingHttpBasicAuthUsername() throws CloudPoolException {
+		AlertsConfig alerts = alertConfig();
+		HttpAlerterConfig httpAlerter = alerts.getHttpAlerters().get(0);
+		setPrivateField(httpAlerter.getAuth().getBasicCredentials().get(),
+				"username", null);
+		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
+				scaleInConfig(), alerts, null).validate();
 	}
 
-	private ClientAuthentication smtpAuth() {
-		return new ClientAuthentication("userName", "password");
+	// illegal config: missing /alerts/http[0]/auth/basicCredentials/password
+	@Test(expected = CloudPoolException.class)
+	public void missingHttpBasicAuthPassword() throws CloudPoolException {
+		AlertsConfig alerts = alertConfig();
+		HttpAlerterConfig httpAlerter = alerts.getHttpAlerters().get(0);
+		setPrivateField(httpAlerter.getAuth().getBasicCredentials().get(),
+				"password", null);
+		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
+				scaleInConfig(), alerts, null).validate();
+	}
+
+	private AlertsConfig alertConfig() {
+		List<SmtpAlerterConfig> emailAlerters = Arrays
+				.asList(emailAlerterConfig("user@elastisys.com", "ERROR|FATAL"));
+		List<HttpAlerterConfig> httpAlerters = Arrays.asList(httpAlerterConfig(
+				"https://host", "ERROR"));
+		return new AlertsConfig(emailAlerters, httpAlerters);
+	}
+
+	private HttpAlerterConfig httpAlerterConfig(String url,
+			String severityFilter) {
+		return new HttpAlerterConfig(Arrays.asList(url), severityFilter,
+				new HttpAuthConfig(new BasicCredentials("user", "pass"), null));
+	}
+
+	private SmtpAlerterConfig emailAlerterConfig(String recipient,
+			String severityFilter) {
+		return new SmtpAlerterConfig(Arrays.asList(recipient),
+				"sender@elastisys.com", "subject", severityFilter,
+				smtpClientConfig());
+	}
+
+	private SmtpClientConfig smtpClientConfig() {
+		return new SmtpClientConfig("some.mail.host", 587, smtpAuth(), true);
+	}
+
+	private SmtpClientAuthentication smtpAuth() {
+		return new SmtpClientAuthentication("userName", "password");
 	}
 
 	private CloudPoolConfig cloudPoolConfig() {

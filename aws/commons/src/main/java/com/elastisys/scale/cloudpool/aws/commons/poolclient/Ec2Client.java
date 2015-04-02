@@ -7,7 +7,7 @@ import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 
 /**

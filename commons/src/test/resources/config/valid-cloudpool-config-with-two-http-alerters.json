@@ -24,20 +24,22 @@
       "instanceHourMargin": 0
     },
     "alerts": {
-      "smtp": [
-        {
-          "subject": "[elastisys:scale] alert for scaling group 'my-cloud-pool'",
-          "recipients": ["recipient@elastisys.com"],
-          "sender": "noreply@elastisys.com",
-          "severityFilter": "INFO|WARN|ERROR|FATAL", 
-          "smtpClientConfig": {
-            "smtpHost": "mail.elastisys.com",
-            "smtpPort": 25,
-            "authentication": {"username": "user", "password": "password"},
-            "useSsl": true
-          }
-        }
-      ]
-    },    
+        "http": [
+          {       
+            "destinationUrls": ["https://some.host1:443/"],
+            "severityFilter": "ERROR|FATAL", 
+            "auth": {
+              "basicCredentials": { "username": "user1", "password": "secret1" }
+            }
+          },
+          {       
+            "destinationUrls": ["https://some.host2:443/"],
+            "severityFilter": "INFO|WARN", 
+            "auth": {
+              "certificateCredentials": { "keystorePath": "src/test/resources/security/client_keystore.p12", "keystorePassword": "secret" }
+            }
+          }          
+        ]        
+    },     
     "poolUpdatePeriod": 60            
 }  

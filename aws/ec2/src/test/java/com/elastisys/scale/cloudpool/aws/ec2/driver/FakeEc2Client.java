@@ -10,7 +10,7 @@ import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.google.common.collect.Lists;
 
 /**

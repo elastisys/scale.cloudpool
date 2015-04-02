@@ -2,7 +2,6 @@ package com.elastisys.scale.cloudpool.aws.autoscaling.driver;
 
 import static com.elastisys.scale.cloudpool.api.types.ServiceState.IN_SERVICE;
 import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.AwsAsPoolDriver.REQUESTED_ID_PREFIX;
-import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.MachinesMatcher.machines;
 import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.TestUtils.config;
 import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.TestUtils.ec2Instance;
 import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.TestUtils.ec2Instances;
@@ -41,8 +40,8 @@ import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AutoScalingCl
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.commons.functions.AwsAutoScalingFunctions;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
@@ -79,21 +78,23 @@ public class TestAwsAsDriverOperation {
 	public void listMachines() throws CloudPoolDriverException {
 		// empty Auto Scaling Group
 		setUpMockedAutoScalingGroup(GROUP_NAME, 0, ec2Instances());
-		assertThat(this.cloudPool.listMachines(), is(machines()));
+		assertThat(this.cloudPool.listMachines(),
+				is(MachinesMatcher.machines()));
 		verify(this.mockAwsClient).getAutoScalingGroup(GROUP_NAME);
 		verify(this.mockAwsClient).getAutoScalingGroupMembers(GROUP_NAME);
 
 		// non-empty group
 		setUpMockedAutoScalingGroup(GROUP_NAME, 0,
 				ec2Instances(ec2Instance("i-1", "running")));
-		assertThat(this.cloudPool.listMachines(), is(machines("i-1")));
+		assertThat(this.cloudPool.listMachines(),
+				is(MachinesMatcher.machines("i-1")));
 
 		// group with machines in different states
 		List<Instance> members = ec2Instances(ec2Instance("i-1", "running"),
 				ec2Instance("i-2", "pending"), ec2Instance("i-3", "terminated"));
 		setUpMockedAutoScalingGroup(GROUP_NAME, 0, members);
 		List<Machine> machines = this.cloudPool.listMachines();
-		assertThat(machines, is(machines("i-1", "i-2", "i-3")));
+		assertThat(machines, is(MachinesMatcher.machines("i-1", "i-2", "i-3")));
 		// verify that listMachines returns cloud-specific metadata about each
 		// machine
 		assertTrue(machines.get(0).getMetadata().has("instanceId"));
@@ -118,8 +119,8 @@ public class TestAwsAsDriverOperation {
 		setUpMockedAutoScalingGroup(GROUP_NAME, desiredCapacity,
 				ec2Instances(ec2Instance("i-1", "running")));
 		List<Machine> groupMembers = this.cloudPool.listMachines();
-		assertThat(groupMembers,
-				is(machines("i-1", "i-requested1", "i-requested2")));
+		assertThat(groupMembers, is(MachinesMatcher.machines("i-1",
+				"i-requested1", "i-requested2")));
 		assertThat(groupMembers.get(0).getMachineState(),
 				is(MachineState.RUNNING));
 		assertThat(groupMembers.get(1).getMachineState(),
@@ -157,7 +158,8 @@ public class TestAwsAsDriverOperation {
 		this.cloudPool.configure(config);
 		List<Machine> startedMachines = this.cloudPool.startMachines(1,
 				scaleUpConfig);
-		assertThat(startedMachines, is(machines("i-requested1")));
+		assertThat(startedMachines,
+				is(MachinesMatcher.machines("i-requested1")));
 
 		// scale up from 1 -> 2
 		desiredCapacity = 1;
@@ -166,7 +168,8 @@ public class TestAwsAsDriverOperation {
 						"running"))));
 		this.cloudPool.configure(config);
 		startedMachines = this.cloudPool.startMachines(1, scaleUpConfig);
-		assertThat(startedMachines, is(machines("i-requested1")));
+		assertThat(startedMachines,
+				is(MachinesMatcher.machines("i-requested1")));
 
 		// scale up from 2 -> 4
 		desiredCapacity = 2;
@@ -177,7 +180,7 @@ public class TestAwsAsDriverOperation {
 		this.cloudPool.configure(config);
 		startedMachines = this.cloudPool.startMachines(2, scaleUpConfig);
 		assertThat(startedMachines,
-				is(machines("i-requested1", "i-requested2")));
+				is(MachinesMatcher.machines("i-requested1", "i-requested2")));
 	}
 
 	/**
@@ -218,10 +221,12 @@ public class TestAwsAsDriverOperation {
 						ec2Instance("i-2", "pending"))));
 		this.cloudPool.configure(config);
 		this.cloudPool.terminateMachine("i-1");
-		assertThat(this.cloudPool.listMachines(), is(machines("i-2")));
+		assertThat(this.cloudPool.listMachines(),
+				is(MachinesMatcher.machines("i-2")));
 
 		this.cloudPool.terminateMachine("i-2");
-		assertThat(this.cloudPool.listMachines(), is(machines()));
+		assertThat(this.cloudPool.listMachines(),
+				is(MachinesMatcher.machines()));
 	}
 
 	/**
@@ -250,7 +255,7 @@ public class TestAwsAsDriverOperation {
 		assertThat(client.getAutoScalingGroup(GROUP_NAME).getDesiredCapacity(),
 				is(3));
 		assertThat(this.cloudPool.listMachines(),
-				is(machines("i-1", "i-2", requestedMachineId)));
+				is(MachinesMatcher.machines("i-1", "i-2", requestedMachineId)));
 
 		// now ask scaling group to terminate the requested instance (this
 		// should only result in the desired capacity being decremented, not
@@ -258,7 +263,8 @@ public class TestAwsAsDriverOperation {
 		this.cloudPool.terminateMachine(requestedMachineId);
 		assertThat(client.getAutoScalingGroup(GROUP_NAME).getDesiredCapacity(),
 				is(2));
-		assertThat(this.cloudPool.listMachines(), is(machines("i-1", "i-2")));
+		assertThat(this.cloudPool.listMachines(),
+				is(MachinesMatcher.machines("i-1", "i-2")));
 	}
 
 	/**

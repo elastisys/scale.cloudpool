@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
 import com.elastisys.scale.cloudpool.openstack.requests.AssignFloatingIpRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.CreateServerRequest;

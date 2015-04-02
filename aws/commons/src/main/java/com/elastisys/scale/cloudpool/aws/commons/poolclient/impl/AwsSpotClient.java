@@ -11,7 +11,7 @@ import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CancelSpotInstance
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetSpotInstanceRequest;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetSpotInstanceRequests;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.PlaceSpotInstanceRequest;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.google.common.base.Joiner;
 
 public class AwsSpotClient extends AwsEc2Client implements SpotClient {

@@ -7,7 +7,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
 import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory.OSClientCreator;
 import com.elastisys.scale.cloudpool.openstack.driver.config.AuthConfig;

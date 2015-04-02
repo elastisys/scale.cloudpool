@@ -9,15 +9,16 @@ import com.amazonaws.services.autoscaling.model.Instance;
 import com.amazonaws.services.autoscaling.model.LifecycleState;
 import com.amazonaws.services.ec2.model.InstanceState;
 import com.elastisys.scale.cloudpool.api.types.Machine;
-import com.elastisys.scale.cloudpool.aws.autoscaling.driver.AwsAsPoolDriverConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.AlertSettings;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.CloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.MailServerSettings;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleInConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.AlertsConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleInConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.net.alerter.http.HttpAlerterConfig;
+import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerterConfig;
+import com.elastisys.scale.commons.net.smtp.SmtpClientConfig;
 import com.google.common.collect.Lists;
 
 public class TestUtils {
@@ -34,11 +35,16 @@ public class TestUtils {
 						"sudo apt-get install apache2 -qy"));
 		ScaleInConfig scaleDownConfig = new ScaleInConfig(
 				VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR, 300);
-		AlertSettings alertSettings = new AlertSettings(
-				"AwsAsScalingGroup alert",
+
+		SmtpAlerterConfig smtpAlerter = new SmtpAlerterConfig(
 				Arrays.asList("receiver@destination.com"),
-				"noreply@elastisys.com", "ERROR|FATAL", new MailServerSettings(
-						"smtp.host.com", 25, null, false));
+				"noreply@elastisys.com", "cloud pool alert!",
+				"INFO|WARN|ERROR|FATAL", new SmtpClientConfig("smtp.host.com",
+						25, null, false));
+		List<HttpAlerterConfig> httpAlerters = Arrays.asList();
+		AlertsConfig alertSettings = new AlertsConfig(
+				Arrays.asList(smtpAlerter), httpAlerters);
+
 		Integer poolUpdatePeriod = 60;
 		return new BaseCloudPoolConfig(scalingGroupConfig, scaleUpConfig,
 				scaleDownConfig, alertSettings, poolUpdatePeriod);

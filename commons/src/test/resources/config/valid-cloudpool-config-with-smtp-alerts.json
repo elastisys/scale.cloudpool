@@ -1,6 +1,6 @@
 {
     "cloudPool": {
-      "name": "my-scaling-group",
+      "name": "my-cloud-pool",
       "driverConfig": { 
         "keystoneEndpoint": "http://openstack.nova.com:5000/v2.0",
         "region": "RegionOne",
@@ -23,16 +23,21 @@
       "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
       "instanceHourMargin": 0
     },
-    "alerts": {
-      "subject": "[elastisys:scale] alert for scaling group 'my-scaling-group'",
-      "recipients": ["recipient@elastisys.com"],
-      "sender": "noreply@elastisys.com",
-      "mailServer": {
-        "smtpHost": "mail.elastisys.com",
-        "smtpPort": 25,
-        "authentication": {"userName": "user", "password": "password"},
-        "useSsl": true
-      }
+    "alerts": { 
+        "smtp": [
+          {       
+            "subject": "[elastisys:scale] alert for cloud pool my-cloud-pool",
+            "recipients": ["recipient@elastisys.com"],
+            "sender": "noreply@elastisys.com",
+            "severityFilter": "INFO|WARN|ERROR|FATAL", 
+            "smtpClientConfig": {
+              "smtpHost": "mail.elastisys.com",
+              "smtpPort": 465,
+              "authentication": {"username": "user", "password": "secret"},
+              "useSsl": true
+            }
+          }          
+        ]        
     },    
-    "poolUpdatePeriod": 180       
+    "poolUpdatePeriod": 60            
 }  

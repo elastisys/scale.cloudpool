@@ -54,15 +54,16 @@ import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.CloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleInConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleInConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.net.smtp.ClientAuthentication;
+import com.elastisys.scale.commons.net.smtp.SmtpClientAuthentication;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Optional;
@@ -197,7 +198,7 @@ public class TestBaseCloudPoolOperation {
 				machines(booting, active, requested, terminated));
 		// when asked to start a machine, it will succeed
 		Machine newMachine = machine("i-5", MachineState.PENDING);
-		when(this.driverMock.startMachines(1, scaleUpConfig())).thenReturn(
+		when(this.driverMock.startMachines(1, scaleOutConfig())).thenReturn(
 				machines(newMachine));
 
 		// run test that requests one additional machine to be started
@@ -211,7 +212,7 @@ public class TestBaseCloudPoolOperation {
 		this.cloudPool.updateMachinePool();
 
 		// verify that cloud driver was asked to start one additional machine
-		verify(this.driverMock).startMachines(1, scaleUpConfig());
+		verify(this.driverMock).startMachines(1, scaleOutConfig());
 
 		// verify event posted on event bus
 		verify(this.eventBusMock).post(
@@ -230,7 +231,7 @@ public class TestBaseCloudPoolOperation {
 		// when asked to start two more machines, it will succeed
 		Machine newMachine1 = machine("i-5", MachineState.PENDING);
 		Machine newMachine2 = machine("i-6", MachineState.PENDING);
-		when(this.driverMock.startMachines(2, scaleUpConfig())).thenReturn(
+		when(this.driverMock.startMachines(2, scaleOutConfig())).thenReturn(
 				machines(newMachine1, newMachine2));
 
 		// run test that requests two additional machines to be started
@@ -244,7 +245,7 @@ public class TestBaseCloudPoolOperation {
 		this.cloudPool.updateMachinePool();
 
 		// verify that cloud driver was asked to start two additional machines
-		verify(this.driverMock).startMachines(2, scaleUpConfig());
+		verify(this.driverMock).startMachines(2, scaleOutConfig());
 
 		// verify event posted on event bus
 		verify(this.eventBusMock).post(argThat(isStartAlert("i-5", "i-6")));
@@ -271,7 +272,7 @@ public class TestBaseCloudPoolOperation {
 		// when asked to start two more machines, cloud pool will succeed but
 		// return a machine in REQUESTED state
 		Machine requestedMachine = machine("sir-5", MachineState.REQUESTED);
-		when(this.driverMock.startMachines(1, scaleUpConfig())).thenReturn(
+		when(this.driverMock.startMachines(1, scaleOutConfig())).thenReturn(
 				machines(requestedMachine));
 
 		// run test that requests two additional machines to be started
@@ -285,7 +286,7 @@ public class TestBaseCloudPoolOperation {
 		this.cloudPool.updateMachinePool();
 
 		// verify that cloud driver was asked to start two additional machines
-		verify(this.driverMock).startMachines(1, scaleUpConfig());
+		verify(this.driverMock).startMachines(1, scaleOutConfig());
 
 		// verify event posted on event bus
 		verify(this.eventBusMock).post(argThat(isStartAlert("sir-5")));
@@ -308,7 +309,7 @@ public class TestBaseCloudPoolOperation {
 		// when asked to start a machine, an error will be raised
 		Throwable fault = new StartMachinesException(2, machines(),
 				new Exception("failed to add machines"));
-		when(this.driverMock.startMachines(2, scaleUpConfig()))
+		when(this.driverMock.startMachines(2, scaleOutConfig()))
 				.thenThrow(fault);
 
 		// run test that requests two additional machines to be started
@@ -328,7 +329,7 @@ public class TestBaseCloudPoolOperation {
 		}
 
 		// verify that cloud driver was asked to start two additional machines
-		verify(this.driverMock).startMachines(2, scaleUpConfig());
+		verify(this.driverMock).startMachines(2, scaleOutConfig());
 
 		// verify that an error event was posted on event bus
 		verify(this.eventBusMock).post(argThat(isAlert(RESIZE.name(), ERROR)));
@@ -356,7 +357,7 @@ public class TestBaseCloudPoolOperation {
 		Throwable partialFault = new StartMachinesException(2,
 				machines(newMachine), new Exception(
 						"failed to start second machine"));
-		when(this.driverMock.startMachines(2, scaleUpConfig())).thenThrow(
+		when(this.driverMock.startMachines(2, scaleOutConfig())).thenThrow(
 				partialFault);
 
 		// run test that requests two additional machines to be started
@@ -375,7 +376,7 @@ public class TestBaseCloudPoolOperation {
 		assertThat(this.cloudPool.desiredSize(), is(5));
 
 		// verify that cloud driver was asked to start two additional machines
-		verify(this.driverMock).startMachines(2, scaleUpConfig());
+		verify(this.driverMock).startMachines(2, scaleOutConfig());
 
 		// verify event posted on event bus
 		verify(this.eventBusMock).post(argThat(isStartAlert("i-5")));
@@ -710,14 +711,14 @@ public class TestBaseCloudPoolOperation {
 				machines(booting, active1, terminated));
 		// when asked to start a machine, it will succeed
 		Machine newMachine = machine("i-5", MachineState.PENDING);
-		when(this.driverMock.startMachines(1, scaleUpConfig())).thenReturn(
+		when(this.driverMock.startMachines(1, scaleOutConfig())).thenReturn(
 				machines(newMachine));
 
 		// run pool update (to 3) => scale-out expected
 		this.cloudPool.updateMachinePool();
 
 		// verify that cloud driver was asked to start one additional machine
-		verify(this.driverMock).startMachines(1, scaleUpConfig());
+		verify(this.driverMock).startMachines(1, scaleOutConfig());
 		// verify event posted on event bus
 		verify(this.eventBusMock).post(argThat(isStartAlert("i-5")));
 
@@ -862,7 +863,7 @@ public class TestBaseCloudPoolOperation {
 
 		// when asked to start a machine, it will succeed
 		Machine newMachine = machine("i-3", MachineState.PENDING);
-		when(this.driverMock.startMachines(1, scaleUpConfig())).thenReturn(
+		when(this.driverMock.startMachines(1, scaleOutConfig())).thenReturn(
 				machines(newMachine));
 
 		// run pool update => expected to start a replacement instance for i-1
@@ -870,7 +871,7 @@ public class TestBaseCloudPoolOperation {
 		this.cloudPool.updateMachinePool();
 
 		// verify that cloud driver was asked to start one additional machine
-		verify(this.driverMock).startMachines(1, scaleUpConfig());
+		verify(this.driverMock).startMachines(1, scaleOutConfig());
 		// verify event posted on event bus
 		verify(this.eventBusMock).post(argThat(isStartAlert("i-3")));
 	}
@@ -1277,7 +1278,7 @@ public class TestBaseCloudPoolOperation {
 	private JsonObject poolConfig(VictimSelectionPolicy victimSelectionPolicy,
 			int instanceHourMargin) {
 		CloudPoolConfig scalingGroupConfig = scalingGroupConfig();
-		ScaleOutConfig scaleUpConfig = scaleUpConfig();
+		ScaleOutConfig scaleUpConfig = scaleOutConfig();
 		ScaleInConfig scaleDownConfig = new ScaleInConfig(
 				victimSelectionPolicy, instanceHourMargin);
 		BaseCloudPoolConfig poolConfig = new BaseCloudPoolConfig(
@@ -1295,15 +1296,15 @@ public class TestBaseCloudPoolOperation {
 				+ "\"region\": \"us-east-1\"}");
 	}
 
-	private ScaleOutConfig scaleUpConfig() {
+	private ScaleOutConfig scaleOutConfig() {
 		ScaleOutConfig scaleUpConfig = new ScaleOutConfig("size", "image",
 				"keyPair", Arrays.asList("web"),
 				Arrays.asList("apt-get install apache2"));
 		return scaleUpConfig;
 	}
 
-	private ClientAuthentication smtpAuth() {
-		return new ClientAuthentication("userName", "password");
+	private SmtpClientAuthentication smtpAuth() {
+		return new SmtpClientAuthentication("userName", "password");
 	}
 
 }

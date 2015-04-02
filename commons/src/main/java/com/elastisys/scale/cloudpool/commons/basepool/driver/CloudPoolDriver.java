@@ -9,9 +9,9 @@ import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.CloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 
 /**
  * A cloud pool management interface for a particular cloud provider.

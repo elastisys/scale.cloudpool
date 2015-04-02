@@ -26,7 +26,7 @@ import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
 import com.elastisys.scale.cloudpool.aws.spot.util.SpotTestUtil;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 
 /**
  * A fake {@link SpotClient} that can be set up to simulate an EC2 account with

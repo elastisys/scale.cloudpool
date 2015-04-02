@@ -37,9 +37,10 @@ import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.CloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleInConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
@@ -86,9 +87,9 @@ public class TestSpotPoolDriverOperation {
 	 * @return config to use for the {@link SpotPoolDriver} under test.
 	 */
 	private BaseCloudPoolConfig config() {
-		BaseCloudPoolConfig.ScaleInConfig scaleInConfig = new BaseCloudPoolConfig.ScaleInConfig(
+		ScaleInConfig scaleInConfig = new ScaleInConfig(
 				VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR, 300);
-		BaseCloudPoolConfig.ScaleOutConfig scaleOutConfig = new BaseCloudPoolConfig.ScaleOutConfig(
+		ScaleOutConfig scaleOutConfig = new ScaleOutConfig(
 				"m1.small", "ami-123", "instancekey", asList("webserver"),
 				asList("apt-get update -qy", "apt-get install apache2 -qy"));
 		int poolUpdatePeriod = 30;

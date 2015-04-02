@@ -1,0 +1,52 @@
+{
+    "cloudPool": {
+      "name": "my-cloud-pool",
+      "driverConfig": { 
+        "keystoneEndpoint": "http://openstack.nova.com:5000/v2.0",
+        "region": "RegionOne",
+        "tenantName": "tenant",
+        "userName": "clouduser",
+        "password": "cloudpass"
+      }      
+    },
+    "scaleOutConfig": {
+      "size": "m1.small", 
+      "image": "Ubuntu Server 12.04",
+      "keyPair": "openstack_p11",
+      "securityGroups": ["web"],               
+      "bootScript": [
+        "sudo apt-get update",
+        "sudo apt-get install -y --force-yes apache2"
+      ]
+    },
+    "scaleInConfig": {
+      "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
+      "instanceHourMargin": 0
+    },
+    "alerts": {
+        "http": [
+          {       
+            "destinationUrls": ["https://some.host:443/"],
+            "severityFilter": "INFO|WARN|ERROR|FATAL", 
+            "auth": {
+                "basicCredentials": { "username": "user", "password": "secret" }
+            }
+          }
+        ],
+        "smtp": [
+          {
+            "subject": "[elastisys:scale] alert for cloud pool my-cloud-pool",
+            "recipients": ["recipient@elastisys.com"],
+            "sender": "noreply@elastisys.com",
+            "severityFilter": "INFO|WARN|ERROR|FATAL", 
+            "smtpClientConfig": {
+              "smtpHost": "mail.elastisys.com",
+              "smtpPort": 25,
+              "authentication": {"username": "user", "password": "password"},
+              "useSsl": true
+            }
+          }
+        ]
+    },    
+    "poolUpdatePeriod": 60            
+}  

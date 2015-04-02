@@ -16,8 +16,8 @@ import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.AwsAsPoolDriver;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.AwsAsPoolDriverConfig;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AutoScalingClient;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.commons.json.JsonUtils;
 
@@ -75,7 +75,7 @@ public class TestAwsAsDriverConfiguration {
 	@Test(expected = IllegalStateException.class)
 	public void invokeStartMachineBeforeBeingConfigured()
 			throws CloudPoolException {
-		ScaleOutConfig scaleUpConfig = new BaseCloudPoolConfig.ScaleOutConfig(
+		ScaleOutConfig scaleUpConfig = new ScaleOutConfig(
 				"size", "image", "keyPair", Arrays.asList("webserver"),
 				Arrays.asList("#!/bin/bash", "apt-get update"));
 		this.driver.startMachines(3, scaleUpConfig);

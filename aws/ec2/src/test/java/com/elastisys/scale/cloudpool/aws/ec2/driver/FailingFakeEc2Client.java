@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.ec2.model.Instance;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 
 /**
  * A {@link FakeEc2Client} that only allows a limited number of

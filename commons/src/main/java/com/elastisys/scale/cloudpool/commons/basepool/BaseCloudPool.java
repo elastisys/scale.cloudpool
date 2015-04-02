@@ -32,10 +32,11 @@ import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.AlertSettings;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleInConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPoolConfig.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertTopics;
+import com.elastisys.scale.cloudpool.commons.basepool.config.AlertsConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleInConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.commons.resizeplanner.ResizePlan;
@@ -45,10 +46,12 @@ import com.elastisys.scale.cloudpool.commons.termqueue.TerminationQueue;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.net.alerter.AlertSeverity;
-import com.elastisys.scale.commons.net.alerter.smtp.EmailAlerter;
-import com.elastisys.scale.commons.net.alerter.smtp.EmailAlerterConfig;
+import com.elastisys.scale.commons.net.alerter.Alerter;
+import com.elastisys.scale.commons.net.alerter.http.HttpAlerter;
+import com.elastisys.scale.commons.net.alerter.http.HttpAlerterConfig;
+import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerter;
+import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerterConfig;
 import com.elastisys.scale.commons.net.host.HostUtils;
-import com.elastisys.scale.commons.net.smtp.SmtpServerSettings;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
@@ -209,15 +212,15 @@ public class BaseCloudPool implements CloudPool {
 
 	/**
 	 * {@link EventBus} used to post {@link Alert} events that are to be
-	 * forwarded by the {@link EmailAlerter} (if configured).
+	 * forwarded by configured {@link Alerter}s (if any).
 	 */
 	private final EventBus eventBus;
 	/**
-	 * If email alerts are configured, will hold an {@link EmailAlerter} that is
-	 * registered with the {@link EventBus} to forward {@link Alert}s to a list
-	 * of configured email recipients.
+	 * Holds the list of configured {@link Alerter}s (if any). Each
+	 * {@link Alerter} is registered with the {@link EventBus} to forward posted
+	 * {@link Alert}s.
 	 */
-	private final AtomicReference<EmailAlerter> smtpAlerter;
+	private final AtomicReference<List<Alerter>> alerters;
 	/**
 	 * Pool update task that periodically runs the {@link #updateMachinePool()}
 	 * method to (1) effectuate pending instance terminations in the /
@@ -271,7 +274,7 @@ public class BaseCloudPool implements CloudPool {
 		this.config = Atomics.newReference();
 		this.started = new AtomicBoolean(false);
 
-		this.smtpAlerter = Atomics.newReference();
+		this.alerters = Atomics.newReference();
 
 		this.terminationQueue = new TerminationQueue();
 		this.desiredSize = Atomics.newReference();
@@ -336,7 +339,7 @@ public class BaseCloudPool implements CloudPool {
 				new PoolUpdateTask(), poolUpdatePeriod, poolUpdatePeriod,
 				TimeUnit.SECONDS);
 
-		setUpSmtpAlerter(config());
+		setUpAlerters(config());
 		this.started.set(true);
 		LOG.info(getClass().getSimpleName() + " started.");
 	}
@@ -393,7 +396,7 @@ public class BaseCloudPool implements CloudPool {
 			// cancel tasks (allow any running tasks to finish)
 			this.poolUpdateTask.cancel(false);
 			this.poolUpdateTask = null;
-			takeDownSmtpAlerter();
+			takeDownAlerters();
 			this.started.set(false);
 		}
 		LOG.info(getClass().getSimpleName() + " stopped.");
@@ -539,29 +542,44 @@ public class BaseCloudPool implements CloudPool {
 	}
 
 	/**
-	 * Sets up an {@link EmailAlerter}, in case the configuration contains an
-	 * {@link AlertSettings}.
+	 * Sets up an {@link SmtpAlerter}, in case the configuration contains an
+	 * {@link AlertsConfig}.
 	 *
 	 * @param configuration
 	 */
-	private void setUpSmtpAlerter(BaseCloudPoolConfig configuration) {
-		AlertSettings alertsConfig = configuration.getAlerts();
-		if (alertsConfig != null) {
-			LOG.debug("configuring SMTP alerter.");
-			EmailAlerterConfig sendSettings = new EmailAlerterConfig(
-					alertsConfig.getRecipients(), alertsConfig.getSender(),
-					alertsConfig.getSubject(), alertsConfig.getSeverityFilter());
-			SmtpServerSettings mailServerSettings = alertsConfig
-					.getMailServer().toSmtpServerSettings();
-			this.smtpAlerter.set(new EmailAlerter(mailServerSettings,
-					sendSettings, standardAlertMetadata()));
-			this.eventBus.register(this.smtpAlerter.get());
+	private void setUpAlerters(BaseCloudPoolConfig configuration) {
+		AlertsConfig alertsConfig = configuration.getAlerts();
+		if (alertsConfig == null) {
+			LOG.debug("no alerts configuration, no alerters set up");
+			return;
 		}
+
+		List<Alerter> newAlerters = Lists.newArrayList();
+		Map<String, JsonElement> standardAlertMetadataTags = standardAlertMetadata();
+		// add SMTP alerters
+		List<SmtpAlerterConfig> smtpAlerters = alertsConfig.getSmtpAlerters();
+		LOG.debug("adding {} SMTP alerter(s)", smtpAlerters.size());
+		for (SmtpAlerterConfig smtpAlerterConfig : smtpAlerters) {
+			newAlerters.add(new SmtpAlerter(smtpAlerterConfig,
+					standardAlertMetadataTags));
+		}
+		// add HTTP alerters
+		List<HttpAlerterConfig> httpAlerters = alertsConfig.getHttpAlerters();
+		LOG.debug("adding {} HTTP alerter(s)", httpAlerters.size());
+		for (HttpAlerterConfig httpAlerterConfig : httpAlerters) {
+			newAlerters.add(new HttpAlerter(httpAlerterConfig,
+					standardAlertMetadataTags));
+		}
+		// register every alerter with event bus
+		for (Alerter alerter : newAlerters) {
+			this.eventBus.register(alerter);
+		}
+		this.alerters.set(newAlerters);
 	}
 
 	/**
 	 * Standard {@link Alert} tags to include in all {@link Alert} mails sent by
-	 * the {@link EmailAlerter}.
+	 * the configured {@link Alerter}s.
 	 *
 	 * @return
 	 */
@@ -579,12 +597,14 @@ public class BaseCloudPool implements CloudPool {
 	}
 
 	/**
-	 * Unregisters the {@link EmailAlerter} from the {@link EventBus}, if an
-	 * {@link EmailAlerter} has been set up.
+	 * Unregisters all configured {@link Alerter}s from the {@link EventBus}.
 	 */
-	private void takeDownSmtpAlerter() {
-		if (this.smtpAlerter.get() != null) {
-			this.eventBus.unregister(this.smtpAlerter.get());
+	private void takeDownAlerters() {
+		if (this.alerters.get() != null) {
+			List<Alerter> alerterList = this.alerters.get();
+			for (Alerter alerter : alerterList) {
+				this.eventBus.unregister(alerter);
+			}
 		}
 	}
 
