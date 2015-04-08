@@ -9,7 +9,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.alerter.http.HttpAlerterConfig;
@@ -61,7 +60,7 @@ public class TestBaseCloudPoolConfig {
 				is(BaseCloudPoolConfig.DEFAULT_POOL_UPDATE_PERIOD));
 	}
 
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingCloudPool() {
 		BaseCloudPoolConfig config = new BaseCloudPoolConfig(null,
 				scaleOutConfig(), scaleInConfig(), alertSettings(),
@@ -69,14 +68,14 @@ public class TestBaseCloudPoolConfig {
 		config.validate();
 	}
 
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingScaleOutConfig() {
 		BaseCloudPoolConfig config = new BaseCloudPoolConfig(cloudPoolConfig(),
 				null, scaleInConfig(), alertSettings(), poolUpdatePeriod());
 		config.validate();
 	}
 
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingScaleInConfig() {
 		BaseCloudPoolConfig config = new BaseCloudPoolConfig(cloudPoolConfig(),
 				scaleOutConfig(), null, alertSettings(), poolUpdatePeriod());

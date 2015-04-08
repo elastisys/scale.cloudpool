@@ -295,7 +295,8 @@ public class BaseCloudPool implements CloudPool {
 	}
 
 	@Override
-	public void configure(JsonObject jsonConfig) throws CloudPoolException {
+	public void configure(JsonObject jsonConfig)
+			throws IllegalArgumentException, CloudPoolException {
 		BaseCloudPoolConfig configuration = validate(jsonConfig);
 
 		synchronized (this.updateLock) {
@@ -309,15 +310,15 @@ public class BaseCloudPool implements CloudPool {
 	}
 
 	private BaseCloudPoolConfig validate(JsonObject jsonConfig)
-			throws CloudPoolException {
+			throws IllegalArgumentException {
 		try {
 			BaseCloudPoolConfig configuration = JsonUtils.toObject(jsonConfig,
 					BaseCloudPoolConfig.class);
 			configuration.validate();
 			return configuration;
 		} catch (Exception e) {
-			Throwables.propagateIfInstanceOf(e, CloudPoolException.class);
-			throw new CloudPoolException(
+			Throwables.propagateIfInstanceOf(e, IllegalArgumentException.class);
+			throw new IllegalArgumentException(
 					"failed to validate cloud pool configuration: "
 							+ e.getMessage(), e);
 		}

@@ -74,9 +74,9 @@ public class BaseCloudPoolConfig {
 	/**
 	 * Performs basic validation of this configuration.
 	 *
-	 * @throws CloudPoolException
+	 * @throws IllegalArgumentException
 	 */
-	public void validate() throws CloudPoolException {
+	public void validate() throws IllegalArgumentException {
 		try {
 			checkNotNull(this.cloudPool, "missing cloudPool config");
 			checkNotNull(this.scaleOutConfig, "missing scaleOutConfig");
@@ -92,8 +92,8 @@ public class BaseCloudPoolConfig {
 			}
 		} catch (Exception e) {
 			// no need to wrap further if already a config exception
-			Throwables.propagateIfInstanceOf(e, CloudPoolException.class);
-			throw new CloudPoolException(format(
+			Throwables.propagateIfInstanceOf(e, IllegalArgumentException.class);
+			throw new IllegalArgumentException(format(
 					"failed to validate configuration: %s", e.getMessage()), e);
 		}
 	}
@@ -174,9 +174,8 @@ public class BaseCloudPoolConfig {
 		 */
 		public void validate() throws CloudPoolException {
 			try {
-				SmtpClientConfig settings = new SmtpClientConfig(
-						getSmtpHost(), getSmtpPort(), getAuthentication(),
-						isUseSsl());
+				SmtpClientConfig settings = new SmtpClientConfig(getSmtpHost(),
+						getSmtpPort(), getAuthentication(), isUseSsl());
 				settings.validate();
 			} catch (Exception e) {
 				throw new CloudPoolException(format(

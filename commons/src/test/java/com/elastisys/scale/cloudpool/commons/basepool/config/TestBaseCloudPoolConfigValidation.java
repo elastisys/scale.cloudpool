@@ -37,14 +37,14 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	// illegal config: missing /cloudPool
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingCloudPool() throws CloudPoolException {
 		new BaseCloudPoolConfig(null, scaleOutConfig(), scaleInConfig(),
 				alertConfig(), null).validate();
 	}
 
 	// illegal config: missing /cloudPool/name
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingCloudPoolName() throws CloudPoolException {
 		CloudPoolConfig cloudPoolConfig = cloudPoolConfig();
 		setPrivateField(cloudPoolConfig, "name", null);
@@ -53,7 +53,7 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	// illegal config: missing /cloudPool/driverConfig
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingCloudPoolDriverConfig() throws CloudPoolException {
 		CloudPoolConfig cloudPoolConfig = cloudPoolConfig();
 		setPrivateField(cloudPoolConfig, "driverConfig", null);
@@ -62,14 +62,14 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	// illegal config: missing /scaleOutConfig
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingScaleOutConfig() throws CloudPoolException {
 		new BaseCloudPoolConfig(cloudPoolConfig(), null, scaleInConfig(),
 				alertConfig(), null).validate();
 	}
 
 	// illegal config: missing /scaleOutConfig/size
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingScaleOutConfigSize() throws CloudPoolException {
 		ScaleOutConfig scaleOutConfig = scaleOutConfig();
 		setPrivateField(scaleOutConfig, "size", null);
@@ -78,7 +78,7 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	// illegal config: missing /scaleOutConfig/image
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingScaleOutConfigImage() throws CloudPoolException {
 		ScaleOutConfig scaleOutConfig = scaleOutConfig();
 		setPrivateField(scaleOutConfig, "image", null);
@@ -87,7 +87,7 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	// illegal config: missing /scaleOutConfig/keyPair
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingScaleOutConfigKeyPair() throws CloudPoolException {
 		ScaleOutConfig scaleOutConfig = scaleOutConfig();
 		setPrivateField(scaleOutConfig, "keyPair", null);
@@ -96,7 +96,7 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	// illegal config: missing /scaleOutConfig/securityGroups
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingScaleOutConfigSecurityGroups() throws CloudPoolException {
 		ScaleOutConfig scaleOutConfig = scaleOutConfig();
 		setPrivateField(scaleOutConfig, "securityGroups", null);
@@ -105,7 +105,7 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	// illegal config: missing /scaleOutConfig/bootScript
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingScaleOutConfigBootScript() throws CloudPoolException {
 		ScaleOutConfig scaleOutConfig = scaleOutConfig();
 		setPrivateField(scaleOutConfig, "bootScript", null);
@@ -114,7 +114,7 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	// illegal config: missing /alerts/smtp[0]/subject
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingSmtpSubject() throws CloudPoolException {
 		AlertsConfig alerts = alertConfig();
 		setPrivateField(alerts.getSmtpAlerters().get(0), "subject", null);
@@ -123,7 +123,7 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	// illegal config: missing /alerts/smtp[0]/recipients
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingSmtpRecipients() throws CloudPoolException {
 		AlertsConfig alerts = alertConfig();
 		setPrivateField(alerts.getSmtpAlerters().get(0), "recipients", null);
@@ -132,7 +132,7 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	// illegal config: missing /alerts/smtp[0]/sender
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingSmtpSender() throws CloudPoolException {
 		AlertsConfig alerts = alertConfig();
 		setPrivateField(alerts.getSmtpAlerters().get(0), "sender", null);
@@ -141,7 +141,7 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	// illegal config: missing /alerts/smtp[0]/smtpClientConfig
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingSmtpClientConfig() throws CloudPoolException {
 		AlertsConfig alerts = alertConfig();
 		setPrivateField(alerts.getSmtpAlerters().get(0), "smtpClientConfig",
@@ -151,7 +151,7 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	// illegal config: missing /alerts/smtp[0]/smtpClientConfig/smtpHost
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingSmtpHost() throws CloudPoolException {
 		AlertsConfig alerts = alertConfig();
 		setPrivateField(alerts.getSmtpAlerters().get(0).getSmtpClientConfig(),
@@ -162,7 +162,7 @@ public class TestBaseCloudPoolConfigValidation {
 
 	// illegal config: missing
 	// /alerts/smtp[0]/smtpClientConfig/authentication/userName
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingSmtpAuthenticationUsername() throws CloudPoolException {
 		AlertsConfig alerts = alertConfig();
 		SmtpClientAuthentication authentication = alerts.getSmtpAlerters()
@@ -174,7 +174,7 @@ public class TestBaseCloudPoolConfigValidation {
 
 	// illegal config: missing
 	// /alerts/smtp[0]/smtpClientConfig/authentication/password
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingSmtpAuthenticationPassword() throws CloudPoolException {
 		AlertsConfig alerts = alertConfig();
 		SmtpClientAuthentication authentication = alerts.getSmtpAlerters()
@@ -185,7 +185,7 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	// illegal config: missing /alerts/http[0]/destinationUrls
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingHttpDestinationUrls() throws CloudPoolException {
 		AlertsConfig alerts = alertConfig();
 		HttpAlerterConfig httpAlerter = alerts.getHttpAlerters().get(0);
@@ -195,7 +195,7 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	// illegal config: missing /alerts/http[0]/auth/basicCredentials/username
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingHttpBasicAuthUsername() throws CloudPoolException {
 		AlertsConfig alerts = alertConfig();
 		HttpAlerterConfig httpAlerter = alerts.getHttpAlerters().get(0);
@@ -206,7 +206,7 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	// illegal config: missing /alerts/http[0]/auth/basicCredentials/password
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void missingHttpBasicAuthPassword() throws CloudPoolException {
 		AlertsConfig alerts = alertConfig();
 		HttpAlerterConfig httpAlerter = alerts.getHttpAlerters().get(0);

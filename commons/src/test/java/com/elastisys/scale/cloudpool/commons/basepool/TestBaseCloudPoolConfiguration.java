@@ -287,13 +287,13 @@ public class TestBaseCloudPoolConfiguration {
 		assertTrue(this.cloudPool.isStarted());
 	}
 
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void testConfigureWithEmptyConfig() throws CloudPoolException {
 		JsonObject emptyConfig = new JsonObject();
 		this.cloudPool.configure(emptyConfig);
 	}
 
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void testConfigureWithIllegalConfig() throws CloudPoolException {
 		JsonObject illegalConfig = JsonUtils
 				.parseJsonResource("config/invalid-cloudpool-config-missing-cloudpool.json");
@@ -303,7 +303,7 @@ public class TestBaseCloudPoolConfiguration {
 	/**
 	 * Validation of configuration missing required element should fail.
 	 */
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void parseIllegalConfigMissingScaleOutConfig()
 			throws CloudPoolException {
 		String jsonConf = "config/invalid-cloudpool-config-missing-scaleoutconfig.json";
@@ -318,7 +318,7 @@ public class TestBaseCloudPoolConfiguration {
 	/**
 	 * Validation of configuration missing required element should fail.
 	 */
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void parseIllegalConfigMissingScalingGroup()
 			throws CloudPoolException {
 		String jsonConf = "config/invalid-cloudpool-config-missing-cloudpool.json";
@@ -333,7 +333,7 @@ public class TestBaseCloudPoolConfiguration {
 	/**
 	 * Validation of configuration missing required element should fail.
 	 */
-	@Test(expected = CloudPoolException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void parseIllegalConfigMissingScaleInConfig()
 			throws CloudPoolException {
 		String jsonConf = "config/invalid-cloudpool-config-missing-scaleinconfig.json";
