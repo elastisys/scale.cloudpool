@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +32,6 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Atomics;
@@ -140,7 +138,9 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 	 * regarding the scaling group too small and ordering new machines via
 	 * startMachines.
 	 * <p/>
-	 * We set the request time attribute of the machine to the current time.
+	 * We set the request time to null, since AWS AutoScaling does not support
+	 * reporting it and attempting to keep track of it manually is rather
+	 * awkward and brittle.
 	 *
 	 * @param actualCapacity
 	 *            The actual scaling group size.
@@ -150,14 +150,13 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 	 */
 	private List<Machine> requestedInstances(int actualCapacity,
 			int desiredCapacity) {
-		final DateTime now = UtcTime.now();
 		int missingInstances = desiredCapacity - actualCapacity;
 
 		List<Machine> requestedInstances = Lists.newArrayList();
 		for (int i = 0; i < missingInstances; i++) {
 			String pseudoId = String.format("%s%d", REQUESTED_ID_PREFIX, i + 1);
 			requestedInstances.add(new Machine(pseudoId,
-					MachineState.REQUESTED, ServiceState.UNKNOWN, now, null,
+					MachineState.REQUESTED, ServiceState.UNKNOWN, null, null,
 					null, null));
 		}
 		return requestedInstances;

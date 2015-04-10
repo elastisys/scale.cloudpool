@@ -36,7 +36,11 @@ public class InstanceToMachine implements Function<Instance, Machine> {
 	}
 
 	/**
-	 * Converts an {@link Instance} to a {@link Machine}.
+	 * Converts an {@link Instance} to a {@link Machine}. The request time is
+	 * set to null, since AWS does not report it, and attempting to manually
+	 * keep track of it is awkward and brittle. It will have to stay this way
+	 * until either they add support for it, or we figure out a way to do it
+	 * that is not brittle.
 	 *
 	 * @see com.google.common.base.Function#apply(java.lang.Object)
 	 */
@@ -46,7 +50,7 @@ public class InstanceToMachine implements Function<Instance, Machine> {
 
 		String id = instance.getInstanceId();
 		MachineState machineState = new InstanceStateToMachineState()
-				.apply(instance.getState());
+		.apply(instance.getState());
 		DateTime launchtime = new DateTime(instance.getLaunchTime(),
 				DateTimeZone.UTC);
 		List<String> publicIps = Lists.newArrayList();
@@ -80,7 +84,7 @@ public class InstanceToMachine implements Function<Instance, Machine> {
 
 		JsonObject metadata = JsonUtils.toJson(instance).getAsJsonObject();
 		return new Machine(id, machineState, membershipStatus, serviceState,
-				launchtime, publicIps, privateIps, metadata);
+				null, launchtime, publicIps, privateIps, metadata);
 	}
 
 	/**
