@@ -27,7 +27,7 @@ import com.google.gson.JsonObject;
  * {@link Machine} representation.
  */
 public class InstancePairedSpotRequestToMachine implements
-		Function<InstancePairedSpotRequest, Machine> {
+Function<InstancePairedSpotRequest, Machine> {
 
 	/**
 	 * Converts an {@link InstancePairedSpotRequest} to a {@link Machine}.
@@ -38,7 +38,7 @@ public class InstancePairedSpotRequestToMachine implements
 	public static Machine convert(
 			InstancePairedSpotRequest instancePairedSpotRequest) {
 		return new InstancePairedSpotRequestToMachine()
-				.apply(instancePairedSpotRequest);
+		.apply(instancePairedSpotRequest);
 	}
 
 	@Override
@@ -50,6 +50,8 @@ public class InstancePairedSpotRequestToMachine implements
 
 		String id = request.getSpotInstanceRequestId();
 		MachineState machineState = spotInstanceRequest.getMachineState();
+		final DateTime requesttime = new DateTime(spotInstanceRequest
+				.getRequest().getCreateTime(), UTC);
 		DateTime launchtime = null;
 		List<String> publicIps = Lists.newArrayList();
 		List<String> privateIps = Lists.newArrayList();
@@ -86,7 +88,7 @@ public class InstancePairedSpotRequestToMachine implements
 		JsonObject metadata = JsonUtils.toJson(spotInstanceRequest)
 				.getAsJsonObject();
 		return new Machine(id, machineState, membershipStatus, serviceState,
-				launchtime, publicIps, privateIps, metadata);
+				requesttime, launchtime, publicIps, privateIps, metadata);
 	}
 
 	/**
