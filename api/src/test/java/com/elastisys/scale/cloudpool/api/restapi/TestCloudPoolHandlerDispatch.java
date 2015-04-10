@@ -71,7 +71,7 @@ public class TestCloudPoolHandlerDispatch {
 		List<String> privateIps = asList("1.2.3.5");
 		JsonObject metadata = parseJsonString("{\"id\": \"i-1\"}");
 		Machine machine = new Machine("i-1", MachineState.PENDING,
-				MembershipStatus.defaultStatus(), ServiceState.BOOTING,
+				MembershipStatus.defaultStatus(), ServiceState.BOOTING, null,
 				UtcTime.parse("2014-01-13T11:00:00.000Z"), publicIps,
 				privateIps, metadata);
 		MachinePool pool = TestUtils.pool(
@@ -127,7 +127,7 @@ public class TestCloudPoolHandlerDispatch {
 			throws CloudPoolException {
 		// set up mock response: should throw error
 		doThrow(new CloudPoolException("null pointer"))
-				.when(this.cloudPoolMock).setDesiredSize(anyInt());
+		.when(this.cloudPoolMock).setDesiredSize(anyInt());
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint
@@ -146,7 +146,7 @@ public class TestCloudPoolHandlerDispatch {
 			throws CloudPoolException {
 		// set up mock response: should throw error
 		doThrow(IllegalArgumentException.class).when(this.cloudPoolMock)
-				.setDesiredSize(anyInt());
+		.setDesiredSize(anyInt());
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint
@@ -211,7 +211,7 @@ public class TestCloudPoolHandlerDispatch {
 	public void testTerminateMachineOnNotFoundError() throws Exception {
 		// set up mock response
 		doThrow(NotFoundException.class).when(this.cloudPoolMock)
-				.terminateMachine("i-X", false);
+		.terminateMachine("i-X", false);
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.terminateMachine("i-X",
@@ -261,7 +261,7 @@ public class TestCloudPoolHandlerDispatch {
 	public void testDetachMachineOnNotFoundError() throws Exception {
 		// set up mock response
 		doThrow(NotFoundException.class).when(this.cloudPoolMock)
-				.detachMachine("i-X", false);
+		.detachMachine("i-X", false);
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.detachMachine("i-X",
@@ -310,7 +310,7 @@ public class TestCloudPoolHandlerDispatch {
 	public void testAttachMachineOnNotFoundError() throws Exception {
 		// set up mock response
 		doThrow(NotFoundException.class).when(this.cloudPoolMock)
-				.attachMachine("i-X");
+		.attachMachine("i-X");
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.attachMachine("i-X");
@@ -359,7 +359,7 @@ public class TestCloudPoolHandlerDispatch {
 	public void testSetServiceStateOnNotFoundError() throws Exception {
 		// set up mock response
 		doThrow(NotFoundException.class).when(this.cloudPoolMock)
-				.setServiceState("i-X", ServiceState.IN_SERVICE);
+		.setServiceState("i-X", ServiceState.IN_SERVICE);
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.setServiceState("i-X",
@@ -377,7 +377,7 @@ public class TestCloudPoolHandlerDispatch {
 		// set up mock response
 		doThrow(new CloudPoolException("cloud api outage")).when(
 				this.cloudPoolMock).setServiceState("i-1",
-				ServiceState.IN_SERVICE);
+						ServiceState.IN_SERVICE);
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.setServiceState("i-1",
@@ -414,7 +414,7 @@ public class TestCloudPoolHandlerDispatch {
 			throws Exception {
 		// set up mock response
 		doThrow(NotFoundException.class).when(this.cloudPoolMock)
-				.setMembershipStatus("i-X", MembershipStatus.awaitingService());
+		.setMembershipStatus("i-X", MembershipStatus.awaitingService());
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.setMembershipStatus(
@@ -435,7 +435,7 @@ public class TestCloudPoolHandlerDispatch {
 		// set up mock response
 		doThrow(new RuntimeException("cloud api outage")).when(
 				this.cloudPoolMock).setMembershipStatus("i-X",
-				MembershipStatus.awaitingService());
+						MembershipStatus.awaitingService());
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.setMembershipStatus(

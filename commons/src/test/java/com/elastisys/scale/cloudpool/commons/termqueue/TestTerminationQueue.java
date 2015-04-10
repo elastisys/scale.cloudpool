@@ -12,8 +12,6 @@ import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
-import com.elastisys.scale.cloudpool.commons.termqueue.ScheduledTermination;
-import com.elastisys.scale.cloudpool.commons.termqueue.TerminationQueue;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.collect.Lists;
@@ -229,7 +227,7 @@ public class TestTerminationQueue {
 	private Machine instance(String withId) {
 		List<String> publicIps = Lists.newArrayList();
 		List<String> privateIps = Lists.newArrayList();
-		return new Machine(withId, MachineState.RUNNING, UtcTime.now(),
+		return new Machine(withId, MachineState.RUNNING, null, UtcTime.now(),
 				publicIps, privateIps);
 	}
 

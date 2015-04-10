@@ -58,7 +58,10 @@ public class ServerToMachine implements Function<Server, Machine> {
 	private static Machine asMachine(Server server) {
 		MachineState machineState = new StatusToMachineState().apply(server
 				.getStatus());
-		DateTime launchTime = new DateTime(server.getCreated(),
+
+		final DateTime creationTime = new DateTime(server.getCreated(),
+				DateTimeZone.UTC);
+		final DateTime launchedAtTime = new DateTime(server.getLaunchedAt(),
 				DateTimeZone.UTC);
 
 		// collect public (floating) and private (fixed) IP addresses assigned
@@ -96,6 +99,7 @@ public class ServerToMachine implements Function<Server, Machine> {
 		}
 		JsonObject metadata = JsonUtils.toJson(server).getAsJsonObject();
 		return new Machine(server.getId(), machineState, membershipStatus,
-				serviceState, launchTime, publicIps, privateIps, metadata);
+				serviceState, creationTime, launchedAtTime, publicIps,
+				privateIps, metadata);
 	}
 }

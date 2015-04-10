@@ -25,6 +25,7 @@ import javax.ws.rs.core.Response.Status;
 import jersey.repackaged.com.google.common.collect.Lists;
 
 import org.eclipse.jetty.server.Server;
+import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -194,9 +195,11 @@ public class TestRestApi {
 	public void testGetPool() {
 		// set up mocked cloud pool response
 		List<Machine> machines = Lists.newArrayList();
-		machines.add(new Machine("i-1", MachineState.RUNNING, UtcTime.now()
-				.minusHours(1), Arrays.asList("1.2.3.4"), null));
-		MachinePool pool = new MachinePool(machines, UtcTime.now());
+		final DateTime now = UtcTime.now();
+		final DateTime anHourAgo = now.minusHours(1);
+		machines.add(new Machine("i-1", MachineState.RUNNING, anHourAgo,
+				anHourAgo, Arrays.asList("1.2.3.4"), null));
+		MachinePool pool = new MachinePool(machines, now);
 		when(cloudPool.getMachinePool()).thenReturn(pool);
 
 		// run test
@@ -343,7 +346,7 @@ public class TestRestApi {
 	public void testTerminateMachineOnNotFoundError() {
 		// set up expected call on mock
 		doThrow(new NotFoundException("unrecognized!")).when(cloudPool)
-				.terminateMachine("i-1", true);
+		.terminateMachine("i-1", true);
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
@@ -366,7 +369,7 @@ public class TestRestApi {
 	public void testTerminateMachineOnCloudPoolError() {
 		// set up expected call on mock
 		doThrow(new RuntimeException("failed!")).when(cloudPool)
-				.terminateMachine("i-1", true);
+		.terminateMachine("i-1", true);
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
@@ -412,7 +415,7 @@ public class TestRestApi {
 	public void testDetachMachineOnNotFoundError() {
 		// set up expected call on mock
 		doThrow(new NotFoundException("unrecognized!")).when(cloudPool)
-				.detachMachine("i-1", true);
+		.detachMachine("i-1", true);
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
@@ -479,7 +482,7 @@ public class TestRestApi {
 	public void testAttachMachineOnNotFoundError() {
 		// set up expected call on mock
 		doThrow(new NotFoundException("unrecognized!")).when(cloudPool)
-				.attachMachine("i-1");
+		.attachMachine("i-1");
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
@@ -546,7 +549,7 @@ public class TestRestApi {
 	public void testSetServiceStateOnNotFoundError() {
 		// set up expected call on mock
 		doThrow(new NotFoundException("unrecognized!")).when(cloudPool)
-				.setServiceState("i-1", ServiceState.OUT_OF_SERVICE);
+		.setServiceState("i-1", ServiceState.OUT_OF_SERVICE);
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
@@ -570,7 +573,7 @@ public class TestRestApi {
 	public void testSetServiceStateOnCloudPoolError() {
 		// set up expected call on mock
 		doThrow(new RuntimeException("failed!")).when(cloudPool)
-				.setServiceState("i-1", ServiceState.OUT_OF_SERVICE);
+		.setServiceState("i-1", ServiceState.OUT_OF_SERVICE);
 
 		// run test
 		Client client = RestClients.httpsNoAuth();

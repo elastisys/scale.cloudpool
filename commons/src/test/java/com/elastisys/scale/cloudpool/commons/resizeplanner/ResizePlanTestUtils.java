@@ -60,8 +60,33 @@ public class ResizePlanTestUtils {
 	}
 
 	/**
+	 * Creates a {@link Machine} with a given identifier index, request time,
+	 * launch time, machine state and service state.
+	 *
+	 * @param idIndex
+	 *            The identifier sequence number of the machine.
+	 * @param launchTime
+	 *            A launch times for the machine. <code>null</code> is accepted
+	 *            and represent a machine that hasn't started (yet).
+	 * @param machineState
+	 *            The {@link MachineState}.
+	 * @param membershipStatus
+	 *            The {@link MembershipStatus}.
+	 * @return
+	 */
+	public static Machine makeMachine(int idIndex, DateTime requestTime,
+			DateTime launchTime, MachineState machineState,
+			MembershipStatus membershipStatus) {
+		List<String> publicIps = Lists.newArrayList();
+		List<String> privateIps = Lists.newArrayList();
+		return new Machine("instance-" + idIndex, machineState,
+				membershipStatus, ServiceState.UNKNOWN, requestTime,
+				launchTime, publicIps, privateIps, null);
+	}
+
+	/**
 	 * Creates a {@link Machine} with a given identifier index, launch time,
-	 * machine state and service state.
+	 * machine state and service state. The request time equals the launch time.
 	 *
 	 * @param idIndex
 	 *            The identifier sequence number of the machine.
@@ -76,11 +101,8 @@ public class ResizePlanTestUtils {
 	 */
 	public static Machine makeMachine(int idIndex, DateTime launchTime,
 			MachineState machineState, MembershipStatus membershipStatus) {
-		List<String> publicIps = Lists.newArrayList();
-		List<String> privateIps = Lists.newArrayList();
-		return new Machine("instance-" + idIndex, machineState,
-				membershipStatus, ServiceState.UNKNOWN, launchTime, publicIps,
-				privateIps, null);
+		return makeMachine(idIndex, launchTime, launchTime, machineState,
+				membershipStatus);
 	}
 
 	/**
@@ -131,8 +153,8 @@ public class ResizePlanTestUtils {
 		List<String> publicIps = Lists.newArrayList();
 		List<String> privateIps = Lists.newArrayList();
 		return new ScheduledTermination(new Machine(instanceId,
-				MachineState.RUNNING, UtcTime.now(), publicIps, privateIps),
-				terminationTime);
+				MachineState.RUNNING, null, UtcTime.now(), publicIps,
+				privateIps), terminationTime);
 	}
 
 	public static List<ScheduledTermination> toTerminate(

@@ -78,6 +78,16 @@ public class Machine {
 	 * {@link Machine}.
 	 */
 	private final DateTime launchtime;
+
+	/**
+	 * The request time of the {@link Machine}. This attribute shall be set
+	 * immediately when a VM has been successfully requested from the cloud
+	 * backend. It may be null, if the cloud pool has no way of determining the
+	 * correct value, e.g., if it was started with a pool of VMs already
+	 * allocated and there is no way to find out when they were requested.
+	 */
+	private final DateTime requesttime;
+
 	/**
 	 * The list of public IP addresses associated with this {@link Machine}.
 	 * Depending on the state of the {@link Machine}, this list may be empty.
@@ -104,6 +114,11 @@ public class Machine {
 	 *            The identifier of the {@link Machine} .
 	 * @param state
 	 *            The state of the {@link Machine} .
+	 * @param requestTime
+	 *            The request time of the {@link Machine}, if this time is
+	 *            known. If the time when the machine was initially and
+	 *            successfully requested is not known, this attribute shall be
+	 *            null.
 	 * @param launchtime
 	 *            The launch time of the {@link Machine} if it has been
 	 *            launched. This attribute may be <code>null</code>, depending
@@ -119,10 +134,10 @@ public class Machine {
 	 *            IP addresses, this attribute can be set to <code>null</code>
 	 *            or an empty list.
 	 */
-	public Machine(String id, MachineState state, DateTime launchtime,
-			List<String> publicIps, List<String> privateIps) {
+	public Machine(String id, MachineState state, DateTime requestTime,
+			DateTime launchtime, List<String> publicIps, List<String> privateIps) {
 		this(id, state, MembershipStatus.defaultStatus(), ServiceState.UNKNOWN,
-				launchtime, publicIps, privateIps, null);
+				requestTime, launchtime, publicIps, privateIps, null);
 	}
 
 	/**
@@ -136,6 +151,11 @@ public class Machine {
 	 * @param serviceState
 	 *            The operational state of the service running on the
 	 *            {@link Machine}.
+	 * @param requestTime
+	 *            The request time of the {@link Machine}, if this time is
+	 *            known. If the time when the machine was initially and
+	 *            successfully requested is not known, this attribute shall be
+	 *            null.
 	 * @param launchtime
 	 *            The launch time of the {@link Machine} if it has been
 	 *            launched. This attribute may be <code>null</code>, depending
@@ -152,10 +172,10 @@ public class Machine {
 	 *            or an empty list.
 	 */
 	public Machine(String id, MachineState machineState,
-			ServiceState serviceState, DateTime launchtime,
-			List<String> publicIps, List<String> privateIps) {
+			ServiceState serviceState, DateTime requestTime,
+			DateTime launchtime, List<String> publicIps, List<String> privateIps) {
 		this(id, machineState, MembershipStatus.defaultStatus(), serviceState,
-				launchtime, publicIps, privateIps, null);
+				requestTime, launchtime, publicIps, privateIps, null);
 	}
 
 	/**
@@ -170,6 +190,11 @@ public class Machine {
 	 * @param serviceState
 	 *            The operational state of the service running on the
 	 *            {@link Machine}.
+	 * @param requestTime
+	 *            The request time of the {@link Machine}, if this time is
+	 *            known. If the time when the machine was initially and
+	 *            successfully requested is not known, this attribute shall be
+	 *            null.
 	 * @param launchtime
 	 *            The launch time of the {@link Machine} if it has been
 	 *            launched. This attribute may be <code>null</code>, depending
@@ -190,7 +215,7 @@ public class Machine {
 	 */
 	public Machine(String id, MachineState machineState,
 			MembershipStatus membershipStatus, ServiceState serviceState,
-			DateTime launchtime, List<String> publicIps,
+			DateTime requestTime, DateTime launchtime, List<String> publicIps,
 			List<String> privateIps, JsonObject metadata) {
 		checkNotNull(id, "missing id");
 		checkNotNull(machineState, "missing machineState");
@@ -201,6 +226,7 @@ public class Machine {
 		this.machineState = machineState;
 		this.membershipStatus = membershipStatus;
 		this.serviceState = serviceState;
+		this.requesttime = requestTime;
 		this.launchtime = launchtime;
 		this.publicIps = Optional.fromNullable(publicIps).or(
 				new ArrayList<String>());
@@ -266,6 +292,20 @@ public class Machine {
 	}
 
 	/**
+	 * Returns the request time of the {@link Machine}. This attribute shall be
+	 * set immediately when a VM has been successfully requested from the cloud
+	 * backend. It may be null, if the cloud pool has no way of determining the
+	 * correct value, e.g., if it was started with a pool of VMs already
+	 * allocated and there is no way to find out when they were requested.
+	 *
+	 * @return A {@link DateTime} object with the request time, if any. null
+	 *         otherwise.
+	 */
+	public DateTime getRequestTime() {
+		return this.requesttime;
+	}
+
+	/**
 	 * Returns the list of public IP addresses associated with this
 	 * {@link Machine}. Depending on the state of the {@link Machine}, this list
 	 * may be empty.
@@ -316,12 +356,20 @@ public class Machine {
 			} else {
 				launchtimesEqual = false;
 			}
+			final boolean requesttimesEqual;
+			if (this.requesttime != null && that.requesttime != null) {
+				requesttimesEqual = this.requesttime.isEqual(that.requesttime);
+			} else if (this.requesttime == null && that.requesttime == null) {
+				requesttimesEqual = true;
+			} else {
+				requesttimesEqual = false;
+			}
 			return Objects.equal(this.id, that.id)
 					&& Objects.equal(this.machineState, that.machineState)
 					&& Objects.equal(this.membershipStatus,
 							that.membershipStatus)
 					&& Objects.equal(this.serviceState, that.serviceState)
-					&& launchtimesEqual
+					&& launchtimesEqual && requesttimesEqual
 					&& Objects.equal(this.publicIps, that.publicIps)
 					&& Objects.equal(this.privateIps, that.privateIps)
 					&& Objects.equal(this.metadata, that.metadata);
@@ -335,6 +383,7 @@ public class Machine {
 				.add("machineState", this.machineState)
 				.add("membershipStatus", this.membershipStatus)
 				.add("serviceState", this.serviceState)
+				.add("requesttime", this.requesttime)
 				.add("launchtime", this.launchtime)
 				.add("publicIps", this.publicIps)
 				.add("privateIps", this.privateIps)
@@ -352,8 +401,8 @@ public class Machine {
 	 */
 	public Machine withMetadata(JsonObject metadata) {
 		return new Machine(this.id, this.machineState, this.membershipStatus,
-				this.serviceState, this.launchtime, this.publicIps,
-				this.privateIps, metadata);
+				this.serviceState, this.requesttime, this.launchtime,
+				this.publicIps, this.privateIps, metadata);
 	}
 
 	/**
@@ -531,7 +580,7 @@ public class Machine {
 		@Override
 		public boolean apply(Machine machine) {
 			return isAllocated().apply(machine)
-					&& (machine.getMembershipStatus().isActive());
+					&& machine.getMembershipStatus().isActive();
 		}
 	}
 
@@ -689,6 +738,7 @@ public class Machine {
 					.add("machineState", machine.getMachineState().name())
 					.add("membershipStatus", machine.getMembershipStatus())
 					.add("serviceState", machine.getServiceState().name())
+					.add("requesttime", machine.getRequestTime())
 					.add("launchtime", machine.getLaunchtime())
 					.add("publicIps", machine.getPublicIps())
 					.add("privateIps", machine.getPrivateIps()).toString();

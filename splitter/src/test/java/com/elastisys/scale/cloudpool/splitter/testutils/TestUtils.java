@@ -29,6 +29,7 @@ public class TestUtils {
 	 * @return
 	 */
 	public static Machine machine(int index) {
-		return new Machine("i-" + index, MachineState.RUNNING, null, null, null);
+		return new Machine("i-" + index, MachineState.RUNNING, null, null,
+				null, null);
 	}
 }

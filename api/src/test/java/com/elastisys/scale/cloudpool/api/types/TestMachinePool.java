@@ -54,23 +54,23 @@ public class TestMachinePool {
 
 		// on a pool with a mix of machines in different states
 		Machine requested1 = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, null, null, null);
+				ServiceState.UNKNOWN, null, null, null, null);
 		Machine requested2 = new Machine("i-2", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, null, null, null);
+				ServiceState.UNKNOWN, null, null, null, null);
 		Machine pending1 = new Machine("i-3", MachineState.PENDING,
-				ServiceState.BOOTING, now, null, null);
+				ServiceState.BOOTING, now, now, null, null);
 		Machine running1 = new Machine("i-4", MachineState.RUNNING,
-				ServiceState.IN_SERVICE, now, asList("1.2.3.4"), null);
+				ServiceState.IN_SERVICE, now, now, asList("1.2.3.4"), null);
 		Machine running2 = new Machine("i-5", MachineState.RUNNING,
-				ServiceState.UNHEALTHY, now, asList("1.2.3.4"), null);
+				ServiceState.UNHEALTHY, now, now, asList("1.2.3.4"), null);
 		Machine running3 = new Machine("i-5.1", MachineState.RUNNING,
-				ServiceState.OUT_OF_SERVICE, now, asList("1.2.3.5"), null);
+				ServiceState.OUT_OF_SERVICE, now, now, asList("1.2.3.5"), null);
 		Machine terminating = new Machine("i-6", MachineState.TERMINATING,
-				ServiceState.UNKNOWN, now, null, null);
+				ServiceState.UNKNOWN, now, now, null, null);
 		Machine terminated1 = new Machine("i-7", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, null, null);
+				ServiceState.UNKNOWN, now, now, null, null);
 		Machine terminated2 = new Machine("i-8", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, null, null);
+				ServiceState.UNKNOWN, now, now, null, null);
 		pool = new MachinePool(Arrays.asList(requested1, requested2, pending1,
 				running1, running2, running3, terminating, terminated1,
 				terminated2), now);
@@ -95,23 +95,23 @@ public class TestMachinePool {
 
 		// on a pool with a mix of machines in different states
 		Machine requested1 = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, null, null, null);
+				ServiceState.UNKNOWN, null, null, null, null);
 		Machine requested2 = new Machine("i-2", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, null, null, null);
+				ServiceState.UNKNOWN, null, null, null, null);
 		Machine pending1 = new Machine("i-3", MachineState.PENDING,
-				ServiceState.BOOTING, now, null, null);
+				ServiceState.BOOTING, now, now, null, null);
 		Machine running1 = new Machine("i-4", MachineState.RUNNING,
-				ServiceState.IN_SERVICE, now, asList("1.2.3.4"), null);
+				ServiceState.IN_SERVICE, now, now, asList("1.2.3.4"), null);
 		Machine running2 = new Machine("i-5", MachineState.RUNNING,
-				ServiceState.UNHEALTHY, now, asList("1.2.3.4"), null);
+				ServiceState.UNHEALTHY, now, now, asList("1.2.3.4"), null);
 		Machine running3 = new Machine("i-5.1", MachineState.RUNNING,
-				ServiceState.OUT_OF_SERVICE, now, asList("1.2.3.5"), null);
+				ServiceState.OUT_OF_SERVICE, now, now, asList("1.2.3.5"), null);
 		Machine terminating = new Machine("i-6", MachineState.TERMINATING,
-				ServiceState.UNKNOWN, now, null, null);
+				ServiceState.UNKNOWN, now, now, null, null);
 		Machine terminated1 = new Machine("i-7", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, null, null);
+				ServiceState.UNKNOWN, now, now, null, null);
 		Machine terminated2 = new Machine("i-8", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, null, null);
+				ServiceState.UNKNOWN, now, now, null, null);
 		pool = new MachinePool(Arrays.asList(requested1, requested2, pending1,
 				running1, running2, running3, terminating, terminated1,
 				terminated2), now);
@@ -137,29 +137,30 @@ public class TestMachinePool {
 		// on a pool with a mix of machines in different states
 		Machine requested1 = new Machine("i-1", MachineState.REQUESTED,
 				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, null,
-				null, null, null);
+				null, null, null, null);
 		Machine requested2 = new Machine("i-2", MachineState.REQUESTED,
 				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, null,
-				null, null, null);
+				null, null, null, null);
 		Machine pending1 = new Machine("i-3", MachineState.PENDING,
 				MembershipStatus.defaultStatus(), ServiceState.BOOTING, now,
-				null, null, null);
+				now, null, null, null);
 
 		Machine running1 = new Machine("i-4", MachineState.RUNNING,
-				MembershipStatus.blessed(), ServiceState.IN_SERVICE, now,
+				MembershipStatus.blessed(), ServiceState.IN_SERVICE, now, now,
 				asList("1.2.3.4"), null, null);
 		Machine running2 = new Machine("i-5", MachineState.RUNNING,
 				MembershipStatus.defaultStatus(), ServiceState.UNHEALTHY, now,
-				asList("1.2.3.4"), null, null);
+				now, asList("1.2.3.4"), null, null);
 		Machine running3 = new Machine("i-5.1", MachineState.RUNNING,
 				MembershipStatus.awaitingService(),
-				ServiceState.OUT_OF_SERVICE, now, asList("1.2.3.5"), null, null);
+				ServiceState.OUT_OF_SERVICE, now, now, asList("1.2.3.5"), null,
+				null);
 		Machine terminating = new Machine("i-6", MachineState.TERMINATING,
-				ServiceState.UNKNOWN, now, null, null);
+				ServiceState.UNKNOWN, now, now, null, null);
 		Machine terminated1 = new Machine("i-7", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, null, null);
+				ServiceState.UNKNOWN, now, now, null, null);
 		Machine terminated2 = new Machine("i-8", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, null, null);
+				ServiceState.UNKNOWN, now, now, null, null);
 		pool = new MachinePool(Arrays.asList(requested1, requested2, pending1,
 				running1, running2, running3, terminating, terminated1,
 				terminated2), now);
@@ -197,12 +198,12 @@ public class TestMachinePool {
 				UtcTime.parse("2014-01-13T12:00:00.000Z"),
 				machineNoIp("m1", MachineState.RUNNING,
 						UtcTime.parse("2014-01-13T11:00:00.000Z")),
-				machineNoIp("m2", MachineState.REQUESTED, null));
+						machineNoIp("m2", MachineState.REQUESTED, null));
 		MachinePool multiPoolClone = pool(
 				UtcTime.parse("2014-01-13T12:00:00.000Z"),
 				machineNoIp("m1", MachineState.RUNNING,
 						UtcTime.parse("2014-01-13T11:00:00.000Z")),
-				machineNoIp("m2", MachineState.REQUESTED, null));
+						machineNoIp("m2", MachineState.REQUESTED, null));
 
 		assertThat(empty1, is(empty1Clone));
 		assertThat(empty1, is(not(empty2)));
@@ -256,12 +257,12 @@ public class TestMachinePool {
 				UtcTime.parse("2014-01-13T12:00:00.000Z"),
 				machineNoIp("m1", MachineState.RUNNING,
 						UtcTime.parse("2014-01-13T11:00:00.000Z")),
-				machineNoIp("m2", MachineState.REQUESTED, null));
+						machineNoIp("m2", MachineState.REQUESTED, null));
 		MachinePool multiPoolClone = pool(
 				UtcTime.parse("2014-01-13T12:00:00.000Z"),
 				machineNoIp("m1", MachineState.RUNNING,
 						UtcTime.parse("2014-01-13T11:00:00.000Z")),
-				machineNoIp("m2", MachineState.REQUESTED, null));
+						machineNoIp("m2", MachineState.REQUESTED, null));
 
 		assertThat(empty1.hashCode(), is(empty1Clone.hashCode()));
 		assertThat(empty1.hashCode(), is(not(empty2.hashCode())));
@@ -311,6 +312,7 @@ public class TestMachinePool {
 	public void parseSingleMachinePoolFromJson() throws IOException {
 		Machine machine1 = new Machine("m1", MachineState.PENDING,
 				MembershipStatus.defaultStatus(), ServiceState.IN_SERVICE,
+				UtcTime.parse("2014-01-13T11:00:00.000Z"),
 				UtcTime.parse("2014-01-13T11:00:00.000Z"), ips("1.2.3.4"),
 				ips("1.2.3.5"), parseJsonString("{\"k1\": \"v1\"}"));
 		MachinePool expectedPool = pool(
@@ -331,6 +333,7 @@ public class TestMachinePool {
 	public void convertSingleMachinePoolToJson() throws IOException {
 		Machine machine1 = new Machine("m1", MachineState.PENDING,
 				MembershipStatus.defaultStatus(), ServiceState.IN_SERVICE,
+				UtcTime.parse("2014-01-13T11:00:00.000Z"),
 				UtcTime.parse("2014-01-13T11:00:00.000Z"), ips("1.2.3.4"),
 				ips("1.2.3.5"), parseJsonString("{\"k1\": \"v1\"}"));
 		MachinePool pool = pool(UtcTime.parse("2014-01-13T12:00:00.000Z"),
@@ -351,6 +354,7 @@ public class TestMachinePool {
 	public void parseMultiMachinePoolFromJson() throws IOException {
 		Machine machine1 = new Machine("m1", MachineState.RUNNING,
 				new MembershipStatus(true, false), ServiceState.IN_SERVICE,
+				UtcTime.parse("2014-01-13T11:00:00.000Z"),
 				UtcTime.parse("2014-01-13T11:00:00.000Z"), ips("1.2.3.4"),
 				ips(), parseJsonString("{\"k1\": \"v1\"}"));
 		Machine machine2 = machine("m2", MachineState.REQUESTED, null, null,
@@ -374,10 +378,11 @@ public class TestMachinePool {
 	public void convertMultiMachinePoolToJson() throws IOException {
 		Machine machine1 = new Machine("m1", MachineState.RUNNING,
 				new MembershipStatus(true, false), ServiceState.IN_SERVICE,
+				UtcTime.parse("2014-01-13T11:00:00.000Z"),
 				UtcTime.parse("2014-01-13T11:00:00.000Z"), ips("1.2.3.4"),
 				ips(), parseJsonString("{\"k1\": \"v1\"}"));
 		Machine machine2 = new Machine("m2", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, null, null, null);
+				ServiceState.UNKNOWN, null, null, null, null);
 		MachinePool pool = pool(UtcTime.parse("2014-01-13T12:00:00.000Z"),
 				machine1, machine2);
 
@@ -388,26 +393,26 @@ public class TestMachinePool {
 	@Test(expected = NullPointerException.class)
 	public void parseInvalidPoolMissingMachines() throws IOException {
 		MachinePool
-				.fromJson(loadJson("json/invalidpool-missing-machines.json"));
+		.fromJson(loadJson("json/invalidpool-missing-machines.json"));
 	}
 
 	@Test(expected = NullPointerException.class)
 	public void parseInvalidPoolMissingTimestamp() throws IOException {
 		MachinePool
-				.fromJson(loadJson("json/invalidpool-missing-timestamp.json"));
+		.fromJson(loadJson("json/invalidpool-missing-timestamp.json"));
 	}
 
 	@Test(expected = NullPointerException.class)
 	public void parseInvalidPoolWithMachineMissingId() throws IOException {
 		MachinePool
-				.fromJson(loadJson("json/invalidpool-machine-missing-id.json"));
+		.fromJson(loadJson("json/invalidpool-machine-missing-id.json"));
 	}
 
 	@Test(expected = NullPointerException.class)
 	public void parseInvalidPoolWithMachineMissingMachineState()
 			throws IOException {
 		MachinePool
-				.fromJson(loadJson("json/invalidpool-machine-missing-machinestate.json"));
+		.fromJson(loadJson("json/invalidpool-machine-missing-machinestate.json"));
 	}
 
 	private String loadJson(String resourcePath) {

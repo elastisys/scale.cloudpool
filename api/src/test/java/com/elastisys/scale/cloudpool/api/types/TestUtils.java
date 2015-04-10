@@ -34,20 +34,48 @@ public class TestUtils {
 	 * @return
 	 */
 	public static Machine machineNoIp(String id, MachineState state,
-			DateTime launchtime) {
-		return new Machine(id, state, launchtime, null, null);
+			DateTime requesttime, DateTime launchtime) {
+		return new Machine(id, state, requesttime, launchtime, null, null);
 	}
 
 	/**
-	 * Convenience method for creating a {@link Machine} with a given launch
-	 * time.
+	 * Convenience method for creating a {@link Machine} without IP addresses
+	 * and with identical request and launch times.
+	 *
+	 * @param id
+	 * @param state
+	 * @param launchtime
+	 * @return
+	 */
+	public static Machine machineNoIp(String id, MachineState state,
+			DateTime launchtime) {
+		return machineNoIp(id, state, launchtime, launchtime);
+	}
+
+	/**
+	 * Convenience method for creating a {@link Machine} with a given request
+	 * and launch time.
+	 *
+	 * @param id
+	 * @param launchtime
+	 * @return
+	 */
+	public static Machine machine(String id, DateTime requesttime,
+			DateTime launchtime) {
+		return new Machine(id, MachineState.RUNNING, requesttime, launchtime,
+				null, null);
+	}
+
+	/**
+	 * Convenience method for creating a {@link Machine} with given identical
+	 * request and launch times.
 	 *
 	 * @param id
 	 * @param launchtime
 	 * @return
 	 */
 	public static Machine machine(String id, DateTime launchtime) {
-		return new Machine(id, MachineState.RUNNING, launchtime, null, null);
+		return machine(id, launchtime, launchtime);
 	}
 
 	/**
@@ -62,8 +90,26 @@ public class TestUtils {
 	 * @return
 	 */
 	public static Machine machine(String id, MachineState state,
+			DateTime requesttime, DateTime launchtime, List<String> publicIps,
+			List<String> privateIps) {
+		return new Machine(id, state, requesttime, launchtime, publicIps,
+				privateIps);
+	}
+
+	/**
+	 * Convenience method for creating a {@link Machine} with public and/or
+	 * private IP address(es) and identical request and launch times.
+	 *
+	 * @param id
+	 * @param state
+	 * @param launchtime
+	 * @param publicIps
+	 * @param privateIps
+	 * @return
+	 */
+	public static Machine machine(String id, MachineState state,
 			DateTime launchtime, List<String> publicIps, List<String> privateIps) {
-		return new Machine(id, state, launchtime, publicIps, privateIps);
+		return machine(id, state, launchtime, launchtime, publicIps, privateIps);
 	}
 
 	public static List<String> ips(String... ipAddresses) {

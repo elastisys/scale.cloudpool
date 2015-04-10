@@ -17,7 +17,7 @@ public class BasePoolTestUtils {
 		List<String> publicIps = Lists.newArrayList();
 		List<String> privateIps = Lists.newArrayList();
 		return new Machine(id, MachineState.RUNNING,
-				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN,
+				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, null,
 				UtcTime.now(), publicIps, privateIps, null);
 	}
 
@@ -25,8 +25,8 @@ public class BasePoolTestUtils {
 		List<String> publicIps = Lists.newArrayList();
 		List<String> privateIps = Lists.newArrayList();
 		return new Machine(id, machineState, MembershipStatus.defaultStatus(),
-				ServiceState.UNKNOWN, UtcTime.now(), publicIps, privateIps,
-				null);
+				ServiceState.UNKNOWN, null, UtcTime.now(), publicIps,
+				privateIps, null);
 	}
 
 	public static Machine machine(String id, MachineState machineState,
@@ -34,7 +34,8 @@ public class BasePoolTestUtils {
 		List<String> publicIps = Lists.newArrayList();
 		List<String> privateIps = Lists.newArrayList();
 		return new Machine(id, machineState, MembershipStatus.defaultStatus(),
-				ServiceState.UNKNOWN, launchTime, publicIps, privateIps, null);
+				ServiceState.UNKNOWN, null, launchTime, publicIps, privateIps,
+				null);
 	}
 
 	public static Machine machine(String id, MachineState machineState,
@@ -42,14 +43,15 @@ public class BasePoolTestUtils {
 		List<String> publicIps = Lists.newArrayList();
 		List<String> privateIps = Lists.newArrayList();
 		return new Machine(id, machineState, membershipStatus,
-				ServiceState.UNKNOWN, launchTime, publicIps, privateIps, null);
+				ServiceState.UNKNOWN, null, launchTime, publicIps, privateIps,
+				null);
 	}
 
 	public static Machine machine(String id, String publicIp) {
 		List<String> publicIps = Lists.newArrayList(publicIp);
 		List<String> privateIps = Lists.newArrayList();
 		return new Machine(id, MachineState.RUNNING,
-				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN,
+				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, null,
 				UtcTime.now(), publicIps, privateIps, null);
 	}
 

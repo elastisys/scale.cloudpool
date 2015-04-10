@@ -3,6 +3,8 @@ package com.elastisys.scale.cloudpool.api.types;
 import static com.elastisys.scale.cloudpool.api.types.Machine.isActiveMember;
 import static com.elastisys.scale.cloudpool.api.types.Machine.isAllocated;
 import static com.elastisys.scale.cloudpool.api.types.TestUtils.ips;
+import static com.elastisys.scale.cloudpool.api.types.TestUtils.machine;
+import static com.elastisys.scale.cloudpool.api.types.TestUtils.machineNoIp;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -34,10 +36,10 @@ public class TestMachinePredicates {
 	@Test
 	public void testMachineInStatePredicate() {
 		DateTime now = UtcTime.now();
-		Machine m1 = new Machine("id", MachineState.REQUESTED, now, null, null);
-		Machine m2 = new Machine("id", MachineState.RUNNING, now,
-				ips("1.2.3.4"), ips("1.2.3.5"));
-		Machine m3 = new Machine("id", MachineState.PENDING, now, null, null);
+		Machine m1 = machineNoIp("id", MachineState.REQUESTED, now);
+		Machine m2 = machine("id", MachineState.RUNNING, now, ips("1.2.3.4"),
+				ips("1.2.3.5"));
+		Machine m3 = machineNoIp("id", MachineState.PENDING, now);
 
 		assertFalse(Machine.inState(MachineState.RUNNING).apply(m1));
 		assertTrue(Machine.inState(MachineState.RUNNING).apply(m2));
@@ -69,9 +71,10 @@ public class TestMachinePredicates {
 							"tested combination: %s-%s-%s", machineState,
 							membershipStatus, serviceState);
 					LOG.info(combo);
+					final DateTime timestamp = UtcTime.now();
 					Machine machine = new Machine("id", machineState,
-							membershipStatus, serviceState, UtcTime.now(),
-							ips("1.2.3.4"), ips("1.2.3.5"), null);
+							membershipStatus, serviceState, timestamp,
+							timestamp, ips("1.2.3.4"), ips("1.2.3.5"), null);
 					Set<MachineState> allocatedStates = Sets.newHashSet(
 							MachineState.REQUESTED, MachineState.PENDING,
 							MachineState.RUNNING);
@@ -112,14 +115,15 @@ public class TestMachinePredicates {
 							"tested combination: %s-%s-%s", machineState,
 							membershipStatus, serviceState);
 					LOG.info(combo);
+					final DateTime timestamp = UtcTime.now();
 					Machine machine = new Machine("id", machineState,
-							membershipStatus, serviceState, UtcTime.now(),
-							ips("1.2.3.4"), ips("1.2.3.5"), null);
+							membershipStatus, serviceState, timestamp,
+							timestamp, ips("1.2.3.4"), ips("1.2.3.5"), null);
 					Set<MachineState> allocatedStates = Sets.newHashSet(
 							MachineState.REQUESTED, MachineState.PENDING,
 							MachineState.RUNNING);
 					if (allocatedStates.contains(machine.getMachineState())
-							&& (machine.getMembershipStatus().isActive())) {
+							&& machine.getMembershipStatus().isActive()) {
 						activeFound = true;
 						assertTrue(combo, isActiveMember().apply(machine));
 					} else {
@@ -140,20 +144,22 @@ public class TestMachinePredicates {
 	@Test
 	public void testEvictablePredicate() {
 		// evictable
-		Machine m1 = new Machine("id", MachineState.REQUESTED, UtcTime.now(),
-				null, null);
+		Machine m1 = machineNoIp("id", MachineState.REQUESTED, UtcTime.now());
 		// not evictable
 		Machine m2 = new Machine("id", MachineState.RUNNING,
 				MembershipStatus.blessed(), ServiceState.UNKNOWN,
-				UtcTime.now(), ips("1.2.3.4"), ips("1.2.3.5"), null);
+				UtcTime.now(), UtcTime.now(), ips("1.2.3.4"), ips("1.2.3.5"),
+				null);
 		// evictable
 		Machine m3 = new Machine("id", MachineState.RUNNING,
 				MembershipStatus.disposable(), ServiceState.UNKNOWN,
-				UtcTime.now(), ips("1.2.3.4"), ips("1.2.3.5"), null);
+				UtcTime.now(), UtcTime.now(), ips("1.2.3.4"), ips("1.2.3.5"),
+				null);
 		// not evictable
 		Machine m4 = new Machine("id", MachineState.RUNNING,
 				MembershipStatus.awaitingService(), ServiceState.UNKNOWN,
-				UtcTime.now(), ips("1.2.3.4"), ips("1.2.3.5"), null);
+				UtcTime.now(), UtcTime.now(), ips("1.2.3.4"), ips("1.2.3.5"),
+				null);
 
 		assertTrue(Machine.isEvictable().apply(m1));
 		assertFalse(Machine.isEvictable().apply(m2));

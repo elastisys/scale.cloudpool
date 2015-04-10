@@ -11,7 +11,6 @@ import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
-import com.elastisys.scale.cloudpool.commons.scaledown.TerminationScheduler;
 import com.elastisys.scale.cloudpool.commons.termqueue.ScheduledTermination;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
@@ -165,7 +164,7 @@ public class TestTerminationScheduler extends AbstractScaledownTest {
 	@Test(expected = NullPointerException.class)
 	public void candidateWithNullLaunchTime() {
 		DateTime launchTime = null;
-		Machine machine = new Machine("i-1", MachineState.REQUESTED,
+		Machine machine = new Machine("i-1", MachineState.REQUESTED, null,
 				launchTime, null, null);
 		new TerminationScheduler(60).scheduleEviction(machine);
 	}

@@ -35,23 +35,24 @@ public class TestMachine {
 	public void testEquality() throws IOException {
 		// with null launch time
 		Machine noLaunchTime = new Machine("i-1", MachineState.REQUESTED, null,
-				null, null);
-		Machine noLaunchTimeClone = new Machine("i-1", MachineState.REQUESTED,
 				null, null, null);
+		Machine noLaunchTimeClone = new Machine("i-1", MachineState.REQUESTED,
+				null, null, null, null);
 
 		// with service state
 		Machine withServiceState = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.BOOTING, null, null, null);
+				ServiceState.BOOTING, null, null, null, null);
 		Machine withServiceStateClone = new Machine("i-1",
-				MachineState.REQUESTED, ServiceState.BOOTING, null, null, null);
+				MachineState.REQUESTED, ServiceState.BOOTING, null, null, null,
+				null);
 
 		// with service state
 		DateTime now = UtcTime.now();
 		Machine withIps = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.BOOTING, now, Arrays.asList("1.2.3.4"),
+				ServiceState.BOOTING, now, now, Arrays.asList("1.2.3.4"),
 				Arrays.asList("1.2.3.5"));
 		Machine withIpsClone = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.BOOTING, now, Arrays.asList("1.2.3.4"),
+				ServiceState.BOOTING, now, now, Arrays.asList("1.2.3.4"),
 				Arrays.asList("1.2.3.5"));
 
 		// with meta data and membership status
@@ -59,10 +60,12 @@ public class TestMachine {
 				.parseJsonString("{'a': 1, 'b': 2, c: {'d': 4}}");
 		Machine withMetadata = new Machine("i-1", MachineState.RUNNING,
 				new MembershipStatus(true, false), ServiceState.UNKNOWN,
+				UtcTime.parse("2014-01-10T08:00:00Z"),
 				UtcTime.parse("2014-01-10T08:00:00Z"), ips("1.2.3.4"),
 				ips("1.2.3.5"), metadata);
 		Machine withMetadataClone = new Machine("i-1", MachineState.RUNNING,
 				new MembershipStatus(true, false), ServiceState.UNKNOWN,
+				UtcTime.parse("2014-01-10T08:00:00Z"),
 				UtcTime.parse("2014-01-10T08:00:00Z"), ips("1.2.3.4"),
 				ips("1.2.3.5"), metadata);
 
@@ -97,26 +100,27 @@ public class TestMachine {
 	public void testHashCode() throws IOException {
 		// with null launch time
 		Machine noLaunchTime = new Machine("i-1", MachineState.REQUESTED, null,
-				null, null);
-		Machine noLaunchTimeClone = new Machine("i-1", MachineState.REQUESTED,
 				null, null, null);
+		Machine noLaunchTimeClone = new Machine("i-1", MachineState.REQUESTED,
+				null, null, null, null);
 		assertEquals(noLaunchTime.hashCode(), noLaunchTimeClone.hashCode());
 
 		// with service state
 		Machine withServiceState = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.BOOTING, null, null, null);
+				ServiceState.BOOTING, null, null, null, null);
 		Machine withServiceStateClone = new Machine("i-1",
-				MachineState.REQUESTED, ServiceState.BOOTING, null, null, null);
+				MachineState.REQUESTED, ServiceState.BOOTING, null, null, null,
+				null);
 		assertEquals(withServiceState.hashCode(),
 				withServiceStateClone.hashCode());
 
 		// with IP addresses
 		DateTime now = UtcTime.now();
 		Machine withIps = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.BOOTING, now, Arrays.asList("1.2.3.4"),
+				ServiceState.BOOTING, now, now, Arrays.asList("1.2.3.4"),
 				Arrays.asList("1.2.3.5"));
 		Machine withIpsClone = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.BOOTING, now, Arrays.asList("1.2.3.4"),
+				ServiceState.BOOTING, now, now, Arrays.asList("1.2.3.4"),
 				Arrays.asList("1.2.3.5"));
 
 		// with meta data and membership status
@@ -124,10 +128,12 @@ public class TestMachine {
 				.parseJsonString("{'a': 1, 'b': 2, c: {'d': 4}}");
 		Machine withMetadata = new Machine("i-1", MachineState.RUNNING,
 				new MembershipStatus(true, false), ServiceState.UNKNOWN,
+				UtcTime.parse("2014-01-10T08:00:00Z"),
 				UtcTime.parse("2014-01-10T08:00:00Z"), ips("1.2.3.4"),
 				ips("1.2.3.5"), metadata);
 		Machine withMetadataClone = new Machine("i-1", MachineState.RUNNING,
 				new MembershipStatus(true, false), ServiceState.UNKNOWN,
+				UtcTime.parse("2014-01-10T08:00:00Z"),
 				UtcTime.parse("2014-01-10T08:00:00Z"), ips("1.2.3.4"),
 				ips("1.2.3.5"), metadata);
 
@@ -144,12 +150,12 @@ public class TestMachine {
 	@Test
 	public void createWithoutIpAddresses() {
 		Machine noIpAddresses = new Machine("i-1", MachineState.REQUESTED,
-				null, null, null);
+				null, null, null, null);
 		assertThat(noIpAddresses.getPrivateIps(), is(ips()));
 		assertThat(noIpAddresses.getPublicIps(), is(ips()));
 
-		noIpAddresses = new Machine("i-1", MachineState.REQUESTED, null, ips(),
-				ips());
+		noIpAddresses = new Machine("i-1", MachineState.REQUESTED, null, null,
+				ips(), ips());
 		assertThat(noIpAddresses.getPrivateIps(), is(ips()));
 		assertThat(noIpAddresses.getPublicIps(), is(ips()));
 	}
@@ -157,7 +163,7 @@ public class TestMachine {
 	@Test
 	public void createWithOnlyPublicIpAddress() {
 		Machine noIpAddresses = new Machine("i-1", MachineState.REQUESTED,
-				null, ips("1.2.3.4"), null);
+				null, null, ips("1.2.3.4"), null);
 		assertThat(noIpAddresses.getPrivateIps(), is(ips()));
 		assertThat(noIpAddresses.getPublicIps(), is(ips("1.2.3.4")));
 	}
@@ -165,7 +171,7 @@ public class TestMachine {
 	@Test
 	public void createWithOnlyPrivateIpAddress() {
 		Machine noIpAddresses = new Machine("i-1", MachineState.REQUESTED,
-				null, null, ips("1.2.3.4"));
+				null, null, null, ips("1.2.3.4"));
 		assertThat(noIpAddresses.getPublicIps(), is(ips()));
 		assertThat(noIpAddresses.getPrivateIps(), is(ips("1.2.3.4")));
 	}
@@ -177,7 +183,7 @@ public class TestMachine {
 	@Test
 	public void createWithoutMembershipStatus() {
 		Machine defaultMembershipStatus = new Machine("i-1",
-				MachineState.REQUESTED, null, null, null);
+				MachineState.REQUESTED, null, null, null, null);
 		assertThat(defaultMembershipStatus.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
 	}
@@ -189,7 +195,7 @@ public class TestMachine {
 	@Test
 	public void createWithoutServiceState() {
 		Machine defaultServiceState = new Machine("i-1",
-				MachineState.REQUESTED, null, null, null);
+				MachineState.REQUESTED, null, null, null, null);
 		assertThat(defaultServiceState.getServiceState(),
 				is(ServiceState.UNKNOWN));
 	}
@@ -197,7 +203,7 @@ public class TestMachine {
 	@Test
 	public void createWithServiceState() {
 		Machine withServiceState = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.IN_SERVICE, null, null, ips("1.2.3.4"));
+				ServiceState.IN_SERVICE, null, null, null, ips("1.2.3.4"));
 		assertThat(withServiceState.getServiceState(),
 				is(ServiceState.IN_SERVICE));
 	}
@@ -215,11 +221,11 @@ public class TestMachine {
 		DateTime pm = UtcTime.parse("2015-02-13T15:00:00.000Z");
 
 		Machine first = new Machine("i-1", MachineState.RUNNING,
-				ServiceState.IN_SERVICE, am, null, null);
+				ServiceState.IN_SERVICE, am, am, null, null);
 		Machine second = new Machine("i-2", MachineState.PENDING,
-				ServiceState.BOOTING, noon, null, null);
+				ServiceState.BOOTING, noon, noon, null, null);
 		Machine third = new Machine("i-3", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, pm, null, null);
+				ServiceState.UNKNOWN, pm, pm, null, null);
 
 		Comparator<Machine> earliestFirst = new Comparator<Machine>() {
 			@Override
@@ -252,6 +258,7 @@ public class TestMachine {
 				.parseJsonString("{'a': 1, 'b': 2, c: {'d': 4}}");
 		Machine original = new Machine("i-1", MachineState.RUNNING,
 				new MembershipStatus(true, false), ServiceState.UNKNOWN,
+				UtcTime.parse("2014-01-10T08:00:00Z"),
 				UtcTime.parse("2014-01-10T08:00:00Z"), ips("1.2.3.4"),
 				ips("1.2.3.5"), metadata);
 
