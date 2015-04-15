@@ -301,7 +301,7 @@ public class Machine {
 	 * @return A {@link DateTime} object with the request time, if any. null
 	 *         otherwise.
 	 */
-	public DateTime getRequestTime() {
+	public DateTime getRequesttime() {
 		return this.requesttime;
 	}
 
@@ -738,7 +738,7 @@ public class Machine {
 					.add("machineState", machine.getMachineState().name())
 					.add("membershipStatus", machine.getMembershipStatus())
 					.add("serviceState", machine.getServiceState().name())
-					.add("requesttime", machine.getRequestTime())
+					.add("requesttime", machine.getRequesttime())
 					.add("launchtime", machine.getLaunchtime())
 					.add("publicIps", machine.getPublicIps())
 					.add("privateIps", machine.getPrivateIps()).toString();

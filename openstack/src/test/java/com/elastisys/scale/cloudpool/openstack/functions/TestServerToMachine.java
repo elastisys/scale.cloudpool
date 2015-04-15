@@ -47,7 +47,7 @@ public class TestServerToMachine {
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
 		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
-		assertThat(machine.getLaunchtime().toDate(), is(server.getCreated()));
+		assertThat(machine.getRequesttime().toDate(), is(server.getCreated()));
 		assertThat(machine.getPublicIps(), is(asList("130.239.48.193")));
 		assertThat(machine.getPrivateIps(), is(asList("10.11.12.2")));
 		assertThat(machine.getMetadata(), is(JsonUtils.toJson(server)));
@@ -67,7 +67,7 @@ public class TestServerToMachine {
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
 		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
-		assertThat(machine.getLaunchtime().toDate(), is(server.getCreated()));
+		assertThat(machine.getRequesttime().toDate(), is(server.getCreated()));
 		List<String> empty = asList();
 		assertThat(machine.getPublicIps(), is(empty));
 		assertThat(machine.getPrivateIps(), is(asList("10.11.12.2")));
@@ -118,12 +118,12 @@ public class TestServerToMachine {
 		return server;
 	}
 
-	private Server serverWithMetadata(Status status, DateTime launchTime,
+	private Server serverWithMetadata(Status status, DateTime requestTime,
 			NovaAddresses ipAddresses, Map<String, String> metadata) {
 
 		NovaServer server = new NovaServer();
 		server.id = "serverId";
-		server.created = launchTime.toDate();
+		server.created = requestTime.toDate();
 		server.addresses = ipAddresses;
 		server.status = status;
 		server.metadata = metadata;
