@@ -33,11 +33,18 @@ public class TestMachine {
 	 */
 	@Test
 	public void testEquality() throws IOException {
+		final DateTime now = UtcTime.now();
 		// with null launch time
 		Machine noLaunchTime = new Machine("i-1", MachineState.REQUESTED, null,
 				null, null, null);
 		Machine noLaunchTimeClone = new Machine("i-1", MachineState.REQUESTED,
 				null, null, null, null);
+
+		// with set requestTime, null launch time
+		Machine unlaunchedRequested = new Machine("i-1",
+				MachineState.REQUESTED, now, null, null, null);
+		Machine unlaunchedRequestedClone = new Machine("i-1",
+				MachineState.REQUESTED, now, null, null, null);
 
 		// with service state
 		Machine withServiceState = new Machine("i-1", MachineState.REQUESTED,
@@ -47,7 +54,6 @@ public class TestMachine {
 				null);
 
 		// with service state
-		DateTime now = UtcTime.now();
 		Machine withIps = new Machine("i-1", MachineState.REQUESTED,
 				ServiceState.BOOTING, now, now, Arrays.asList("1.2.3.4"),
 				Arrays.asList("1.2.3.5"));
@@ -70,6 +76,7 @@ public class TestMachine {
 				ips("1.2.3.5"), metadata);
 
 		assertEquals(noLaunchTime, noLaunchTimeClone);
+		assertEquals(unlaunchedRequested, unlaunchedRequestedClone);
 		assertEquals(withIps, withIpsClone);
 		assertEquals(withServiceState, withServiceStateClone);
 		assertEquals(withMetadata, withMetadataClone);
