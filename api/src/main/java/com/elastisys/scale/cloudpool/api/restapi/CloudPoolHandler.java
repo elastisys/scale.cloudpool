@@ -20,6 +20,7 @@ import com.elastisys.scale.cloudpool.api.restapi.types.SetDesiredSizeRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetMembershipStatusRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetServiceStateRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.TerminateMachineRequest;
+import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.commons.json.JsonUtils;
@@ -120,6 +121,32 @@ public class CloudPoolHandler {
 			return Response.ok(toJson(poolSize)).build();
 		} catch (Exception e) {
 			String message = "failure to process GET /pool/size: "
+					+ e.getMessage();
+			log.error(message, e);
+			return Response.status(Status.INTERNAL_SERVER_ERROR)
+					.entity(new ErrorType(message, e)).build();
+		}
+	}
+
+	/**
+	 * Returns metadata about the cloud pool and the cloud infrastructure it
+	 * manages.
+	 *
+	 * @return A response message as per the <a
+	 *         href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >cloud
+	 *         pool REST API</a>.
+	 */
+	@GET
+	@Path("/pool/metadata")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getMetadata() {
+		log.info("GET /pool/metadata");
+		try {
+			CloudPoolMetadata metadata = this.cloudPool.getMetadata();
+			return Response.ok(toJson(metadata)).build();
+		} catch (Exception e) {
+			String message = "failure to process GET /pool/metadata: "
 					+ e.getMessage();
 			log.error(message, e);
 			return Response.status(Status.INTERNAL_SERVER_ERROR)
@@ -261,7 +288,7 @@ public class CloudPoolHandler {
 		log.info("POST /pool/{}/serviceState", machineId);
 		try {
 			this.cloudPool
-					.setServiceState(machineId, request.getServiceState());
+			.setServiceState(machineId, request.getServiceState());
 			return Response.ok().build();
 		} catch (NotFoundException e) {
 			String message = "unrecognized machine: " + e.getMessage();

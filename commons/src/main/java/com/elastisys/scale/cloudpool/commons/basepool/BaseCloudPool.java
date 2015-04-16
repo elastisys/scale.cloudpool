@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
+import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
@@ -281,7 +282,7 @@ public class BaseCloudPool implements CloudPool {
 		this.eventBus = eventBus;
 
 		ThreadFactory threadFactory = new ThreadFactoryBuilder()
-				.setDaemon(true).setNameFormat("cloudpool-%d").build();
+		.setDaemon(true).setNameFormat("cloudpool-%d").build();
 		this.executorService = Executors.newScheduledThreadPool(
 				MAX_CONCURRENCY, threadFactory);
 
@@ -556,6 +557,11 @@ public class BaseCloudPool implements CloudPool {
 		membershipStatusAlert(machineId, membershipStatus);
 	}
 
+	@Override
+	public CloudPoolMetadata getMetadata() {
+		return this.cloudDriver.getMetadata();
+	}
+
 	/**
 	 * Sets up an {@link SmtpAlerter}, in case the configuration contains an
 	 * {@link AlertsConfig}.
@@ -684,8 +690,8 @@ public class BaseCloudPool implements CloudPool {
 		this.terminationQueue.filter(pool.getActiveMachines());
 		ResizePlanner resizePlanner = new ResizePlanner(pool,
 				this.terminationQueue, scaleInConfig()
-						.getVictimSelectionPolicy(), scaleInConfig()
-						.getInstanceHourMargin());
+				.getVictimSelectionPolicy(), scaleInConfig()
+				.getInstanceHourMargin());
 		int netSize = resizePlanner.getNetSize();
 
 		ResizePlan resizePlan = resizePlanner.calculateResizePlan(newSize);

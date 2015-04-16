@@ -16,8 +16,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
+import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
+import com.elastisys.scale.cloudpool.api.types.PoolIdentifier;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
@@ -51,6 +53,17 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 
 	/** Client used to communicate with the OpenStack API. */
 	private final OpenstackClient client;
+
+	/**
+	 * Supported API versions by this implementation.
+	 */
+	public final static List<String> supportedApiVersions = Lists
+			.<String> newArrayList("3.0", "3.1");
+	/**
+	 * Cloud pool metadata for this implementation.
+	 */
+	public final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
+			PoolIdentifier.OPENSTACK, true, supportedApiVersions);
 
 	/**
 	 * Creates a new {@link OpenStackPoolDriver}. Needs to be configured before
@@ -243,6 +256,11 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 
 		return this.poolName.get();
+	}
+
+	@Override
+	public CloudPoolMetadata getMetadata() {
+		return cloudPoolMetadata;
 	}
 
 	/**

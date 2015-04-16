@@ -66,6 +66,24 @@ public class TestMachineFunctions {
 		assertThat(Machine.toId().apply(m3), is("i-3"));
 	}
 
+	@Test
+	public void testRequestAge() {
+		final int millisecondsSinceRequestTime = 60000;
+
+		final DateTime requesttime = UtcTime.parse("2013-12-09T08:50:00Z");
+		final DateTime now = requesttime
+				.plusMillis(millisecondsSinceRequestTime);
+
+		Machine machine = machine("i-1", requesttime, null);
+
+		assertThat(Machine.requestAge(now).apply(machine).get(), is(new Long(
+				millisecondsSinceRequestTime)));
+
+		// no request time
+		machine = machine("i-1", null, null);
+		assertFalse(Machine.requestAge(now).apply(machine).isPresent());
+	}
+
 	/**
 	 * Verifies the correctness of {@link InstanceHourStart} {@link Function}
 	 * calculations.

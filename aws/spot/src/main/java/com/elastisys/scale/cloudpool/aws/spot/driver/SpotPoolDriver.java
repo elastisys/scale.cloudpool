@@ -39,9 +39,11 @@ import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
+import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
+import com.elastisys.scale.cloudpool.api.types.PoolIdentifier;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
@@ -169,6 +171,17 @@ public class SpotPoolDriver implements CloudPoolDriver {
 
 	/** The client used to communicate with the EC2 API. */
 	private final SpotClient client;
+
+	/**
+	 * Supported API versions by this implementation.
+	 */
+	public final static List<String> supportedApiVersions = Lists
+			.<String> newArrayList("3.0", "3.1");
+	/**
+	 * Cloud pool metadata for this implementation.
+	 */
+	public final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
+			PoolIdentifier.AWS_SPOT_INSTANCES, true, supportedApiVersions);
 
 	public SpotPoolDriver(SpotClient client) {
 		this.client = client;
@@ -377,6 +390,11 @@ public class SpotPoolDriver implements CloudPoolDriver {
 		return this.poolName.get();
 	}
 
+	@Override
+	public CloudPoolMetadata getMetadata() {
+		return cloudPoolMetadata;
+	}
+
 	private boolean isConfigured() {
 		return this.poolConfig.get() != null;
 	}
@@ -502,7 +520,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
 		Filter idFilter = new Filter(SPOT_REQUEST_ID_FILTER,
 				asList(spotRequestId));
 		Filter poolFilter = new Filter(CLOUD_POOL_TAG_FILTER,
-				asList(this.getPoolName()));
+				asList(getPoolName()));
 		List<SpotInstanceRequest> matchingRequests = this.client
 				.getSpotInstanceRequests(Arrays.asList(idFilter, poolFilter));
 		if (matchingRequests.isEmpty()) {

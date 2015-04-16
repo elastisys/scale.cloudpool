@@ -368,11 +368,11 @@ public class Machine {
 					&& Objects.equal(this.machineState, that.machineState)
 					&& Objects.equal(this.membershipStatus,
 							that.membershipStatus)
-					&& Objects.equal(this.serviceState, that.serviceState)
-					&& launchtimesEqual && requesttimesEqual
-					&& Objects.equal(this.publicIps, that.publicIps)
-					&& Objects.equal(this.privateIps, that.privateIps)
-					&& Objects.equal(this.metadata, that.metadata);
+							&& Objects.equal(this.serviceState, that.serviceState)
+							&& launchtimesEqual && requesttimesEqual
+							&& Objects.equal(this.publicIps, that.publicIps)
+							&& Objects.equal(this.privateIps, that.privateIps)
+							&& Objects.equal(this.metadata, that.metadata);
 		}
 		return false;
 	}
@@ -436,6 +436,21 @@ public class Machine {
 	}
 
 	/**
+	 * Optionally returns how many milliseconds ago a request was made.
+	 *
+	 * @param now
+	 *            The time to regard as the current time.
+	 * @return A {@link Function} that given a {@link Machine} and the current
+	 *         time returns how many milliseconds ago it was requested from the
+	 *         underlying cloud infrastructure. Since not all clouds support
+	 *         reporting how old a request is, the return value is optional.
+	 */
+	public static Function<? super Machine, Optional<Long>> requestAge(
+			final DateTime now) {
+		return new RequestAge(now);
+	}
+
+	/**
 	 * Returns a {@link Function} that given a {@link Machine} (with a launch
 	 * time set) returns the starting point of the {@link Machine}'s most
 	 * recently started hour.
@@ -488,7 +503,7 @@ public class Machine {
 	 * @see http://code.google.com/p/guava-libraries/wiki/FunctionalExplained
 	 */
 	public static class MachineStateExtractor implements
-			Function<Machine, MachineState> {
+	Function<Machine, MachineState> {
 		/**
 		 * Extracts the state of a {@link Machine}.
 		 *
@@ -608,7 +623,7 @@ public class Machine {
 	 * The {@link Machine} must have its launch time set.
 	 */
 	public static class InstanceHourStart implements
-			Function<Machine, DateTime> {
+	Function<Machine, DateTime> {
 
 		/**
 		 * Calculates the starting point of the machine's current hour.
@@ -647,13 +662,44 @@ public class Machine {
 	}
 
 	/**
+	 * A {@link Function} that optionally returns the number of milliseconds of
+	 * how long ago the request to start a given {@link Machine} was made. Since
+	 * not all cloud infrastructures support returning this value, the return
+	 * value from the function is {@link Optional}.
+	 */
+	public static class RequestAge implements Function<Machine, Optional<Long>> {
+		private final DateTime now;
+
+		/**
+		 * Creates a new instance that sets the current time to a particular
+		 * value.
+		 *
+		 * @param now
+		 *            The time to regard as the current time.
+		 */
+		public RequestAge(DateTime now) {
+			this.now = now;
+		}
+
+		@Override
+		public Optional<Long> apply(Machine machine) {
+			if (machine.getRequesttime() != null) {
+				return Optional.of(this.now.minus(
+						machine.getRequesttime().getMillis()).getMillis());
+			} else {
+				return Optional.absent();
+			}
+		}
+	}
+
+	/**
 	 * A {@link Function} that for a given {@link Machine} calculates the
 	 * remaining time (in seconds) of the machine's current hour.
 	 *
 	 *
 	 */
 	public static class RemainingInstanceHourTime implements
-			Function<Machine, Long> {
+	Function<Machine, Long> {
 
 		/**
 		 * Calculates the remaining time (in seconds) of the machine's last
@@ -707,7 +753,7 @@ public class Machine {
 	 * {@link Machine}.
 	 */
 	public static class ToShortMachineFormat implements
-			Function<Machine, Machine> {
+	Function<Machine, Machine> {
 
 		@Override
 		public Machine apply(Machine machine) {
@@ -730,7 +776,7 @@ public class Machine {
 	 * produce quite some log noise).
 	 */
 	public static class ToShortMachineString implements
-			Function<Machine, String> {
+	Function<Machine, String> {
 
 		@Override
 		public String apply(Machine machine) {

@@ -17,9 +17,11 @@ import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
+import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
+import com.elastisys.scale.cloudpool.api.types.PoolIdentifier;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AutoScalingClient;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
@@ -61,6 +63,17 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 
 	/** A client used to communicate with the AWS Auto Scaling API. */
 	private final AutoScalingClient client;
+
+	/**
+	 * Supported API versions by this implementation.
+	 */
+	public final static List<String> supportedApiVersions = Lists
+			.<String> newArrayList("3.0", "3.1");
+	/**
+	 * Cloud pool metadata for this implementation.
+	 */
+	public final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
+			PoolIdentifier.AWS_AUTO_SCALING_GROUPS, false, supportedApiVersions);
 
 	/**
 	 * Creates a new {@link AwsAsPoolDriver}. Needs to be configured before use.
@@ -322,6 +335,11 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 
 		return this.poolName.get();
+	}
+
+	@Override
+	public CloudPoolMetadata getMetadata() {
+		return cloudPoolMetadata;
 	}
 
 	boolean isConfigured() {

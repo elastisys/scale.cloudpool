@@ -19,8 +19,10 @@ import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
+import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
+import com.elastisys.scale.cloudpool.api.types.PoolIdentifier;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
@@ -54,6 +56,17 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 
 	/** A client used to communicate with the AWS EC2 API. */
 	private final Ec2Client client;
+
+	/**
+	 * Supported API versions by this implementation.
+	 */
+	public final static List<String> supportedApiVersions = Lists
+			.<String> newArrayList("3.0", "3.1");
+	/**
+	 * Cloud pool metadata for this implementation.
+	 */
+	public final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
+			PoolIdentifier.AWS_EC2, false, supportedApiVersions);
 
 	/**
 	 * Creates a new {@link Ec2PoolDriver}. Needs to be configured before use.
@@ -96,7 +109,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 			// filter instances on cloud pool tag
 			Filter filter = new Filter().withName(
 					ScalingFilters.CLOUD_POOL_TAG_FILTER).withValues(
-					getPoolName());
+							getPoolName());
 			List<Instance> instances = this.client.getInstances(asList(filter));
 			return Lists.transform(instances, new InstanceToMachine());
 		} catch (Exception e) {
@@ -150,7 +163,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 
 	@Override
 	public void attachMachine(String machineId) throws NotFoundException,
-			CloudPoolDriverException {
+	CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured Ec2PoolDriver");
 
 		// verify that machine exists
@@ -169,7 +182,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 
 	@Override
 	public void detachMachine(String machineId) throws NotFoundException,
-			CloudPoolDriverException {
+	CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured Ec2PoolDriver");
 
 		// verify that machine exists in group
@@ -231,6 +244,11 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 	public String getPoolName() {
 		checkState(isConfigured(), "attempt to use unconfigured Ec2PoolDriver");
 		return this.poolName.get();
+	}
+
+	@Override
+	public CloudPoolMetadata getMetadata() {
+		return cloudPoolMetadata;
 	}
 
 	boolean isConfigured() {

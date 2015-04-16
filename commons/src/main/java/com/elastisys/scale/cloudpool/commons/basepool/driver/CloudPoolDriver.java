@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
+import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
@@ -140,7 +141,7 @@ public interface CloudPoolDriver {
 	 *             If anything went wrong.
 	 */
 	public void terminateMachine(String machineId) throws NotFoundException,
-			CloudPoolDriverException;
+	CloudPoolDriverException;
 
 	/**
 	 * Attaches an already running machine instance to the cloud pool.
@@ -153,7 +154,7 @@ public interface CloudPoolDriver {
 	 *             If the operation could not be completed.
 	 */
 	void attachMachine(String machineId) throws NotFoundException,
-			CloudPoolDriverException;
+	CloudPoolDriverException;
 
 	/**
 	 * Removes a member from the cloud pool without terminating it. The machine
@@ -168,7 +169,7 @@ public interface CloudPoolDriver {
 	 *             If the operation could not be completed.
 	 */
 	void detachMachine(String machineId) throws NotFoundException,
-			CloudPoolDriverException;
+	CloudPoolDriverException;
 
 	/**
 	 * Sets the service state of a given machine pool member. Setting the
@@ -197,9 +198,9 @@ public interface CloudPoolDriver {
 	 * Sets the membership status of a given pool member.
 	 * <p/>
 	 * The membership status for a machine can be set to protect the machine
-	 * from being terminated (by setting its evictability status) and/or to
-	 * mark a machine as being in need of replacement by flagging it as an
-	 * inactive pool member.
+	 * from being terminated (by setting its evictability status) and/or to mark
+	 * a machine as being in need of replacement by flagging it as an inactive
+	 * pool member.
 	 * <p/>
 	 * The specific mechanism to mark pool members' status, which may depend on
 	 * the features offered by the particular cloud API, is left to the
@@ -224,5 +225,14 @@ public interface CloudPoolDriver {
 	 * @return The logical name of the managed machine pool.
 	 */
 	public String getPoolName();
+
+	/**
+	 * Returns description of static properties about the cloud pool itself and
+	 * the cloud it manages.
+	 * 
+	 * @return Description of static properties about the cloud pool itself and
+	 *         the cloud it manages.
+	 */
+	public CloudPoolMetadata getMetadata();
 
 }
