@@ -341,7 +341,8 @@ public class Machine {
 	public int hashCode() {
 		return Objects.hashCode(this.id, this.machineState,
 				this.membershipStatus, this.serviceState, this.launchtime,
-				this.publicIps, this.privateIps, this.metadata);
+				this.requesttime, this.publicIps, this.privateIps,
+				this.metadata);
 	}
 
 	@Override
@@ -368,11 +369,11 @@ public class Machine {
 					&& Objects.equal(this.machineState, that.machineState)
 					&& Objects.equal(this.membershipStatus,
 							that.membershipStatus)
-							&& Objects.equal(this.serviceState, that.serviceState)
-							&& launchtimesEqual && requesttimesEqual
-							&& Objects.equal(this.publicIps, that.publicIps)
-							&& Objects.equal(this.privateIps, that.privateIps)
-							&& Objects.equal(this.metadata, that.metadata);
+					&& Objects.equal(this.serviceState, that.serviceState)
+					&& launchtimesEqual && requesttimesEqual
+					&& Objects.equal(this.publicIps, that.publicIps)
+					&& Objects.equal(this.privateIps, that.privateIps)
+					&& Objects.equal(this.metadata, that.metadata);
 		}
 		return false;
 	}
@@ -503,7 +504,7 @@ public class Machine {
 	 * @see http://code.google.com/p/guava-libraries/wiki/FunctionalExplained
 	 */
 	public static class MachineStateExtractor implements
-	Function<Machine, MachineState> {
+			Function<Machine, MachineState> {
 		/**
 		 * Extracts the state of a {@link Machine}.
 		 *
@@ -623,7 +624,7 @@ public class Machine {
 	 * The {@link Machine} must have its launch time set.
 	 */
 	public static class InstanceHourStart implements
-	Function<Machine, DateTime> {
+			Function<Machine, DateTime> {
 
 		/**
 		 * Calculates the starting point of the machine's current hour.
@@ -699,7 +700,7 @@ public class Machine {
 	 *
 	 */
 	public static class RemainingInstanceHourTime implements
-	Function<Machine, Long> {
+			Function<Machine, Long> {
 
 		/**
 		 * Calculates the remaining time (in seconds) of the machine's last
@@ -753,7 +754,7 @@ public class Machine {
 	 * {@link Machine}.
 	 */
 	public static class ToShortMachineFormat implements
-	Function<Machine, Machine> {
+			Function<Machine, Machine> {
 
 		@Override
 		public Machine apply(Machine machine) {
@@ -776,7 +777,7 @@ public class Machine {
 	 * produce quite some log noise).
 	 */
 	public static class ToShortMachineString implements
-	Function<Machine, String> {
+			Function<Machine, String> {
 
 		@Override
 		public String apply(Machine machine) {
