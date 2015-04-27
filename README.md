@@ -12,8 +12,6 @@ for different cloud providers:
     that manages a group of [AWS EC2](http://aws.amazon.com/ec2/) instances.
   - ``cloudpool.aws.autoscaling``: a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages the size of an [AWS Auto Scaling Group](http://docs.aws.amazon.com/AutoScaling/latest/DeveloperGuide/WorkingWithASG.html).
-  - ``cloudpool.splitter``: a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
-    that manages the size of several back-end cloud pools.
 
 
 Getting started
