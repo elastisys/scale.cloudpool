@@ -20,12 +20,6 @@ public class CloudPoolMetadata {
 	private final String poolIdentifier;
 
 	/**
-	 * Flag indicating if the cloud pool supports disclosing when a request for
-	 * a machine was made or not.
-	 */
-	private final boolean cloudSupportsRequesttime;
-
-	/**
 	 * List of supported API versions.
 	 */
 	private final List<String> supportedApiVersions;
@@ -45,14 +39,11 @@ public class CloudPoolMetadata {
 	 * @param poolIdentifier
 	 *            The unique identifier for the cloud infrastructure managed by
 	 *            this cloud pool.
-	 * @param cloudSupportsRequesttime
-	 *            Flag indicating if the cloud pool supports disclosing when a
-	 *            request for a machine was made or not.
 	 * @param supportedApiVersions
 	 *            List of supported API versions.
 	 */
 	public CloudPoolMetadata(String poolIdentifier,
-			boolean cloudSupportsRequesttime, List<String> supportedApiVersions) {
+			List<String> supportedApiVersions) {
 		Preconditions.checkNotNull(poolIdentifier,
 				"poolIdentifier cannot be null");
 		Preconditions.checkNotNull(supportedApiVersions,
@@ -66,7 +57,6 @@ public class CloudPoolMetadata {
 		}
 
 		this.poolIdentifier = poolIdentifier;
-		this.cloudSupportsRequesttime = cloudSupportsRequesttime;
 		this.supportedApiVersions = ImmutableList.copyOf(supportedApiVersions);
 	}
 
@@ -77,16 +67,12 @@ public class CloudPoolMetadata {
 	 * @param poolIdentifier
 	 *            The unique identifier for the cloud infrastructure managed by
 	 *            this cloud pool.
-	 * @param cloudSupportsRequesttime
-	 *            Flag indicating if the cloud pool supports disclosing when a
-	 *            request for a machine was made or not.
 	 * @param supportedApiVersions
 	 *            List of supported API versions.
 	 */
 	public CloudPoolMetadata(PoolIdentifier poolIdentifier,
-			boolean cloudSupportsRequesttime, List<String> supportedApiVersions) {
-		this(poolIdentifier.name(), cloudSupportsRequesttime,
-				supportedApiVersions);
+			List<String> supportedApiVersions) {
+		this(poolIdentifier.name(), supportedApiVersions);
 	}
 
 	/**
@@ -95,14 +81,6 @@ public class CloudPoolMetadata {
 	 */
 	public String poolIdentifier() {
 		return this.poolIdentifier;
-	}
-
-	/**
-	 * @return Flag indicating if the cloud pool supports disclosing when a
-	 *         request for a machine was made or not.
-	 */
-	public boolean cloudSupportsRequesttime() {
-		return this.cloudSupportsRequesttime;
 	}
 
 	/**
@@ -119,8 +97,7 @@ public class CloudPoolMetadata {
 	 */
 	@Override
 	public int hashCode() {
-		return Objects.hashCode(this.poolIdentifier,
-				this.cloudSupportsRequesttime, this.supportedApiVersions);
+		return Objects.hashCode(this.poolIdentifier, this.supportedApiVersions);
 	}
 
 	/*
@@ -133,8 +110,6 @@ public class CloudPoolMetadata {
 		if (obj instanceof CloudPoolMetadata) {
 			CloudPoolMetadata that = (CloudPoolMetadata) obj;
 			return Objects.equal(this.poolIdentifier, that.poolIdentifier)
-					&& Objects.equal(this.cloudSupportsRequesttime,
-							that.cloudSupportsRequesttime)
 					&& Objects.equal(this.supportedApiVersions,
 							that.supportedApiVersions);
 		} else {
@@ -146,7 +121,6 @@ public class CloudPoolMetadata {
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
 				.add("poolIdentifier", this.poolIdentifier)
-				.add("cloudSupportsRequesttime", this.cloudSupportsRequesttime)
 				.add("supportedApiVersions", this.supportedApiVersions)
 				.toString();
 	}

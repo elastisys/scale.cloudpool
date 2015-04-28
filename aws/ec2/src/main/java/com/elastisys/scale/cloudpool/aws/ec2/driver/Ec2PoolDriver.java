@@ -66,7 +66,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 	 * Cloud pool metadata for this implementation.
 	 */
 	public final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
-			PoolIdentifier.AWS_EC2, false, supportedApiVersions);
+			PoolIdentifier.AWS_EC2, supportedApiVersions);
 
 	/**
 	 * Creates a new {@link Ec2PoolDriver}. Needs to be configured before use.
@@ -109,7 +109,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 			// filter instances on cloud pool tag
 			Filter filter = new Filter().withName(
 					ScalingFilters.CLOUD_POOL_TAG_FILTER).withValues(
-							getPoolName());
+					getPoolName());
 			List<Instance> instances = this.client.getInstances(asList(filter));
 			return Lists.transform(instances, new InstanceToMachine());
 		} catch (Exception e) {
@@ -163,7 +163,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 
 	@Override
 	public void attachMachine(String machineId) throws NotFoundException,
-	CloudPoolDriverException {
+			CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured Ec2PoolDriver");
 
 		// verify that machine exists
@@ -182,7 +182,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 
 	@Override
 	public void detachMachine(String machineId) throws NotFoundException,
-	CloudPoolDriverException {
+			CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured Ec2PoolDriver");
 
 		// verify that machine exists in group

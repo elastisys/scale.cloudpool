@@ -73,7 +73,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 	 * Cloud pool metadata for this implementation.
 	 */
 	public final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
-			PoolIdentifier.AWS_AUTO_SCALING_GROUPS, false, supportedApiVersions);
+			PoolIdentifier.AWS_AUTO_SCALING_GROUPS, supportedApiVersions);
 
 	/**
 	 * Creates a new {@link AwsAsPoolDriver}. Needs to be configured before use.
@@ -251,7 +251,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 
 	@Override
 	public void detachMachine(String machineId) throws NotFoundException,
-	CloudPoolDriverException {
+			CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 
 		// verify that machine exists in group

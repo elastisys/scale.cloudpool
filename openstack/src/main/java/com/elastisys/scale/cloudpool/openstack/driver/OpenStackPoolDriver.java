@@ -63,7 +63,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 	 * Cloud pool metadata for this implementation.
 	 */
 	public final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
-			PoolIdentifier.OPENSTACK, true, supportedApiVersions);
+			PoolIdentifier.OPENSTACK, supportedApiVersions);
 
 	/**
 	 * Creates a new {@link OpenStackPoolDriver}. Needs to be configured before
@@ -165,7 +165,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 
 	@Override
 	public void attachMachine(String machineId) throws NotFoundException,
-			CloudPoolDriverException {
+	CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 
 		Map<String, String> tags = ImmutableMap.of(Constants.CLOUD_POOL_TAG,
@@ -184,7 +184,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 
 	@Override
 	public void detachMachine(String machineId) throws NotFoundException,
-			CloudPoolDriverException {
+	CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 
 		// verify that machine exists in group
