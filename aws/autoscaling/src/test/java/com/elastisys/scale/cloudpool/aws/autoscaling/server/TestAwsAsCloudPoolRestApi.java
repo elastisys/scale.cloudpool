@@ -40,7 +40,7 @@ public class TestAwsAsCloudPoolRestApi {
 	private static Server server;
 	/** Server port to use for HTTPS. */
 	private static int httpsPort;
-
+	private final static String storageDir = "target/test/cloudpool/storage";
 	private static CloudPool cloudPool;
 
 	@BeforeClass
@@ -57,6 +57,7 @@ public class TestAwsAsCloudPoolRestApi {
 		options.sslKeyStorePassword = SERVER_KEYSTORE_PASSWORD;
 		options.requireClientCert = false;
 		options.enableConfigHandler = true;
+		options.storageDir = storageDir;
 
 		server = CloudPoolServer.createServer(cloudPool, options);
 		server.start();

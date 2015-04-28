@@ -8,6 +8,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.nio.file.Paths;
 import java.util.List;
 
 import javax.ws.rs.client.Client;
@@ -50,6 +51,9 @@ public class TestRestApiSecurityBasicAuth {
 	private static Server server;
 	/** Server port to use for HTTPS. */
 	private static int httpsPort;
+	/** Storage dir for configurations. */
+	private static final String storageDir = Paths.get("target", "cloudpool",
+			"storage").toString();
 
 	private static CloudPool cloudPool = mock(CloudPool.class);
 
@@ -69,6 +73,7 @@ public class TestRestApiSecurityBasicAuth {
 		options.requireBasicAuth = true;
 		options.requireRole = "AUTOSCALER";
 		options.realmFile = "src/test/resources/security/server/security-realm.properties";
+		options.storageDir = storageDir;
 
 		server = CloudPoolServer.createServer(cloudPool, options);
 		server.start();

@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -38,9 +39,13 @@ public class TestConfigHandlerDispatch {
 	 */
 	private CloudPool cloudPoolMock = mock(CloudPool.class);
 
+	/** Storage dir for configurations. */
+	private static final String storageDir = Paths.get("target", "cloudpool",
+			"storage").toString();
+
 	@Before
 	public void onSetup() {
-		this.restEndpoint = new ConfigHandler(this.cloudPoolMock);
+		this.restEndpoint = new ConfigHandler(this.cloudPoolMock, storageDir);
 	}
 
 	/**
@@ -66,8 +71,7 @@ public class TestConfigHandlerDispatch {
 	 */
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testGetConfigurationDispatchOnCloudPoolError()
-			throws Exception {
+	public void testGetConfigurationDispatchOnCloudPoolError() throws Exception {
 		// set up mock response
 		when(this.cloudPoolMock.getConfiguration()).thenThrow(
 				CloudPoolException.class);
@@ -87,7 +91,7 @@ public class TestConfigHandlerDispatch {
 	public void testPostConfigDispatch() throws Exception {
 		// call rest endpoint and verify proper dispatching to mock
 		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}");
-		Response response = this.restEndpoint.setConfig(config);
+		Response response = this.restEndpoint.setAndStoreConfig(config);
 		assertEquals(response.getStatus(), Status.OK.getStatusCode());
 		assertEquals(response.getEntity(), null);
 
@@ -104,12 +108,12 @@ public class TestConfigHandlerDispatch {
 	@Test
 	public void testPostConfigOnCloudPoolError() throws Exception {
 		// set up mock response: should throw error
-		doThrow(CloudPoolException.class).when(this.cloudPoolMock)
-				.configure(any(JsonObject.class));
+		doThrow(CloudPoolException.class).when(this.cloudPoolMock).configure(
+				any(JsonObject.class));
 
 		// call rest endpoint and verify proper dispatching to mock
 		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}");
-		Response response = this.restEndpoint.setConfig(config);
+		Response response = this.restEndpoint.setAndStoreConfig(config);
 		assertEquals(response.getStatus(),
 				Status.INTERNAL_SERVER_ERROR.getStatusCode());
 		assertThat(response.getEntity(), instanceOf(ErrorType.class));
@@ -128,7 +132,7 @@ public class TestConfigHandlerDispatch {
 		// call rest endpoint and verify proper dispatching to mock
 		JsonObject config = JsonUtils
 				.parseJsonString("{\"key\": \"illegal-value\"}");
-		Response response = this.restEndpoint.setConfig(config);
+		Response response = this.restEndpoint.setAndStoreConfig(config);
 		assertEquals(response.getStatus(), Status.BAD_REQUEST.getStatusCode());
 		assertThat(response.getEntity(), instanceOf(ErrorType.class));
 	}

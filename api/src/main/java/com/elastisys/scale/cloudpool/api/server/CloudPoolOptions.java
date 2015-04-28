@@ -5,13 +5,21 @@ import java.util.List;
 
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.spi.ExplicitBooleanOptionHandler;
 
+import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.google.common.io.Resources;
 
 /**
  * Captures (command-line) options accepted by a {@link CloudPoolServer}.
  */
 public class CloudPoolOptions {
+
+	/**
+	 * The default directory where the {@link CloudPool} will store its runtime
+	 * state.
+	 */
+	public final static String DEFAULT_STORAGE_DIR = "/var/lib/elastisys/cloudpool";
 
 	/**
 	 * The default SSL key store embedded in the server's JAR file. This key
@@ -26,20 +34,19 @@ public class CloudPoolOptions {
 			"etc/security/server_truststore.jks").toString();
 	public final static String DEFAULT_TRUSTSTORE_PASSWORD = "truststorepassword";
 
-	@Option(name = "--https-port", metaVar = "PORT", usage = "The HTTPS port to listen on. Default: 8443.")
+	@Option(name = "--https-port", metaVar = "PORT", usage = "The HTTPS port to listen on.")
 	public int httpsPort = 8443; // default
 
 	@Option(name = "--require-cert", usage = "Require SSL clients "
 			+ "to authenticate with a certificate. Note that this requires "
 			+ "trusted clients to have their certificates added to the "
-			+ "server's trust store. Default: false.")
+			+ "server's trust store.")
 	public boolean requireClientCert = false;
 
 	@Option(name = "--ssl-keystore", metaVar = "PATH", usage = "The location of the server's SSL key store (PKCS12 format). "
 			+ "Default: an embedded key store with a self-signed certificate.")
 	public String sslKeyStore = DEFAULT_KEYSTORE_PATH;
-	@Option(name = "--ssl-keystore-password", metaVar = "PASSWORD", usage = "The password that protects the SSL key store. "
-			+ "Default: '" + DEFAULT_KEYSTORE_PASSWORD + "'")
+	@Option(name = "--ssl-keystore-password", metaVar = "PASSWORD", usage = "The password that protects the SSL key store.")
 	public String sslKeyStorePassword = DEFAULT_KEYSTORE_PASSWORD;
 
 	@Option(name = "--ssl-truststore", metaVar = "PATH", usage = "The location "
@@ -50,39 +57,46 @@ public class CloudPoolOptions {
 			+ "client certificate (not intended for production use).")
 	public String sslTrustStore = DEFAULT_TRUSTSTORE_PATH;
 
-	@Option(name = "--ssl-truststore-password", metaVar = "PASSWORD", usage = "The password that protects the SSL trust store. "
-			+ "Default: '" + DEFAULT_TRUSTSTORE_PASSWORD + "'")
+	@Option(name = "--ssl-truststore-password", metaVar = "PASSWORD", usage = "The password that protects the SSL trust store.")
 	public String sslTrustStorePassword = DEFAULT_TRUSTSTORE_PASSWORD;
 
 	@Option(name = "--require-basicauth", usage = "Require clients to "
 			+ "provide username/password credentials according to the "
 			+ "HTTP BASIC authentication scheme. Role-based authorization "
-			+ "is specified via the --realm-file and --require-role options."
-			+ " Default: false.")
+			+ "is specified via the --realm-file and --require-role options.")
 	public boolean requireBasicAuth = false;
 
 	@Option(name = "--require-role", metaVar = "ROLE", usage = "The role "
 			+ "that an authenticated user must be assigned to be granted "
 			+ "access to the server. This option is only relevant when HTTP "
 			+ "BASIC authentication is specified (--require-basicauth). User "
-			+ "roles are assigned in the realm file (--realm-file). "
-			+ "Default: \"USER\"")
+			+ "roles are assigned in the realm file (--realm-file).")
 	public String requireRole = "USER";
 
 	@Option(name = "--realm-file", metaVar = "PATH", usage = "A credentials "
 			+ "store with users, passwords, and roles according to the "
 			+ "format prescribed by the Jetty HashLoginService. This option is "
 			+ "only required when HTTP BASIC authentication is specified "
-			+ "(see --require-basicauth and --require-role). ")
+			+ "(see --require-basicauth and --require-role).")
 	public String realmFile = null;
 
-	@Option(name = "--config", metaVar = "FILE", usage = "Initial cloud pool configuration file (JSON-formatted).")
+	@Option(name = "--config", metaVar = "FILE", usage = "Initial "
+			+ "(JSON-formatted) configuration to set for cloud pool. "
+			+ "If no configuration is set, an attempt will be made to "
+			+ "load the last set configuration from the storage "
+			+ "directory (see --storage-dir). If none has been set, "
+			+ "the cloud pool is started without configuration.")
 	public String config = null;
 
-	@Option(name = "--config-handler", usage = "Publish a /config handler that allows configuration to be queried and updated. Default: False.")
-	public boolean enableConfigHandler = false;
+	@Option(name = "--storage-dir", metaVar = "DIR", usage = "Directory where "
+			+ "the cloud pool will store its runtime state. Needs to be "
+			+ "writable by the user running the cloud pool.")
+	public String storageDir = DEFAULT_STORAGE_DIR;
 
-	@Option(name = "--exit-handler", usage = "Publish an /exit handler that shuts down the server on 'GET /exit'. Default: False.")
+	@Option(name = "--config-handler", handler = ExplicitBooleanOptionHandler.class, metaVar = "true|false", usage = "Publish a /config handler that allows configuration to be queried and updated.")
+	public boolean enableConfigHandler = true;
+
+	@Option(name = "--exit-handler", handler = ExplicitBooleanOptionHandler.class, metaVar = "true|false", usage = "Publish an /exit handler that shuts down the server on 'GET /exit'.")
 	public boolean enableExitHandler = false;
 
 	@Option(name = "--help", usage = "Displays this help text.")

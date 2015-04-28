@@ -22,11 +22,11 @@ COPY opt/elastisys/ec2pool/start.sh /opt/elastisys/ec2pool/start.sh
 # create configuration directory
 COPY etc/elastisys/ /etc/elastisys/
 
-# create log directory
+# create directories
 RUN mkdir -p /var/log/elastisys && \
     mkdir -p /var/run/elastisys/ && \
-    chown -R elastisys:elastisys /var/log/elastisys /var/run/elastisys \
-            /opt/elastisys && \
+    mkdir -p /var/lib/elastisys/ && \    
+    chown -R elastisys:elastisys /var/log/elastisys /var/run/elastisys /var/lib/elastisys /opt/elastisys /etc/elastisys && \
     chmod +x /opt/elastisys/ec2pool/start.sh
 
 # make sure https port (443) can be used by server via authbind

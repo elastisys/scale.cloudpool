@@ -6,6 +6,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.nio.file.Paths;
 import java.util.List;
 
 import javax.ws.rs.client.Client;
@@ -18,8 +19,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
-import com.elastisys.scale.cloudpool.api.server.CloudPoolOptions;
-import com.elastisys.scale.cloudpool.api.server.CloudPoolServer;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.commons.net.host.HostUtils;
 import com.elastisys.scale.commons.net.ssl.KeyStoreType;
@@ -42,6 +41,9 @@ public class TestRestApiSecurityNoAuth {
 	private static Server server;
 	/** Server port to use for HTTPS. */
 	private static int httpsPort;
+	/** Storage dir for configurations. */
+	private static final String storageDir = Paths.get("target", "cloudpool",
+			"storage").toString();
 
 	private static CloudPool cloudPool = mock(CloudPool.class);
 
@@ -59,6 +61,7 @@ public class TestRestApiSecurityNoAuth {
 		options.sslKeyStore = SERVER_KEYSTORE;
 		options.sslKeyStorePassword = SERVER_KEYSTORE_PASSWORD;
 		options.requireClientCert = false;
+		options.storageDir = storageDir;
 
 		server = CloudPoolServer.createServer(cloudPool, options);
 		server.start();

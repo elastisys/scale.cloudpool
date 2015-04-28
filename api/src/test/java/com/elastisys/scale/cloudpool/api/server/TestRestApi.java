@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -61,6 +62,9 @@ public class TestRestApi {
 	private static Server server;
 	/** Server port to use for HTTPS. */
 	private static int httpsPort;
+	/** Storage dir for configurations. */
+	private static final String storageDir = Paths.get("target", "cloudpool",
+			"storage").toString();
 
 	private static CloudPool cloudPool = mock(CloudPool.class);
 
@@ -75,6 +79,7 @@ public class TestRestApi {
 		options.sslKeyStorePassword = SERVER_KEYSTORE_PASSWORD;
 		options.requireClientCert = false;
 		options.enableConfigHandler = true;
+		options.storageDir = storageDir;
 
 		server = CloudPoolServer.createServer(cloudPool, options);
 		server.start();
@@ -104,7 +109,7 @@ public class TestRestApi {
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
-		Response response = client.target(getUrl("/config")).request().get();
+		Response response = client.target(url("/config")).request().get();
 		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 		assertNotNull(response.readEntity(JsonObject.class));
 
@@ -125,7 +130,7 @@ public class TestRestApi {
 		when(cloudPool.getConfiguration()).thenReturn(config);
 
 		Client client = RestClients.httpsNoAuth();
-		Response response = client.target(getUrl("/config")).request().get();
+		Response response = client.target(url("/config")).request().get();
 		assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
 		assertNotNull(response.readEntity(JsonObject.class));
 	}
@@ -141,7 +146,7 @@ public class TestRestApi {
 				cloudPool).getConfiguration();
 
 		Client client = RestClients.httpsNoAuth();
-		Response response = client.target(getUrl("/config")).request().get();
+		Response response = client.target(url("/config")).request().get();
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
 		assertThat(response.readEntity(String.class),
@@ -160,7 +165,7 @@ public class TestRestApi {
 		String configDoc = "{\"setting\": \"true\"}";
 		JsonObject config = JsonUtils.parseJsonString(configDoc);
 		Client client = RestClients.httpsNoAuth();
-		Response response = client.target(getUrl("/config"))
+		Response response = client.target(url("/config"))
 				.request(MediaType.APPLICATION_JSON).post(Entity.json(config));
 		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 
@@ -182,7 +187,7 @@ public class TestRestApi {
 		String configDoc = "{\"setting\": \"true\"}";
 		JsonObject config = JsonUtils.parseJsonString(configDoc);
 		Client client = RestClients.httpsNoAuth();
-		Response response = client.target(getUrl("/config"))
+		Response response = client.target(url("/config"))
 				.request(MediaType.APPLICATION_JSON).post(Entity.json(config));
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
@@ -204,7 +209,7 @@ public class TestRestApi {
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
-		Response response = client.target(getUrl("/pool")).request().get();
+		Response response = client.target(url("/pool")).request().get();
 		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 		MachinePool receivedPool = JsonUtils.toObject(
 				response.readEntity(JsonObject.class), MachinePool.class);
@@ -226,7 +231,7 @@ public class TestRestApi {
 				cloudPool).getMachinePool();
 
 		Client client = RestClients.httpsNoAuth();
-		Response response = client.target(getUrl("/pool")).request().get();
+		Response response = client.target(url("/pool")).request().get();
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
 		assertThat(response.readEntity(String.class),
@@ -244,7 +249,7 @@ public class TestRestApi {
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
-		Response response = client.target(getUrl("/pool/size")).request().get();
+		Response response = client.target(url("/pool/size")).request().get();
 		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 		PoolSizeSummary poolSize = JsonUtils.toObject(
 				response.readEntity(JsonObject.class), PoolSizeSummary.class);
@@ -266,7 +271,7 @@ public class TestRestApi {
 				cloudPool).getPoolSize();
 
 		Client client = RestClients.httpsNoAuth();
-		Response response = client.target(getUrl("/pool/size")).request().get();
+		Response response = client.target(url("/pool/size")).request().get();
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
 		assertThat(response.readEntity(String.class),
@@ -285,7 +290,7 @@ public class TestRestApi {
 		// run test
 		Client client = RestClients.httpsNoAuth();
 		Entity<String> request = Entity.json("{\"desiredSize\": 15}");
-		Response response = client.target(getUrl("/pool/size")).request()
+		Response response = client.target(url("/pool/size")).request()
 				.post(request);
 		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 
@@ -307,7 +312,7 @@ public class TestRestApi {
 		// run test
 		Client client = RestClients.httpsNoAuth();
 		Entity<String> request = Entity.json("{\"desiredSize\": 15}");
-		Response response = client.target(getUrl("/pool/size")).request()
+		Response response = client.target(url("/pool/size")).request()
 				.post(request);
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
@@ -328,8 +333,8 @@ public class TestRestApi {
 		Client client = RestClients.httpsNoAuth();
 		Entity<String> request = Entity
 				.json("{\"decrementDesiredSize\": true}");
-		Response response = client.target(getUrl("/pool/i-1/terminate"))
-				.request().post(request);
+		Response response = client.target(url("/pool/i-1/terminate")).request()
+				.post(request);
 		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 
 		// verify dispatch from REST server to cloud pool
@@ -346,14 +351,14 @@ public class TestRestApi {
 	public void testTerminateMachineOnNotFoundError() {
 		// set up expected call on mock
 		doThrow(new NotFoundException("unrecognized!")).when(cloudPool)
-		.terminateMachine("i-1", true);
+				.terminateMachine("i-1", true);
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
 		Entity<String> request = Entity
 				.json("{\"decrementDesiredSize\": true}");
-		Response response = client.target(getUrl("/pool/i-1/terminate"))
-				.request().post(request);
+		Response response = client.target(url("/pool/i-1/terminate")).request()
+				.post(request);
 		assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
 
 		// verify dispatch from REST server to cloud pool
@@ -369,14 +374,14 @@ public class TestRestApi {
 	public void testTerminateMachineOnCloudPoolError() {
 		// set up expected call on mock
 		doThrow(new RuntimeException("failed!")).when(cloudPool)
-		.terminateMachine("i-1", true);
+				.terminateMachine("i-1", true);
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
 		Entity<String> request = Entity
 				.json("{\"decrementDesiredSize\": true}");
-		Response response = client.target(getUrl("/pool/i-1/terminate"))
-				.request().post(request);
+		Response response = client.target(url("/pool/i-1/terminate")).request()
+				.post(request);
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
 
@@ -398,7 +403,7 @@ public class TestRestApi {
 		Client client = RestClients.httpsNoAuth();
 		Entity<String> request = Entity
 				.json("{\"decrementDesiredSize\": true}");
-		Response response = client.target(getUrl("/pool/i-1/detach")).request()
+		Response response = client.target(url("/pool/i-1/detach")).request()
 				.post(request);
 		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 
@@ -415,13 +420,13 @@ public class TestRestApi {
 	public void testDetachMachineOnNotFoundError() {
 		// set up expected call on mock
 		doThrow(new NotFoundException("unrecognized!")).when(cloudPool)
-		.detachMachine("i-1", true);
+				.detachMachine("i-1", true);
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
 		Entity<String> request = Entity
 				.json("{\"decrementDesiredSize\": true}");
-		Response response = client.target(getUrl("/pool/i-1/detach")).request()
+		Response response = client.target(url("/pool/i-1/detach")).request()
 				.post(request);
 		assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
 
@@ -444,7 +449,7 @@ public class TestRestApi {
 		Client client = RestClients.httpsNoAuth();
 		Entity<String> request = Entity
 				.json("{\"decrementDesiredSize\": true}");
-		Response response = client.target(getUrl("/pool/i-1/detach")).request()
+		Response response = client.target(url("/pool/i-1/detach")).request()
 				.post(request);
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
@@ -465,7 +470,7 @@ public class TestRestApi {
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
-		Response response = client.target(getUrl("/pool/i-1/attach")).request()
+		Response response = client.target(url("/pool/i-1/attach")).request()
 				.post(null);
 		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 
@@ -482,11 +487,11 @@ public class TestRestApi {
 	public void testAttachMachineOnNotFoundError() {
 		// set up expected call on mock
 		doThrow(new NotFoundException("unrecognized!")).when(cloudPool)
-		.attachMachine("i-1");
+				.attachMachine("i-1");
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
-		Response response = client.target(getUrl("/pool/i-1/attach")).request()
+		Response response = client.target(url("/pool/i-1/attach")).request()
 				.post(null);
 		assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
 
@@ -507,7 +512,7 @@ public class TestRestApi {
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
-		Response response = client.target(getUrl("/pool/i-1/attach")).request()
+		Response response = client.target(url("/pool/i-1/attach")).request()
 				.post(null);
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
@@ -531,7 +536,7 @@ public class TestRestApi {
 		Client client = RestClients.httpsNoAuth();
 		Entity<String> request = Entity
 				.json("{\"serviceState\": \"OUT_OF_SERVICE\"}");
-		Response response = client.target(getUrl("/pool/i-1/serviceState"))
+		Response response = client.target(url("/pool/i-1/serviceState"))
 				.request().post(request);
 		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 
@@ -549,13 +554,13 @@ public class TestRestApi {
 	public void testSetServiceStateOnNotFoundError() {
 		// set up expected call on mock
 		doThrow(new NotFoundException("unrecognized!")).when(cloudPool)
-		.setServiceState("i-1", ServiceState.OUT_OF_SERVICE);
+				.setServiceState("i-1", ServiceState.OUT_OF_SERVICE);
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
 		Entity<String> request = Entity
 				.json("{\"serviceState\": \"OUT_OF_SERVICE\"}");
-		Response response = client.target(getUrl("/pool/i-1/serviceState"))
+		Response response = client.target(url("/pool/i-1/serviceState"))
 				.request().post(request);
 		assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
 
@@ -573,13 +578,13 @@ public class TestRestApi {
 	public void testSetServiceStateOnCloudPoolError() {
 		// set up expected call on mock
 		doThrow(new RuntimeException("failed!")).when(cloudPool)
-		.setServiceState("i-1", ServiceState.OUT_OF_SERVICE);
+				.setServiceState("i-1", ServiceState.OUT_OF_SERVICE);
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
 		Entity<String> request = Entity
 				.json("{\"serviceState\": \"OUT_OF_SERVICE\"}");
-		Response response = client.target(getUrl("/pool/i-1/serviceState"))
+		Response response = client.target(url("/pool/i-1/serviceState"))
 				.request().post(request);
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
@@ -590,13 +595,13 @@ public class TestRestApi {
 	}
 
 	/**
-	 * URL to do a {@code GET /pool} request.
+	 * URL to do a {@code GET /<path>} request.
 	 *
 	 * @param path
 	 *            The resource path on the remote server.
 	 * @return
 	 */
-	private static String getUrl(String path) {
+	private static String url(String path) {
 		return String.format("https://localhost:%d%s", httpsPort, path);
 	}
 

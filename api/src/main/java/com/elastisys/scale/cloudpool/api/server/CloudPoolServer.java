@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.api.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import org.eclipse.jetty.server.Server;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -23,6 +24,7 @@ import com.elastisys.scale.commons.server.ServletServerBuilder;
 import com.elastisys.scale.commons.server.SslKeyStoreType;
 import com.elastisys.scale.commons.util.io.IoUtils;
 import com.google.common.base.Charsets;
+import com.google.common.base.Optional;
 import com.google.gson.JsonObject;
 
 /**
@@ -34,7 +36,8 @@ import com.google.gson.JsonObject;
  * cloud pool REST API documentation</a>.
  */
 public class CloudPoolServer {
-	static Logger log = LoggerFactory.getLogger(CloudPoolServer.class);
+	private final static Logger LOG = LoggerFactory
+			.getLogger(CloudPoolServer.class);
 
 	/**
 	 * Parse command-line arguments and start an HTTPS server that serves REST
@@ -60,7 +63,7 @@ public class CloudPoolServer {
 		try {
 			parser.parseArgument(args);
 		} catch (CmdLineException e) {
-			log.error("error: " + e.getMessage());
+			LOG.error("error: " + e.getMessage());
 			parser.printUsage(System.err);
 			System.exit(-1);
 		}
@@ -78,14 +81,14 @@ public class CloudPoolServer {
 		Server server = createServer(cloudPool, arguments);
 
 		// start server and wait
-		log.info("Starting Jetty server with HTTPS port " + arguments.httpsPort);
+		LOG.info("Starting Jetty server with HTTPS port " + arguments.httpsPort);
 		try {
 			server.start();
 		} catch (Exception e) {
-			log.error("failed to start server: " + e.getMessage(), e);
+			LOG.error("failed to start server: " + e.getMessage(), e);
 			System.exit(-1);
 		}
-		log.info("Started Jetty server with HTTPS port " + arguments.httpsPort);
+		LOG.info("Started Jetty server with HTTPS port " + arguments.httpsPort);
 		server.join();
 	}
 
@@ -117,20 +120,30 @@ public class CloudPoolServer {
 		// deploy pool handler
 		application.addHandler(new CloudPoolHandler(cloudPool));
 
+		ConfigHandler configHandler = new ConfigHandler(cloudPool,
+				options.storageDir);
+		if (options.config != null) {
+			// use explicitly specified configuration file
+			JsonObject config = parseJsonConfig(options.config);
+			cloudPool.configure(config);
+			configHandler.storeConfig(config);
+		} else {
+			// restore cloudpool config from storage directory (if available)
+			Optional<JsonObject> config = restoreConfig(configHandler
+					.getCloudPoolConfigPath());
+			if (config.isPresent()) {
+				cloudPool.configure(config.get());
+			}
+		}
+
 		if (options.enableConfigHandler) {
-			// optionally deploy config handler and config schema handler
-			application.addHandler(new ConfigHandler(cloudPool));
+			// optionally deploy config handler resource
+			application.addHandler(configHandler);
 		}
 
 		if (options.enableExitHandler) {
 			// optionally deploy exit handler
 			application.addHandler(new ExitHandler());
-		}
-
-		if (options.config != null) {
-			// optionally configure cloud pool
-			JsonObject configuration = parseJsonConfig(options.config);
-			cloudPool.configure(configuration);
 		}
 
 		// build server
@@ -155,15 +168,38 @@ public class CloudPoolServer {
 		return server;
 	}
 
+	/**
+	 * Loads any previously set {@link CloudPool} configuration file from the
+	 * storage directory, if one exists.
+	 *
+	 * @param storageDir
+	 * @return The previously set {@link CloudPool} configuration, if available.
+	 * @throws IOException
+	 */
+	private static Optional<JsonObject> restoreConfig(Path configPath)
+			throws IOException {
+		File cloudPoolConfig = configPath.toFile();
+		LOG.info("restoring cloudpool config from {}",
+				cloudPoolConfig.getAbsolutePath());
+		if (!cloudPoolConfig.isFile()) {
+			LOG.info("no cloud pool configuration found at {}. "
+					+ "starting without config ...",
+					cloudPoolConfig.getAbsolutePath());
+			return Optional.absent();
+		}
+
+		return Optional.of(parseJsonConfig(cloudPoolConfig.getAbsolutePath()));
+	}
+
 	private static JsonObject parseJsonConfig(String configFile)
 			throws IOException {
 		JsonObject configuration;
 		try {
 			configuration = JsonUtils.parseJsonFile(new File(configFile));
 		} catch (Exception e) {
-			throw new IllegalArgumentException(
-					"failed to parse JSON configuration file: "
-							+ e.getMessage(), e);
+			throw new IllegalArgumentException(String.format(
+					"failed to parse JSON configuration file %s: %s",
+					configFile, e.getMessage()), e);
 		}
 		return configuration;
 	}
