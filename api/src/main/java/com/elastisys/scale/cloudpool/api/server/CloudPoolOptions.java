@@ -29,11 +29,10 @@ public class CloudPoolOptions {
 	@Option(name = "--https-port", metaVar = "PORT", usage = "The HTTPS port to listen on. Default: 8443.")
 	public int httpsPort = 8443; // default
 
-	@Option(name = "--cert-required", usage = "Set if SSL clients must "
-			+ "authenticate with a certificate. "
-			+ "Note that this requires trusted clients to "
-			+ "have their certificates added to the server's trust store. "
-			+ "Default: false.")
+	@Option(name = "--require-cert", usage = "Require SSL clients "
+			+ "to authenticate with a certificate. Note that this requires "
+			+ "trusted clients to have their certificates added to the "
+			+ "server's trust store. Default: false.")
 	public boolean requireClientCert = false;
 
 	@Option(name = "--ssl-keystore", metaVar = "PATH", usage = "The location of the server's SSL key store (PKCS12 format). "
@@ -43,14 +42,39 @@ public class CloudPoolOptions {
 			+ "Default: '" + DEFAULT_KEYSTORE_PASSWORD + "'")
 	public String sslKeyStorePassword = DEFAULT_KEYSTORE_PASSWORD;
 
-	@Option(name = "--ssl-truststore", metaVar = "PATH", usage = "The location of "
-			+ "a SSL trust store (JKS format), containing trusted client "
-			+ "certificates. Default: an embedded key store that trusts a "
-			+ "dummy client.")
+	@Option(name = "--ssl-truststore", metaVar = "PATH", usage = "The location "
+			+ "of a SSL trust store (JKS format), containing trusted client "
+			+ "certificates. This option is only relevant when client "
+			+ "certificate authentication is required (--require-cert). "
+			+ "Default: an embedded trust store that only trusts a single dummy "
+			+ "client certificate (not intended for production use).")
 	public String sslTrustStore = DEFAULT_TRUSTSTORE_PATH;
+
 	@Option(name = "--ssl-truststore-password", metaVar = "PASSWORD", usage = "The password that protects the SSL trust store. "
 			+ "Default: '" + DEFAULT_TRUSTSTORE_PASSWORD + "'")
 	public String sslTrustStorePassword = DEFAULT_TRUSTSTORE_PASSWORD;
+
+	@Option(name = "--require-basicauth", usage = "Require clients to "
+			+ "provide username/password credentials according to the "
+			+ "HTTP BASIC authentication scheme. Role-based authorization "
+			+ "is specified via the --realm-file and --require-role options."
+			+ " Default: false.")
+	public boolean requireBasicAuth = false;
+
+	@Option(name = "--require-role", metaVar = "ROLE", usage = "The role "
+			+ "that an authenticated user must be assigned to be granted "
+			+ "access to the server. This option is only relevant when HTTP "
+			+ "BASIC authentication is specified (--require-basicauth). User "
+			+ "roles are assigned in the realm file (--realm-file). "
+			+ "Default: \"USER\"")
+	public String requireRole = "USER";
+
+	@Option(name = "--realm-file", metaVar = "PATH", usage = "A credentials "
+			+ "store with users, passwords, and roles according to the "
+			+ "format prescribed by the Jetty HashLoginService. This option is "
+			+ "only required when HTTP BASIC authentication is specified "
+			+ "(see --require-basicauth and --require-role). ")
+	public String realmFile = null;
 
 	@Option(name = "--config", metaVar = "FILE", usage = "Initial cloud pool configuration file (JSON-formatted).")
 	public String config = null;

@@ -14,7 +14,7 @@ JAVA_OPTS="-Djava.net.preferIPv4Stack=true -Djava.util.logging.config.file=${jul
 SECURITY_OPTS="--ssl-keystore ${security_dir}/server_keystore.p12 --ssl-keystore-password serverpassword"
 
 # require clients to authenticate with a trusted certificate
-# SECURITY_OPTS="${SERVER_OPTS} --ssl-truststore ${security_dir}/server_truststore.jks --ssl-truststore-password serverpassword --cert-required"
+# SECURITY_OPTS="${SERVER_OPTS} --ssl-truststore ${security_dir}/server_truststore.jks --ssl-truststore-password serverpassword --require-cert"
 
 SERVER_OPTS="--config-handler --https-port ${httpsport} ${SECURITY_OPTS}"
 
