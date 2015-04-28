@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.api.types;
 
 import static com.elastisys.scale.cloudpool.api.types.Machine.isActiveMember;
 import static com.elastisys.scale.cloudpool.api.types.Machine.isAllocated;
+import static com.elastisys.scale.cloudpool.api.types.Machine.isStarted;
 import static com.elastisys.scale.cloudpool.api.types.TestUtils.ips;
 import static com.elastisys.scale.cloudpool.api.types.TestUtils.machine;
 import static com.elastisys.scale.cloudpool.api.types.TestUtils.machineNoIp;
@@ -89,6 +90,50 @@ public class TestMachinePredicates {
 		}
 		// verify that at least one allocated machine was found
 		assertTrue(allocatedFound);
+	}
+
+	/**
+	 * Verifies the {@link AllocatedMachinePredicate} {@link Predicate}. Only
+	 * machines that are REQUESTED/PENDING/RUNNING are to be considered
+	 * allocated.
+	 */
+	@Test
+	public void testStartedMachinePredicate() {
+		// check all combinations of machineState, membershipStatus and
+		// serviceState
+		MachineState[] machineStates = MachineState.values();
+		ServiceState[] serviceStates = ServiceState.values();
+		MembershipStatus[] membershipStatuses = {
+				new MembershipStatus(true, true),
+				new MembershipStatus(true, false),
+				new MembershipStatus(false, true),
+				new MembershipStatus(false, false) };
+
+		boolean startedFound = false;
+		for (MachineState machineState : machineStates) {
+			for (ServiceState serviceState : serviceStates) {
+				for (MembershipStatus membershipStatus : membershipStatuses) {
+					String combo = String.format(
+							"tested combination: %s-%s-%s", machineState,
+							membershipStatus, serviceState);
+					LOG.info(combo);
+					final DateTime timestamp = UtcTime.now();
+					Machine machine = new Machine("id", machineState,
+							membershipStatus, serviceState, timestamp,
+							timestamp, ips("1.2.3.4"), ips("1.2.3.5"), null);
+					Set<MachineState> startedStates = Sets.newHashSet(
+							MachineState.PENDING, MachineState.RUNNING);
+					if (startedStates.contains(machine.getMachineState())) {
+						startedFound = true;
+						assertTrue(combo, isStarted().apply(machine));
+					} else {
+						assertFalse(combo, isStarted().apply(machine));
+					}
+				}
+			}
+		}
+		// verify that at least one allocated machine was found
+		assertTrue(startedFound);
 	}
 
 	/**
