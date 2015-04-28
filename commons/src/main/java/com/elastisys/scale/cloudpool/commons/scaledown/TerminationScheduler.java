@@ -72,7 +72,7 @@ public class TerminationScheduler {
 	 */
 	public ScheduledTermination scheduleEviction(Machine victim) {
 		Preconditions.checkNotNull(victim, "null victim");
-		Preconditions.checkNotNull(victim.getLaunchtime(),
+		Preconditions.checkNotNull(victim.getLaunchTime(),
 				"cannot schedule termination for a "
 						+ "machine instance without launch time");
 

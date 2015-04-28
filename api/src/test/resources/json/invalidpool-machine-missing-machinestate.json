@@ -1,6 +1,6 @@
 {
   "timestamp": "2014-01-13T12:00:00.000Z",
   "machines": [
-    {"id": "m1",  "membershipStatus": {"active": true, "evictable": true}, "launchtime": "2014-01-13T11:00:00.000Z", "metadata": {}}
+    {"id": "m1",  "membershipStatus": {"active": true, "evictable": true}, "launchTime": "2014-01-13T11:00:00.000Z", "metadata": {}}
   ]
 }

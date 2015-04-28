@@ -237,7 +237,7 @@ public class TestMachine {
 		Comparator<Machine> earliestFirst = new Comparator<Machine>() {
 			@Override
 			public int compare(Machine m1, Machine m2) {
-				return m1.getLaunchtime().compareTo(m2.getLaunchtime());
+				return m1.getLaunchTime().compareTo(m2.getLaunchTime());
 			}
 		};
 
@@ -279,7 +279,7 @@ public class TestMachine {
 		assertThat(copy.getMembershipStatus(),
 				is(original.getMembershipStatus()));
 		assertThat(copy.getServiceState(), is(original.getServiceState()));
-		assertThat(copy.getLaunchtime(), is(original.getLaunchtime()));
+		assertThat(copy.getLaunchTime(), is(original.getLaunchTime()));
 		assertThat(copy.getPublicIps(), is(original.getPublicIps()));
 		assertThat(copy.getPrivateIps(), is(original.getPrivateIps()));
 		assertFalse(copy.getMetadata().equals(original.getMetadata()));

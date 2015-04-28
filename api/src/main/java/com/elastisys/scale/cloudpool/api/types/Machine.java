@@ -77,7 +77,7 @@ public class Machine {
 	 * attribute may be <code>null</code>, depending on the state of the
 	 * {@link Machine}.
 	 */
-	private final DateTime launchtime;
+	private final DateTime launchTime;
 
 	/**
 	 * The request time of the {@link Machine}. This attribute shall be set
@@ -86,7 +86,7 @@ public class Machine {
 	 * correct value, e.g., if it was started with a pool of VMs already
 	 * allocated and there is no way to find out when they were requested.
 	 */
-	private final DateTime requesttime;
+	private final DateTime requestTime;
 
 	/**
 	 * The list of public IP addresses associated with this {@link Machine}.
@@ -119,7 +119,7 @@ public class Machine {
 	 *            known. If the time when the machine was initially and
 	 *            successfully requested is not known, this attribute shall be
 	 *            null.
-	 * @param launchtime
+	 * @param launchTime
 	 *            The launch time of the {@link Machine} if it has been
 	 *            launched. This attribute may be <code>null</code>, depending
 	 *            on the state of the {@link Machine}.
@@ -135,9 +135,9 @@ public class Machine {
 	 *            or an empty list.
 	 */
 	public Machine(String id, MachineState state, DateTime requestTime,
-			DateTime launchtime, List<String> publicIps, List<String> privateIps) {
+			DateTime launchTime, List<String> publicIps, List<String> privateIps) {
 		this(id, state, MembershipStatus.defaultStatus(), ServiceState.UNKNOWN,
-				requestTime, launchtime, publicIps, privateIps, null);
+				requestTime, launchTime, publicIps, privateIps, null);
 	}
 
 	/**
@@ -156,7 +156,7 @@ public class Machine {
 	 *            known. If the time when the machine was initially and
 	 *            successfully requested is not known, this attribute shall be
 	 *            null.
-	 * @param launchtime
+	 * @param launchTime
 	 *            The launch time of the {@link Machine} if it has been
 	 *            launched. This attribute may be <code>null</code>, depending
 	 *            on the state of the {@link Machine}.
@@ -173,9 +173,9 @@ public class Machine {
 	 */
 	public Machine(String id, MachineState machineState,
 			ServiceState serviceState, DateTime requestTime,
-			DateTime launchtime, List<String> publicIps, List<String> privateIps) {
+			DateTime launchTime, List<String> publicIps, List<String> privateIps) {
 		this(id, machineState, MembershipStatus.defaultStatus(), serviceState,
-				requestTime, launchtime, publicIps, privateIps, null);
+				requestTime, launchTime, publicIps, privateIps, null);
 	}
 
 	/**
@@ -195,7 +195,7 @@ public class Machine {
 	 *            known. If the time when the machine was initially and
 	 *            successfully requested is not known, this attribute shall be
 	 *            null.
-	 * @param launchtime
+	 * @param launchTime
 	 *            The launch time of the {@link Machine} if it has been
 	 *            launched. This attribute may be <code>null</code>, depending
 	 *            on the state of the {@link Machine}.
@@ -215,7 +215,7 @@ public class Machine {
 	 */
 	public Machine(String id, MachineState machineState,
 			MembershipStatus membershipStatus, ServiceState serviceState,
-			DateTime requestTime, DateTime launchtime, List<String> publicIps,
+			DateTime requestTime, DateTime launchTime, List<String> publicIps,
 			List<String> privateIps, JsonObject metadata) {
 		checkNotNull(id, "missing id");
 		checkNotNull(machineState, "missing machineState");
@@ -226,8 +226,8 @@ public class Machine {
 		this.machineState = machineState;
 		this.membershipStatus = membershipStatus;
 		this.serviceState = serviceState;
-		this.requesttime = requestTime;
-		this.launchtime = launchtime;
+		this.requestTime = requestTime;
+		this.launchTime = launchTime;
 		this.publicIps = Optional.fromNullable(publicIps).or(
 				new ArrayList<String>());
 		this.privateIps = Optional.fromNullable(privateIps).or(
@@ -287,8 +287,8 @@ public class Machine {
 	 *
 	 * @return
 	 */
-	public DateTime getLaunchtime() {
-		return this.launchtime;
+	public DateTime getLaunchTime() {
+		return this.launchTime;
 	}
 
 	/**
@@ -301,8 +301,8 @@ public class Machine {
 	 * @return A {@link DateTime} object with the request time, if any. null
 	 *         otherwise.
 	 */
-	public DateTime getRequesttime() {
-		return this.requesttime;
+	public DateTime getRequestTime() {
+		return this.requestTime;
 	}
 
 	/**
@@ -340,8 +340,8 @@ public class Machine {
 	@Override
 	public int hashCode() {
 		return Objects.hashCode(this.id, this.machineState,
-				this.membershipStatus, this.serviceState, this.launchtime,
-				this.requesttime, this.publicIps, this.privateIps,
+				this.membershipStatus, this.serviceState, this.launchTime,
+				this.requestTime, this.publicIps, this.privateIps,
 				this.metadata);
 	}
 
@@ -350,17 +350,17 @@ public class Machine {
 		if (obj instanceof Machine) {
 			Machine that = (Machine) obj;
 			final boolean launchtimesEqual;
-			if (this.launchtime != null && that.launchtime != null) {
-				launchtimesEqual = this.launchtime.isEqual(that.launchtime);
-			} else if (this.launchtime == null && that.launchtime == null) {
+			if (this.launchTime != null && that.launchTime != null) {
+				launchtimesEqual = this.launchTime.isEqual(that.launchTime);
+			} else if (this.launchTime == null && that.launchTime == null) {
 				launchtimesEqual = true;
 			} else {
 				launchtimesEqual = false;
 			}
 			final boolean requesttimesEqual;
-			if (this.requesttime != null && that.requesttime != null) {
-				requesttimesEqual = this.requesttime.isEqual(that.requesttime);
-			} else if (this.requesttime == null && that.requesttime == null) {
+			if (this.requestTime != null && that.requestTime != null) {
+				requesttimesEqual = this.requestTime.isEqual(that.requestTime);
+			} else if (this.requestTime == null && that.requestTime == null) {
 				requesttimesEqual = true;
 			} else {
 				requesttimesEqual = false;
@@ -369,11 +369,11 @@ public class Machine {
 					&& Objects.equal(this.machineState, that.machineState)
 					&& Objects.equal(this.membershipStatus,
 							that.membershipStatus)
-					&& Objects.equal(this.serviceState, that.serviceState)
-					&& launchtimesEqual && requesttimesEqual
-					&& Objects.equal(this.publicIps, that.publicIps)
-					&& Objects.equal(this.privateIps, that.privateIps)
-					&& Objects.equal(this.metadata, that.metadata);
+							&& Objects.equal(this.serviceState, that.serviceState)
+							&& launchtimesEqual && requesttimesEqual
+							&& Objects.equal(this.publicIps, that.publicIps)
+							&& Objects.equal(this.privateIps, that.privateIps)
+							&& Objects.equal(this.metadata, that.metadata);
 		}
 		return false;
 	}
@@ -384,8 +384,8 @@ public class Machine {
 				.add("machineState", this.machineState)
 				.add("membershipStatus", this.membershipStatus)
 				.add("serviceState", this.serviceState)
-				.add("requesttime", this.requesttime)
-				.add("launchtime", this.launchtime)
+				.add("requestTime", this.requestTime)
+				.add("launchTime", this.launchTime)
 				.add("publicIps", this.publicIps)
 				.add("privateIps", this.privateIps)
 				.add("metadata", this.metadata).toString();
@@ -402,7 +402,7 @@ public class Machine {
 	 */
 	public Machine withMetadata(JsonObject metadata) {
 		return new Machine(this.id, this.machineState, this.membershipStatus,
-				this.serviceState, this.requesttime, this.launchtime,
+				this.serviceState, this.requestTime, this.launchTime,
 				this.publicIps, this.privateIps, metadata);
 	}
 
@@ -504,7 +504,7 @@ public class Machine {
 	 * @see http://code.google.com/p/guava-libraries/wiki/FunctionalExplained
 	 */
 	public static class MachineStateExtractor implements
-			Function<Machine, MachineState> {
+	Function<Machine, MachineState> {
 		/**
 		 * Extracts the state of a {@link Machine}.
 		 *
@@ -654,7 +654,7 @@ public class Machine {
 	 * The {@link Machine} must have its launch time set.
 	 */
 	public static class InstanceHourStart implements
-			Function<Machine, DateTime> {
+	Function<Machine, DateTime> {
 
 		/**
 		 * Calculates the starting point of the machine's current hour.
@@ -665,10 +665,10 @@ public class Machine {
 		@Override
 		public DateTime apply(Machine machine) {
 			checkArgument(machine != null, "null machine");
-			checkArgument(machine.getLaunchtime() != null,
+			checkArgument(machine.getLaunchTime() != null,
 					"null launch time for machine");
 			DateTime now = UtcTime.now();
-			DateTime launchtime = machine.getLaunchtime();
+			DateTime launchtime = machine.getLaunchTime();
 			long secondsPerHour = TimeUnit.SECONDS.convert(1, TimeUnit.HOURS);
 			long millisPerSecond = TimeUnit.MILLISECONDS.convert(1,
 					TimeUnit.SECONDS);
@@ -714,9 +714,9 @@ public class Machine {
 
 		@Override
 		public Optional<Long> apply(Machine machine) {
-			if (machine.getRequesttime() != null) {
+			if (machine.getRequestTime() != null) {
 				return Optional.of(this.now.minus(
-						machine.getRequesttime().getMillis()).getMillis());
+						machine.getRequestTime().getMillis()).getMillis());
 			} else {
 				return Optional.absent();
 			}
@@ -730,7 +730,7 @@ public class Machine {
 	 *
 	 */
 	public static class RemainingInstanceHourTime implements
-			Function<Machine, Long> {
+	Function<Machine, Long> {
 
 		/**
 		 * Calculates the remaining time (in seconds) of the machine's last
@@ -742,7 +742,7 @@ public class Machine {
 		@Override
 		public Long apply(Machine machine) {
 			checkArgument(machine != null, "null machine");
-			checkArgument(machine.getLaunchtime() != null,
+			checkArgument(machine.getLaunchTime() != null,
 					"null launch time for machine");
 
 			DateTime HourStart = instanceHourStart().apply(machine);
@@ -784,7 +784,7 @@ public class Machine {
 	 * {@link Machine}.
 	 */
 	public static class ToShortMachineFormat implements
-			Function<Machine, Machine> {
+	Function<Machine, Machine> {
 
 		@Override
 		public Machine apply(Machine machine) {
@@ -807,7 +807,7 @@ public class Machine {
 	 * produce quite some log noise).
 	 */
 	public static class ToShortMachineString implements
-			Function<Machine, String> {
+	Function<Machine, String> {
 
 		@Override
 		public String apply(Machine machine) {
@@ -815,8 +815,8 @@ public class Machine {
 					.add("machineState", machine.getMachineState().name())
 					.add("membershipStatus", machine.getMembershipStatus())
 					.add("serviceState", machine.getServiceState().name())
-					.add("requesttime", machine.getRequesttime())
-					.add("launchtime", machine.getLaunchtime())
+					.add("requestTime", machine.getRequestTime())
+					.add("launchTime", machine.getLaunchTime())
 					.add("publicIps", machine.getPublicIps())
 					.add("privateIps", machine.getPrivateIps()).toString();
 		}

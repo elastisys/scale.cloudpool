@@ -49,7 +49,7 @@ public class TestInstancePairedSpotRequestToMachine {
 		assertThat(machine.getMachineState(), is(MachineState.REQUESTED));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
-		assertThat(machine.getLaunchtime(), is(nullValue()));
+		assertThat(machine.getLaunchTime(), is(nullValue()));
 		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
 		assertThat(machine.getPublicIps(), is(list()));
 		assertThat(machine.getPrivateIps(), is(list()));
@@ -68,7 +68,7 @@ public class TestInstancePairedSpotRequestToMachine {
 		assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
-		assertThat(machine.getLaunchtime(), is(nullValue()));
+		assertThat(machine.getLaunchTime(), is(nullValue()));
 		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
 		assertThat(machine.getPublicIps(), is(list()));
 		assertThat(machine.getPrivateIps(), is(list()));
@@ -88,7 +88,7 @@ public class TestInstancePairedSpotRequestToMachine {
 		assertThat(machine.getMachineState(), is(MachineState.REJECTED));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
-		assertThat(machine.getLaunchtime(), is(nullValue()));
+		assertThat(machine.getLaunchTime(), is(nullValue()));
 		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
 		assertThat(machine.getPublicIps(), is(list()));
 		assertThat(machine.getPrivateIps(), is(list()));
@@ -107,7 +107,7 @@ public class TestInstancePairedSpotRequestToMachine {
 		assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
-		assertThat(machine.getLaunchtime(), is(nullValue()));
+		assertThat(machine.getLaunchTime(), is(nullValue()));
 		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
 		assertThat(machine.getPublicIps(), is(list()));
 		assertThat(machine.getPrivateIps(), is(list()));
@@ -132,7 +132,7 @@ public class TestInstancePairedSpotRequestToMachine {
 		assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
-		assertThat(machine.getLaunchtime(), is(FrozenTime.now()));
+		assertThat(machine.getLaunchTime(), is(FrozenTime.now()));
 		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
 		assertThat(machine.getPublicIps(), is(list()));
 		assertThat(machine.getPrivateIps(), is(list()));

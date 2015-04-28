@@ -40,8 +40,8 @@ public enum NewestInstanceVictimSelectionStrategy implements
 	public class NewestFirstOrder implements Comparator<Machine> {
 		@Override
 		public int compare(Machine instance1, Machine instance2) {
-			return instance2.getLaunchtime().compareTo(
-					instance1.getLaunchtime());
+			return instance2.getLaunchTime().compareTo(
+					instance1.getLaunchTime());
 		}
 	}
 }

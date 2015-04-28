@@ -39,8 +39,8 @@ public enum OldestInstanceVictimSelectionStrategy implements
 	public static class OldestFirstOrder implements Comparator<Machine> {
 		@Override
 		public int compare(Machine instance1, Machine instance2) {
-			return instance1.getLaunchtime().compareTo(
-					instance2.getLaunchtime());
+			return instance1.getLaunchTime().compareTo(
+					instance2.getLaunchTime());
 		}
 	}
 }

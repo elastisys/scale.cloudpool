@@ -55,7 +55,7 @@ public class TestInstanceToMachine {
 
 		Machine machine = convert(instance);
 		assertThat(machine.getId(), is(instance.getInstanceId()));
-		assertThat(machine.getLaunchtime(), is(launchTime));
+		assertThat(machine.getLaunchTime(), is(launchTime));
 		assertThat(machine.getMachineState(), is(MachineState.RUNNING));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
@@ -86,7 +86,7 @@ public class TestInstanceToMachine {
 
 		Machine machine = convert(instance);
 		assertThat(machine.getId(), is(instance.getInstanceId()));
-		assertThat(machine.getLaunchtime(), is(launchTime));
+		assertThat(machine.getLaunchTime(), is(launchTime));
 		assertThat(machine.getMachineState(), is(MachineState.RUNNING));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
@@ -114,7 +114,7 @@ public class TestInstanceToMachine {
 
 		Machine machine = convert(instance);
 		assertThat(machine.getId(), is(instance.getInstanceId()));
-		assertThat(machine.getLaunchtime(), is(launchTime));
+		assertThat(machine.getLaunchTime(), is(launchTime));
 		assertThat(machine.getMachineState(), is(MachineState.RUNNING));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));

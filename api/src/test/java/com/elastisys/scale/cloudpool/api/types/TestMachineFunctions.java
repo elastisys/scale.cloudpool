@@ -155,48 +155,48 @@ public class TestMachineFunctions {
 		FrozenTime.setFixed(UtcTime.parse("2013-12-09T09:15:00Z"));
 		assertThat(
 				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchtime()
+				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
 						.plusHours(1))));
 
 		FrozenTime.setFixed(UtcTime.parse("2013-12-09T08:55:00Z"));
 		assertThat(
 				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchtime()
+				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
 						.plusHours(1))));
 
 		FrozenTime.setFixed(UtcTime.parse("2013-12-09T09:15:00Z"));
 		assertThat(
 				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchtime()
+				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
 						.plusHours(1))));
 
 		FrozenTime.setFixed(UtcTime.parse("2013-12-09T09:49:00Z"));
 		assertThat(
 				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchtime()
+				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
 						.plusHours(1))));
 
 		FrozenTime.setFixed(UtcTime.parse("2013-12-09T09:49:59Z"));
 		assertThat(
 				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchtime()
+				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
 						.plusHours(1))));
 
 		FrozenTime.setFixed(UtcTime.parse("2013-12-09T09:50:00Z"));
 		assertThat(
 				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchtime()
+				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
 						.plusHours(2))));
 		FrozenTime.setFixed(UtcTime.parse("2013-12-09T09:55:00Z"));
 		assertThat(
 				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchtime()
+				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
 						.plusHours(2))));
 
 		FrozenTime.setFixed(UtcTime.parse("2013-12-09T10:51:00Z"));
 		assertThat(
 				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchtime()
+				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
 						.plusHours(3))));
 
 		// with milliseconds precision
@@ -204,7 +204,7 @@ public class TestMachineFunctions {
 		machine = machine("i-1", UtcTime.parse("2013-12-09T08:50:00.500Z"));
 		assertThat(
 				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchtime()
+				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
 						.plusHours(3))));
 	}
 
@@ -244,7 +244,7 @@ public class TestMachineFunctions {
 		assertThat(m1Stripped.getMembershipStatus(),
 				is(m1.getMembershipStatus()));
 		assertThat(m1Stripped.getServiceState(), is(m1.getServiceState()));
-		assertThat(m1Stripped.getLaunchtime(), is(m1.getLaunchtime()));
+		assertThat(m1Stripped.getLaunchTime(), is(m1.getLaunchTime()));
 		assertThat(m1Stripped.getPublicIps(), is(m1.getPublicIps()));
 		assertThat(m1Stripped.getPrivateIps(), is(m1.getPrivateIps()));
 		assertThat(m1Stripped.getMetadata(), is(nullValue()));

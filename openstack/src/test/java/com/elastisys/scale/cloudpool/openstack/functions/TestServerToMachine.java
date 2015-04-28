@@ -47,7 +47,7 @@ public class TestServerToMachine {
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
 		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
-		assertThat(machine.getRequesttime().toDate(), is(server.getCreated()));
+		assertThat(machine.getRequestTime().toDate(), is(server.getCreated()));
 		assertThat(machine.getPublicIps(), is(asList("130.239.48.193")));
 		assertThat(machine.getPrivateIps(), is(asList("10.11.12.2")));
 		assertThat(machine.getMetadata(), is(JsonUtils.toJson(server)));
@@ -67,7 +67,7 @@ public class TestServerToMachine {
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
 		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
-		assertThat(machine.getRequesttime().toDate(), is(server.getCreated()));
+		assertThat(machine.getRequestTime().toDate(), is(server.getCreated()));
 		List<String> empty = asList();
 		assertThat(machine.getPublicIps(), is(empty));
 		assertThat(machine.getPrivateIps(), is(asList("10.11.12.2")));
