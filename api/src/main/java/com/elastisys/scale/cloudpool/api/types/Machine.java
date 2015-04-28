@@ -565,6 +565,18 @@ public class Machine {
 	}
 
 	/**
+	 * A {@link Predicate} that returns <code>true</code> when passed a
+	 * {@link Machine} that has been started by the underlying infrastructure
+	 * (machine state is {@link MachineState#PENDING} or
+	 * {@link MachineState#RUNNING}).
+	 *
+	 * @see MachineState
+	 */
+	public static Predicate<Machine> isStarted() {
+		return new StartedMachinePredicate();
+	}
+
+	/**
 	 * Returns a {@link Predicate} that returns <code>true</code> for any
 	 * {@link Machine} with an evictable {@link MembershipStatus}.
 	 *
@@ -614,6 +626,24 @@ public class Machine {
 		@Override
 		public boolean apply(Machine machine) {
 			return allocatedStates.contains(machine.getMachineState());
+		}
+	}
+
+	/**
+	 * A {@link Predicate} that returns <code>true</code> when passed a
+	 * {@link Machine} that has been started by the underlying infrastructure
+	 * (machine state is {@link MachineState#PENDING} or
+	 * {@link MachineState#RUNNING}).
+	 *
+	 * @see MachineState
+	 */
+	public static class StartedMachinePredicate implements Predicate<Machine> {
+		private static final Set<MachineState> startedStates = Sets.newHashSet(
+				MachineState.PENDING, MachineState.RUNNING);
+
+		@Override
+		public boolean apply(Machine machine) {
+			return startedStates.contains(machine.getMachineState());
 		}
 	}
 
