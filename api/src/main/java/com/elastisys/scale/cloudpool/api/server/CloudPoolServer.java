@@ -136,8 +136,11 @@ public class CloudPoolServer {
 		// build server
 		ServletContainer restApiServlet = new ServletContainer(
 				ResourceConfig.forApplication(application));
-		ServletDefinition servlet = new ServletDefinition.Builder().servlet(
-				restApiServlet).build();
+		ServletDefinition servlet = new ServletDefinition.Builder()
+				.servlet(restApiServlet)
+				.requireBasicAuth(options.requireBasicAuth)
+				.realmFile(options.realmFile).requireRole(options.requireRole)
+				.build();
 		Server server = ServletServerBuilder.create()
 				.httpsPort(options.httpsPort)
 				.sslKeyStoreType(SslKeyStoreType.PKCS12)
