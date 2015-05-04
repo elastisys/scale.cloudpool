@@ -127,7 +127,7 @@ public class TestMachinePool {
 	 * Exercise {@link MachinePool#getActiveMachines()}
 	 */
 	@Test
-	public void testGetEffectiveMachines() {
+	public void testGetActiveMachines() {
 		DateTime now = UtcTime.now();
 
 		// on empty pool
@@ -173,6 +173,54 @@ public class TestMachinePool {
 	}
 
 	/**
+	 * Exercise {@link MachinePool#getStartedMachines()}
+	 */
+	@Test
+	public void testGetStartedMachines() {
+		DateTime now = UtcTime.now();
+
+		// on empty pool
+		MachinePool pool = MachinePool.emptyPool(now);
+		assertThat(pool.getActiveMachines().size(), is(0));
+
+		// on a pool with a mix of machines in different states
+		Machine requested1 = new Machine("i-1", MachineState.REQUESTED,
+				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, null,
+				null, null, null, null);
+		Machine requested2 = new Machine("i-2", MachineState.REQUESTED,
+				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, null,
+				null, null, null, null);
+		Machine pending1 = new Machine("i-3", MachineState.PENDING,
+				MembershipStatus.defaultStatus(), ServiceState.BOOTING, now,
+				now, null, null, null);
+
+		Machine running1 = new Machine("i-4", MachineState.RUNNING,
+				MembershipStatus.blessed(), ServiceState.IN_SERVICE, now, now,
+				asList("1.2.3.4"), null, null);
+		Machine running2 = new Machine("i-5", MachineState.RUNNING,
+				MembershipStatus.defaultStatus(), ServiceState.UNHEALTHY, now,
+				now, asList("1.2.3.4"), null, null);
+		Machine running3 = new Machine("i-5.1", MachineState.RUNNING,
+				MembershipStatus.awaitingService(),
+				ServiceState.OUT_OF_SERVICE, now, now, asList("1.2.3.5"), null,
+				null);
+		Machine terminating = new Machine("i-6", MachineState.TERMINATING,
+				ServiceState.UNKNOWN, now, now, null, null);
+		Machine terminated1 = new Machine("i-7", MachineState.TERMINATED,
+				ServiceState.UNKNOWN, now, now, null, null);
+		Machine terminated2 = new Machine("i-8", MachineState.TERMINATED,
+				ServiceState.UNKNOWN, now, now, null, null);
+		pool = new MachinePool(Arrays.asList(requested1, requested2, pending1,
+				running1, running2, running3, terminating, terminated1,
+				terminated2), now);
+		// verify started machines: 1 pending + 3 running that
+		// don't have an inactive membership status
+		assertThat(pool.getStartedMachines().size(), is(4));
+		assertThat(pool.getStartedMachines(),
+				is(asList(pending1, running1, running2, running3)));
+	}
+
+	/**
 	 * Test equality comparisons.
 	 */
 	@Test
@@ -198,12 +246,12 @@ public class TestMachinePool {
 				UtcTime.parse("2014-01-13T12:00:00.000Z"),
 				machineNoIp("m1", MachineState.RUNNING,
 						UtcTime.parse("2014-01-13T11:00:00.000Z")),
-						machineNoIp("m2", MachineState.REQUESTED, null));
+				machineNoIp("m2", MachineState.REQUESTED, null));
 		MachinePool multiPoolClone = pool(
 				UtcTime.parse("2014-01-13T12:00:00.000Z"),
 				machineNoIp("m1", MachineState.RUNNING,
 						UtcTime.parse("2014-01-13T11:00:00.000Z")),
-						machineNoIp("m2", MachineState.REQUESTED, null));
+				machineNoIp("m2", MachineState.REQUESTED, null));
 
 		assertThat(empty1, is(empty1Clone));
 		assertThat(empty1, is(not(empty2)));
@@ -257,12 +305,12 @@ public class TestMachinePool {
 				UtcTime.parse("2014-01-13T12:00:00.000Z"),
 				machineNoIp("m1", MachineState.RUNNING,
 						UtcTime.parse("2014-01-13T11:00:00.000Z")),
-						machineNoIp("m2", MachineState.REQUESTED, null));
+				machineNoIp("m2", MachineState.REQUESTED, null));
 		MachinePool multiPoolClone = pool(
 				UtcTime.parse("2014-01-13T12:00:00.000Z"),
 				machineNoIp("m1", MachineState.RUNNING,
 						UtcTime.parse("2014-01-13T11:00:00.000Z")),
-						machineNoIp("m2", MachineState.REQUESTED, null));
+				machineNoIp("m2", MachineState.REQUESTED, null));
 
 		assertThat(empty1.hashCode(), is(empty1Clone.hashCode()));
 		assertThat(empty1.hashCode(), is(not(empty2.hashCode())));
@@ -393,26 +441,26 @@ public class TestMachinePool {
 	@Test(expected = NullPointerException.class)
 	public void parseInvalidPoolMissingMachines() throws IOException {
 		MachinePool
-		.fromJson(loadJson("json/invalidpool-missing-machines.json"));
+				.fromJson(loadJson("json/invalidpool-missing-machines.json"));
 	}
 
 	@Test(expected = NullPointerException.class)
 	public void parseInvalidPoolMissingTimestamp() throws IOException {
 		MachinePool
-		.fromJson(loadJson("json/invalidpool-missing-timestamp.json"));
+				.fromJson(loadJson("json/invalidpool-missing-timestamp.json"));
 	}
 
 	@Test(expected = NullPointerException.class)
 	public void parseInvalidPoolWithMachineMissingId() throws IOException {
 		MachinePool
-		.fromJson(loadJson("json/invalidpool-machine-missing-id.json"));
+				.fromJson(loadJson("json/invalidpool-machine-missing-id.json"));
 	}
 
 	@Test(expected = NullPointerException.class)
 	public void parseInvalidPoolWithMachineMissingMachineState()
 			throws IOException {
 		MachinePool
-		.fromJson(loadJson("json/invalidpool-machine-missing-machinestate.json"));
+				.fromJson(loadJson("json/invalidpool-machine-missing-machinestate.json"));
 	}
 
 	private String loadJson(String resourcePath) {

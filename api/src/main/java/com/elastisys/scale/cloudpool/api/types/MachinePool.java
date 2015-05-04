@@ -91,6 +91,18 @@ public class MachinePool {
 	}
 
 	/**
+	 * Returns all <i>started</i> {@link Machine}s in the pool. See
+	 * {@link Machine#isStarted()}.
+	 *
+	 * @return
+	 */
+	public List<Machine> getStartedMachines() {
+		Iterable<Machine> startedMachines = filter(getMachines(),
+				Machine.isStarted());
+		return Lists.newArrayList(startedMachines);
+	}
+
+	/**
 	 * Returns the time when this snapshot of the resource pool was taken.
 	 *
 	 * @return
