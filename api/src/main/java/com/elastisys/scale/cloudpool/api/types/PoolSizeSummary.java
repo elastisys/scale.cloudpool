@@ -3,7 +3,7 @@ package com.elastisys.scale.cloudpool.api.types;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
-import com.google.common.base.MoreObjects;
+import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Objects;
 
 /**
@@ -20,8 +20,9 @@ public class PoolSizeSummary {
 	 */
 	private final int allocated;
 	/**
-	 * The number of machines in the pool that are marked
-	 * {@link MembershipStatus#isActive()}.
+	 * The number of active machines in the pool
+	 * {@link Machine#isActiveMember()}. That is, the number of allocated
+	 * machines that have also been marked with an active membership status.
 	 */
 	private final int active;
 
@@ -58,8 +59,9 @@ public class PoolSizeSummary {
 	}
 
 	/**
-	 * Returns the number of machines in the pool that are marked
-	 * {@link MembershipStatus#isActive()}.
+	 * The number of active machines in the pool
+	 * {@link Machine#isActiveMember()}. That is, the number of allocated
+	 * machines that have also been marked with an active membership status.
 	 *
 	 * @return
 	 */
@@ -85,9 +87,6 @@ public class PoolSizeSummary {
 
 	@Override
 	public String toString() {
-		return MoreObjects.toStringHelper(this)
-				.add("desiredSize", this.desiredSize)
-				.add("allocated", this.allocated).add("active", this.active)
-				.toString();
+		return JsonUtils.toString(JsonUtils.toJson(this));
 	}
 }
