@@ -13,7 +13,9 @@ import org.hamcrest.TypeSafeMatcher;
 
 import com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertTopics;
 import com.elastisys.scale.commons.net.alerter.Alert;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
 
 public class IsStartAlert extends TypeSafeMatcher<Alert> {
 
@@ -34,8 +36,9 @@ public class IsStartAlert extends TypeSafeMatcher<Alert> {
 					|| !alertTags.containsKey("requestedMachines")) {
 				return false;
 			}
-			if (!alertTags.get("requestedMachines").getAsString()
-					.contains(machineId)) {
+			JsonArray requested = alertTags.get("requestedMachines")
+					.getAsJsonArray();
+			if (!requested.contains(new JsonPrimitive(machineId))) {
 				return false;
 			}
 		}
