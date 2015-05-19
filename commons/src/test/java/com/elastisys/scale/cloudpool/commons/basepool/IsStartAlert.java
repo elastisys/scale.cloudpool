@@ -30,10 +30,11 @@ public class IsStartAlert extends TypeSafeMatcher<Alert> {
 		}
 		for (String machineId : this.machineIds) {
 			Map<String, JsonElement> alertTags = someAlert.getMetadata();
-			if (alertTags == null || !alertTags.containsKey("startedMachines")) {
+			if (alertTags == null
+					|| !alertTags.containsKey("requestedMachines")) {
 				return false;
 			}
-			if (!alertTags.get("startedMachines").getAsString()
+			if (!alertTags.get("requestedMachines").getAsString()
 					.contains(machineId)) {
 				return false;
 			}

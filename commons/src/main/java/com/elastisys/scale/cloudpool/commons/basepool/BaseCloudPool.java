@@ -282,7 +282,7 @@ public class BaseCloudPool implements CloudPool {
 		this.eventBus = eventBus;
 
 		ThreadFactory threadFactory = new ThreadFactoryBuilder()
-		.setDaemon(true).setNameFormat("cloudpool-%d").build();
+				.setDaemon(true).setNameFormat("cloudpool-%d").build();
 		this.executorService = Executors.newScheduledThreadPool(
 				MAX_CONCURRENCY, threadFactory);
 
@@ -563,7 +563,7 @@ public class BaseCloudPool implements CloudPool {
 	}
 
 	/**
-	 * Sets up an {@link SmtpAlerter}, in case the configuration contains an
+	 * Sets up {@link Alerter}s, in case the configuration contains an
 	 * {@link AlertsConfig}.
 	 *
 	 * @param configuration
@@ -690,8 +690,8 @@ public class BaseCloudPool implements CloudPool {
 		this.terminationQueue.filter(pool.getActiveMachines());
 		ResizePlanner resizePlanner = new ResizePlanner(pool,
 				this.terminationQueue, scaleInConfig()
-				.getVictimSelectionPolicy(), scaleInConfig()
-				.getInstanceHourMargin());
+						.getVictimSelectionPolicy(), scaleInConfig()
+						.getInstanceHourMargin());
 		int netSize = resizePlanner.getNetSize();
 
 		ResizePlan resizePlan = resizePlanner.calculateResizePlan(newSize);
@@ -787,13 +787,13 @@ public class BaseCloudPool implements CloudPool {
 		}
 
 		String message = String.format(
-				"%d machine(s) were started in cloud pool %s",
+				"%d machine(s) were requested from cloud pool %s",
 				startedMachines.size(), poolName());
 		LOG.info(message);
 		Map<String, JsonElement> tags = Maps.newHashMap();
 		List<String> startedMachineIds = Lists.transform(startedMachines,
 				Machine.toId());
-		tags.put("startedMachines",
+		tags.put("requestedMachines",
 				JsonUtils.toJson(Joiner.on(", ").join(startedMachineIds)));
 		tags.put("poolMembers", poolMembersTag());
 		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
