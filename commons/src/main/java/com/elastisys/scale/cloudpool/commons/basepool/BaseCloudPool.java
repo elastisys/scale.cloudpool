@@ -610,8 +610,8 @@ public class BaseCloudPool implements CloudPool {
 		for (InetAddress inetAddr : HostUtils.hostIpv4Addresses()) {
 			ipv4Addresses.add(inetAddr.getHostAddress());
 		}
-		String ipAddresses = Joiner.on(", ").join(ipv4Addresses);
-		standardTags.put("cloudPoolEndpointIps", JsonUtils.toJson(ipAddresses));
+		standardTags.put("cloudPoolEndpointIps",
+				JsonUtils.toJson(ipv4Addresses));
 		standardTags.put("cloudPoolName",
 				JsonUtils.toJson(config().getCloudPool().getName()));
 		return standardTags;
