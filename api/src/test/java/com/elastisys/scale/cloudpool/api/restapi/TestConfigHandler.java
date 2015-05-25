@@ -103,12 +103,14 @@ public class TestConfigHandler {
 		assertFalse(destinationFile.exists());
 
 		String config = "{\"someKey\": \"someValue\"}";
-		JsonObject jsonConfig = JsonUtils.parseJsonString(config);
+		JsonObject jsonConfig = JsonUtils.parseJsonString(config)
+				.getAsJsonObject();
 		ConfigHandler configHandler = new ConfigHandler(this.poolMock,
 				storageDir, "conf.json");
 		configHandler.storeConfig(jsonConfig);
 		assertTrue(destinationFile.exists());
-		assertThat(JsonUtils.parseJsonFile(destinationFile), is(jsonConfig));
+		assertThat(JsonUtils.parseJsonFile(destinationFile).getAsJsonObject(),
+				is(jsonConfig));
 	}
 
 	/**
@@ -122,7 +124,8 @@ public class TestConfigHandler {
 		assertFalse(destinationFile.exists());
 
 		String config = "{\"someKey\": \"someValue\"}";
-		JsonObject jsonConfig = JsonUtils.parseJsonString(config);
+		JsonObject jsonConfig = JsonUtils.parseJsonString(config)
+				.getAsJsonObject();
 		ConfigHandler configHandler = new ConfigHandler(this.poolMock,
 				storageDir, "conf.json");
 		configHandler.setAndStoreConfig(jsonConfig);
@@ -131,7 +134,8 @@ public class TestConfigHandler {
 		verify(this.poolMock).configure(jsonConfig);
 		// verify that config was saved
 		assertTrue(destinationFile.exists());
-		assertThat(JsonUtils.parseJsonFile(destinationFile), is(jsonConfig));
+		assertThat(JsonUtils.parseJsonFile(destinationFile).getAsJsonObject(),
+				is(jsonConfig));
 	}
 
 	/**
@@ -144,7 +148,8 @@ public class TestConfigHandler {
 		assertFalse(destinationFile.exists());
 
 		String config = "{\"someKey\": \"someValue\"}";
-		JsonObject jsonConfig = JsonUtils.parseJsonString(config);
+		JsonObject jsonConfig = JsonUtils.parseJsonString(config)
+				.getAsJsonObject();
 		// cloud pool set up to fail on configure()
 		doThrow(new RuntimeException("unexpected failure")).when(this.poolMock)
 				.configure(jsonConfig);

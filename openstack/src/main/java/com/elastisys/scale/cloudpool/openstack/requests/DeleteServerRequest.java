@@ -7,9 +7,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import jersey.repackaged.com.google.common.collect.Lists;
-import jersey.repackaged.com.google.common.collect.Maps;
-
 import org.openstack4j.api.OSClient;
 import org.openstack4j.api.compute.ComputeFloatingIPService;
 import org.openstack4j.api.compute.ServerService;
@@ -26,6 +23,8 @@ import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriver
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
 import com.google.common.base.Predicates;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 /**
  * OpenStack task that, when executed, deletes a {@link Server}, releases any

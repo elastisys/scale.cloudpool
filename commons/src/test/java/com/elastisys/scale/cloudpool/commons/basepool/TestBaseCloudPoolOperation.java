@@ -309,8 +309,8 @@ public class TestBaseCloudPoolOperation {
 		// when asked to start a machine, an error will be raised
 		Throwable fault = new StartMachinesException(2, machines(),
 				new Exception("failed to add machines"));
-		when(this.driverMock.startMachines(2, scaleOutConfig()))
-				.thenThrow(fault);
+		when(this.driverMock.startMachines(2, scaleOutConfig())).thenThrow(
+				fault);
 
 		// run test that requests two additional machines to be started
 		this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
@@ -1292,8 +1292,9 @@ public class TestBaseCloudPoolOperation {
 	}
 
 	private JsonObject cloudCredentialsConfig() {
-		return JsonUtils.parseJsonString("{\"userName\": \"johndoe\", "
-				+ "\"region\": \"us-east-1\"}");
+		return JsonUtils.parseJsonString(
+				"{\"userName\": \"johndoe\", " + "\"region\": \"us-east-1\"}")
+				.getAsJsonObject();
 	}
 
 	private ScaleOutConfig scaleOutConfig() {

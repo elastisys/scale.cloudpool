@@ -106,7 +106,8 @@ public class CloudPoolCommandLineDriver {
 			File configFile = new File(args.get(0));
 			checkArgument(configFile.isFile(),
 					"error: given path is not a file");
-			this.cloudPool.configure(JsonUtils.parseJsonFile(configFile));
+			this.cloudPool.configure(JsonUtils.parseJsonFile(configFile)
+					.getAsJsonObject());
 			break;
 		}
 		case "size": {

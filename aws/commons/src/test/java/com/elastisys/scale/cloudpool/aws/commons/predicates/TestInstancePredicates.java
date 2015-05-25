@@ -11,16 +11,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import jersey.repackaged.com.google.common.collect.Lists;
-
 import org.junit.Test;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.Tag;
-import com.elastisys.scale.cloudpool.aws.commons.predicates.InstancePredicates;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 
 /**
  * Exercises the {@link InstancePredicates} class.

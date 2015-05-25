@@ -27,8 +27,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import jersey.repackaged.com.google.common.collect.Iterables;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +57,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverExce
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Atomics;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -189,7 +188,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
 		this.poolConfig = Atomics.newReference();
 		this.driverConfig = Atomics.newReference();
 		ThreadFactory threadFactory = new ThreadFactoryBuilder()
-		.setDaemon(true).setNameFormat("spotdriver-tasks-%d").build();
+				.setDaemon(true).setNameFormat("spotdriver-tasks-%d").build();
 		this.threadPool = Executors.newScheduledThreadPool(MAX_THREADS,
 				threadFactory);
 	}
@@ -312,7 +311,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
 
 	@Override
 	public void attachMachine(String spotRequestId) throws NotFoundException,
-	CloudPoolDriverException {
+			CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 
 		try {
@@ -329,7 +328,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
 
 	@Override
 	public void detachMachine(String spotRequestId) throws NotFoundException,
-	CloudPoolDriverException {
+			CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 
 		try {
@@ -568,7 +567,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
 		// only include spot requests in state
 		Filter spotStateFilter = new Filter().withName(
 				SPOT_REQUEST_STATE_FILTER).withValues(Cancelled.toString(),
-						Closed.toString());
+				Closed.toString());
 		List<SpotInstanceRequest> deadRequests = client()
 				.getSpotInstanceRequests(asList(poolFilter, spotStateFilter));
 		List<String> deadRequestIds = transform(deadRequests, toSpotRequestId());
@@ -579,7 +578,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
 				.withValues(Pending.toString(), Running.toString());
 		Filter spotRequestFilter = new Filter().withName(
 				ScalingFilters.SPOT_REQUEST_ID_FILTER).withValues(
-						deadRequestIds);
+				deadRequestIds);
 
 		List<Instance> danglingInstances = client().getInstances(
 				asList(stateFilter, spotRequestFilter));

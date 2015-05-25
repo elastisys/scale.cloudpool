@@ -195,7 +195,8 @@ public class CloudPoolServer {
 			throws IOException {
 		JsonObject configuration;
 		try {
-			configuration = JsonUtils.parseJsonFile(new File(configFile));
+			configuration = JsonUtils.parseJsonFile(new File(configFile))
+					.getAsJsonObject();
 		} catch (Exception e) {
 			throw new IllegalArgumentException(String.format(
 					"failed to parse JSON configuration file %s: %s",

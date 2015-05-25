@@ -39,7 +39,8 @@ public class RunPool {
 				new StandardOpenstackClient());
 		CloudPool pool = new BaseCloudPool(openstackScalingGroup);
 
-		JsonObject config = JsonUtils.parseJsonFile(cloudPoolConfig.toFile());
+		JsonObject config = JsonUtils.parseJsonFile(cloudPoolConfig.toFile())
+				.getAsJsonObject();
 		pool.configure(config);
 
 		new CloudPoolCommandLineDriver(pool).start();

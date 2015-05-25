@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import jersey.repackaged.com.google.common.collect.Lists;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +25,7 @@ import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
 import com.elastisys.scale.cloudpool.aws.spot.util.SpotTestUtil;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
+import com.google.common.collect.Lists;
 
 /**
  * A fake {@link SpotClient} that can be set up to simulate an EC2 account with

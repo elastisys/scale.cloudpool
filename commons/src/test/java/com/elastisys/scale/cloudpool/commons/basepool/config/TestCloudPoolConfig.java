@@ -16,8 +16,8 @@ public class TestCloudPoolConfig {
 
 	@Test
 	public void basicSanity() {
-		JsonObject driverConfig = JsonUtils
-				.parseJsonString("{'config': 'value'}");
+		JsonObject driverConfig = JsonUtils.parseJsonString(
+				"{'config': 'value'}").getAsJsonObject();
 		CloudPoolConfig config = new CloudPoolConfig("poolName", driverConfig);
 		config.validate();
 		assertThat(config.getName(), is("poolName"));
@@ -29,8 +29,8 @@ public class TestCloudPoolConfig {
 	 */
 	@Test(expected = CloudPoolException.class)
 	public void missingPoolName() {
-		JsonObject driverConfig = JsonUtils
-				.parseJsonString("{'config': 'value'}");
+		JsonObject driverConfig = JsonUtils.parseJsonString(
+				"{'config': 'value'}").getAsJsonObject();
 		CloudPoolConfig config = new CloudPoolConfig(null, driverConfig);
 		config.validate();
 	}

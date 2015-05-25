@@ -103,8 +103,8 @@ public class TestRestApi {
 	public void testGetConfig() throws IOException {
 		// set up mocked cloud pool response
 		String configDoc = "{\"setting\": \"true\"}";
-		Optional<JsonObject> config = Optional.of(JsonUtils
-				.parseJsonString(configDoc));
+		Optional<JsonObject> config = Optional.of(JsonUtils.parseJsonString(
+				configDoc).getAsJsonObject());
 		when(cloudPool.getConfiguration()).thenReturn(config);
 
 		// run test
@@ -163,7 +163,8 @@ public class TestRestApi {
 
 		// do test
 		String configDoc = "{\"setting\": \"true\"}";
-		JsonObject config = JsonUtils.parseJsonString(configDoc);
+		JsonObject config = JsonUtils.parseJsonString(configDoc)
+				.getAsJsonObject();
 		Client client = RestClients.httpsNoAuth();
 		Response response = client.target(url("/config"))
 				.request(MediaType.APPLICATION_JSON).post(Entity.json(config));
@@ -185,7 +186,8 @@ public class TestRestApi {
 				cloudPool).configure(Matchers.any(JsonObject.class));
 
 		String configDoc = "{\"setting\": \"true\"}";
-		JsonObject config = JsonUtils.parseJsonString(configDoc);
+		JsonObject config = JsonUtils.parseJsonString(configDoc)
+				.getAsJsonObject();
 		Client client = RestClients.httpsNoAuth();
 		Response response = client.target(url("/config"))
 				.request(MediaType.APPLICATION_JSON).post(Entity.json(config));

@@ -87,8 +87,9 @@ public class TestBaseCloudPoolConfig {
 	}
 
 	private JsonObject cloudCredentialsConfig() {
-		return JsonUtils.parseJsonString("{\"userName\": \"johndoe\", "
-				+ "\"region\": \"us-east-1\"}");
+		return JsonUtils.parseJsonString(
+				"{\"userName\": \"johndoe\", " + "\"region\": \"us-east-1\"}")
+				.getAsJsonObject();
 	}
 
 	private ScaleOutConfig scaleOutConfig() {

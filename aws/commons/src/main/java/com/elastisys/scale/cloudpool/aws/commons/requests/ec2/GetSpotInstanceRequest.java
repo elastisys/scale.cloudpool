@@ -2,13 +2,12 @@ package com.elastisys.scale.cloudpool.aws.commons.requests.ec2;
 
 import java.util.concurrent.Callable;
 
-import jersey.repackaged.com.google.common.collect.Iterables;
-
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.DescribeSpotInstanceRequestsRequest;
 import com.amazonaws.services.ec2.model.DescribeSpotInstanceRequestsResult;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
+import com.google.common.collect.Iterables;
 
 /**
  * A {@link Callable} task that, when executed, requests meta data for a

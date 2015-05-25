@@ -362,7 +362,8 @@ public class TestMachinePool {
 				MembershipStatus.defaultStatus(), ServiceState.IN_SERVICE,
 				UtcTime.parse("2014-01-13T11:00:00.000Z"),
 				UtcTime.parse("2014-01-13T11:00:00.000Z"), ips("1.2.3.4"),
-				ips("1.2.3.5"), parseJsonString("{\"k1\": \"v1\"}"));
+				ips("1.2.3.5"), parseJsonString("{\"k1\": \"v1\"}")
+						.getAsJsonObject());
 		MachinePool expectedPool = pool(
 				UtcTime.parse("2014-01-13T12:00:00.000Z"), machine1);
 
@@ -383,7 +384,8 @@ public class TestMachinePool {
 				MembershipStatus.defaultStatus(), ServiceState.IN_SERVICE,
 				UtcTime.parse("2014-01-13T11:00:00.000Z"),
 				UtcTime.parse("2014-01-13T11:00:00.000Z"), ips("1.2.3.4"),
-				ips("1.2.3.5"), parseJsonString("{\"k1\": \"v1\"}"));
+				ips("1.2.3.5"), parseJsonString("{\"k1\": \"v1\"}")
+						.getAsJsonObject());
 		MachinePool pool = pool(UtcTime.parse("2014-01-13T12:00:00.000Z"),
 				machine1);
 
@@ -404,7 +406,7 @@ public class TestMachinePool {
 				new MembershipStatus(true, false), ServiceState.IN_SERVICE,
 				UtcTime.parse("2014-01-13T11:00:00.000Z"),
 				UtcTime.parse("2014-01-13T11:00:00.000Z"), ips("1.2.3.4"),
-				ips(), parseJsonString("{\"k1\": \"v1\"}"));
+				ips(), parseJsonString("{\"k1\": \"v1\"}").getAsJsonObject());
 		Machine machine2 = machine("m2", MachineState.REQUESTED, null, null,
 				null);
 		MachinePool expectedPool = pool(
@@ -428,7 +430,7 @@ public class TestMachinePool {
 				new MembershipStatus(true, false), ServiceState.IN_SERVICE,
 				UtcTime.parse("2014-01-13T11:00:00.000Z"),
 				UtcTime.parse("2014-01-13T11:00:00.000Z"), ips("1.2.3.4"),
-				ips(), parseJsonString("{\"k1\": \"v1\"}"));
+				ips(), parseJsonString("{\"k1\": \"v1\"}").getAsJsonObject());
 		Machine machine2 = new Machine("m2", MachineState.REQUESTED,
 				ServiceState.UNKNOWN, null, null, null, null);
 		MachinePool pool = pool(UtcTime.parse("2014-01-13T12:00:00.000Z"),

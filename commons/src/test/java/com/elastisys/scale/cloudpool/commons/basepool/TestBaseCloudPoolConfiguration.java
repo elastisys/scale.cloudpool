@@ -48,7 +48,8 @@ public class TestBaseCloudPoolConfiguration {
 	@Test
 	public void testConfigureWithValidConfig() throws CloudPoolException {
 		String configFile = "config/valid-cloudpool-config-minimal.json";
-		JsonObject validConfig = JsonUtils.parseJsonResource(configFile);
+		JsonObject validConfig = JsonUtils.parseJsonResource(configFile)
+				.getAsJsonObject();
 		this.cloudPool.configure(validConfig);
 
 		Optional<JsonObject> config = this.cloudPool.getConfiguration();
@@ -67,7 +68,8 @@ public class TestBaseCloudPoolConfiguration {
 	@Test
 	public void testConfigureWithSmtpAlerts() throws Exception {
 		String configFile = "config/valid-cloudpool-config-with-smtp-alerts.json";
-		JsonObject validConfig = JsonUtils.parseJsonResource(configFile);
+		JsonObject validConfig = JsonUtils.parseJsonResource(configFile)
+				.getAsJsonObject();
 		this.cloudPool.configure(validConfig);
 
 		BaseCloudPoolConfig config = this.cloudPool.config();
@@ -95,7 +97,8 @@ public class TestBaseCloudPoolConfiguration {
 	@Test
 	public void testConfigureWithDoubleSmtpAlerters() throws Exception {
 		String configFile = "config/valid-cloudpool-config-with-two-smtp-alerters.json";
-		JsonObject validConfig = JsonUtils.parseJsonResource(configFile);
+		JsonObject validConfig = JsonUtils.parseJsonResource(configFile)
+				.getAsJsonObject();
 		this.cloudPool.configure(validConfig);
 
 		BaseCloudPoolConfig config = this.cloudPool.config();
@@ -138,7 +141,8 @@ public class TestBaseCloudPoolConfiguration {
 	public void testConfigureWithDefaultSmtpAlertSettings()
 			throws CloudPoolException {
 		String configFile = "config/valid-cloudpool-config-with-smtp-alerts-using-defaults.json";
-		JsonObject validConfig = JsonUtils.parseJsonResource(configFile);
+		JsonObject validConfig = JsonUtils.parseJsonResource(configFile)
+				.getAsJsonObject();
 		this.cloudPool.configure(validConfig);
 
 		BaseCloudPoolConfig config = this.cloudPool.config();
@@ -162,7 +166,8 @@ public class TestBaseCloudPoolConfiguration {
 	@Test
 	public void testConfigureWithHttpAlerts() {
 		String configFile = "config/valid-cloudpool-config-with-http-alerts.json";
-		JsonObject validConfig = JsonUtils.parseJsonResource(configFile);
+		JsonObject validConfig = JsonUtils.parseJsonResource(configFile)
+				.getAsJsonObject();
 		this.cloudPool.configure(validConfig);
 
 		BaseCloudPoolConfig config = this.cloudPool.config();
@@ -187,7 +192,8 @@ public class TestBaseCloudPoolConfiguration {
 	@Test
 	public void testConfigureWithTwoHttpAlerters() {
 		String configFile = "config/valid-cloudpool-config-with-two-http-alerters.json";
-		JsonObject validConfig = JsonUtils.parseJsonResource(configFile);
+		JsonObject validConfig = JsonUtils.parseJsonResource(configFile)
+				.getAsJsonObject();
 		this.cloudPool.configure(validConfig);
 
 		BaseCloudPoolConfig config = this.cloudPool.config();
@@ -218,7 +224,8 @@ public class TestBaseCloudPoolConfiguration {
 	@Test
 	public void testConfigureWithSmtpAndHttpAlerts() {
 		String configFile = "config/valid-cloudpool-config-with-http-and-smtp-alerts.json";
-		JsonObject validConfig = JsonUtils.parseJsonResource(configFile);
+		JsonObject validConfig = JsonUtils.parseJsonResource(configFile)
+				.getAsJsonObject();
 		this.cloudPool.configure(validConfig);
 
 		BaseCloudPoolConfig config = this.cloudPool.config();
@@ -246,14 +253,15 @@ public class TestBaseCloudPoolConfiguration {
 	@Test
 	public void testReConfigure() throws CloudPoolException {
 		// configure
-		JsonObject oldConfig = JsonUtils
-				.parseJsonResource("config/valid-cloudpool-config-minimal.json");
+		JsonObject oldConfig = JsonUtils.parseJsonResource(
+				"config/valid-cloudpool-config-minimal.json").getAsJsonObject();
 		this.cloudPool.configure(oldConfig);
 		assertEquals(oldConfig, this.cloudPool.getConfiguration().get());
 
 		// re-configure
-		JsonObject newConfig = JsonUtils
-				.parseJsonResource("config/valid-cloudpool-config-with-alerts.json");
+		JsonObject newConfig = JsonUtils.parseJsonResource(
+				"config/valid-cloudpool-config-with-alerts.json")
+				.getAsJsonObject();
 		this.cloudPool.configure(newConfig);
 		assertEquals(newConfig, this.cloudPool.getConfiguration().get());
 
@@ -281,7 +289,8 @@ public class TestBaseCloudPoolConfiguration {
 				new CloudPoolDriverException("temporary cloud API outage"));
 
 		String configFile = "config/valid-cloudpool-config-minimal.json";
-		JsonObject validConfig = JsonUtils.parseJsonResource(configFile);
+		JsonObject validConfig = JsonUtils.parseJsonResource(configFile)
+				.getAsJsonObject();
 		this.cloudPool.configure(validConfig);
 
 		assertTrue(this.cloudPool.isStarted());
@@ -295,8 +304,9 @@ public class TestBaseCloudPoolConfiguration {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testConfigureWithIllegalConfig() throws CloudPoolException {
-		JsonObject illegalConfig = JsonUtils
-				.parseJsonResource("config/invalid-cloudpool-config-missing-cloudpool.json");
+		JsonObject illegalConfig = JsonUtils.parseJsonResource(
+				"config/invalid-cloudpool-config-missing-cloudpool.json")
+				.getAsJsonObject();
 		this.cloudPool.configure(illegalConfig);
 	}
 

@@ -32,7 +32,8 @@ public class RunPool extends AbstractClient {
 		CloudPool pool = new BaseCloudPool(
 				new Ec2PoolDriver(new AwsEc2Client()));
 
-		JsonObject config = JsonUtils.parseJsonFile(configFile.toFile());
+		JsonObject config = JsonUtils.parseJsonFile(configFile.toFile())
+				.getAsJsonObject();
 		pool.configure(config);
 
 		new CloudPoolCommandLineDriver(pool).start();

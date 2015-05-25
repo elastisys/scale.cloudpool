@@ -72,7 +72,8 @@ public class TestCloudPoolHandlerDispatch {
 		// set up mock response
 		List<String> publicIps = asList("1.2.3.4");
 		List<String> privateIps = asList("1.2.3.5");
-		JsonObject metadata = parseJsonString("{\"id\": \"i-1\"}");
+		JsonObject metadata = parseJsonString("{\"id\": \"i-1\"}")
+				.getAsJsonObject();
 		Machine machine = new Machine("i-1", MachineState.PENDING,
 				MembershipStatus.defaultStatus(), ServiceState.BOOTING, null,
 				UtcTime.parse("2014-01-13T11:00:00.000Z"), publicIps,

@@ -221,7 +221,8 @@ public class TestMachineFunctions {
 	@Test
 	public void testToShortMachineString() {
 		DateTime now = UtcTime.now();
-		JsonObject metadata = JsonUtils.parseJsonString("{\"id\": \"i-1\"}");
+		JsonObject metadata = JsonUtils.parseJsonString("{\"id\": \"i-1\"}")
+				.getAsJsonObject();
 		Machine m1 = new Machine("i-2", MachineState.RUNNING,
 				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, now,
 				now, ips("1.2.3.4"), ips("1.2.3.5"), metadata);
@@ -232,7 +233,8 @@ public class TestMachineFunctions {
 	@Test
 	public void testToShortMachineFormat() {
 		DateTime now = UtcTime.now();
-		JsonObject metadata = JsonUtils.parseJsonString("{\"id\": \"i-1\"}");
+		JsonObject metadata = JsonUtils.parseJsonString("{\"id\": \"i-1\"}")
+				.getAsJsonObject();
 		Machine m1 = new Machine("i-2", MachineState.RUNNING,
 				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, now,
 				now, ips("1.2.3.4"), ips("1.2.3.5"), metadata);

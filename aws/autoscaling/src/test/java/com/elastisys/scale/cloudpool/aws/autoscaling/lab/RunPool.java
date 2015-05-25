@@ -39,7 +39,8 @@ public class RunPool {
 		CloudPool pool = new BaseCloudPool(new AwsAsPoolDriver(
 				new AwsAutoScalingClient()));
 
-		JsonObject config = JsonUtils.parseJsonFile(configFile.toFile());
+		JsonObject config = JsonUtils.parseJsonFile(configFile.toFile())
+				.getAsJsonObject();
 		pool.configure(config);
 
 		new CloudPoolCommandLineDriver(pool).start();

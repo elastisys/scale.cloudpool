@@ -67,7 +67,8 @@ public class TestCloudPoolServerConfigurationHandling {
 		CloudPoolOptions options = basicServerOptions();
 
 		File configFile = new File(storageDir, "explicitconf.json");
-		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}");
+		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}")
+				.getAsJsonObject();
 		saveConfig(JsonUtils.toString(config), configFile);
 		options.config = configFile.getAbsolutePath();
 
@@ -93,7 +94,8 @@ public class TestCloudPoolServerConfigurationHandling {
 	public void startServerWithSavedConfig() throws Exception {
 		File savedConfigFile = new File(storageDir,
 				ConfigHandler.DEFAULT_CONFIG_FILE_NAME);
-		JsonObject config = JsonUtils.parseJsonString("{\"key1\": \"value1\"}");
+		JsonObject config = JsonUtils.parseJsonString("{\"key1\": \"value1\"}")
+				.getAsJsonObject();
 		saveConfig(JsonUtils.toString(config), savedConfigFile);
 
 		// no explicit config given. config will be restored from storage
@@ -158,7 +160,8 @@ public class TestCloudPoolServerConfigurationHandling {
 					is(Status.NOT_FOUND.getStatusCode()));
 
 			// set config
-			JsonObject config = JsonUtils.parseJsonString("{\"k\": \"v\"}");
+			JsonObject config = JsonUtils.parseJsonString("{\"k\": \"v\"}")
+					.getAsJsonObject();
 			response = client.target(url("/config"))
 					.request(MediaType.APPLICATION_JSON)
 					.post(Entity.json(config));

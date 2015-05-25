@@ -5,14 +5,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
-import jersey.repackaged.com.google.common.collect.Lists;
-
 import org.junit.Test;
 
 import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
 import com.amazonaws.services.autoscaling.model.Instance;
-import com.elastisys.scale.cloudpool.aws.commons.predicates.AutoScalingPredicates;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Lists;
 
 /**
  * Exercises {@link AutoScalingPredicates}.

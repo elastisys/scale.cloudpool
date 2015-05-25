@@ -40,11 +40,6 @@
       <groupId>org.glassfish.jersey.containers</groupId>
       <artifactId>jersey-container-servlet-core</artifactId>
     </dependency>
-    <!-- Jersey JSON JAXB (de)serialization support -->
-    <dependency>
-      <groupId>org.glassfish.jersey.media</groupId>
-      <artifactId>jersey-media-json-jackson</artifactId>
-    </dependency>
     <!-- Embedded jetty server -->
     <dependency>
       <groupId>org.eclipse.jetty.aggregate</groupId>

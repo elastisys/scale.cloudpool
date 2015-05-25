@@ -62,8 +62,8 @@ public class TestMachine {
 				Arrays.asList("1.2.3.5"));
 
 		// with meta data and membership status
-		JsonObject metadata = JsonUtils
-				.parseJsonString("{'a': 1, 'b': 2, c: {'d': 4}}");
+		JsonObject metadata = JsonUtils.parseJsonString(
+				"{'a': 1, 'b': 2, c: {'d': 4}}").getAsJsonObject();
 		Machine withMetadata = new Machine("i-1", MachineState.RUNNING,
 				new MembershipStatus(true, false), ServiceState.UNKNOWN,
 				UtcTime.parse("2014-01-10T08:00:00Z"),
@@ -131,8 +131,8 @@ public class TestMachine {
 				Arrays.asList("1.2.3.5"));
 
 		// with meta data and membership status
-		JsonObject metadata = JsonUtils
-				.parseJsonString("{'a': 1, 'b': 2, c: {'d': 4}}");
+		JsonObject metadata = JsonUtils.parseJsonString(
+				"{'a': 1, 'b': 2, c: {'d': 4}}").getAsJsonObject();
 		Machine withMetadata = new Machine("i-1", MachineState.RUNNING,
 				new MembershipStatus(true, false), ServiceState.UNKNOWN,
 				UtcTime.parse("2014-01-10T08:00:00Z"),
@@ -261,8 +261,8 @@ public class TestMachine {
 	 */
 	@Test
 	public void testWithMetadata() {
-		JsonObject metadata = JsonUtils
-				.parseJsonString("{'a': 1, 'b': 2, c: {'d': 4}}");
+		JsonObject metadata = JsonUtils.parseJsonString(
+				"{'a': 1, 'b': 2, c: {'d': 4}}").getAsJsonObject();
 		Machine original = new Machine("i-1", MachineState.RUNNING,
 				new MembershipStatus(true, false), ServiceState.UNKNOWN,
 				UtcTime.parse("2014-01-10T08:00:00Z"),
@@ -271,7 +271,7 @@ public class TestMachine {
 
 		// other metadata
 		JsonObject otherMetadata = JsonUtils
-				.parseJsonString("{'d': 1, 'e': 2}");
+				.parseJsonString("{'d': 1, 'e': 2}").getAsJsonObject();
 		Machine copy = original.withMetadata(otherMetadata);
 		// all fields should be equal except metadata
 		assertThat(copy.getId(), is(original.getId()));

@@ -55,7 +55,8 @@ public class TestConfigHandlerDispatch {
 	@Test
 	public void testGetConfigurationDispatch() throws IOException {
 		// set up mock response
-		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}");
+		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}")
+				.getAsJsonObject();
 		when(this.cloudPoolMock.getConfiguration()).thenReturn(
 				Optional.of(config));
 
@@ -90,7 +91,8 @@ public class TestConfigHandlerDispatch {
 	@Test
 	public void testPostConfigDispatch() throws Exception {
 		// call rest endpoint and verify proper dispatching to mock
-		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}");
+		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}")
+				.getAsJsonObject();
 		Response response = this.restEndpoint.setAndStoreConfig(config);
 		assertEquals(response.getStatus(), Status.OK.getStatusCode());
 		assertEquals(response.getEntity(), null);
@@ -112,7 +114,8 @@ public class TestConfigHandlerDispatch {
 				any(JsonObject.class));
 
 		// call rest endpoint and verify proper dispatching to mock
-		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}");
+		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}")
+				.getAsJsonObject();
 		Response response = this.restEndpoint.setAndStoreConfig(config);
 		assertEquals(response.getStatus(),
 				Status.INTERNAL_SERVER_ERROR.getStatusCode());
@@ -130,8 +133,8 @@ public class TestConfigHandlerDispatch {
 				.configure(any(JsonObject.class));
 
 		// call rest endpoint and verify proper dispatching to mock
-		JsonObject config = JsonUtils
-				.parseJsonString("{\"key\": \"illegal-value\"}");
+		JsonObject config = JsonUtils.parseJsonString(
+				"{\"key\": \"illegal-value\"}").getAsJsonObject();
 		Response response = this.restEndpoint.setAndStoreConfig(config);
 		assertEquals(response.getStatus(), Status.BAD_REQUEST.getStatusCode());
 		assertThat(response.getEntity(), instanceOf(ErrorType.class));
