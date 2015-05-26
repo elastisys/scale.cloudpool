@@ -1,7 +1,5 @@
 package com.elastisys.scale.cloudpool.api.restapi.types;
 
-import javax.xml.bind.annotation.XmlElement;
-
 import com.elastisys.scale.cloudpool.api.restapi.CloudPoolHandler;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.google.common.base.Objects;
@@ -17,12 +15,7 @@ public class SetServiceStateRequest {
 	/**
 	 * Service state to set for instance.
 	 */
-	@XmlElement(name = "serviceState")
 	private ServiceState serviceState;
-
-	public SetServiceStateRequest() {
-		// empty constructor mandated by JAXB spec
-	}
 
 	public SetServiceStateRequest(ServiceState serviceState) {
 		this.serviceState = serviceState;

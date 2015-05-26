@@ -1,10 +1,5 @@
 package com.elastisys.scale.cloudpool.api.restapi.types;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-
 import com.elastisys.scale.cloudpool.api.restapi.CloudPoolHandler;
 import com.google.common.base.Objects;
 
@@ -13,20 +8,13 @@ import com.google.common.base.Objects;
  *
  * @see CloudPoolHandler#terminateMachine(String, TerminateMachineRequest)
  */
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
 public class TerminateMachineRequest {
 
 	/**
 	 * If {@code true}, the desired size of the group should be decremented, if
 	 * {@code false} it should be left at its current value.
 	 */
-	@XmlElement(name = "decrementDesiredSize")
 	private boolean decrementDesiredSize;
-
-	public TerminateMachineRequest() {
-		// empty constructor mandated by JAXB spec
-	}
 
 	public TerminateMachineRequest(boolean decrementDesiredSize) {
 		this.decrementDesiredSize = decrementDesiredSize;

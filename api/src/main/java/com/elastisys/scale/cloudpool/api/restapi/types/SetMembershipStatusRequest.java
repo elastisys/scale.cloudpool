@@ -1,7 +1,5 @@
 package com.elastisys.scale.cloudpool.api.restapi.types;
 
-import javax.xml.bind.annotation.XmlElement;
-
 import com.elastisys.scale.cloudpool.api.restapi.CloudPoolHandler;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.google.common.base.Objects;
@@ -18,12 +16,7 @@ public class SetMembershipStatusRequest {
 	/**
 	 * Membership status to set for instance.
 	 */
-	@XmlElement(name = "membershipStatus")
 	private MembershipStatus membershipStatus;
-
-	public SetMembershipStatusRequest() {
-		// empty constructor mandated by JAXB spec
-	}
 
 	public SetMembershipStatusRequest(MembershipStatus membershipStatus) {
 		this.membershipStatus = membershipStatus;
