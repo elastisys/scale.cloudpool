@@ -32,4 +32,5 @@ target
 # Log files
 **/*.log
 
-
+# test config files
+myconfig.json
