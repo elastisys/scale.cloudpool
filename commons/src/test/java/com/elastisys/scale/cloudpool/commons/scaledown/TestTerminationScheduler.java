@@ -164,8 +164,8 @@ public class TestTerminationScheduler extends AbstractScaledownTest {
 	@Test(expected = NullPointerException.class)
 	public void candidateWithNullLaunchTime() {
 		DateTime launchTime = null;
-		Machine machine = new Machine("i-1", MachineState.REQUESTED, null,
-				launchTime, null, null);
+		Machine machine = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).launchTime(null).build();
 		new TerminationScheduler(60).scheduleEviction(machine);
 	}
 }

@@ -8,7 +8,6 @@ import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.termqueue.ScheduledTermination;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.collect.Lists;
@@ -77,11 +76,9 @@ public class ResizePlanTestUtils {
 	public static Machine makeMachine(int idIndex, DateTime requestTime,
 			DateTime launchTime, MachineState machineState,
 			MembershipStatus membershipStatus) {
-		List<String> publicIps = Lists.newArrayList();
-		List<String> privateIps = Lists.newArrayList();
-		return new Machine("instance-" + idIndex, machineState,
-				membershipStatus, ServiceState.UNKNOWN, requestTime,
-				launchTime, publicIps, privateIps, null);
+		return Machine.builder().id("instance-" + idIndex)
+				.machineState(machineState).membershipStatus(membershipStatus)
+				.requestTime(requestTime).launchTime(launchTime).build();
 	}
 
 	/**
@@ -150,11 +147,10 @@ public class ResizePlanTestUtils {
 
 	public static ScheduledTermination termination(String instanceId,
 			DateTime terminationTime) {
-		List<String> publicIps = Lists.newArrayList();
-		List<String> privateIps = Lists.newArrayList();
-		return new ScheduledTermination(new Machine(instanceId,
-				MachineState.RUNNING, null, UtcTime.now(), publicIps,
-				privateIps), terminationTime);
+		Machine machine = Machine.builder().id(instanceId)
+				.machineState(MachineState.RUNNING).launchTime(UtcTime.now())
+				.build();
+		return new ScheduledTermination(machine, terminationTime);
 	}
 
 	public static List<ScheduledTermination> toTerminate(

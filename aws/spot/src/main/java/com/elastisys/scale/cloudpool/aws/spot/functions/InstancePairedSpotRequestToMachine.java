@@ -27,7 +27,7 @@ import com.google.gson.JsonObject;
  * {@link Machine} representation.
  */
 public class InstancePairedSpotRequestToMachine implements
-Function<InstancePairedSpotRequest, Machine> {
+		Function<InstancePairedSpotRequest, Machine> {
 
 	/**
 	 * Converts an {@link InstancePairedSpotRequest} to a {@link Machine}.
@@ -38,7 +38,7 @@ Function<InstancePairedSpotRequest, Machine> {
 	public static Machine convert(
 			InstancePairedSpotRequest instancePairedSpotRequest) {
 		return new InstancePairedSpotRequestToMachine()
-		.apply(instancePairedSpotRequest);
+				.apply(instancePairedSpotRequest);
 	}
 
 	@Override
@@ -50,14 +50,14 @@ Function<InstancePairedSpotRequest, Machine> {
 
 		String id = request.getSpotInstanceRequestId();
 		MachineState machineState = spotInstanceRequest.getMachineState();
-		final DateTime requesttime = new DateTime(spotInstanceRequest
+		final DateTime requestTime = new DateTime(spotInstanceRequest
 				.getRequest().getCreateTime(), UTC);
-		DateTime launchtime = null;
+		DateTime launchTime = null;
 		List<String> publicIps = Lists.newArrayList();
 		List<String> privateIps = Lists.newArrayList();
 		if (spotInstanceRequest.hasInstance()) {
 			Instance instance = spotInstanceRequest.getInstance();
-			launchtime = new DateTime(instance.getLaunchTime(), UTC);
+			launchTime = new DateTime(instance.getLaunchTime(), UTC);
 			if (instance.getPublicIpAddress() != null) {
 				publicIps.add(instance.getPublicIpAddress());
 			}
@@ -87,8 +87,11 @@ Function<InstancePairedSpotRequest, Machine> {
 
 		JsonObject metadata = JsonUtils.toJson(spotInstanceRequest)
 				.getAsJsonObject();
-		return new Machine(id, machineState, membershipStatus, serviceState,
-				requesttime, launchtime, publicIps, privateIps, metadata);
+		return Machine.builder().id(id).machineState(machineState)
+				.membershipStatus(membershipStatus).serviceState(serviceState)
+				.requestTime(requestTime).launchTime(launchTime)
+				.publicIps(publicIps).privateIps(privateIps).metadata(metadata)
+				.build();
 	}
 
 	/**

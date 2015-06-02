@@ -73,9 +73,12 @@ public class TestMachinePredicates {
 							membershipStatus, serviceState);
 					LOG.info(combo);
 					final DateTime timestamp = UtcTime.now();
-					Machine machine = new Machine("id", machineState,
-							membershipStatus, serviceState, timestamp,
-							timestamp, ips("1.2.3.4"), ips("1.2.3.5"), null);
+					Machine machine = Machine.builder().id("id")
+							.machineState(machineState)
+							.membershipStatus(membershipStatus)
+							.serviceState(serviceState).requestTime(timestamp)
+							.launchTime(timestamp).publicIps(ips("1.2.3.4"))
+							.privateIps(ips("1.2.3.5")).build();
 					Set<MachineState> allocatedStates = Sets.newHashSet(
 							MachineState.REQUESTED, MachineState.PENDING,
 							MachineState.RUNNING);
@@ -118,9 +121,12 @@ public class TestMachinePredicates {
 							membershipStatus, serviceState);
 					LOG.info(combo);
 					final DateTime timestamp = UtcTime.now();
-					Machine machine = new Machine("id", machineState,
-							membershipStatus, serviceState, timestamp,
-							timestamp, ips("1.2.3.4"), ips("1.2.3.5"), null);
+					Machine machine = Machine.builder().id("id")
+							.machineState(machineState)
+							.membershipStatus(membershipStatus)
+							.serviceState(serviceState).requestTime(timestamp)
+							.launchTime(timestamp).publicIps(ips("1.2.3.4"))
+							.privateIps(ips("1.2.3.5")).build();
 					Set<MachineState> startedStates = Sets.newHashSet(
 							MachineState.PENDING, MachineState.RUNNING);
 					if (startedStates.contains(machine.getMachineState())) {
@@ -161,9 +167,12 @@ public class TestMachinePredicates {
 							membershipStatus, serviceState);
 					LOG.info(combo);
 					final DateTime timestamp = UtcTime.now();
-					Machine machine = new Machine("id", machineState,
-							membershipStatus, serviceState, timestamp,
-							timestamp, ips("1.2.3.4"), ips("1.2.3.5"), null);
+					Machine machine = Machine.builder().id("id")
+							.machineState(machineState)
+							.membershipStatus(membershipStatus)
+							.serviceState(serviceState).requestTime(timestamp)
+							.launchTime(timestamp).publicIps(ips("1.2.3.4"))
+							.privateIps(ips("1.2.3.5")).build();
 					Set<MachineState> allocatedStates = Sets.newHashSet(
 							MachineState.REQUESTED, MachineState.PENDING,
 							MachineState.RUNNING);
@@ -191,20 +200,23 @@ public class TestMachinePredicates {
 		// evictable
 		Machine m1 = machineNoIp("id", MachineState.REQUESTED, UtcTime.now());
 		// not evictable
-		Machine m2 = new Machine("id", MachineState.RUNNING,
-				MembershipStatus.blessed(), ServiceState.UNKNOWN,
-				UtcTime.now(), UtcTime.now(), ips("1.2.3.4"), ips("1.2.3.5"),
-				null);
+		Machine m2 = Machine.builder().id("id")
+				.machineState(MachineState.RUNNING)
+				.membershipStatus(MembershipStatus.blessed())
+				.requestTime(UtcTime.now()).launchTime(UtcTime.now())
+				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5")).build();
 		// evictable
-		Machine m3 = new Machine("id", MachineState.RUNNING,
-				MembershipStatus.disposable(), ServiceState.UNKNOWN,
-				UtcTime.now(), UtcTime.now(), ips("1.2.3.4"), ips("1.2.3.5"),
-				null);
+		Machine m3 = Machine.builder().id("id")
+				.machineState(MachineState.RUNNING)
+				.membershipStatus(MembershipStatus.disposable())
+				.requestTime(UtcTime.now()).launchTime(UtcTime.now())
+				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5")).build();
 		// not evictable
-		Machine m4 = new Machine("id", MachineState.RUNNING,
-				MembershipStatus.awaitingService(), ServiceState.UNKNOWN,
-				UtcTime.now(), UtcTime.now(), ips("1.2.3.4"), ips("1.2.3.5"),
-				null);
+		Machine m4 = Machine.builder().id("id")
+				.machineState(MachineState.RUNNING)
+				.membershipStatus(MembershipStatus.awaitingService())
+				.requestTime(UtcTime.now()).launchTime(UtcTime.now())
+				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5")).build();
 
 		assertTrue(Machine.isEvictable().apply(m1));
 		assertFalse(Machine.isEvictable().apply(m2));

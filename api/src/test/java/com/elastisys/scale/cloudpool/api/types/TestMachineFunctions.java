@@ -36,12 +36,16 @@ public class TestMachineFunctions {
 	@Test
 	public void testMachineStateExtractor() {
 		DateTime now = UtcTime.now();
-		Machine m1 = new Machine("id", MachineState.REQUESTED, now, now, null,
-				null);
-		Machine m2 = new Machine("id", MachineState.RUNNING, now, now,
-				ips("1.2.3.4"), ips("1.2.3.5"));
-		Machine m3 = new Machine("id", MachineState.PENDING, now, now, null,
-				null);
+		Machine m1 = Machine.builder().id("id")
+				.machineState(MachineState.REQUESTED).requestTime(now)
+				.launchTime(now).build();
+		Machine m2 = Machine.builder().id("id")
+				.machineState(MachineState.RUNNING).requestTime(now)
+				.launchTime(now).publicIps(ips("1.2.3.4"))
+				.privateIps(ips("1.2.3.5")).build();
+		Machine m3 = Machine.builder().id("id")
+				.machineState(MachineState.PENDING).requestTime(now)
+				.launchTime(now).build();
 
 		assertThat(Machine.toState().apply(m1), is(MachineState.REQUESTED));
 		assertThat(Machine.toState().apply(m2), is(MachineState.RUNNING));
@@ -54,12 +58,16 @@ public class TestMachineFunctions {
 	@Test
 	public void testMachineIdExtractor() {
 		DateTime now = UtcTime.now();
-		Machine m1 = new Machine("i-1", MachineState.REQUESTED, now, now, null,
-				null);
-		Machine m2 = new Machine("i-2", MachineState.RUNNING, now, now,
-				ips("1.2.3.4"), ips("1.2.3.5"));
-		Machine m3 = new Machine("i-3", MachineState.PENDING, now, now, null,
-				null);
+		Machine m1 = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).requestTime(now)
+				.launchTime(now).build();
+		Machine m2 = Machine.builder().id("i-2")
+				.machineState(MachineState.RUNNING).requestTime(now)
+				.launchTime(now).publicIps(ips("1.2.3.4"))
+				.privateIps(ips("1.2.3.5")).build();
+		Machine m3 = Machine.builder().id("i-3")
+				.machineState(MachineState.PENDING).requestTime(now)
+				.launchTime(now).build();
 
 		assertThat(Machine.toId().apply(m1), is("i-1"));
 		assertThat(Machine.toId().apply(m2), is("i-2"));
@@ -223,9 +231,10 @@ public class TestMachineFunctions {
 		DateTime now = UtcTime.now();
 		JsonObject metadata = JsonUtils.parseJsonString("{\"id\": \"i-1\"}")
 				.getAsJsonObject();
-		Machine m1 = new Machine("i-2", MachineState.RUNNING,
-				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, now,
-				now, ips("1.2.3.4"), ips("1.2.3.5"), metadata);
+		Machine m1 = Machine.builder().id("i-1")
+				.machineState(MachineState.RUNNING).requestTime(now)
+				.launchTime(now).publicIps(ips("1.2.3.4"))
+				.privateIps(ips("1.2.3.5")).metadata(metadata).build();
 
 		assertFalse(Machine.toShortString().apply(m1).contains("metadata"));
 	}
@@ -235,9 +244,10 @@ public class TestMachineFunctions {
 		DateTime now = UtcTime.now();
 		JsonObject metadata = JsonUtils.parseJsonString("{\"id\": \"i-1\"}")
 				.getAsJsonObject();
-		Machine m1 = new Machine("i-2", MachineState.RUNNING,
-				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, now,
-				now, ips("1.2.3.4"), ips("1.2.3.5"), metadata);
+		Machine m1 = Machine.builder().id("i-2")
+				.machineState(MachineState.RUNNING).requestTime(now)
+				.launchTime(now).publicIps(ips("1.2.3.4"))
+				.privateIps(ips("1.2.3.5")).metadata(metadata).build();
 
 		Machine m1Stripped = Machine.toShortFormat().apply(m1);
 		// all fields should be equal except metadata which should be null

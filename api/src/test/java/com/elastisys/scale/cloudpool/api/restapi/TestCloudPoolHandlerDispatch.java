@@ -74,10 +74,13 @@ public class TestCloudPoolHandlerDispatch {
 		List<String> privateIps = asList("1.2.3.5");
 		JsonObject metadata = parseJsonString("{\"id\": \"i-1\"}")
 				.getAsJsonObject();
-		Machine machine = new Machine("i-1", MachineState.PENDING,
-				MembershipStatus.defaultStatus(), ServiceState.BOOTING, null,
-				UtcTime.parse("2014-01-13T11:00:00.000Z"), publicIps,
-				privateIps, metadata);
+		Machine machine = Machine.builder().id("i-1")
+				.machineState(MachineState.PENDING)
+				.membershipStatus(MembershipStatus.defaultStatus())
+				.serviceState(ServiceState.BOOTING)
+				.launchTime(UtcTime.parse("2014-01-13T11:00:00.000Z"))
+				.publicIps(publicIps).privateIps(privateIps).metadata(metadata)
+				.build();
 		MachinePool pool = TestUtils.pool(
 				DateTime.parse("2014-01-13T12:00:00.000Z"), machine);
 		when(this.cloudPoolMock.getMachinePool()).thenReturn(pool);

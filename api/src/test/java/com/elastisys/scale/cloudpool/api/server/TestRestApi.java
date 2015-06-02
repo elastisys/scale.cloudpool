@@ -204,8 +204,11 @@ public class TestRestApi {
 		List<Machine> machines = Lists.newArrayList();
 		final DateTime now = UtcTime.now();
 		final DateTime anHourAgo = now.minusHours(1);
-		machines.add(new Machine("i-1", MachineState.RUNNING, anHourAgo,
-				anHourAgo, Arrays.asList("1.2.3.4"), null));
+		machines.add(Machine.builder().id("i-1")
+				.machineState(MachineState.RUNNING).requestTime(anHourAgo)
+				.launchTime(anHourAgo).publicIps(Arrays.asList("1.2.3.4"))
+				.build());
+
 		MachinePool pool = new MachinePool(machines, now);
 		when(cloudPool.getMachinePool()).thenReturn(pool);
 

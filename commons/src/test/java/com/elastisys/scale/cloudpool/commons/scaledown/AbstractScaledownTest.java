@@ -18,7 +18,7 @@ public abstract class AbstractScaledownTest {
 	public static Machine instance(String withId, String withLaunchTime) {
 		List<String> publicIps = Lists.newArrayList();
 		List<String> privateIps = Lists.newArrayList();
-		return new Machine(withId, MachineState.RUNNING, null,
-				UtcTime.parse(withLaunchTime), publicIps, privateIps);
+		return Machine.builder().id(withId).machineState(MachineState.RUNNING)
+				.launchTime(UtcTime.parse(withLaunchTime)).build();
 	}
 }

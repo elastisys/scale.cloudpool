@@ -225,10 +225,8 @@ public class TestTerminationQueue {
 	}
 
 	private Machine instance(String withId) {
-		List<String> publicIps = Lists.newArrayList();
-		List<String> privateIps = Lists.newArrayList();
-		return new Machine(withId, MachineState.RUNNING, null, UtcTime.now(),
-				publicIps, privateIps);
+		return Machine.builder().id(withId).machineState(MachineState.RUNNING)
+				.launchTime(UtcTime.now()).build();
 	}
 
 }

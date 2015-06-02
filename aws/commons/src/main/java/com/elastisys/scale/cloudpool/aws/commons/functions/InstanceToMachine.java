@@ -50,7 +50,7 @@ public class InstanceToMachine implements Function<Instance, Machine> {
 
 		String id = instance.getInstanceId();
 		MachineState machineState = new InstanceStateToMachineState()
-		.apply(instance.getState());
+				.apply(instance.getState());
 		DateTime launchtime = new DateTime(instance.getLaunchTime(),
 				DateTimeZone.UTC);
 		List<String> publicIps = Lists.newArrayList();
@@ -83,8 +83,10 @@ public class InstanceToMachine implements Function<Instance, Machine> {
 		}
 
 		JsonObject metadata = JsonUtils.toJson(instance).getAsJsonObject();
-		return new Machine(id, machineState, membershipStatus, serviceState,
-				null, launchtime, publicIps, privateIps, metadata);
+		return Machine.builder().id(id).machineState(machineState)
+				.membershipStatus(membershipStatus).serviceState(serviceState)
+				.launchTime(launchtime).publicIps(publicIps)
+				.privateIps(privateIps).metadata(metadata).build();
 	}
 
 	/**

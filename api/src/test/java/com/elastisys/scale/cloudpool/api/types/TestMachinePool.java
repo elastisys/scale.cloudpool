@@ -1,7 +1,6 @@
 package com.elastisys.scale.cloudpool.api.types;
 
 import static com.elastisys.scale.cloudpool.api.types.TestUtils.ips;
-import static com.elastisys.scale.cloudpool.api.types.TestUtils.machine;
 import static com.elastisys.scale.cloudpool.api.types.TestUtils.machineNoIp;
 import static com.elastisys.scale.cloudpool.api.types.TestUtils.pool;
 import static com.elastisys.scale.commons.json.JsonUtils.parseJsonString;
@@ -53,24 +52,32 @@ public class TestMachinePool {
 		assertThat(pool.getMachines().size(), is(0));
 
 		// on a pool with a mix of machines in different states
-		Machine requested1 = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, null, null, null, null);
-		Machine requested2 = new Machine("i-2", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, null, null, null, null);
-		Machine pending1 = new Machine("i-3", MachineState.PENDING,
-				ServiceState.BOOTING, now, now, null, null);
-		Machine running1 = new Machine("i-4", MachineState.RUNNING,
-				ServiceState.IN_SERVICE, now, now, asList("1.2.3.4"), null);
-		Machine running2 = new Machine("i-5", MachineState.RUNNING,
-				ServiceState.UNHEALTHY, now, now, asList("1.2.3.4"), null);
-		Machine running3 = new Machine("i-5.1", MachineState.RUNNING,
-				ServiceState.OUT_OF_SERVICE, now, now, asList("1.2.3.5"), null);
-		Machine terminating = new Machine("i-6", MachineState.TERMINATING,
-				ServiceState.UNKNOWN, now, now, null, null);
-		Machine terminated1 = new Machine("i-7", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, now, null, null);
-		Machine terminated2 = new Machine("i-8", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, now, null, null);
+		Machine requested1 = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).build();
+		Machine requested2 = Machine.builder().id("i-2")
+				.machineState(MachineState.REQUESTED).build();
+		Machine pending1 = Machine.builder().id("i-3")
+				.machineState(MachineState.PENDING)
+				.serviceState(ServiceState.BOOTING).requestTime(now)
+				.launchTime(now).build();
+		Machine running1 = Machine.builder().id("i-4")
+				.machineState(MachineState.RUNNING)
+				.serviceState(ServiceState.IN_SERVICE).requestTime(now)
+				.launchTime(now).publicIps(asList("1.2.3.4")).build();
+		Machine running2 = Machine.builder().id("i-5")
+				.machineState(MachineState.RUNNING)
+				.serviceState(ServiceState.UNHEALTHY).requestTime(now)
+				.launchTime(now).publicIps(asList("1.2.3.4")).build();
+		Machine running3 = Machine.builder().id("i-5.1")
+				.machineState(MachineState.RUNNING)
+				.serviceState(ServiceState.OUT_OF_SERVICE).requestTime(now)
+				.launchTime(now).publicIps(asList("1.2.3.5")).build();
+		Machine terminating = Machine.builder().id("i-6")
+				.machineState(MachineState.TERMINATING).build();
+		Machine terminated1 = Machine.builder().id("i-7")
+				.machineState(MachineState.TERMINATED).build();
+		Machine terminated2 = Machine.builder().id("i-8")
+				.machineState(MachineState.TERMINATED).build();
 		pool = new MachinePool(Arrays.asList(requested1, requested2, pending1,
 				running1, running2, running3, terminating, terminated1,
 				terminated2), now);
@@ -94,24 +101,32 @@ public class TestMachinePool {
 		assertThat(pool.getAllocatedMachines().size(), is(0));
 
 		// on a pool with a mix of machines in different states
-		Machine requested1 = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, null, null, null, null);
-		Machine requested2 = new Machine("i-2", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, null, null, null, null);
-		Machine pending1 = new Machine("i-3", MachineState.PENDING,
-				ServiceState.BOOTING, now, now, null, null);
-		Machine running1 = new Machine("i-4", MachineState.RUNNING,
-				ServiceState.IN_SERVICE, now, now, asList("1.2.3.4"), null);
-		Machine running2 = new Machine("i-5", MachineState.RUNNING,
-				ServiceState.UNHEALTHY, now, now, asList("1.2.3.4"), null);
-		Machine running3 = new Machine("i-5.1", MachineState.RUNNING,
-				ServiceState.OUT_OF_SERVICE, now, now, asList("1.2.3.5"), null);
-		Machine terminating = new Machine("i-6", MachineState.TERMINATING,
-				ServiceState.UNKNOWN, now, now, null, null);
-		Machine terminated1 = new Machine("i-7", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, now, null, null);
-		Machine terminated2 = new Machine("i-8", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, now, null, null);
+		Machine requested1 = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).build();
+		Machine requested2 = Machine.builder().id("i-2")
+				.machineState(MachineState.REQUESTED).build();
+		Machine pending1 = Machine.builder().id("i-3")
+				.machineState(MachineState.PENDING)
+				.serviceState(ServiceState.BOOTING).requestTime(now)
+				.launchTime(now).build();
+		Machine running1 = Machine.builder().id("i-4")
+				.machineState(MachineState.RUNNING)
+				.serviceState(ServiceState.IN_SERVICE).requestTime(now)
+				.launchTime(now).publicIps(asList("1.2.3.4")).build();
+		Machine running2 = Machine.builder().id("i-5")
+				.machineState(MachineState.RUNNING)
+				.serviceState(ServiceState.UNHEALTHY).requestTime(now)
+				.launchTime(now).publicIps(asList("1.2.3.4")).build();
+		Machine running3 = Machine.builder().id("i-5.1")
+				.machineState(MachineState.RUNNING)
+				.serviceState(ServiceState.OUT_OF_SERVICE).requestTime(now)
+				.launchTime(now).publicIps(asList("1.2.3.5")).build();
+		Machine terminating = Machine.builder().id("i-6")
+				.machineState(MachineState.TERMINATING).build();
+		Machine terminated1 = Machine.builder().id("i-7")
+				.machineState(MachineState.TERMINATED).build();
+		Machine terminated2 = Machine.builder().id("i-8")
+				.machineState(MachineState.TERMINATED).build();
 		pool = new MachinePool(Arrays.asList(requested1, requested2, pending1,
 				running1, running2, running3, terminating, terminated1,
 				terminated2), now);
@@ -135,32 +150,35 @@ public class TestMachinePool {
 		assertThat(pool.getActiveMachines().size(), is(0));
 
 		// on a pool with a mix of machines in different states
-		Machine requested1 = new Machine("i-1", MachineState.REQUESTED,
-				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, null,
-				null, null, null, null);
-		Machine requested2 = new Machine("i-2", MachineState.REQUESTED,
-				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, null,
-				null, null, null, null);
-		Machine pending1 = new Machine("i-3", MachineState.PENDING,
-				MembershipStatus.defaultStatus(), ServiceState.BOOTING, now,
-				now, null, null, null);
-
-		Machine running1 = new Machine("i-4", MachineState.RUNNING,
-				MembershipStatus.blessed(), ServiceState.IN_SERVICE, now, now,
-				asList("1.2.3.4"), null, null);
-		Machine running2 = new Machine("i-5", MachineState.RUNNING,
-				MembershipStatus.defaultStatus(), ServiceState.UNHEALTHY, now,
-				now, asList("1.2.3.4"), null, null);
-		Machine running3 = new Machine("i-5.1", MachineState.RUNNING,
-				MembershipStatus.awaitingService(),
-				ServiceState.OUT_OF_SERVICE, now, now, asList("1.2.3.5"), null,
-				null);
-		Machine terminating = new Machine("i-6", MachineState.TERMINATING,
-				ServiceState.UNKNOWN, now, now, null, null);
-		Machine terminated1 = new Machine("i-7", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, now, null, null);
-		Machine terminated2 = new Machine("i-8", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, now, null, null);
+		Machine requested1 = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).build();
+		Machine requested2 = Machine.builder().id("i-2")
+				.machineState(MachineState.REQUESTED).build();
+		Machine pending1 = Machine.builder().id("i-3")
+				.machineState(MachineState.PENDING)
+				.serviceState(ServiceState.BOOTING).requestTime(now)
+				.launchTime(now).build();
+		Machine running1 = Machine.builder().id("i-4")
+				.machineState(MachineState.RUNNING)
+				.serviceState(ServiceState.IN_SERVICE)
+				.membershipStatus(MembershipStatus.blessed()).requestTime(now)
+				.launchTime(now).publicIps(asList("1.2.3.4")).build();
+		Machine running2 = Machine.builder().id("i-5")
+				.machineState(MachineState.RUNNING)
+				.serviceState(ServiceState.UNHEALTHY).requestTime(now)
+				.launchTime(now).publicIps(asList("1.2.3.4")).build();
+		Machine running3 = Machine.builder().id("i-5.1")
+				.machineState(MachineState.RUNNING)
+				.serviceState(ServiceState.OUT_OF_SERVICE)
+				.membershipStatus(MembershipStatus.awaitingService())
+				.requestTime(now).launchTime(now).publicIps(asList("1.2.3.5"))
+				.build();
+		Machine terminating = Machine.builder().id("i-6")
+				.machineState(MachineState.TERMINATING).build();
+		Machine terminated1 = Machine.builder().id("i-7")
+				.machineState(MachineState.TERMINATED).build();
+		Machine terminated2 = Machine.builder().id("i-8")
+				.machineState(MachineState.TERMINATED).build();
 		pool = new MachinePool(Arrays.asList(requested1, requested2, pending1,
 				running1, running2, running3, terminating, terminated1,
 				terminated2), now);
@@ -184,32 +202,35 @@ public class TestMachinePool {
 		assertThat(pool.getActiveMachines().size(), is(0));
 
 		// on a pool with a mix of machines in different states
-		Machine requested1 = new Machine("i-1", MachineState.REQUESTED,
-				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, null,
-				null, null, null, null);
-		Machine requested2 = new Machine("i-2", MachineState.REQUESTED,
-				MembershipStatus.defaultStatus(), ServiceState.UNKNOWN, null,
-				null, null, null, null);
-		Machine pending1 = new Machine("i-3", MachineState.PENDING,
-				MembershipStatus.defaultStatus(), ServiceState.BOOTING, now,
-				now, null, null, null);
-
-		Machine running1 = new Machine("i-4", MachineState.RUNNING,
-				MembershipStatus.blessed(), ServiceState.IN_SERVICE, now, now,
-				asList("1.2.3.4"), null, null);
-		Machine running2 = new Machine("i-5", MachineState.RUNNING,
-				MembershipStatus.defaultStatus(), ServiceState.UNHEALTHY, now,
-				now, asList("1.2.3.4"), null, null);
-		Machine running3 = new Machine("i-5.1", MachineState.RUNNING,
-				MembershipStatus.awaitingService(),
-				ServiceState.OUT_OF_SERVICE, now, now, asList("1.2.3.5"), null,
-				null);
-		Machine terminating = new Machine("i-6", MachineState.TERMINATING,
-				ServiceState.UNKNOWN, now, now, null, null);
-		Machine terminated1 = new Machine("i-7", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, now, null, null);
-		Machine terminated2 = new Machine("i-8", MachineState.TERMINATED,
-				ServiceState.UNKNOWN, now, now, null, null);
+		Machine requested1 = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).build();
+		Machine requested2 = Machine.builder().id("i-2")
+				.machineState(MachineState.REQUESTED).build();
+		Machine pending1 = Machine.builder().id("i-3")
+				.machineState(MachineState.PENDING)
+				.serviceState(ServiceState.BOOTING).requestTime(now)
+				.launchTime(now).build();
+		Machine running1 = Machine.builder().id("i-4")
+				.machineState(MachineState.RUNNING)
+				.serviceState(ServiceState.IN_SERVICE)
+				.membershipStatus(MembershipStatus.blessed()).requestTime(now)
+				.launchTime(now).publicIps(asList("1.2.3.4")).build();
+		Machine running2 = Machine.builder().id("i-5")
+				.machineState(MachineState.RUNNING)
+				.serviceState(ServiceState.UNHEALTHY).requestTime(now)
+				.launchTime(now).publicIps(asList("1.2.3.4")).build();
+		Machine running3 = Machine.builder().id("i-5.1")
+				.machineState(MachineState.RUNNING)
+				.serviceState(ServiceState.OUT_OF_SERVICE)
+				.membershipStatus(MembershipStatus.awaitingService())
+				.requestTime(now).launchTime(now).publicIps(asList("1.2.3.5"))
+				.build();
+		Machine terminating = Machine.builder().id("i-6")
+				.machineState(MachineState.TERMINATING).build();
+		Machine terminated1 = Machine.builder().id("i-7")
+				.machineState(MachineState.TERMINATED).build();
+		Machine terminated2 = Machine.builder().id("i-8")
+				.machineState(MachineState.TERMINATED).build();
 		pool = new MachinePool(Arrays.asList(requested1, requested2, pending1,
 				running1, running2, running3, terminating, terminated1,
 				terminated2), now);
@@ -358,12 +379,17 @@ public class TestMachinePool {
 	 */
 	@Test
 	public void parseSingleMachinePoolFromJson() throws IOException {
-		Machine machine1 = new Machine("m1", MachineState.PENDING,
-				MembershipStatus.defaultStatus(), ServiceState.IN_SERVICE,
-				UtcTime.parse("2014-01-13T11:00:00.000Z"),
-				UtcTime.parse("2014-01-13T11:00:00.000Z"), ips("1.2.3.4"),
-				ips("1.2.3.5"), parseJsonString("{\"k1\": \"v1\"}")
-						.getAsJsonObject());
+		Machine machine1 = Machine
+				.builder()
+				.id("m1")
+				.machineState(MachineState.PENDING)
+				.serviceState(ServiceState.IN_SERVICE)
+				.requestTime(UtcTime.parse("2014-01-13T11:00:00.000Z"))
+				.launchTime(UtcTime.parse("2014-01-13T11:00:00.000Z"))
+				.publicIps(ips("1.2.3.4"))
+				.privateIps(ips("1.2.3.5"))
+				.metadata(parseJsonString("{\"k1\": \"v1\"}").getAsJsonObject())
+				.build();
 		MachinePool expectedPool = pool(
 				UtcTime.parse("2014-01-13T12:00:00.000Z"), machine1);
 
@@ -380,12 +406,17 @@ public class TestMachinePool {
 	 */
 	@Test
 	public void convertSingleMachinePoolToJson() throws IOException {
-		Machine machine1 = new Machine("m1", MachineState.PENDING,
-				MembershipStatus.defaultStatus(), ServiceState.IN_SERVICE,
-				UtcTime.parse("2014-01-13T11:00:00.000Z"),
-				UtcTime.parse("2014-01-13T11:00:00.000Z"), ips("1.2.3.4"),
-				ips("1.2.3.5"), parseJsonString("{\"k1\": \"v1\"}")
-						.getAsJsonObject());
+		Machine machine1 = Machine
+				.builder()
+				.id("m1")
+				.machineState(MachineState.PENDING)
+				.serviceState(ServiceState.IN_SERVICE)
+				.requestTime(UtcTime.parse("2014-01-13T11:00:00.000Z"))
+				.launchTime(UtcTime.parse("2014-01-13T11:00:00.000Z"))
+				.publicIps(ips("1.2.3.4"))
+				.privateIps(ips("1.2.3.5"))
+				.metadata(parseJsonString("{\"k1\": \"v1\"}").getAsJsonObject())
+				.build();
 		MachinePool pool = pool(UtcTime.parse("2014-01-13T12:00:00.000Z"),
 				machine1);
 
@@ -402,13 +433,19 @@ public class TestMachinePool {
 	 */
 	@Test
 	public void parseMultiMachinePoolFromJson() throws IOException {
-		Machine machine1 = new Machine("m1", MachineState.RUNNING,
-				new MembershipStatus(true, false), ServiceState.IN_SERVICE,
-				UtcTime.parse("2014-01-13T11:00:00.000Z"),
-				UtcTime.parse("2014-01-13T11:00:00.000Z"), ips("1.2.3.4"),
-				ips(), parseJsonString("{\"k1\": \"v1\"}").getAsJsonObject());
-		Machine machine2 = machine("m2", MachineState.REQUESTED, null, null,
-				null);
+		Machine machine1 = Machine
+				.builder()
+				.id("m1")
+				.machineState(MachineState.RUNNING)
+				.membershipStatus(new MembershipStatus(true, false))
+				.serviceState(ServiceState.IN_SERVICE)
+				.requestTime(UtcTime.parse("2014-01-13T11:00:00.000Z"))
+				.launchTime(UtcTime.parse("2014-01-13T11:00:00.000Z"))
+				.publicIps(ips("1.2.3.4"))
+				.metadata(parseJsonString("{\"k1\": \"v1\"}").getAsJsonObject())
+				.build();
+		Machine machine2 = Machine.builder().id("m2")
+				.machineState(MachineState.REQUESTED).build();
 		MachinePool expectedPool = pool(
 				UtcTime.parse("2014-01-13T12:00:00.000Z"), machine1, machine2);
 
@@ -426,13 +463,19 @@ public class TestMachinePool {
 	 */
 	@Test
 	public void convertMultiMachinePoolToJson() throws IOException {
-		Machine machine1 = new Machine("m1", MachineState.RUNNING,
-				new MembershipStatus(true, false), ServiceState.IN_SERVICE,
-				UtcTime.parse("2014-01-13T11:00:00.000Z"),
-				UtcTime.parse("2014-01-13T11:00:00.000Z"), ips("1.2.3.4"),
-				ips(), parseJsonString("{\"k1\": \"v1\"}").getAsJsonObject());
-		Machine machine2 = new Machine("m2", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, null, null, null, null);
+		Machine machine1 = Machine
+				.builder()
+				.id("m1")
+				.machineState(MachineState.RUNNING)
+				.membershipStatus(new MembershipStatus(true, false))
+				.serviceState(ServiceState.IN_SERVICE)
+				.requestTime(UtcTime.parse("2014-01-13T11:00:00.000Z"))
+				.launchTime(UtcTime.parse("2014-01-13T11:00:00.000Z"))
+				.publicIps(ips("1.2.3.4"))
+				.metadata(parseJsonString("{\"k1\": \"v1\"}").getAsJsonObject())
+				.build();
+		Machine machine2 = Machine.builder().id("m2")
+				.machineState(MachineState.REQUESTED).build();
 		MachinePool pool = pool(UtcTime.parse("2014-01-13T12:00:00.000Z"),
 				machine1, machine2);
 

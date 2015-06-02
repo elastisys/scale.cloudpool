@@ -106,79 +106,6 @@ public class Machine {
 	private final JsonObject metadata;
 
 	/**
-	 * Constructs a new {@link Machine} with {@link ServiceState#UNKNOWN}
-	 * service state, without any cloud-specific machine meta data and with
-	 * default {@link MembershipStatus}..
-	 *
-	 * @param id
-	 *            The identifier of the {@link Machine} .
-	 * @param state
-	 *            The state of the {@link Machine} .
-	 * @param requestTime
-	 *            The request time of the {@link Machine}, if this time is
-	 *            known. If the time when the machine was initially and
-	 *            successfully requested is not known, this attribute shall be
-	 *            null.
-	 * @param launchTime
-	 *            The launch time of the {@link Machine} if it has been
-	 *            launched. This attribute may be <code>null</code>, depending
-	 *            on the state of the {@link Machine}.
-	 * @param publicIps
-	 *            The list of public IP addresses associated with this
-	 *            {@link Machine}. If the machine hasn't (yet) been assigned any
-	 *            IP addresses, this attribute can be set to <code>null</code>
-	 *            or an empty list.
-	 * @param privateIps
-	 *            The list of private IP addresses associated with this
-	 *            {@link Machine}. If the machine hasn't (yet) been assigned any
-	 *            IP addresses, this attribute can be set to <code>null</code>
-	 *            or an empty list.
-	 */
-	public Machine(String id, MachineState state, DateTime requestTime,
-			DateTime launchTime, List<String> publicIps, List<String> privateIps) {
-		this(id, state, MembershipStatus.defaultStatus(), ServiceState.UNKNOWN,
-				requestTime, launchTime, publicIps, privateIps, null);
-	}
-
-	/**
-	 * Constructs a new {@link Machine} without any cloud-specific machine meta
-	 * data and with default {@link MembershipStatus}.
-	 *
-	 * @param id
-	 *            The identifier of the {@link Machine}.
-	 * @param machineState
-	 *            The execution state of the {@link Machine}.
-	 * @param serviceState
-	 *            The operational state of the service running on the
-	 *            {@link Machine}.
-	 * @param requestTime
-	 *            The request time of the {@link Machine}, if this time is
-	 *            known. If the time when the machine was initially and
-	 *            successfully requested is not known, this attribute shall be
-	 *            null.
-	 * @param launchTime
-	 *            The launch time of the {@link Machine} if it has been
-	 *            launched. This attribute may be <code>null</code>, depending
-	 *            on the state of the {@link Machine}.
-	 * @param publicIps
-	 *            The list of public IP addresses associated with this
-	 *            {@link Machine}. If the machine hasn't (yet) been assigned any
-	 *            IP addresses, this attribute can be set to <code>null</code>
-	 *            or an empty list.
-	 * @param privateIps
-	 *            The list of private IP addresses associated with this
-	 *            {@link Machine}. If the machine hasn't (yet) been assigned any
-	 *            IP addresses, this attribute can be set to <code>null</code>
-	 *            or an empty list.
-	 */
-	public Machine(String id, MachineState machineState,
-			ServiceState serviceState, DateTime requestTime,
-			DateTime launchTime, List<String> publicIps, List<String> privateIps) {
-		this(id, machineState, MembershipStatus.defaultStatus(), serviceState,
-				requestTime, launchTime, publicIps, privateIps, null);
-	}
-
-	/**
 	 * Constructs a new {@link Machine}.
 	 *
 	 * @param id
@@ -213,7 +140,7 @@ public class Machine {
 	 *            Additional cloud provider-specific meta data about the
 	 *            {@link Machine}. May be <code>null</code>.
 	 */
-	public Machine(String id, MachineState machineState,
+	protected Machine(String id, MachineState machineState,
 			MembershipStatus membershipStatus, ServiceState serviceState,
 			DateTime requestTime, DateTime launchTime, List<String> publicIps,
 			List<String> privateIps, JsonObject metadata) {
@@ -369,11 +296,11 @@ public class Machine {
 					&& Objects.equal(this.machineState, that.machineState)
 					&& Objects.equal(this.membershipStatus,
 							that.membershipStatus)
-							&& Objects.equal(this.serviceState, that.serviceState)
-							&& launchtimesEqual && requesttimesEqual
-							&& Objects.equal(this.publicIps, that.publicIps)
-							&& Objects.equal(this.privateIps, that.privateIps)
-							&& Objects.equal(this.metadata, that.metadata);
+					&& Objects.equal(this.serviceState, that.serviceState)
+					&& launchtimesEqual && requesttimesEqual
+					&& Objects.equal(this.publicIps, that.publicIps)
+					&& Objects.equal(this.privateIps, that.privateIps)
+					&& Objects.equal(this.metadata, that.metadata);
 		}
 		return false;
 	}
@@ -504,7 +431,7 @@ public class Machine {
 	 * @see http://code.google.com/p/guava-libraries/wiki/FunctionalExplained
 	 */
 	public static class MachineStateExtractor implements
-	Function<Machine, MachineState> {
+			Function<Machine, MachineState> {
 		/**
 		 * Extracts the state of a {@link Machine}.
 		 *
@@ -654,7 +581,7 @@ public class Machine {
 	 * The {@link Machine} must have its launch time set.
 	 */
 	public static class InstanceHourStart implements
-	Function<Machine, DateTime> {
+			Function<Machine, DateTime> {
 
 		/**
 		 * Calculates the starting point of the machine's current hour.
@@ -730,7 +657,7 @@ public class Machine {
 	 *
 	 */
 	public static class RemainingInstanceHourTime implements
-	Function<Machine, Long> {
+			Function<Machine, Long> {
 
 		/**
 		 * Calculates the remaining time (in seconds) of the machine's last
@@ -784,7 +711,7 @@ public class Machine {
 	 * {@link Machine}.
 	 */
 	public static class ToShortMachineFormat implements
-	Function<Machine, Machine> {
+			Function<Machine, Machine> {
 
 		@Override
 		public Machine apply(Machine machine) {
@@ -807,7 +734,7 @@ public class Machine {
 	 * produce quite some log noise).
 	 */
 	public static class ToShortMachineString implements
-	Function<Machine, String> {
+			Function<Machine, String> {
 
 		@Override
 		public String apply(Machine machine) {
@@ -819,6 +746,196 @@ public class Machine {
 					.add("launchTime", machine.getLaunchTime())
 					.add("publicIps", machine.getPublicIps())
 					.add("privateIps", machine.getPrivateIps()).toString();
+		}
+	}
+
+	/**
+	 * Creates a {@link Builder} object for generating {@link Machine}
+	 * instances.
+	 *
+	 * @return
+	 */
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	/**
+	 * A builder for creating {@link Machine} instances.
+	 */
+	public static class Builder {
+		private String id = null;
+		private MachineState machineState = null;
+		private ServiceState serviceState = ServiceState.UNKNOWN;
+		private MembershipStatus membershipStatus = MembershipStatus
+				.defaultStatus();
+		private DateTime launchTime = null;
+		private DateTime requestTime = null;
+		private final List<String> publicIps = Lists.newArrayList();
+		private final List<String> privateIps = Lists.newArrayList();
+		private JsonObject metadata = null;
+
+		private Builder() {
+		}
+
+		/**
+		 * Creates a new {@link Machine} instance from the parameters passed
+		 * thus far to the {@link Builder}.
+		 *
+		 * @return
+		 */
+		public Machine build() {
+			checkArgument(this.id != null, "machine: no id given");
+			checkArgument(this.machineState != null,
+					"machine: no machineState given");
+			if (this.requestTime != null && this.launchTime != null) {
+				checkArgument(this.requestTime.isBefore(this.launchTime)
+						|| this.requestTime.isEqual(this.launchTime),
+						"requestTime cannot be later than launchTime");
+			}
+			return new Machine(this.id, this.machineState,
+					this.membershipStatus, this.serviceState, this.requestTime,
+					this.launchTime, this.publicIps, this.privateIps,
+					this.metadata);
+		}
+
+		/**
+		 * Sets the identifier for the {@link Machine} being built. Required
+		 * attribute.
+		 *
+		 * @param id
+		 * @return
+		 */
+		public Builder id(String id) {
+			checkArgument(id != null, "id cannot be null");
+			this.id = id;
+			return this;
+		}
+
+		/**
+		 * Sets the {@link MachineState} for the {@link Machine} being built.
+		 * Required attribute.
+		 *
+		 * @param machineState
+		 * @return
+		 */
+		public Builder machineState(MachineState machineState) {
+			checkArgument(machineState != null, "machineState cannot be null");
+			this.machineState = machineState;
+			return this;
+		}
+
+		/**
+		 * Sets the {@link ServiceState} for the {@link Machine} being built.
+		 * Default: {@link ServiceState#UNKNOWN}.
+		 *
+		 * @param serviceState
+		 * @return
+		 */
+		public Builder serviceState(ServiceState serviceState) {
+			checkArgument(serviceState != null, "serviceState cannot be null");
+			this.serviceState = serviceState;
+			return this;
+		}
+
+		/**
+		 * Sets the {@link MembershipStatus} for the {@link Machine} being
+		 * built. Default: {@link MembershipStatus#defaultStatus()}.
+		 *
+		 * @param membershipStatus
+		 * @return
+		 */
+		public Builder membershipStatus(MembershipStatus membershipStatus) {
+			checkArgument(membershipStatus != null,
+					"membershipStatus cannot be null");
+			this.membershipStatus = membershipStatus;
+			return this;
+		}
+
+		/**
+		 * Sets the launchTime for the {@link Machine} being built. Default:
+		 * <code>null</code>.
+		 *
+		 * @param launchTime
+		 *            Launch time. May be <code>null</code>.
+		 * @return
+		 */
+		public Builder launchTime(DateTime launchTime) {
+			this.launchTime = launchTime;
+			return this;
+		}
+
+		/**
+		 * Sets the requestTime for the {@link Machine} being built. Default:
+		 * <code>null</code>.
+		 *
+		 * @param requestTime
+		 *            Request time. May be <code>null</code>.
+		 * @return
+		 */
+		public Builder requestTime(DateTime requestTime) {
+			this.requestTime = requestTime;
+			return this;
+		}
+
+		/**
+		 * Adds a single public IP address for the {@link Machine} being built.
+		 *
+		 * @param publicIp
+		 * @return
+		 */
+		public Builder publicIp(String publicIp) {
+			checkArgument(publicIp != null, "publicIp cannot be null");
+			this.publicIps.add(publicIp);
+			return this;
+		}
+
+		/**
+		 * Adds several public IP address for the {@link Machine} being built.
+		 *
+		 * @param publicIps
+		 * @return
+		 */
+		public Builder publicIps(List<String> publicIps) {
+			checkArgument(publicIps != null, "publicIps cannot be null");
+			this.publicIps.addAll(publicIps);
+			return this;
+		}
+
+		/**
+		 * Adds a single private IP address for the {@link Machine} being built.
+		 *
+		 * @param privateIp
+		 * @return
+		 */
+		public Builder privateIp(String privateIp) {
+			checkArgument(privateIp != null, "privateIp cannot be null");
+			this.privateIps.add(privateIp);
+			return this;
+		}
+
+		/**
+		 * Adds several private IP address for the {@link Machine} being built.
+		 *
+		 * @param privateIps
+		 * @return
+		 */
+		public Builder privateIps(List<String> privateIps) {
+			checkArgument(privateIps != null, "privateIps cannot be null");
+			this.privateIps.addAll(privateIps);
+			return this;
+		}
+
+		/**
+		 * Sets the meta data for the {@link Machine} being built. Default:
+		 * <code>null</code>.
+		 *
+		 * @param metadata
+		 *            Meta data. May be <code>null</code>.
+		 * @return
+		 */
+		public Builder metadata(JsonObject metadata) {
+			this.metadata = metadata;
+			return this;
 		}
 	}
 }

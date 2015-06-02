@@ -98,8 +98,10 @@ public class ServerToMachine implements Function<Server, Machine> {
 					Constants.SERVICE_STATE_TAG));
 		}
 		JsonObject metadata = JsonUtils.toJson(server).getAsJsonObject();
-		return new Machine(server.getId(), machineState, membershipStatus,
-				serviceState, creationTime, launchedAtTime, publicIps,
-				privateIps, metadata);
+		return Machine.builder().id(server.getId()).machineState(machineState)
+				.membershipStatus(membershipStatus).serviceState(serviceState)
+				.requestTime(creationTime).launchTime(launchedAtTime)
+				.publicIps(publicIps).privateIps(privateIps).metadata(metadata)
+				.build();
 	}
 }

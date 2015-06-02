@@ -9,7 +9,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -35,45 +34,54 @@ public class TestMachine {
 	public void testEquality() throws IOException {
 		final DateTime now = UtcTime.now();
 		// with null launch time
-		Machine noLaunchTime = new Machine("i-1", MachineState.REQUESTED, null,
-				null, null, null);
-		Machine noLaunchTimeClone = new Machine("i-1", MachineState.REQUESTED,
-				null, null, null, null);
+		Machine noLaunchTime = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).build();
+		Machine noLaunchTimeClone = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).build();
 
 		// with set requestTime, null launch time
-		Machine unlaunchedRequested = new Machine("i-1",
-				MachineState.REQUESTED, now, null, null, null);
-		Machine unlaunchedRequestedClone = new Machine("i-1",
-				MachineState.REQUESTED, now, null, null, null);
+		Machine unlaunchedRequested = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).requestTime(now).build();
+		Machine unlaunchedRequestedClone = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).requestTime(now).build();
 
 		// with service state
-		Machine withServiceState = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.BOOTING, null, null, null, null);
-		Machine withServiceStateClone = new Machine("i-1",
-				MachineState.REQUESTED, ServiceState.BOOTING, null, null, null,
-				null);
+		Machine withServiceState = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED)
+				.serviceState(ServiceState.BOOTING).requestTime(now).build();
+		Machine withServiceStateClone = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED)
+				.serviceState(ServiceState.BOOTING).requestTime(now).build();
 
 		// with service state
-		Machine withIps = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.BOOTING, now, now, Arrays.asList("1.2.3.4"),
-				Arrays.asList("1.2.3.5"));
-		Machine withIpsClone = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.BOOTING, now, now, Arrays.asList("1.2.3.4"),
-				Arrays.asList("1.2.3.5"));
+		Machine withIps = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED)
+				.serviceState(ServiceState.BOOTING).requestTime(now)
+				.launchTime(now).publicIps(ips("1.2.3.4"))
+				.privateIps(ips("1.2.3.5")).build();
+		Machine withIpsClone = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED)
+				.serviceState(ServiceState.BOOTING).requestTime(now)
+				.launchTime(now).publicIps(ips("1.2.3.4"))
+				.privateIps(ips("1.2.3.5")).build();
 
 		// with meta data and membership status
 		JsonObject metadata = JsonUtils.parseJsonString(
 				"{'a': 1, 'b': 2, c: {'d': 4}}").getAsJsonObject();
-		Machine withMetadata = new Machine("i-1", MachineState.RUNNING,
-				new MembershipStatus(true, false), ServiceState.UNKNOWN,
-				UtcTime.parse("2014-01-10T08:00:00Z"),
-				UtcTime.parse("2014-01-10T08:00:00Z"), ips("1.2.3.4"),
-				ips("1.2.3.5"), metadata);
-		Machine withMetadataClone = new Machine("i-1", MachineState.RUNNING,
-				new MembershipStatus(true, false), ServiceState.UNKNOWN,
-				UtcTime.parse("2014-01-10T08:00:00Z"),
-				UtcTime.parse("2014-01-10T08:00:00Z"), ips("1.2.3.4"),
-				ips("1.2.3.5"), metadata);
+		Machine withMetadata = Machine.builder().id("i-1")
+				.machineState(MachineState.RUNNING)
+				.membershipStatus(new MembershipStatus(true, false))
+				.requestTime(UtcTime.parse("2014-01-10T08:00:00Z"))
+				.launchTime(UtcTime.parse("2014-01-10T08:00:00Z"))
+				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5"))
+				.metadata(metadata).build();
+		Machine withMetadataClone = Machine.builder().id("i-1")
+				.machineState(MachineState.RUNNING)
+				.membershipStatus(new MembershipStatus(true, false))
+				.requestTime(UtcTime.parse("2014-01-10T08:00:00Z"))
+				.launchTime(UtcTime.parse("2014-01-10T08:00:00Z"))
+				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5"))
+				.metadata(metadata).build();
 
 		assertEquals(noLaunchTime, noLaunchTimeClone);
 		assertEquals(unlaunchedRequested, unlaunchedRequestedClone);
@@ -105,114 +113,93 @@ public class TestMachine {
 	 */
 	@Test
 	public void testHashCode() throws IOException {
+		final DateTime now = UtcTime.now();
 		// with null launch time
-		Machine noLaunchTime = new Machine("i-1", MachineState.REQUESTED, null,
-				null, null, null);
-		Machine noLaunchTimeClone = new Machine("i-1", MachineState.REQUESTED,
-				null, null, null, null);
-		assertEquals(noLaunchTime.hashCode(), noLaunchTimeClone.hashCode());
+		Machine noLaunchTime = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).build();
+		Machine noLaunchTimeClone = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).build();
+
+		// with set requestTime, null launch time
+		Machine unlaunchedRequested = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).requestTime(now).build();
+		Machine unlaunchedRequestedClone = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).requestTime(now).build();
 
 		// with service state
-		Machine withServiceState = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.BOOTING, null, null, null, null);
-		Machine withServiceStateClone = new Machine("i-1",
-				MachineState.REQUESTED, ServiceState.BOOTING, null, null, null,
-				null);
-		assertEquals(withServiceState.hashCode(),
-				withServiceStateClone.hashCode());
+		Machine withServiceState = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED)
+				.serviceState(ServiceState.BOOTING).requestTime(now).build();
+		Machine withServiceStateClone = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED)
+				.serviceState(ServiceState.BOOTING).requestTime(now).build();
 
-		// with IP addresses
-		DateTime now = UtcTime.now();
-		Machine withIps = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.BOOTING, now, now, Arrays.asList("1.2.3.4"),
-				Arrays.asList("1.2.3.5"));
-		Machine withIpsClone = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.BOOTING, now, now, Arrays.asList("1.2.3.4"),
-				Arrays.asList("1.2.3.5"));
+		// with service state
+		Machine withIps = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED)
+				.serviceState(ServiceState.BOOTING).requestTime(now)
+				.launchTime(now).publicIps(ips("1.2.3.4"))
+				.privateIps(ips("1.2.3.5")).build();
+		Machine withIpsClone = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED)
+				.serviceState(ServiceState.BOOTING).requestTime(now)
+				.launchTime(now).publicIps(ips("1.2.3.4"))
+				.privateIps(ips("1.2.3.5")).build();
 
 		// with meta data and membership status
 		JsonObject metadata = JsonUtils.parseJsonString(
 				"{'a': 1, 'b': 2, c: {'d': 4}}").getAsJsonObject();
-		Machine withMetadata = new Machine("i-1", MachineState.RUNNING,
-				new MembershipStatus(true, false), ServiceState.UNKNOWN,
-				UtcTime.parse("2014-01-10T08:00:00Z"),
-				UtcTime.parse("2014-01-10T08:00:00Z"), ips("1.2.3.4"),
-				ips("1.2.3.5"), metadata);
-		Machine withMetadataClone = new Machine("i-1", MachineState.RUNNING,
-				new MembershipStatus(true, false), ServiceState.UNKNOWN,
-				UtcTime.parse("2014-01-10T08:00:00Z"),
-				UtcTime.parse("2014-01-10T08:00:00Z"), ips("1.2.3.4"),
-				ips("1.2.3.5"), metadata);
+		Machine withMetadata = Machine.builder().id("i-1")
+				.machineState(MachineState.RUNNING)
+				.membershipStatus(new MembershipStatus(true, false))
+				.requestTime(UtcTime.parse("2014-01-10T08:00:00Z"))
+				.launchTime(UtcTime.parse("2014-01-10T08:00:00Z"))
+				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5"))
+				.metadata(metadata).build();
+		Machine withMetadataClone = Machine.builder().id("i-1")
+				.machineState(MachineState.RUNNING)
+				.membershipStatus(new MembershipStatus(true, false))
+				.requestTime(UtcTime.parse("2014-01-10T08:00:00Z"))
+				.launchTime(UtcTime.parse("2014-01-10T08:00:00Z"))
+				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5"))
+				.metadata(metadata).build();
 
+		assertEquals(noLaunchTime.hashCode(), noLaunchTimeClone.hashCode());
+		assertEquals(unlaunchedRequested.hashCode(),
+				unlaunchedRequestedClone.hashCode());
+		assertEquals(withServiceState.hashCode(),
+				withServiceStateClone.hashCode());
 		assertEquals(withMetadata.hashCode(), withMetadataClone.hashCode());
 		assertEquals(withIps.hashCode(), withIpsClone.hashCode());
 		assertEquals(withMetadata.hashCode(), withMetadataClone.hashCode());
 
 		assertFalse(noLaunchTime.hashCode() == withIps.hashCode());
 		assertFalse(noLaunchTime.hashCode() == withServiceState.hashCode());
+		assertFalse(noLaunchTime.hashCode() == unlaunchedRequested.hashCode());
+
 		assertFalse(withIps.hashCode() == withServiceState.hashCode());
-		assertFalse(withMetadata.hashCode() == withIps.hashCode());
+		assertFalse(withIps.hashCode() == unlaunchedRequested.hashCode());
+		assertFalse(withIps.hashCode() == withMetadata.hashCode());
+
+		assertFalse(withMetadata.hashCode() == withServiceState.hashCode());
+		assertFalse(withMetadata.hashCode() == unlaunchedRequested.hashCode());
+
+		assertFalse(withServiceState.hashCode() == unlaunchedRequested
+				.hashCode());
 	}
 
 	@Test
 	public void createWithoutIpAddresses() {
-		Machine noIpAddresses = new Machine("i-1", MachineState.REQUESTED,
-				null, null, null, null);
+		Machine noIpAddresses = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).build();
 		assertThat(noIpAddresses.getPrivateIps(), is(ips()));
 		assertThat(noIpAddresses.getPublicIps(), is(ips()));
 
-		noIpAddresses = new Machine("i-1", MachineState.REQUESTED, null, null,
-				ips(), ips());
+		noIpAddresses = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).publicIps(ips())
+				.privateIps(ips()).build();
 		assertThat(noIpAddresses.getPrivateIps(), is(ips()));
 		assertThat(noIpAddresses.getPublicIps(), is(ips()));
-	}
-
-	@Test
-	public void createWithOnlyPublicIpAddress() {
-		Machine noIpAddresses = new Machine("i-1", MachineState.REQUESTED,
-				null, null, ips("1.2.3.4"), null);
-		assertThat(noIpAddresses.getPrivateIps(), is(ips()));
-		assertThat(noIpAddresses.getPublicIps(), is(ips("1.2.3.4")));
-	}
-
-	@Test
-	public void createWithOnlyPrivateIpAddress() {
-		Machine noIpAddresses = new Machine("i-1", MachineState.REQUESTED,
-				null, null, null, ips("1.2.3.4"));
-		assertThat(noIpAddresses.getPublicIps(), is(ips()));
-		assertThat(noIpAddresses.getPrivateIps(), is(ips("1.2.3.4")));
-	}
-
-	/**
-	 * Make sure the default {@link MembershipStatus} is set when none is
-	 * specified on construction.
-	 */
-	@Test
-	public void createWithoutMembershipStatus() {
-		Machine defaultMembershipStatus = new Machine("i-1",
-				MachineState.REQUESTED, null, null, null, null);
-		assertThat(defaultMembershipStatus.getMembershipStatus(),
-				is(MembershipStatus.defaultStatus()));
-	}
-
-	/**
-	 * Make sure a default {@link ServiceState} is set when none is specified on
-	 * construction.
-	 */
-	@Test
-	public void createWithoutServiceState() {
-		Machine defaultServiceState = new Machine("i-1",
-				MachineState.REQUESTED, null, null, null, null);
-		assertThat(defaultServiceState.getServiceState(),
-				is(ServiceState.UNKNOWN));
-	}
-
-	@Test
-	public void createWithServiceState() {
-		Machine withServiceState = new Machine("i-1", MachineState.REQUESTED,
-				ServiceState.IN_SERVICE, null, null, null, ips("1.2.3.4"));
-		assertThat(withServiceState.getServiceState(),
-				is(ServiceState.IN_SERVICE));
 	}
 
 	/**
@@ -227,12 +214,12 @@ public class TestMachine {
 		DateTime noon = UtcTime.parse("2015-02-13T12:00:00.000Z");
 		DateTime pm = UtcTime.parse("2015-02-13T15:00:00.000Z");
 
-		Machine first = new Machine("i-1", MachineState.RUNNING,
-				ServiceState.IN_SERVICE, am, am, null, null);
-		Machine second = new Machine("i-2", MachineState.PENDING,
-				ServiceState.BOOTING, noon, noon, null, null);
-		Machine third = new Machine("i-3", MachineState.REQUESTED,
-				ServiceState.UNKNOWN, pm, pm, null, null);
+		Machine first = Machine.builder().id("i-1")
+				.machineState(MachineState.RUNNING).launchTime(am).build();
+		Machine second = Machine.builder().id("i-2")
+				.machineState(MachineState.PENDING).launchTime(noon).build();
+		Machine third = Machine.builder().id("i-3")
+				.machineState(MachineState.REQUESTED).launchTime(pm).build();
 
 		Comparator<Machine> earliestFirst = new Comparator<Machine>() {
 			@Override
@@ -263,11 +250,13 @@ public class TestMachine {
 	public void testWithMetadata() {
 		JsonObject metadata = JsonUtils.parseJsonString(
 				"{'a': 1, 'b': 2, c: {'d': 4}}").getAsJsonObject();
-		Machine original = new Machine("i-1", MachineState.RUNNING,
-				new MembershipStatus(true, false), ServiceState.UNKNOWN,
-				UtcTime.parse("2014-01-10T08:00:00Z"),
-				UtcTime.parse("2014-01-10T08:00:00Z"), ips("1.2.3.4"),
-				ips("1.2.3.5"), metadata);
+		Machine original = Machine.builder().id("i-1")
+				.machineState(MachineState.RUNNING)
+				.membershipStatus(new MembershipStatus(true, false))
+				.requestTime(UtcTime.parse("2014-01-10T08:00:00Z"))
+				.launchTime(UtcTime.parse("2014-01-10T08:00:00Z"))
+				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5"))
+				.metadata(metadata).build();
 
 		// other metadata
 		JsonObject otherMetadata = JsonUtils

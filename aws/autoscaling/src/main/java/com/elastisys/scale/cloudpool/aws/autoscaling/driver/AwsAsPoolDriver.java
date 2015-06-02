@@ -168,9 +168,9 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 		List<Machine> requestedInstances = Lists.newArrayList();
 		for (int i = 0; i < missingInstances; i++) {
 			String pseudoId = String.format("%s%d", REQUESTED_ID_PREFIX, i + 1);
-			requestedInstances.add(new Machine(pseudoId,
-					MachineState.REQUESTED, ServiceState.UNKNOWN, null, null,
-					null, null));
+			requestedInstances.add(Machine.builder().id(pseudoId)
+					.machineState(MachineState.REQUESTED).build());
+
 		}
 		return requestedInstances;
 	}

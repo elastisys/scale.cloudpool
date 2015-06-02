@@ -35,7 +35,8 @@ public class TestUtils {
 	 */
 	public static Machine machineNoIp(String id, MachineState state,
 			DateTime requesttime, DateTime launchtime) {
-		return new Machine(id, state, requesttime, launchtime, null, null);
+		return Machine.builder().id(id).machineState(state)
+				.requestTime(requesttime).launchTime(launchtime).build();
 	}
 
 	/**
@@ -62,8 +63,8 @@ public class TestUtils {
 	 */
 	public static Machine machine(String id, DateTime requesttime,
 			DateTime launchtime) {
-		return new Machine(id, MachineState.RUNNING, requesttime, launchtime,
-				null, null);
+		return Machine.builder().id(id).machineState(MachineState.RUNNING)
+				.requestTime(requesttime).launchTime(launchtime).build();
 	}
 
 	/**
@@ -92,8 +93,9 @@ public class TestUtils {
 	public static Machine machine(String id, MachineState state,
 			DateTime requesttime, DateTime launchtime, List<String> publicIps,
 			List<String> privateIps) {
-		return new Machine(id, state, requesttime, launchtime, publicIps,
-				privateIps);
+		return Machine.builder().id(id).machineState(state)
+				.requestTime(requesttime).launchTime(launchtime)
+				.publicIps(publicIps).privateIps(privateIps).build();
 	}
 
 	/**
