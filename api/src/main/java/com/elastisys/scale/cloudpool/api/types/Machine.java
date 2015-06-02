@@ -895,7 +895,7 @@ public class Machine {
 		 * @param publicIps
 		 * @return
 		 */
-		public Builder publicIps(List<String> publicIps) {
+		public Builder publicIps(Collection<String> publicIps) {
 			checkArgument(publicIps != null, "publicIps cannot be null");
 			this.publicIps.addAll(publicIps);
 			return this;
@@ -919,7 +919,7 @@ public class Machine {
 		 * @param privateIps
 		 * @return
 		 */
-		public Builder privateIps(List<String> privateIps) {
+		public Builder privateIps(Collection<String> privateIps) {
 			checkArgument(privateIps != null, "privateIps cannot be null");
 			this.privateIps.addAll(privateIps);
 			return this;
