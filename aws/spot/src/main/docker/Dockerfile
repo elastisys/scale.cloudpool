@@ -1,4 +1,4 @@
-FROM dockerfile/java:openjdk-7-jre
+FROM java:openjdk-7-jre
 MAINTAINER Elastisys <techteam@elastisys.com>
 
 RUN apt-get update -y && apt-get install -y \
