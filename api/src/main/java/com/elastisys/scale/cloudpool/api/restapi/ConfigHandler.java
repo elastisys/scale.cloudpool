@@ -29,12 +29,10 @@ import com.google.gson.JsonObject;
 /**
  * A REST response handler that handles requests to get ({@code GET}) and set (
  * {@code POST}) the {@link CloudPool} configuration.
- * <p/>
- * <i>Note: this is an optional extension of the {@link CloudPool} REST API, and
- * is merely provided to facilitate remote (re-)configuration of a
- * {@link CloudPool}.</i>
  */
 @Path("/config")
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
 public class ConfigHandler {
 	private final static Logger LOG = LoggerFactory
 			.getLogger(ConfigHandler.class);
@@ -133,20 +131,16 @@ public class ConfigHandler {
 
 	/**
 	 * Retrieves the configuration currently set for the {@link CloudPool}.
-	 * <p/>
-	 * <i>Note: this is an optional extension of the cloud pool REST API
-	 * provided to facilitate remote re-configuration of a {@link CloudPool}. A
-	 * cloud pool is not required to respond to this type of requests.</i>
 	 *
 	 * @return <ul>
 	 *         <li>On success: HTTP response code 200 with a JSON-formatted
-	 *         configuration.</li> <li>On error: HTTP response code 500 with an
+	 *         configuration.</li>
+	 *         <li>On error: HTTP response 404 (Not Found) if no configuration
+	 *         has been set. On other errors: HTTP response code 500 with an
 	 *         {@link ErrorType} message.</li>
 	 *         </ul>
 	 */
 	@GET
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public Response getConfig() {
 		LOG.info("GET /config");
 		try {
@@ -169,26 +163,22 @@ public class ConfigHandler {
 
 	/**
 	 * Sets the configuration for the {@link CloudPool}.
-	 * <p/>
-	 * <i>Note: this is an optional extension of the cloud pool REST API
-	 * provided to facilitate remote re-configuration of a {@link CloudPool}. A
-	 * cloud pool is not required to respond to this type of requests.</i>
 	 *
 	 * @param configuration
 	 *            The (JSON) configuration document to set.
 	 * @return <ul>
-	 *         <li>On success: HTTP response code 200 without content.</li> <li>
+	 *         <li>On success: HTTP response code 200 without content.</li>
+	 *         <li>
 	 *         On error:
 	 *         <ul>
 	 *         <li>on illegal input: HTTP response code 400 with an
-	 *         {@link ErrorType} message</li> <li>otherwise: HTTP response code
-	 *         500 with an {@link ErrorType} message</li>
+	 *         {@link ErrorType} message</li>
+	 *         <li>otherwise: HTTP response code 500 with an {@link ErrorType}
+	 *         message</li>
 	 *         </ul>
 	 *         </ul>
 	 */
 	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public Response setAndStoreConfig(JsonObject configuration) {
 		LOG.info("POST /config");
 		try {

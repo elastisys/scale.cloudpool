@@ -15,6 +15,7 @@ import org.openstack4j.model.compute.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.elastisys.scale.cloudpool.api.ApiVersion;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.Machine;
@@ -57,12 +58,12 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 	/**
 	 * Supported API versions by this implementation.
 	 */
-	public final static List<String> supportedApiVersions = Lists
-			.<String> newArrayList("3.0", "3.1");
+	private final static List<String> supportedApiVersions = Arrays
+			.asList(ApiVersion.LATEST);
 	/**
 	 * Cloud pool metadata for this implementation.
 	 */
-	public final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
+	private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
 			PoolIdentifier.OPENSTACK, supportedApiVersions);
 
 	/**
@@ -165,7 +166,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 
 	@Override
 	public void attachMachine(String machineId) throws NotFoundException,
-	CloudPoolDriverException {
+			CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 
 		Map<String, String> tags = ImmutableMap.of(Constants.CLOUD_POOL_TAG,
@@ -184,7 +185,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 
 	@Override
 	public void detachMachine(String machineId) throws NotFoundException,
-	CloudPoolDriverException {
+			CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 
 		// verify that machine exists in group

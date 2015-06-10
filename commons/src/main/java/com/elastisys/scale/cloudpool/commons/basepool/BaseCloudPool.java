@@ -1,7 +1,6 @@
 package com.elastisys.scale.cloudpool.commons.basepool;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Math.max;
 import static java.lang.String.format;
 
@@ -24,8 +23,11 @@ import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
+import com.elastisys.scale.cloudpool.api.NotConfiguredException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
+import com.elastisys.scale.cloudpool.api.NotStartedException;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
+import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
@@ -301,11 +303,13 @@ public class BaseCloudPool implements CloudPool {
 
 		synchronized (this.updateLock) {
 			this.config.set(configuration);
+			// re-configure driver
+			this.cloudDriver.configure(configuration);
 
 			if (isStarted()) {
 				stop();
+				start();
 			}
-			start();
 		}
 	}
 
@@ -333,20 +337,15 @@ public class BaseCloudPool implements CloudPool {
 		return Optional.of(JsonUtils.toJson(currentConfig).getAsJsonObject());
 	}
 
-	private void start() throws CloudPoolException {
-		checkState(getConfiguration().isPresent(),
-				"attempt to start cloud pool before being configured");
+	@Override
+	public void start() throws NotConfiguredException {
+		ensureConfigured();
+
 		if (isStarted()) {
 			return;
 		}
 		LOG.info("starting {} driving a {}", getClass().getSimpleName(),
 				this.cloudDriver.getClass().getSimpleName());
-
-		// re-configure driver
-		LOG.info("configuring cloud pool '{}'", config().getCloudPool()
-				.getName());
-		this.cloudDriver.configure(config());
-		determineDesiredSizeIfUnset();
 
 		// start pool update task that periodically runs updateMachinepool()
 		int poolUpdatePeriod = config().getPoolUpdatePeriod();
@@ -356,7 +355,41 @@ public class BaseCloudPool implements CloudPool {
 
 		setUpAlerters(config());
 		this.started.set(true);
+
+		determineDesiredSizeIfUnset();
 		LOG.info(getClass().getSimpleName() + " started.");
+	}
+
+	@Override
+	public void stop() {
+		if (isStarted()) {
+			LOG.debug("stopping {} ...", getClass().getSimpleName());
+			// cancel tasks (allow any running tasks to finish)
+			this.poolUpdateTask.cancel(false);
+			this.poolUpdateTask = null;
+			takeDownAlerters();
+			this.started.set(false);
+		}
+		LOG.info(getClass().getSimpleName() + " stopped.");
+	}
+
+	@Override
+	public CloudPoolStatus getStatus() {
+		return new CloudPoolStatus(isStarted(), isConfigured());
+	}
+
+	private boolean isConfigured() {
+		return getConfiguration().isPresent();
+	}
+
+	/**
+	 * Checks that a configuration has been set for the {@link CloudPool} or
+	 * throws a {@link NotConfiguredException}.
+	 */
+	private void ensureConfigured() throws NotConfiguredException {
+		if (!isConfigured()) {
+			throw new NotConfiguredException("cloud pool is not configured");
+		}
 	}
 
 	/**
@@ -405,26 +438,13 @@ public class BaseCloudPool implements CloudPool {
 				this.desiredSize, allocated, effectiveSize);
 	}
 
-	private void stop() {
-		if (isStarted()) {
-			LOG.debug("stopping {} ...", getClass().getSimpleName());
-			// cancel tasks (allow any running tasks to finish)
-			this.poolUpdateTask.cancel(false);
-			this.poolUpdateTask = null;
-			takeDownAlerters();
-			this.started.set(false);
-		}
-		LOG.info(getClass().getSimpleName() + " stopped.");
-	}
-
 	boolean isStarted() {
 		return this.started.get();
 	}
 
 	@Override
 	public MachinePool getMachinePool() throws CloudPoolException {
-		checkState(getConfiguration().isPresent(),
-				"cloud pool needs to be configured before use");
+		ensureStarted();
 
 		List<Machine> machines = listMachines();
 		MachinePool pool = new MachinePool(machines, UtcTime.now());
@@ -433,14 +453,30 @@ public class BaseCloudPool implements CloudPool {
 		return pool;
 	}
 
+	/**
+	 * Ensures that the {@link CloudPool} has been started or otherwise throws a
+	 * {@link NotStartedException}.
+	 */
+	private void ensureStarted() throws NotStartedException {
+		if (!isStarted()) {
+			throw new NotStartedException(
+					"attempt to use cloud pool before being started");
+		}
+	}
+
+	/**
+	 * Returns the desired size or <code>null</code> if none has been
+	 * set/determined.
+	 *
+	 * @return
+	 */
 	Integer desiredSize() {
 		return this.desiredSize.get();
 	}
 
 	@Override
 	public PoolSizeSummary getPoolSize() throws CloudPoolException {
-		checkState(getConfiguration().isPresent(),
-				"cloud pool needs to be configured before use");
+		ensureStarted();
 
 		MachinePool pool = getMachinePool();
 		return new PoolSizeSummary(this.desiredSize.get(), pool
@@ -462,8 +498,7 @@ public class BaseCloudPool implements CloudPool {
 	@Override
 	public void setDesiredSize(int desiredSize)
 			throws IllegalArgumentException, CloudPoolException {
-		checkState(getConfiguration().isPresent(),
-				"cloud pool needs to be configured before use");
+		ensureStarted();
 		checkArgument(desiredSize >= 0, "negative desired pool size");
 
 		// prevent concurrent pool modifications
@@ -476,8 +511,7 @@ public class BaseCloudPool implements CloudPool {
 	@Override
 	public void terminateMachine(String machineId, boolean decrementDesiredSize)
 			throws IllegalArgumentException, CloudPoolException {
-		checkState(getConfiguration().isPresent(),
-				"cloud pool needs to be configured before use");
+		ensureStarted();
 
 		// prevent concurrent pool modifications
 		synchronized (this.updateLock) {
@@ -497,8 +531,7 @@ public class BaseCloudPool implements CloudPool {
 	@Override
 	public void attachMachine(String machineId)
 			throws IllegalArgumentException, CloudPoolException {
-		checkState(getConfiguration().isPresent(),
-				"cloud pool needs to be configured before use");
+		ensureStarted();
 
 		// prevent concurrent pool modifications
 		synchronized (this.updateLock) {
@@ -513,8 +546,7 @@ public class BaseCloudPool implements CloudPool {
 	@Override
 	public void detachMachine(String machineId, boolean decrementDesiredSize)
 			throws IllegalArgumentException, CloudPoolException {
-		checkState(getConfiguration().isPresent(),
-				"cloud pool needs to be configured before use");
+		ensureStarted();
 
 		// prevent concurrent pool modifications
 		synchronized (this.updateLock) {
@@ -534,8 +566,7 @@ public class BaseCloudPool implements CloudPool {
 	@Override
 	public void setServiceState(String machineId, ServiceState serviceState)
 			throws IllegalArgumentException {
-		checkState(getConfiguration().isPresent(),
-				"cloud pool needs to be configured before use");
+		ensureStarted();
 
 		LOG.debug("service state {} assigned to {}", serviceState.name(),
 				machineId);
@@ -547,8 +578,7 @@ public class BaseCloudPool implements CloudPool {
 	public void setMembershipStatus(String machineId,
 			MembershipStatus membershipStatus) throws NotFoundException,
 			CloudPoolException {
-		checkState(getConfiguration().isPresent(),
-				"cloud pool needs to be configured before use");
+		ensureStarted();
 
 		LOG.debug("membership status {} assigned to {}", membershipStatus,
 				machineId);

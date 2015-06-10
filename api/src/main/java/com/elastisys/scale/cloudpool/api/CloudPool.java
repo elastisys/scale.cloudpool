@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.api;
 
 import com.elastisys.scale.cloudpool.api.restapi.CloudPoolHandler;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
+import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
@@ -41,11 +42,14 @@ public interface CloudPool {
 	/**
 	 * Updates the configuration for this {@link CloudPool}.
 	 * <p/>
+	 * This operation does not change the {@link CloudPool}'s started state --
+	 * if the {@link CloudPool} is started it should remain started, and if it
+	 * is in a stopped state it should remain stopped.
+	 * <p/>
 	 * The configuration is passed as a JSON object. It is up to the
 	 * {@link CloudPool} to validate and apply the contents of the configuration
-	 * as well as to reload internal data structures, restart periodical tasks
-	 * or perform whatever changes are needed for the new configuration to take
-	 * effect.
+	 * as well as to perform whatever changes are needed for the new
+	 * configuration to take effect.
 	 *
 	 * @param configuration
 	 *            The JSON configuration to be set.
@@ -64,6 +68,37 @@ public interface CloudPool {
 	 * @return A JSON configuration if set, {@link Optional#absent()} otherwise.
 	 */
 	Optional<JsonObject> getConfiguration();
+
+	/**
+	 * Starts the {@link CloudPool}.
+	 * <p/>
+	 * This will set the {@link CloudPool} in an activated state where it will
+	 * start to accept requests to query or modify the machine pool.
+	 * <p/>
+	 * If the {@link CloudPool} has not been configured the method will fail. If
+	 * the {@link CloudPool} is already started this is a no-op.
+	 *
+	 * @throws NotConfiguredException
+	 *             If the {@link CloudPool} has not been configured.
+	 */
+	void start() throws NotConfiguredException;
+
+	/**
+	 * Stops the {@link CloudPool}.
+	 * <p/>
+	 * A stopped {@link CloudPool} is in a passivated state and will not accept
+	 * any requests to query or modify the machine pool.
+	 * <p/>
+	 * If the {@link CloudPool} is already in a stopped state this is a no-op.
+	 */
+	void stop();
+
+	/**
+	 * Returns the execution status for the {@link CloudPool}.
+	 *
+	 * @return
+	 */
+	CloudPoolStatus getStatus();
 
 	/**
 	 * Returns a list of the members of the cloud pool.
@@ -92,8 +127,10 @@ public interface CloudPool {
 	 *
 	 * @throws CloudPoolException
 	 *             If the operation could not be completed.
+	 * @throws NotStartedException
+	 *             If the {@link CloudPool} is not started.
 	 */
-	MachinePool getMachinePool() throws CloudPoolException;
+	MachinePool getMachinePool() throws CloudPoolException, NotStartedException;
 
 	/**
 	 * Returns the current size of the {@link MachinePool} -- both in terms of
@@ -102,8 +139,11 @@ public interface CloudPool {
 	 * @return The current {@link PoolSizeSummary}.
 	 * @throws CloudPoolException
 	 *             If the operation could not be completed.
+	 * @throws NotStartedException
+	 *             If the {@link CloudPool} is not started.
 	 */
-	PoolSizeSummary getPoolSize() throws CloudPoolException;
+	PoolSizeSummary getPoolSize() throws CloudPoolException,
+			NotStartedException;
 
 	/**
 	 * Sets the desired number of machines in the machine pool. This method is
@@ -124,9 +164,11 @@ public interface CloudPool {
 	 *             If the desired size is illegal.
 	 * @throws CloudPoolException
 	 *             If the operation could not be completed.
+	 * @throws NotStartedException
+	 *             If the {@link CloudPool} is not started.
 	 */
 	void setDesiredSize(int desiredSize) throws IllegalArgumentException,
-			CloudPoolException;
+			CloudPoolException, NotStartedException;
 
 	/**
 	 * Terminates a particular machine pool member. The caller can control if a
@@ -143,9 +185,11 @@ public interface CloudPool {
 	 *             If the specified machine is not a member of the pool.
 	 * @throws CloudPoolException
 	 *             If the operation could not be completed.
+	 * @throws NotStartedException
+	 *             If the {@link CloudPool} is not started.
 	 */
 	void terminateMachine(String machineId, boolean decrementDesiredSize)
-			throws NotFoundException, CloudPoolException;
+			throws NotFoundException, CloudPoolException, NotStartedException;
 
 	/**
 	 * Sets the service state of a given machine pool member. Setting the
@@ -162,9 +206,11 @@ public interface CloudPool {
 	 *             If the specified machine is not a member of the pool.
 	 * @throws CloudPoolException
 	 *             If the operation could not be completed.
+	 * @throws NotStartedException
+	 *             If the {@link CloudPool} is not started.
 	 */
 	void setServiceState(String machineId, ServiceState serviceState)
-			throws NotFoundException, CloudPoolException;
+			throws NotFoundException, CloudPoolException, NotStartedException;
 
 	/**
 	 * Sets the membership status of a given pool member.
@@ -180,9 +226,11 @@ public interface CloudPool {
 	 *            The {@link MembershipStatus} to set.
 	 * @throws NotFoundException
 	 * @throws CloudPoolException
+	 * @throws NotStartedException
+	 *             If the {@link CloudPool} is not started.
 	 */
 	void setMembershipStatus(String machineId, MembershipStatus membershipStatus)
-			throws NotFoundException, CloudPoolException;
+			throws NotFoundException, CloudPoolException, NotStartedException;
 
 	/**
 	 * Attaches an already running machine instance to the pool, growing the
@@ -195,9 +243,11 @@ public interface CloudPool {
 	 *             If the specified machine does not exist.
 	 * @throws CloudPoolException
 	 *             If the operation could not be completed.
+	 * @throws NotStartedException
+	 *             If the {@link CloudPool} is not started.
 	 */
 	void attachMachine(String machineId) throws NotFoundException,
-			CloudPoolException;
+			CloudPoolException, NotStartedException;
 
 	/**
 	 * Removes a member from the pool without terminating it. The machine keeps
@@ -215,9 +265,11 @@ public interface CloudPool {
 	 *             If the specified machine is not a member of the pool.
 	 * @throws CloudPoolException
 	 *             If the operation could not be completed.
+	 * @throws NotStartedException
+	 *             If the {@link CloudPool} is not started.
 	 */
 	void detachMachine(String machineId, boolean decrementDesiredSize)
-			throws NotFoundException, CloudPoolException;
+			throws NotFoundException, CloudPoolException, NotStartedException;
 
 	/**
 	 * @return A {@link CloudPoolMetadata} object that describes certain static
@@ -225,5 +277,4 @@ public interface CloudPool {
 	 *         manages.
 	 */
 	CloudPoolMetadata getMetadata();
-
 }

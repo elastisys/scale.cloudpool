@@ -4,7 +4,6 @@ package com.elastisys.scale.cloudpool.api;
  * Thrown by a {@link CloudPool} to indicate an error condition.
  *
  * @see CloudPool
- *
  */
 public class CloudPoolException extends RuntimeException {
 

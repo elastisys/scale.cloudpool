@@ -34,7 +34,9 @@ import org.junit.Test;
 import org.mockito.Matchers;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
+import com.elastisys.scale.cloudpool.api.NotConfiguredException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
+import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
@@ -78,7 +80,6 @@ public class TestRestApi {
 		options.sslKeyStore = SERVER_KEYSTORE;
 		options.sslKeyStorePassword = SERVER_KEYSTORE_PASSWORD;
 		options.requireClientCert = false;
-		options.enableConfigHandler = true;
 		options.storageDir = storageDir;
 
 		server = CloudPoolServer.createServer(cloudPool, options);
@@ -88,6 +89,10 @@ public class TestRestApi {
 	@Before
 	public void beforeTestMethod() {
 		reset(cloudPool);
+		// unless otherwise specified by test methods, cloudpool is configured
+		// and started
+		CloudPoolStatus startedStatus = new CloudPoolStatus(true, true);
+		when(cloudPool.getStatus()).thenReturn(startedStatus);
 	}
 
 	@AfterClass
@@ -195,6 +200,74 @@ public class TestRestApi {
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
 	}
 
+	@Test
+	public void testStart() {
+		// set up mocked cloud pool response
+		doNothing().when(cloudPool).start();
+
+		// do test
+		Client client = RestClients.httpsNoAuth();
+		Response response = client.target(url("/start"))
+				.request(MediaType.APPLICATION_JSON).post(null);
+		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
+
+		// verify dispatch from REST server to cloud pool
+		verify(cloudPool).start();
+		verifyNoMoreInteractions(cloudPool);
+	}
+
+	@Test
+	public void testStartBeforeConfigured() {
+		// set up mock to not be configured and fail start() call
+		doThrow(new NotConfiguredException("cannot start without config!"))
+				.when(cloudPool).start();
+
+		// do test
+		Client client = RestClients.httpsNoAuth();
+		Response response = client.target(url("/start"))
+				.request(MediaType.APPLICATION_JSON).post(null);
+		assertThat(response.getStatus(), is(Status.BAD_REQUEST.getStatusCode()));
+		assertThat(response.readEntity(String.class),
+				containsString("cannot start without config!"));
+
+		// verify dispatch from REST server to cloud pool
+		verify(cloudPool).start();
+		verifyNoMoreInteractions(cloudPool);
+	}
+
+	@Test
+	public void testStop() {
+		// set up mocked cloud pool response
+		doNothing().when(cloudPool).stop();
+
+		// do test
+		Client client = RestClients.httpsNoAuth();
+		Response response = client.target(url("/stop"))
+				.request(MediaType.APPLICATION_JSON).post(null);
+		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
+
+		// verify dispatch from REST server to cloud pool
+		verify(cloudPool).stop();
+		verifyNoMoreInteractions(cloudPool);
+	}
+
+	@Test
+	public void testGetStatus() {
+		// set up mocked cloud pool response
+		CloudPoolStatus status = new CloudPoolStatus(false, true);
+		when(cloudPool.getStatus()).thenReturn(status);
+
+		// do test
+		Client client = RestClients.httpsNoAuth();
+		Response response = client.target(url("/status")).request().get();
+		assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
+		assertThat(response.readEntity(CloudPoolStatus.class), is(status));
+
+		// verify dispatch from REST server to cloud pool
+		verify(cloudPool).getStatus();
+		verifyNoMoreInteractions(cloudPool);
+	}
+
 	/**
 	 * Verifies a {@code 200} response on a successful {@code GET /pool}.
 	 */
@@ -222,6 +295,24 @@ public class TestRestApi {
 
 		// verify dispatch from REST server to cloud pool
 		verify(cloudPool).getMachinePool();
+	}
+
+	@Test
+	public void testGetPoolBeforeStarted() {
+		// set up mocked cloud pool to not be in a started state
+		CloudPoolStatus notStartedStatus = new CloudPoolStatus(false, true);
+		when(cloudPool.getStatus()).thenReturn(notStartedStatus);
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Response response = client.target(url("/pool")).request().get();
+		assertThat(response.getStatus(),
+				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+		assertThat(
+				response.readEntity(String.class),
+				containsString("attempt to invoke cloudpool before being started"));
+
+		verify(cloudPool).getStatus();
 		verifyNoMoreInteractions(cloudPool);
 	}
 
@@ -262,6 +353,24 @@ public class TestRestApi {
 
 		// verify dispatch from REST server to cloud pool
 		verify(cloudPool).getPoolSize();
+	}
+
+	@Test
+	public void testGetPoolSizeBeforeStarted() {
+		// set up mocked cloud pool to not be in a started state
+		CloudPoolStatus notStartedStatus = new CloudPoolStatus(false, true);
+		when(cloudPool.getStatus()).thenReturn(notStartedStatus);
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Response response = client.target(url("/pool/size")).request().get();
+		assertThat(response.getStatus(),
+				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+		assertThat(
+				response.readEntity(String.class),
+				containsString("attempt to invoke cloudpool before being started"));
+
+		verify(cloudPool).getStatus();
 		verifyNoMoreInteractions(cloudPool);
 	}
 
@@ -301,6 +410,26 @@ public class TestRestApi {
 
 		// verify dispatch from REST server to cloud pool
 		verify(cloudPool).setDesiredSize(15);
+	}
+
+	@Test
+	public void testSetDesiredSizeBeforeStarted() {
+		// set up mocked cloud pool to not be in a started state
+		CloudPoolStatus notStartedStatus = new CloudPoolStatus(false, true);
+		when(cloudPool.getStatus()).thenReturn(notStartedStatus);
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Entity<String> request = Entity.json("{\"desiredSize\": 15}");
+		Response response = client.target(url("/pool/size")).request()
+				.post(request);
+		assertThat(response.getStatus(),
+				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+		assertThat(
+				response.readEntity(String.class),
+				containsString("attempt to invoke cloudpool before being started"));
+
+		verify(cloudPool).getStatus();
 		verifyNoMoreInteractions(cloudPool);
 	}
 
@@ -344,6 +473,27 @@ public class TestRestApi {
 
 		// verify dispatch from REST server to cloud pool
 		verify(cloudPool).terminateMachine("i-1", true);
+	}
+
+	@Test
+	public void testTerminateMachineBeforeStarted() {
+		// set up mocked cloud pool to not be in a started state
+		CloudPoolStatus notStartedStatus = new CloudPoolStatus(false, true);
+		when(cloudPool.getStatus()).thenReturn(notStartedStatus);
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Entity<String> request = Entity
+				.json("{\"decrementDesiredSize\": true}");
+		Response response = client.target(url("/pool/i-1/terminate")).request()
+				.post(request);
+		assertThat(response.getStatus(),
+				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+		assertThat(
+				response.readEntity(String.class),
+				containsString("attempt to invoke cloudpool before being started"));
+
+		verify(cloudPool).getStatus();
 		verifyNoMoreInteractions(cloudPool);
 	}
 
@@ -368,7 +518,6 @@ public class TestRestApi {
 
 		// verify dispatch from REST server to cloud pool
 		verify(cloudPool).terminateMachine("i-1", true);
-		verifyNoMoreInteractions(cloudPool);
 	}
 
 	/**
@@ -392,7 +541,6 @@ public class TestRestApi {
 
 		// verify dispatch from REST server to cloud pool
 		verify(cloudPool).terminateMachine("i-1", true);
-		verifyNoMoreInteractions(cloudPool);
 	}
 
 	/**
@@ -414,6 +562,27 @@ public class TestRestApi {
 
 		// verify dispatch from REST server to cloud pool
 		verify(cloudPool).detachMachine("i-1", true);
+	}
+
+	@Test
+	public void testDetachMachineBeforeStarted() {
+		// set up mocked cloud pool to not be in a started state
+		CloudPoolStatus notStartedStatus = new CloudPoolStatus(false, true);
+		when(cloudPool.getStatus()).thenReturn(notStartedStatus);
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Entity<String> request = Entity
+				.json("{\"decrementDesiredSize\": true}");
+		Response response = client.target(url("/pool/i-1/detach")).request()
+				.post(request);
+		assertThat(response.getStatus(),
+				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+		assertThat(
+				response.readEntity(String.class),
+				containsString("attempt to invoke cloudpool before being started"));
+
+		verify(cloudPool).getStatus();
 		verifyNoMoreInteractions(cloudPool);
 	}
 
@@ -437,7 +606,6 @@ public class TestRestApi {
 
 		// verify dispatch from REST server to cloud pool
 		verify(cloudPool).detachMachine("i-1", true);
-		verifyNoMoreInteractions(cloudPool);
 	}
 
 	/**
@@ -461,7 +629,6 @@ public class TestRestApi {
 
 		// verify dispatch from REST server to cloud pool
 		verify(cloudPool).detachMachine("i-1", true);
-		verifyNoMoreInteractions(cloudPool);
 	}
 
 	/**
@@ -481,6 +648,25 @@ public class TestRestApi {
 
 		// verify dispatch from REST server to cloud pool
 		verify(cloudPool).attachMachine("i-1");
+	}
+
+	@Test
+	public void testAttachMachineBeforeStarted() {
+		// set up mocked cloud pool to not be in a started state
+		CloudPoolStatus notStartedStatus = new CloudPoolStatus(false, true);
+		when(cloudPool.getStatus()).thenReturn(notStartedStatus);
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Response response = client.target(url("/pool/i-1/attach")).request()
+				.post(null);
+		assertThat(response.getStatus(),
+				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+		assertThat(
+				response.readEntity(String.class),
+				containsString("attempt to invoke cloudpool before being started"));
+
+		verify(cloudPool).getStatus();
 		verifyNoMoreInteractions(cloudPool);
 	}
 
@@ -502,7 +688,6 @@ public class TestRestApi {
 
 		// verify dispatch from REST server to cloud pool
 		verify(cloudPool).attachMachine("i-1");
-		verifyNoMoreInteractions(cloudPool);
 	}
 
 	/**
@@ -524,7 +709,6 @@ public class TestRestApi {
 
 		// verify dispatch from REST server to cloud pool
 		verify(cloudPool).attachMachine("i-1");
-		verifyNoMoreInteractions(cloudPool);
 	}
 
 	/**
@@ -547,6 +731,27 @@ public class TestRestApi {
 
 		// verify dispatch from REST server to cloud pool
 		verify(cloudPool).setServiceState("i-1", ServiceState.OUT_OF_SERVICE);
+	}
+
+	@Test
+	public void testSetServiceStateBeforeStarted() {
+		// set up mocked cloud pool to not be in a started state
+		CloudPoolStatus notStartedStatus = new CloudPoolStatus(false, true);
+		when(cloudPool.getStatus()).thenReturn(notStartedStatus);
+
+		// run test
+		Client client = RestClients.httpsNoAuth();
+		Entity<String> request = Entity
+				.json("{\"serviceState\": \"OUT_OF_SERVICE\"}");
+		Response response = client.target(url("/pool/i-1/serviceState"))
+				.request().post(request);
+		assertThat(response.getStatus(),
+				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+		assertThat(
+				response.readEntity(String.class),
+				containsString("attempt to invoke cloudpool before being started"));
+
+		verify(cloudPool).getStatus();
 		verifyNoMoreInteractions(cloudPool);
 	}
 
@@ -571,7 +776,6 @@ public class TestRestApi {
 
 		// verify dispatch from REST server to cloud pool
 		verify(cloudPool).setServiceState("i-1", ServiceState.OUT_OF_SERVICE);
-		verifyNoMoreInteractions(cloudPool);
 	}
 
 	/**
@@ -596,7 +800,6 @@ public class TestRestApi {
 
 		// verify dispatch from REST server to cloud pool
 		verify(cloudPool).setServiceState("i-1", ServiceState.OUT_OF_SERVICE);
-		verifyNoMoreInteractions(cloudPool);
 	}
 
 	/**

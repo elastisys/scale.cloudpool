@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
+import com.elastisys.scale.cloudpool.api.ApiVersion;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.Machine;
@@ -67,12 +68,12 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 	/**
 	 * Supported API versions by this implementation.
 	 */
-	public final static List<String> supportedApiVersions = Lists
-			.<String> newArrayList("3.0", "3.1");
+	private final static List<String> supportedApiVersions = Arrays
+			.asList(ApiVersion.LATEST);
 	/**
 	 * Cloud pool metadata for this implementation.
 	 */
-	public final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
+	private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
 			PoolIdentifier.AWS_AUTO_SCALING_GROUPS, supportedApiVersions);
 
 	/**

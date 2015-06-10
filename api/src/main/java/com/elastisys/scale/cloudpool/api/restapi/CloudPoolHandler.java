@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.api.restapi;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -21,6 +22,7 @@ import com.elastisys.scale.cloudpool.api.restapi.types.SetMembershipStatusReques
 import com.elastisys.scale.cloudpool.api.restapi.types.SetServiceStateRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.TerminateMachineRequest;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
+import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.commons.json.JsonUtils;
@@ -33,14 +35,17 @@ import com.google.gson.JsonObject;
  * cloud pool REST API documentation</a>.
  */
 @Path("/")
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
 public class CloudPoolHandler {
-	static Logger log = LoggerFactory.getLogger(CloudPoolHandler.class);
+	private static final Logger LOG = LoggerFactory
+			.getLogger(CloudPoolHandler.class);
 
 	/** The {@link CloudPool} implementation to which all work is delegated. */
 	private final CloudPool cloudPool;
 
 	public CloudPoolHandler(CloudPool cloudPool) {
-		log.info(getClass().getSimpleName() + " created");
+		LOG.info(getClass().getSimpleName() + " created");
 		this.cloudPool = cloudPool;
 	}
 
@@ -53,17 +58,17 @@ public class CloudPoolHandler {
 	 */
 	@GET
 	@Path("/pool")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public Response getPool() {
-		log.info("GET /pool");
+		LOG.info("GET /pool");
+		requireStartedCloudPool();
+
 		try {
 			MachinePool machinePool = this.cloudPool.getMachinePool();
 			return Response.ok(toJson(machinePool)).build();
 		} catch (Exception e) {
 			String message = "failure to process pool GET /pool: "
 					+ e.getMessage();
-			log.error(message, e);
+			LOG.error(message, e);
 			return Response.status(Status.INTERNAL_SERVER_ERROR)
 					.entity(new ErrorType(message, e)).build();
 		}
@@ -82,10 +87,10 @@ public class CloudPoolHandler {
 	 */
 	@POST
 	@Path("/pool/size")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public Response setDesiredSize(SetDesiredSizeRequest request) {
-		log.info("POST /pool/size");
+		LOG.info("POST /pool/size");
+		requireStartedCloudPool();
+
 		try {
 			this.cloudPool.setDesiredSize(request.getDesiredSize());
 			return Response.ok().build();
@@ -96,7 +101,7 @@ public class CloudPoolHandler {
 		} catch (Exception e) {
 			String message = "failure to process POST /pool/size: "
 					+ e.getMessage();
-			log.error(message, e);
+			LOG.error(message, e);
 			return Response.status(Status.INTERNAL_SERVER_ERROR)
 					.entity(new ErrorType(message, e)).build();
 		}
@@ -112,17 +117,17 @@ public class CloudPoolHandler {
 	 */
 	@GET
 	@Path("/pool/size")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public Response getPoolSize() {
-		log.info("GET /pool/size");
+		LOG.info("GET /pool/size");
+		requireStartedCloudPool();
+
 		try {
 			PoolSizeSummary poolSize = this.cloudPool.getPoolSize();
 			return Response.ok(toJson(poolSize)).build();
 		} catch (Exception e) {
 			String message = "failure to process GET /pool/size: "
 					+ e.getMessage();
-			log.error(message, e);
+			LOG.error(message, e);
 			return Response.status(Status.INTERNAL_SERVER_ERROR)
 					.entity(new ErrorType(message, e)).build();
 		}
@@ -138,17 +143,17 @@ public class CloudPoolHandler {
 	 */
 	@GET
 	@Path("/pool/metadata")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public Response getMetadata() {
-		log.info("GET /pool/metadata");
+		LOG.info("GET /pool/metadata");
+		requireStartedCloudPool();
+
 		try {
 			CloudPoolMetadata metadata = this.cloudPool.getMetadata();
 			return Response.ok(toJson(metadata)).build();
 		} catch (Exception e) {
 			String message = "failure to process GET /pool/metadata: "
 					+ e.getMessage();
-			log.error(message, e);
+			LOG.error(message, e);
 			return Response.status(Status.INTERNAL_SERVER_ERROR)
 					.entity(new ErrorType(message, e)).build();
 		}
@@ -168,11 +173,11 @@ public class CloudPoolHandler {
 	 */
 	@POST
 	@Path("/pool/{machine}/terminate")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public Response terminateMachine(@PathParam("machine") String machineId,
 			TerminateMachineRequest request) {
-		log.info("POST /pool/{}/terminate", machineId);
+		LOG.info("POST /pool/{}/terminate", machineId);
+		requireStartedCloudPool();
+
 		try {
 			this.cloudPool.terminateMachine(machineId,
 					request.isDecrementDesiredSize());
@@ -185,7 +190,7 @@ public class CloudPoolHandler {
 			String message = String.format(
 					"failure to process POST /pool/%s/terminate: %s",
 					machineId, e.getMessage());
-			log.error(message, e);
+			LOG.error(message, e);
 			return Response.status(Status.INTERNAL_SERVER_ERROR)
 					.entity(new ErrorType(message, e)).build();
 		}
@@ -207,11 +212,11 @@ public class CloudPoolHandler {
 	 */
 	@POST
 	@Path("/pool/{machine}/detach")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public Response detachMachine(@PathParam("machine") String machineId,
 			DetachMachineRequest request) {
-		log.info("POST /pool/{}/detach", machineId);
+		LOG.info("POST /pool/{}/detach", machineId);
+		requireStartedCloudPool();
+
 		try {
 			this.cloudPool.detachMachine(machineId,
 					request.isDecrementDesiredSize());
@@ -224,7 +229,7 @@ public class CloudPoolHandler {
 			String message = String.format(
 					"failure to process POST /pool/%s/detach: %s", machineId,
 					e.getMessage());
-			log.error(message, e);
+			LOG.error(message, e);
 			return Response.status(Status.INTERNAL_SERVER_ERROR)
 					.entity(new ErrorType(message, e)).build();
 		}
@@ -243,10 +248,10 @@ public class CloudPoolHandler {
 	 */
 	@POST
 	@Path("/pool/{machine}/attach")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public Response attachMachine(@PathParam("machine") String machineId) {
-		log.info("POST /pool/{}/attach", machineId);
+		LOG.info("POST /pool/{}/attach", machineId);
+		requireStartedCloudPool();
+
 		try {
 			this.cloudPool.attachMachine(machineId);
 			return Response.ok().build();
@@ -258,7 +263,7 @@ public class CloudPoolHandler {
 			String message = String.format(
 					"failure to process POST /pool/%s/attach: %s", machineId,
 					e.getMessage());
-			log.error(message, e);
+			LOG.error(message, e);
 			return Response.status(Status.INTERNAL_SERVER_ERROR)
 					.entity(new ErrorType(message, e)).build();
 		}
@@ -281,14 +286,14 @@ public class CloudPoolHandler {
 	 */
 	@POST
 	@Path("/pool/{machine}/serviceState")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public Response setServiceState(@PathParam("machine") String machineId,
 			SetServiceStateRequest request) {
-		log.info("POST /pool/{}/serviceState", machineId);
+		LOG.info("POST /pool/{}/serviceState", machineId);
+		requireStartedCloudPool();
+
 		try {
 			this.cloudPool
-			.setServiceState(machineId, request.getServiceState());
+					.setServiceState(machineId, request.getServiceState());
 			return Response.ok().build();
 		} catch (NotFoundException e) {
 			String message = "unrecognized machine: " + e.getMessage();
@@ -298,7 +303,7 @@ public class CloudPoolHandler {
 			String message = String.format(
 					"failure to process POST /pool/%s/serviceState: %s",
 					machineId, e.getMessage());
-			log.error(message, e);
+			LOG.error(message, e);
 			return Response.status(Status.INTERNAL_SERVER_ERROR)
 					.entity(new ErrorType(message, e)).build();
 		}
@@ -306,11 +311,11 @@ public class CloudPoolHandler {
 
 	@POST
 	@Path("/pool/{machine}/membershipStatus")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	public Response setMembershipStatus(@PathParam("machine") String machineId,
 			SetMembershipStatusRequest request) {
-		log.info("POST /pool/{}/membershipStatus", machineId);
+		LOG.info("POST /pool/{}/membershipStatus", machineId);
+		requireStartedCloudPool();
+
 		try {
 			this.cloudPool.setMembershipStatus(machineId,
 					request.getMembershipStatus());
@@ -323,7 +328,7 @@ public class CloudPoolHandler {
 			String message = String.format(
 					"failure to process POST /pool/%s/membershipStatus: %s",
 					machineId, e.getMessage());
-			log.error(message, e);
+			LOG.error(message, e);
 			return Response.status(Status.INTERNAL_SERVER_ERROR)
 					.entity(new ErrorType(message, e)).build();
 		}
@@ -339,4 +344,20 @@ public class CloudPoolHandler {
 		return JsonUtils.toJson(object).getAsJsonObject();
 	}
 
+	/**
+	 * Requires the {@link CloudPool} to be in a started (and configured) state,
+	 * or else throws an {@link InternalServerErrorException} which breaks the
+	 * request processing and responds with a
+	 * {@code 500 (Internal Server Error)} response.
+	 */
+	private void requireStartedCloudPool() {
+		CloudPoolStatus cloudPoolStatus = this.cloudPool.getStatus();
+		if (!cloudPoolStatus.isStarted()) {
+			String errorMessage = "attempt to invoke cloudpool before being started";
+			LOG.warn(errorMessage);
+			ErrorType error = new ErrorType(errorMessage);
+			throw new InternalServerErrorException(Response
+					.status(Status.INTERNAL_SERVER_ERROR).entity(error).build());
+		}
+	}
 }

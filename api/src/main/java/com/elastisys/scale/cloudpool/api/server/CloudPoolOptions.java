@@ -93,8 +93,11 @@ public class CloudPoolOptions {
 			+ "writable by the user running the cloud pool.")
 	public String storageDir = DEFAULT_STORAGE_DIR;
 
-	@Option(name = "--config-handler", handler = ExplicitBooleanOptionHandler.class, metaVar = "true|false", usage = "Publish a /config handler that allows configuration to be queried and updated.")
-	public boolean enableConfigHandler = true;
+	@Option(name = "--stopped", usage = "Puts the cloud pool in a stopped "
+			+ "state. By default, the cloud pool is started if an explicit "
+			+ "configuration is provided (--config) or if the cloud pool can "
+			+ "recover an old configration from the storage directory.")
+	public boolean stopped = false; // default
 
 	@Option(name = "--exit-handler", handler = ExplicitBooleanOptionHandler.class, metaVar = "true|false", usage = "Publish an /exit handler that shuts down the server on 'GET /exit'.")
 	public boolean enableExitHandler = false;

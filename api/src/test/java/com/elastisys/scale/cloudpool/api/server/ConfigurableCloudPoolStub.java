@@ -4,6 +4,7 @@ import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
+import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
@@ -12,12 +13,13 @@ import com.google.common.base.Optional;
 import com.google.gson.JsonObject;
 
 /**
- * A {@link CloudPool} stub that only supports setting/getting the
- * configuration.
+ * A {@link CloudPool} stub that only supports setting/getting the configuration
+ * and starting/stopping.
  */
 class ConfigurableCloudPoolStub implements CloudPool {
 
-	private JsonObject config;
+	private JsonObject config = null;
+	private boolean started = false;
 
 	@Override
 	public void configure(JsonObject configuration)
@@ -28,6 +30,22 @@ class ConfigurableCloudPoolStub implements CloudPool {
 	@Override
 	public Optional<JsonObject> getConfiguration() {
 		return Optional.fromNullable(this.config);
+	}
+
+	@Override
+	public void start() throws IllegalStateException {
+		this.started = true;
+	}
+
+	@Override
+	public void stop() {
+		this.started = false;
+	}
+
+	@Override
+	public CloudPoolStatus getStatus() {
+		boolean configured = this.config != null;
+		return new CloudPoolStatus(this.started, configured);
 	}
 
 	@Override
@@ -47,9 +65,8 @@ class ConfigurableCloudPoolStub implements CloudPool {
 	}
 
 	@Override
-	public void terminateMachine(String machineId,
-			boolean decrementDesiredSize) throws NotFoundException,
-			CloudPoolException {
+	public void terminateMachine(String machineId, boolean decrementDesiredSize)
+			throws NotFoundException, CloudPoolException {
 		throw new UnsupportedOperationException("not implemented");
 	}
 

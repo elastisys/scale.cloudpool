@@ -292,6 +292,7 @@ public class TestBaseCloudPoolConfiguration {
 		JsonObject validConfig = JsonUtils.parseJsonResource(configFile)
 				.getAsJsonObject();
 		this.cloudPool.configure(validConfig);
+		this.cloudPool.start();
 
 		assertTrue(this.cloudPool.isStarted());
 	}

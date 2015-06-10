@@ -10,7 +10,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -31,6 +30,7 @@ import com.elastisys.scale.cloudpool.api.restapi.types.SetMembershipStatusReques
 import com.elastisys.scale.cloudpool.api.restapi.types.SetServiceStateRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.TerminateMachineRequest;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
+import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
@@ -61,6 +61,10 @@ public class TestCloudPoolHandlerDispatch {
 
 	@Before
 	public void onSetup() {
+		// cloudpool is configured and started
+		CloudPoolStatus startedStatus = new CloudPoolStatus(true, true);
+		when(this.cloudPoolMock.getStatus()).thenReturn(startedStatus);
+
 		this.restEndpoint = new CloudPoolHandler(this.cloudPoolMock);
 	}
 
@@ -122,7 +126,6 @@ public class TestCloudPoolHandlerDispatch {
 		assertEquals(response.getEntity(), null);
 
 		verify(this.cloudPoolMock).setDesiredSize(2);
-		verifyNoMoreInteractions(this.cloudPoolMock);
 	}
 
 	/**

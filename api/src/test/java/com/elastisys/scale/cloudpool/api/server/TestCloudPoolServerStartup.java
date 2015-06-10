@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.restapi.ConfigHandler;
+import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.host.HostUtils;
 import com.elastisys.scale.commons.rest.client.RestClients;
@@ -31,9 +32,10 @@ import com.google.common.io.Resources;
 import com.google.gson.JsonObject;
 
 /**
- * Exercises the configuration handling of the {@link CloudPoolServer} class.
+ * Exercises the configuration handling of the {@link CloudPoolServer} on
+ * startups with and without an existing server configuration to be restored.
  */
-public class TestCloudPoolServerConfigurationHandling {
+public class TestCloudPoolServerStartup {
 	private static final String SERVER_KEYSTORE = Resources.getResource(
 			"security/server/server_keystore.p12").toString();
 	private static final String SERVER_KEYSTORE_PASSWORD = "serverpass";
@@ -80,6 +82,12 @@ public class TestCloudPoolServerConfigurationHandling {
 			Response response = client.target(url("/config")).request().get();
 			assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 			assertThat(response.readEntity(JsonObject.class), is(config));
+
+			// by default (without --stopped flag), cloudpool is to be started
+			response = client.target(url("/status")).request().get();
+			assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
+			assertThat(response.readEntity(CloudPoolStatus.class),
+					is(new CloudPoolStatus(true, true)));
 		} finally {
 			this.server.stop();
 			this.server.join();
@@ -110,6 +118,84 @@ public class TestCloudPoolServerConfigurationHandling {
 			Response response = client.target(url("/config")).request().get();
 			assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 			assertThat(response.readEntity(JsonObject.class), is(config));
+
+			// by default (without --stopped flag), cloudpool is to be started
+			response = client.target(url("/status")).request().get();
+			assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
+			assertThat(response.readEntity(CloudPoolStatus.class),
+					is(new CloudPoolStatus(true, true)));
+		} finally {
+			this.server.stop();
+			this.server.join();
+		}
+	}
+
+	/**
+	 * When started with {@code --stopped} flag, the {@link CloudPool} should be
+	 * in a stopped state.
+	 */
+	@Test
+	public void startServerWithExplicitConfigInStoppedState() throws Exception {
+		CloudPoolOptions options = basicServerOptions();
+
+		File configFile = new File(storageDir, "explicitconf.json");
+		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}")
+				.getAsJsonObject();
+		saveConfig(JsonUtils.toString(config), configFile);
+		options.config = configFile.getAbsolutePath();
+		// set --stopped
+		options.stopped = true;
+
+		this.server = CloudPoolServer.createServer(this.cloudPool, options);
+		try {
+			this.server.start();
+			// verify that explicitly set config was indeed set
+			Client client = RestClients.httpsNoAuth();
+			Response response = client.target(url("/config")).request().get();
+			assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
+			assertThat(response.readEntity(JsonObject.class), is(config));
+
+			// with --stopped flag, cloudpool should be stopped
+			response = client.target(url("/status")).request().get();
+			assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
+			assertThat(response.readEntity(CloudPoolStatus.class),
+					is(new CloudPoolStatus(false, true)));
+		} finally {
+			this.server.stop();
+			this.server.join();
+		}
+	}
+
+	/**
+	 * When started with {@code --stopped} flag, the {@link CloudPool} should be
+	 * in a stopped state.
+	 */
+	@Test
+	public void startServerWithSavedConfigInStoppedState() throws Exception {
+		CloudPoolOptions options = basicServerOptions();
+
+		File configFile = new File(storageDir, "explicitconf.json");
+		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}")
+				.getAsJsonObject();
+		saveConfig(JsonUtils.toString(config), configFile);
+		options.config = configFile.getAbsolutePath();
+		// set --stopped
+		options.stopped = true;
+
+		this.server = CloudPoolServer.createServer(this.cloudPool, options);
+		try {
+			this.server.start();
+			// verify that explicitly set config was indeed set
+			Client client = RestClients.httpsNoAuth();
+			Response response = client.target(url("/config")).request().get();
+			assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
+			assertThat(response.readEntity(JsonObject.class), is(config));
+
+			// with --stopped flag, cloudpool should be stopped
+			response = client.target(url("/status")).request().get();
+			assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
+			assertThat(response.readEntity(CloudPoolStatus.class),
+					is(new CloudPoolStatus(false, true)));
 		} finally {
 			this.server.stop();
 			this.server.join();
@@ -134,6 +220,12 @@ public class TestCloudPoolServerConfigurationHandling {
 			Response response = client.target(url("/config")).request().get();
 			assertThat(response.getStatus(),
 					is(Status.NOT_FOUND.getStatusCode()));
+
+			// without a config, cloudpool is expected to be in a stopped state
+			response = client.target(url("/status")).request().get();
+			assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
+			assertThat(response.readEntity(CloudPoolStatus.class),
+					is(new CloudPoolStatus(false, false)));
 		} finally {
 			this.server.stop();
 			this.server.join();
@@ -191,7 +283,6 @@ public class TestCloudPoolServerConfigurationHandling {
 		options.sslKeyStore = SERVER_KEYSTORE;
 		options.sslKeyStorePassword = SERVER_KEYSTORE_PASSWORD;
 		options.requireClientCert = false;
-		options.enableConfigHandler = true;
 		options.storageDir = storageDir;
 		return options;
 	}

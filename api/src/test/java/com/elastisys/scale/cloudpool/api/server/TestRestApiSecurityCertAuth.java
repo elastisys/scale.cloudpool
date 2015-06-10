@@ -23,6 +23,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
+import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.commons.net.host.HostUtils;
 import com.elastisys.scale.commons.net.ssl.KeyStoreType;
@@ -68,6 +69,9 @@ public class TestRestApiSecurityCertAuth {
 		List<Integer> freePorts = HostUtils.findFreePorts(2);
 		httpsPort = freePorts.get(0);
 
+		// cloudpool is configured and started
+		CloudPoolStatus startedStatus = new CloudPoolStatus(true, true);
+		when(cloudPool.getStatus()).thenReturn(startedStatus);
 		// set up mocked cloud pool that will back the created server
 		when(cloudPool.getMachinePool()).thenReturn(
 				MachinePool.emptyPool(UtcTime.now()));

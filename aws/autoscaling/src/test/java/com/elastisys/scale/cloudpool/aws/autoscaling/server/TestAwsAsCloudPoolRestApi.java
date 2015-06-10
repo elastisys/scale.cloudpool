@@ -56,7 +56,6 @@ public class TestAwsAsCloudPoolRestApi {
 		options.sslKeyStore = SERVER_KEYSTORE;
 		options.sslKeyStorePassword = SERVER_KEYSTORE_PASSWORD;
 		options.requireClientCert = false;
-		options.enableConfigHandler = true;
 		options.storageDir = storageDir;
 
 		server = CloudPoolServer.createServer(cloudPool, options);

@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.restapi.CloudPoolHandler;
 import com.elastisys.scale.cloudpool.api.restapi.ConfigHandler;
+import com.elastisys.scale.cloudpool.api.restapi.StartStopHandler;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.rest.responsehandlers.ExitHandler;
 import com.elastisys.scale.commons.rest.server.JaxRsApplication;
@@ -122,24 +123,28 @@ public class CloudPoolServer {
 
 		ConfigHandler configHandler = new ConfigHandler(cloudPool,
 				options.storageDir);
+		application.addHandler(configHandler);
 		if (options.config != null) {
 			// use explicitly specified configuration file
 			JsonObject config = parseJsonConfig(options.config);
 			cloudPool.configure(config);
 			configHandler.storeConfig(config);
+			if (!options.stopped) {
+				cloudPool.start();
+			}
 		} else {
 			// restore cloudpool config from storage directory (if available)
 			Optional<JsonObject> config = restoreConfig(configHandler
 					.getCloudPoolConfigPath());
 			if (config.isPresent()) {
 				cloudPool.configure(config.get());
+				if (!options.stopped) {
+					cloudPool.start();
+				}
 			}
 		}
 
-		if (options.enableConfigHandler) {
-			// optionally deploy config handler resource
-			application.addHandler(configHandler);
-		}
+		application.addHandler(new StartStopHandler(cloudPool));
 
 		if (options.enableExitHandler) {
 			// optionally deploy exit handler
