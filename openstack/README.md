@@ -52,7 +52,6 @@ The `openstackpool` is configured with a JSON document such as the following:
       "instanceHourMargin": 300
     },   
     "alerts": {
-<<<<<<< HEAD
       "smtp": [
         {
           "subject": "[elastisys:scale] cloud pool alert for MyScalingPool",
@@ -83,19 +82,6 @@ The `openstackpool` is configured with a JSON document such as the following:
         }        
       ]
     },    
-=======
-      "subject": "[elastisys] cloud pool alert for MyScalingPool",
-      "recipients": ["receiver@destination.com"],
-      "sender": "noreply@elastisys.com",
-      "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
-      "mailServer": {
-        "smtpHost": "smtp.host.com",
-        "smtpPort": 465,
-        "authentication": {"userName": "johndoe", "password": "secret" },
-        "useSsl": true
-      }
-    },
->>>>>>> master
     "poolUpdatePeriod": 120
   }
 }
