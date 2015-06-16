@@ -30,8 +30,8 @@ public class CreateKeypairMain {
 		OpenStackPoolDriverConfig driverConfig = DriverConfigLoader
 				.loadDefault();
 
-		OSClient client = new OSClientFactory()
-				.createAuthenticatedClient(driverConfig.getAuth());
+		OSClient client = new OSClientFactory().createAuthenticatedClient(
+				driverConfig.getAuth()).useRegion(driverConfig.getRegion());
 		KeypairService keyApi = client.compute().keypairs();
 
 		String publicKeyContent = new String(Files.toByteArray(publicKeyFile));
