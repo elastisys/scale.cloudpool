@@ -53,7 +53,7 @@
 
     <!-- scale.commons version to use -->
     <commons.version>2.0.2-SNAPSHOT</commons.version>
-    <openstack4j.version>2.0.2</openstack4j.version>
+    <openstack4j.version>2.0.4-SNAPSHOT</openstack4j.version>
   </properties>
 
   <dependencyManagement>

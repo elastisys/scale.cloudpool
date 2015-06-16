@@ -65,6 +65,7 @@ public class CloudPoolCommandLineDriver {
 	 * Starts the main command input loop.
 	 */
 	public void start() {
+		this.cloudPool.start();
 		prompt();
 		try (Scanner scanner = new Scanner(System.in)) {
 			while (scanner.hasNextLine()) {
