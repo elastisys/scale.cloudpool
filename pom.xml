@@ -424,7 +424,7 @@
     </repository>
     <!-- snapshot repo -->
     <snapshotRepository>
-      <id>oss-repo</id>
+      <id>oss-repo-snapshots</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </snapshotRepository>
     <!-- The URL to which the project site is deployed when running mvn site:deploy. 
@@ -435,5 +435,17 @@
     </site>
   </distributionManagement>
 
+  <repositories>
+    <!-- To be able to use latest snapshot of openstack4j. Can be removed 
+      once 2.0.4 is released. -->
+    <repository>
+      <id>maven-snapshots</id>
+      <name>sonatype-snapshots</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
 
 </project>
