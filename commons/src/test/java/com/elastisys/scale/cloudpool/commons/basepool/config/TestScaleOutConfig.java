@@ -52,7 +52,10 @@ public class TestScaleOutConfig {
 		config.validate();
 	}
 
-	@Test(expected = CloudPoolException.class)
+	/**
+	 * It's okay to specify no key pair.
+	 */
+	@Test
 	public void missingKeypair() {
 		List<String> bootScript = Arrays.asList("#!/bin/bash",
 				"sudo apt-get update");
@@ -62,7 +65,10 @@ public class TestScaleOutConfig {
 		config.validate();
 	}
 
-	@Test(expected = CloudPoolException.class)
+	/**
+	 * It's okay to specify no security groups.
+	 */
+	@Test
 	public void missingSecurityGroups() {
 		List<String> bootScript = Arrays.asList("#!/bin/bash",
 				"sudo apt-get update");
@@ -72,7 +78,10 @@ public class TestScaleOutConfig {
 		config.validate();
 	}
 
-	@Test(expected = CloudPoolException.class)
+	/**
+	 * It's okay to specify no user data.
+	 */
+	@Test
 	public void missingBootscript() {
 		List<String> bootScript = null;
 		List<String> securityGroups = Arrays.asList("webserver");

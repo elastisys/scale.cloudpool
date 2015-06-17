@@ -9,6 +9,8 @@ import java.util.List;
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Objects;
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 
 /**
  * The section of a {@link BaseCloudPoolConfig} that describes how to provision
@@ -21,11 +23,20 @@ public class ScaleOutConfig {
 	private final String size;
 	/** The name of the machine image used to boot new servers. */
 	private final String image;
-	/** The name of the key pair to use for new machine instances. */
+	/**
+	 * The name of the key pair to use for new machine instances. May be
+	 * <code>null</code>.
+	 */
 	private final String keyPair;
-	/** The security group(s) to use for new machine instances. */
+	/**
+	 * The security group(s) to use for new machine instances. May be
+	 * <code>null</code>.
+	 */
 	private final List<String> securityGroups;
-	/** The script to run after first boot of a new instance. */
+	/**
+	 * The script to run after first boot of a new instance. May be
+	 * <code>null</code>.
+	 */
 	private final List<String> bootScript;
 
 	public ScaleOutConfig(String size, String image, String keyPair,
@@ -33,8 +44,10 @@ public class ScaleOutConfig {
 		this.size = size;
 		this.image = image;
 		this.keyPair = keyPair;
-		this.securityGroups = securityGroups;
-		this.bootScript = bootScript;
+		List<String> emptyList = ImmutableList.of();
+		this.securityGroups = Optional.fromNullable(securityGroups).or(
+				emptyList);
+		this.bootScript = Optional.fromNullable(bootScript).or(emptyList);
 	}
 
 	public String getSize() {
@@ -66,12 +79,9 @@ public class ScaleOutConfig {
 		try {
 			checkNotNull(this.size, "missing size");
 			checkNotNull(this.image, "missing image");
-			checkNotNull(this.keyPair, "missing keyPair");
-			checkNotNull(this.securityGroups, "missing securityGroups");
-			checkNotNull(this.bootScript, "missing bootScript");
 		} catch (Exception e) {
 			throw new CloudPoolException(format(
-					"failed to validate scaleUpConfig: %s", e.getMessage()), e);
+					"failed to validate scaleOutConfig: %s", e.getMessage()), e);
 		}
 	}
 

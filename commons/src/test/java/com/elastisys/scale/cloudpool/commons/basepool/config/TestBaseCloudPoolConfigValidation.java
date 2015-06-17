@@ -86,8 +86,8 @@ public class TestBaseCloudPoolConfigValidation {
 				scaleInConfig(), alertConfig(), null).validate();
 	}
 
-	// illegal config: missing /scaleOutConfig/keyPair
-	@Test(expected = IllegalArgumentException.class)
+	// it is okay for config to miss /scaleOutConfig/keyPair
+	@Test
 	public void missingScaleOutConfigKeyPair() throws CloudPoolException {
 		ScaleOutConfig scaleOutConfig = scaleOutConfig();
 		setPrivateField(scaleOutConfig, "keyPair", null);
@@ -95,8 +95,8 @@ public class TestBaseCloudPoolConfigValidation {
 				scaleInConfig(), alertConfig(), null).validate();
 	}
 
-	// illegal config: missing /scaleOutConfig/securityGroups
-	@Test(expected = IllegalArgumentException.class)
+	// it is okay for config to miss /scaleOutConfig/securityGroups
+	@Test
 	public void missingScaleOutConfigSecurityGroups() throws CloudPoolException {
 		ScaleOutConfig scaleOutConfig = scaleOutConfig();
 		setPrivateField(scaleOutConfig, "securityGroups", null);
@@ -104,8 +104,8 @@ public class TestBaseCloudPoolConfigValidation {
 				scaleInConfig(), alertConfig(), null).validate();
 	}
 
-	// illegal config: missing /scaleOutConfig/bootScript
-	@Test(expected = IllegalArgumentException.class)
+	// it is okay for config to miss /scaleOutConfig/bootScript
+	@Test
 	public void missingScaleOutConfigBootScript() throws CloudPoolException {
 		ScaleOutConfig scaleOutConfig = scaleOutConfig();
 		setPrivateField(scaleOutConfig, "bootScript", null);
