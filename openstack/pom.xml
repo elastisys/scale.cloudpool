@@ -29,7 +29,7 @@
     </dependency>
     <dependency>
       <groupId>org.pacesys.openstack4j.connectors</groupId>
-      <artifactId>openstack4j-httpclient</artifactId>
+      <artifactId>openstack4j-jersey2</artifactId>
     </dependency>
 
     <!-- Common cloud pool API/server classes -->

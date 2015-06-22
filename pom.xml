@@ -100,7 +100,7 @@
       </dependency>
       <dependency>
         <groupId>org.pacesys.openstack4j.connectors</groupId>
-        <artifactId>openstack4j-httpclient</artifactId>
+        <artifactId>openstack4j-jersey2</artifactId>
         <version>${openstack4j.version}</version>        
       </dependency>
     </dependencies>
