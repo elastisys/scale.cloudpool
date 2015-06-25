@@ -460,7 +460,7 @@ public class BaseCloudPool implements CloudPool {
 	private void ensureStarted() throws NotStartedException {
 		if (!isStarted()) {
 			throw new NotStartedException(
-					"attempt to use cloud pool before being started");
+					"attempt to use cloud pool that is stopped");
 		}
 	}
 
