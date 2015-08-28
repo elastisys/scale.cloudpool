@@ -133,7 +133,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 			return pool;
 		} catch (Exception e) {
 			throw new CloudPoolDriverException(format(
-					"failed to retrieve machines in scaling group \"%s\": %s",
+					"failed to retrieve machines in cloud pool \"%s\": %s",
 					getPoolName(), e.getMessage()), e);
 		}
 	}
@@ -328,7 +328,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 		}
 
 		throw new NotFoundException(String.format(
-				"no machine with id '%s' found in scaling group", machineId));
+				"no machine with id '%s' found in cloud pool", machineId));
 	}
 
 	@Override

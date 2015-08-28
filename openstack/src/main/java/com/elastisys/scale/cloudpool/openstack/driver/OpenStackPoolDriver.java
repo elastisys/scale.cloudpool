@@ -112,7 +112,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 			return transform(servers, new ServerToMachine());
 		} catch (Exception e) {
 			throw new CloudPoolDriverException(format(
-					"failed to retrieve machines in scaling group \"%s\": %s",
+					"failed to retrieve machines in cloud pool \"%s\": %s",
 					this.poolName, e.getMessage()), e);
 		}
 	}
@@ -125,7 +125,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 		List<Machine> startedMachines = Lists.newArrayList();
 		try {
 			for (int i = 0; i < count; i++) {
-				// tag new server with scaling group membership
+				// tag new server with cloud pool membership
 				Map<String, String> tags = ImmutableMap.of(
 						Constants.CLOUD_POOL_TAG, getPoolName());
 				Server newServer = this.client.launchServer(uniqueServerName(),
@@ -265,7 +265,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 	}
 
 	/**
-	 * Retrieves a particular member machine from the scaling group or throws an
+	 * Retrieves a particular member machine from the cloud pool or throws an
 	 * exception if it could not be found.
 	 *
 	 * @param machineId
@@ -282,7 +282,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 		}
 
 		throw new NotFoundException(String.format(
-				"no machine with id '%s' found in scaling group", machineId));
+				"no machine with id '%s' found in cloud pool", machineId));
 	}
 
 	/**
