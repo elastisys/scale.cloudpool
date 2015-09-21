@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+
+  <!-- Log output directory is specified by system property/environment 
+       variable 'LOG_DIR'. If unspecified, a directory is used.-->
+  <variable name="logdir" value="${LOG_DIR:-/tmp/elastisys/logs/spotpool}"/>
+  
+  <!-- captures everythin to file -->
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${logdir}/spotpool.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- daily rollover -->
+      <fileNamePattern>${logdir}/spotpool.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <!-- keep 7 days' worth of history -->
+      <maxHistory>7</maxHistory>
+    </rollingPolicy>
+    <encoder>      
+      <pattern>%date{ISO8601} [%thread] %-5level [%class{0}:%method:%line] - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!-- captures everything to stdout -->
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.out</target>    
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>DEBUG</level>
+    </filter>
+    <encoder>
+      <pattern>%date{ISO8601} [%thread] %-5level [%class{0}:%method:%line] - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root>
+    <level value="ERROR" />
+    <appender-ref ref="FILE" />
+    <appender-ref ref="STDOUT" />
+  </root>
+
+  <logger name="com.elastisys">
+    <level value="DEBUG"/>
+  </logger>
+
+</configuration>
