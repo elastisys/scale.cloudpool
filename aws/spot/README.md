@@ -13,6 +13,12 @@ a client (for example, an autoscaler) can manage the pool. For the complete API
 reference, the reader is referred to the 
 [cloud pool API documentation](http://cloudpoolrestapi.readthedocs.org/en/latest/).
 
+*Note that if you plan on using a large number of spot instances for your service, you
+may need to contact Amazon to have them raise the [spot request usage limit](http://docs.amazonaws.cn/en_us/AWSEC2/latest/UserGuide/using-spot-limits.html) for your account. Although the documentation states a maximum
+of 20 ongoing spot requests per region, tests have shown that 50 requests were
+possible in the us-east-1 region. To submit a limit increase request, go to 
+[AWS Support Center](https://console.amazonaws.cn/support/home#/case/create?issueType=service-limit-increase&limitType=service-code-ec2-instances) and complete the request form. In the Use Case Description field, 
+indicate that you are requesting an increase to the request limit for Spot instances.*
 
 
 ## Configuration
