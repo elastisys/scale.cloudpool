@@ -12,7 +12,9 @@ a client (for example, an autoscaler) can manage the pool.
 For the complete API reference, the reader is referred to the 
 [cloud pool API documentation](http://cloudpoolrestapi.readthedocs.org/en/latest/).
 
-
+*Note that if you plan on using a large number of on-demand instances for your service, you
+may need to contact Amazon to have them raise the [instance usage limit](http://aws.amazon.com/ec2/faqs/#How_many_instances_can_I_run_in_Amazon_EC2) for your account.
+To submit a limit increase request, go to [AWS Support Center](https://console.aws.amazon.com/support/home#/case/create?issueType=service-limit-increase&limitType=service-code-ec2-instances) and complete the request form.*
 
 ## Configuration
 The `ec2pool` is configured with a JSON document such as the following:
