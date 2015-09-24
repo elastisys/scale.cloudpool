@@ -11,7 +11,11 @@ This cloud pool assumes that an AWS *Auto Scaling group* with a proper
 has already been created by external means (for instance, through the AWS
 Auto Scaling command-line interface). Load-balancing between instances, if
 needed, is also assumed to be taken care of, for example, via Elastic Load
-Balancer or with a custom-made load balancing solution.
+Balancer or with a custom-made load balancing solution. It should be noted
+that the AWS AutoScaling cloud pool can manage a pool of either on-demand
+instances or spot instances, it all depends on what kind of instances you
+have chosen to work with in your launch configuration.
+
 
 The cloud pool publishes a REST API that follows the general contract of an
 [elastisys](http://elastisys.com/) cloud pool, through which
@@ -19,6 +23,11 @@ a client (for example, an autoscaler) can manage the pool. For the complete API
 reference, the reader is referred to the 
 [cloud pool API documentation](http://cloudpoolrestapi.readthedocs.org/en/latest/).
 
+*Note that if you plan on using a large number of instances for your service, you
+may need to contact Amazon to have them raise the appropriate 
+[usage limits](http://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html) for your account.
+To submit a limit increase request, go to [AWS Support Center](https://console.aws.amazon.com/support/home#/)
+and complete the request form.*
 
 
 ## Configuration
