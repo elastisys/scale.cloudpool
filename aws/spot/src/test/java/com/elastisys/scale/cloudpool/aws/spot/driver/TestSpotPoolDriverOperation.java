@@ -89,9 +89,9 @@ public class TestSpotPoolDriverOperation {
 	private BaseCloudPoolConfig config() {
 		ScaleInConfig scaleInConfig = new ScaleInConfig(
 				VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR, 300);
-		ScaleOutConfig scaleOutConfig = new ScaleOutConfig(
-				"m1.small", "ami-123", "instancekey", asList("webserver"),
-				asList("apt-get update -qy", "apt-get install apache2 -qy"));
+		ScaleOutConfig scaleOutConfig = new ScaleOutConfig("m1.small",
+				"ami-123", "instancekey", asList("webserver"), asList(
+						"apt-get update -qy", "apt-get install apache2 -qy"));
 		int poolUpdatePeriod = 30;
 		SpotPoolDriverConfig driverConfig = new SpotPoolDriverConfig("ABC",
 				"XYZ", "us-east-1", 0.0070, 30L, 30L);
@@ -285,10 +285,11 @@ public class TestSpotPoolDriverOperation {
 
 	/**
 	 * Test that whenever the bid price changes, unfulfilled requests with an
-	 * incorrect bid price are replaced with the new price.
+	 * incorrect bid price are cancelled (to be replaced by requests with the
+	 * new bid price on the next pool size update).
 	 */
 	@Test
-	public void testBidReplacement() {
+	public void testCancelWrongPricedRequests() {
 		this.driver = new SpotPoolDriver(this.fakeClient);
 		this.driver.configure(config());
 		double currentBidPrice = this.driver.driverConfig().getBidPrice();
@@ -302,17 +303,25 @@ public class TestSpotPoolDriverOperation {
 				POOL1_TAG);
 		spot2.setSpotPrice(String.valueOf(currentBidPrice));
 		// fulfilled, right bid price => should not be replaced
-		SpotInstanceRequest spot3 = spotRequest("sir-3", "open", "i-3",
+		SpotInstanceRequest spot3 = spotRequest("sir-3", "active", "i-3",
 				POOL1_TAG);
 		spot3.setSpotPrice(String.valueOf(currentBidPrice));
+		// fulfilled, wrong bid price => should not be replaced
+		SpotInstanceRequest spot4 = spotRequest("sir-4", "active", "i-4",
+				POOL1_TAG);
+		spot4.setSpotPrice(String.valueOf(currentBidPrice + 0.01));
 
-		this.fakeClient.setupFakeAccount(asList(spot1, spot2, spot3),
-				asList(instance("i-3", Running, "sir-3")));
+		this.fakeClient.setupFakeAccount(
+				asList(spot1, spot2, spot3, spot4),
+				asList(instance("i-3", Running, "sir-3"),
+						instance("i-4", Running, "sir-4")));
 
-		List<Machine> newBids = this.driver.replaceBids();
-		assertThat(newBids.size(), is(1));
+		List<String> cancelledRequests = this.driver
+				.cancelWrongPricedRequests();
+		assertThat(cancelledRequests.size(), is(1));
+		assertThat(cancelledRequests.get(0), is("sir-1"));
 		assertRequestIds(this.driver.listMachines(),
-				asList("sir-2", "sir-3", newBids.get(0).getId()));
+				asList("sir-2", "sir-3", "sir-4"));
 	}
 
 	/**

@@ -141,8 +141,9 @@ import com.google.gson.JsonObject;
  * <h3>Periodical tasks</h3>: The {@link SpotPoolDriver} executes background
  * tasks in order to:
  * <ul>
- * <li>Replace unfulfilled spot requests with a bid price that isn't up-to-date
- * with the configured bid price.</li>
+ * <li>Cancel unfulfilled spot requests with a bid price that isn't up-to-date
+ * with the configured bid price. These are eventually replaced when the
+ * wrapping {@link BaseCloudPool} detects that the pool is short of requests.</li>
  * <li>Clean up dangling instances, whose spot requests have been canceled.
  * Normally the instance will be terminated when canceling its spot request,
  * however there is a time-window when the instance may be assigned after we
@@ -232,7 +233,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
 
 		long bidReplacePeriod = driverConfig().getBidReplacementPeriod();
 		this.threadPool.scheduleWithFixedDelay(
-				new WrongBidPriceRequestReplacer(), bidReplacePeriod,
+				new WrongPricedRequestCanceller(), bidReplacePeriod,
 				bidReplacePeriod, TimeUnit.SECONDS);
 	}
 
@@ -594,37 +595,38 @@ public class SpotPoolDriver implements CloudPoolDriver {
 	}
 
 	/**
-	 * Check bid prices for all placed spot requests and replace ones that are
-	 * not up-to-date with the currently configured price.
+	 * Check bid prices for all unfulfilled spot requests and cancel ones that
+	 * are not up-to-date with the currently configured bid price. These are to
+	 * eventually be replaced with a new spot request with the right bid price,
+	 * as soon as the {@link BaseCloudPool} detects that the pool is short on
+	 * spot requests.
 	 *
-	 * @return Returns the (possibly empty) list of new spot requests that were
-	 *         placed.
+	 * @return Returns the list of wrong-priced spot request identifiers that
+	 *         were cancelled.
 	 */
-	List<Machine> replaceBids() {
+	List<String> cancelWrongPricedRequests() {
 		double currentBidPrice = driverConfig().getBidPrice();
-		LOG.info("replacing unfulfilled spot requests with bidprice "
+		LOG.info("cancelling unfulfilled spot requests with bidprice "
 				+ "other than {} ...", currentBidPrice);
 		List<InstancePairedSpotRequest> unfulfilledRequests = getPoolSpotRequests(asList(Open
 				.toString()));
 
-		List<Machine> placedRequests = Lists.newArrayList();
+		List<String> cancelledRequests = Lists.newArrayList();
 		for (InstancePairedSpotRequest unfulfilledRequest : unfulfilledRequests) {
 			SpotInstanceRequest request = unfulfilledRequest.getRequest();
 			double spotPrice = Double.valueOf(request.getSpotPrice());
-			// wrong bid price. replace.
+			// wrong bid price. cancel.
 			if (spotPrice != currentBidPrice) {
 				String requestId = request.getSpotInstanceRequestId();
 				LOG.info(
-						"replacing unfulfilled spot request {} with wrong bid "
+						"cancelling unfulfilled spot request {} with wrong bid "
 								+ "price {} ", requestId, spotPrice);
 				// cancel
 				terminateMachine(requestId);
-				// replace
-				placedRequests.addAll(startMachines(1, poolConfig()
-						.getScaleOutConfig()));
+				cancelledRequests.add(requestId);
 			}
 		}
-		return placedRequests;
+		return cancelledRequests;
 	}
 
 	/**
@@ -649,15 +651,17 @@ public class SpotPoolDriver implements CloudPoolDriver {
 	/**
 	 * Periodical task that, when run, finds spot requests in the pool that have
 	 * been placed with a bid price different from the currently configured one.
-	 * Any such spot requests, that haven't yet been fulfilled, are replaced
-	 * with a new spot request with the right bid price.
+	 * Any such spot requests, that haven't yet been fulfilled, are cancelled
+	 * (to eventually be replaced with a new spot request with the right bid
+	 * price, as soon as the {@link BaseCloudPool} detects that the pool is
+	 * short on spot requests).
 	 */
-	private class WrongBidPriceRequestReplacer implements Runnable {
+	private class WrongPricedRequestCanceller implements Runnable {
 
 		@Override
 		public void run() {
 			try {
-				replaceBids();
+				cancelWrongPricedRequests();
 			} catch (Exception e) {
 				// need to catch exceptions since periodic exeuction will stop
 				// on uncaught exceptions
