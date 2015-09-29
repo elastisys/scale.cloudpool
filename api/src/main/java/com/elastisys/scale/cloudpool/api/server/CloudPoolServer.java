@@ -41,21 +41,17 @@ public class CloudPoolServer {
 			.getLogger(CloudPoolServer.class);
 
 	/**
-	 * Parse command-line arguments and start an HTTPS server that serves REST
-	 * API requests for a given {@link CloudPool}.
+	 * Parses command-line arguments into {@link CloudPoolOptions}. On failure
+	 * to process the command-line arguments, an error will be written together
+	 * with a usage string and then the program will exit with a failure code.
 	 * <p/>
-	 * A failure to parse the command-line arguments will cause the program to
-	 * print a usage message and exit with an error code. The function blocks
-	 * until the started server is stopped.
+	 * The {@code --help} will cause the uasge text to be written before exiting
+	 * the program (with a zero exit code).
 	 *
-	 * @param cloudPool
-	 *            The cloud pool that the started server will publish.
 	 * @param args
-	 *            The command-line arguments.
-	 * @throws Exception
+	 * @return
 	 */
-	public static void main(CloudPool cloudPool, String[] args)
-			throws Exception {
+	public static CloudPoolOptions parseArgs(String[] args) {
 		CloudPoolOptions arguments = new CloudPoolOptions();
 		ParserProperties parserConfig = ParserProperties.defaults()
 				.withUsageWidth(80);
@@ -78,7 +74,26 @@ public class CloudPoolServer {
 			System.err.println(IoUtils.toString("VERSION.txt", Charsets.UTF_8));
 			System.exit(0);
 		}
+		return arguments;
+	}
 
+	/**
+	 * Parse command-line arguments and start an HTTPS server that serves REST
+	 * API requests for a given {@link CloudPool}.
+	 * <p/>
+	 * A failure to parse the command-line arguments will cause the program to
+	 * print a usage message and exit with an error code. The function blocks
+	 * until the started server is stopped.
+	 *
+	 * @param cloudPool
+	 *            The cloud pool that the started server will publish.
+	 * @param args
+	 *            The command-line arguments.
+	 * @throws Exception
+	 */
+	public static void main(CloudPool cloudPool, String[] args)
+			throws Exception {
+		CloudPoolOptions arguments = parseArgs(args);
 		Server server = createServer(cloudPool, arguments);
 
 		// start server and wait

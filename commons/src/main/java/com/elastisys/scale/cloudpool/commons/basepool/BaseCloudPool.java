@@ -211,7 +211,7 @@ public class BaseCloudPool implements CloudPool {
 	static final Logger LOG = LoggerFactory.getLogger(BaseCloudPool.class);
 
 	/** Maximum concurrency in the {@link #executorService}. */
-	private static final int MAX_CONCURRENCY = 20;
+	private static final int MAX_CONCURRENCY = 10;
 
 	/** A cloud-specific management driver for the cloud pool. */
 	private CloudPoolDriver cloudDriver = null;
