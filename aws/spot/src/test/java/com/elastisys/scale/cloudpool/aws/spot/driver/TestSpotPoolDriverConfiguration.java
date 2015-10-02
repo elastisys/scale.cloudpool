@@ -124,9 +124,9 @@ public class TestSpotPoolDriverConfiguration {
 	@Test(expected = IllegalStateException.class)
 	public void invokeStartMachineBeforeBeingConfigured()
 			throws CloudPoolException {
-		ScaleOutConfig scaleUpConfig = new ScaleOutConfig(
-				"size", "image", "keyPair", Arrays.asList("webserver"),
-				Arrays.asList("#!/bin/bash", "apt-get update"));
+		ScaleOutConfig scaleUpConfig = new ScaleOutConfig("size", "image",
+				"keyPair", Arrays.asList("webserver"), Arrays.asList(
+						"#!/bin/bash", "apt-get update"));
 		this.driver.startMachines(3, scaleUpConfig);
 	}
 

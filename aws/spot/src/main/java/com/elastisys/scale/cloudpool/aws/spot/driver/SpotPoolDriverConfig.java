@@ -11,6 +11,13 @@ import com.google.common.base.Optional;
  */
 public class SpotPoolDriverConfig {
 
+	/**
+	 * Number of decimals in Amazon bid prices. For example, a bid price of
+	 * $0.0123456789 gets rounded off to $0.012346 by Amazon (note the
+	 * rounding).
+	 */
+	private static final int AMAZON_BIDPRICE_PRECISION = 6;
+
 	/** Default value for {@link #bidReplacementPeriod} */
 	public static final Long DEFAULT_BID_REPLACEMENT_PERIOD = 120L;
 
@@ -76,7 +83,21 @@ public class SpotPoolDriverConfig {
 	 * @return the {@link #bidPrice}
 	 */
 	public double getBidPrice() {
-		return this.bidPrice;
+		return round(this.bidPrice, AMAZON_BIDPRICE_PRECISION);
+	}
+
+	/**
+	 * Round off value to the specified number of decimals.
+	 *
+	 * @param value
+	 *            The value to be rounded.
+	 * @param precision
+	 *            Number of decimals to keep.
+	 * @return
+	 */
+	private double round(double value, int precision) {
+		double shift = Math.pow(10, precision);
+		return Math.round(value * shift) / shift;
 	}
 
 	/**
@@ -127,7 +148,7 @@ public class SpotPoolDriverConfig {
 				.add("awsAccessKeyId", this.awsAccessKeyId)
 				.add("awsSecretAccessKey", this.awsSecretAccessKey)
 				.add("region", this.region)
-				.add("bidPrice", this.bidPrice)
+				.add("bidPrice", this.getBidPrice())
 				.add("bidReplacementPeriod", this.getBidReplacementPeriod())
 				.add("danglingInstanceCleanupPeriod",
 						this.getDanglingInstanceCleanupPeriod()).toString();
@@ -140,8 +161,9 @@ public class SpotPoolDriverConfig {
 				"SpotPoolDriver config missing awsSecretAccessKey");
 		checkArgument(this.region != null,
 				"SpotPoolDriver config missing region");
-		checkArgument(this.bidPrice > 0,
-				"SpotPoolDriver config bidPrice must be > 0");
+		checkArgument(this.getBidPrice() > 0,
+				"SpotPoolDriver config bidPrice must be > 0, set to %s",
+				getBidPrice());
 		checkArgument(getBidReplacementPeriod() > 0,
 				"SpotPoolDriver config bidReplacementPeriod must be > 0");
 		checkArgument(getDanglingInstanceCleanupPeriod() > 0,

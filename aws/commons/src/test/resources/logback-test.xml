@@ -16,7 +16,7 @@
     <level value="debug" />
   </logger>
   <logger name="com.amazonaws">
-    <level value="warn" />
+    <level value="info" />
   </logger>
   <!-- a summary of requests/responses with AWS request IDs -->
   <logger name="com.amazonaws.request">
@@ -24,8 +24,8 @@
   </logger>
   <!-- Log all HTTP content (headers, parameters, content, etc) for -->
   <!-- all requests and responses. Very verbose! -->
-  <logger name="httpclient.wire">
-    <level value="debug" />
+  <logger name="org.apache.http.wire">
+    <level value="info" />
   </logger>
 
 </configuration>
