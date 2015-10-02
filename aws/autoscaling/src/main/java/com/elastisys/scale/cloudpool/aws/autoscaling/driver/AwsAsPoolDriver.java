@@ -210,8 +210,6 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 			throws CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 
-		// verify that machine exists in group
-		getMachineOrFail(machineId);
 		try {
 			if (machineId.startsWith(REQUESTED_ID_PREFIX)) {
 				// we were asked to terminate a placeholder instance (a
@@ -226,10 +224,13 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 						desiredSize, newSize);
 				this.client.setDesiredSize(getPoolName(), newSize);
 			} else {
+				// verify that machine exists in group
+				getMachineOrFail(machineId);
 				LOG.info("terminating instance {}", machineId);
 				this.client.terminateInstance(getPoolName(), machineId);
 			}
 		} catch (Exception e) {
+			Throwables.propagateIfInstanceOf(e, NotFoundException.class);
 			String message = format("failed to terminate instance \"%s\": %s",
 					machineId, e.getMessage());
 			throw new CloudPoolDriverException(message, e);
