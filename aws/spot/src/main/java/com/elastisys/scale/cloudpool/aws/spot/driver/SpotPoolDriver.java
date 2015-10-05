@@ -21,8 +21,7 @@ import static java.util.Arrays.asList;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,6 +46,7 @@ import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
+import com.elastisys.scale.cloudpool.aws.spot.driver.alerts.AlertTopics;
 import com.elastisys.scale.cloudpool.aws.spot.functions.InstancePairedSpotRequestToMachine;
 import com.elastisys.scale.cloudpool.aws.spot.metadata.InstancePairedSpotRequest;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
@@ -57,11 +57,19 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.net.alerter.Alert;
+import com.elastisys.scale.commons.net.alerter.AlertSeverity;
+import com.elastisys.scale.commons.util.concurrent.RestartableScheduledExecutorService;
+import com.elastisys.scale.commons.util.concurrent.StandardRestartableScheduledExecutorService;
+import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.Atomics;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 /**
@@ -158,8 +166,10 @@ import com.google.gson.JsonObject;
 public class SpotPoolDriver implements CloudPoolDriver {
 	private static Logger LOG = LoggerFactory.getLogger(SpotPoolDriver.class);
 
-	/** Maximum number of threads to run in {@link #threadPool}. */
+	/** Maximum number of threads to run in {@link #executor}. */
 	private static final int MAX_THREADS = 5;
+	/** Task grace time (in seconds) when the {@link #executor} is restarted. */
+	private static final int TASK_TERMINATION_GRACETIME = 30;
 
 	/** Logical name of the managed machine pool. */
 	private final AtomicReference<String> poolName;
@@ -168,10 +178,17 @@ public class SpotPoolDriver implements CloudPoolDriver {
 	/** Driver configuration. */
 	private final AtomicReference<SpotPoolDriverConfig> driverConfig;
 
-	private final ScheduledExecutorService threadPool;
+	/** Task executor. */
+	private final RestartableScheduledExecutorService executor;
 
 	/** The client used to communicate with the EC2 API. */
 	private final SpotClient client;
+
+	/**
+	 * Used to post {@link Alert}s that are to notify webhook/email recipients
+	 * configured for the cloud pool (if any).
+	 */
+	private final EventBus eventBus;
 
 	/**
 	 * Supported API versions by this implementation.
@@ -184,15 +201,26 @@ public class SpotPoolDriver implements CloudPoolDriver {
 	private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
 			PoolIdentifier.AWS_SPOT_INSTANCES, supportedApiVersions);
 
-	public SpotPoolDriver(SpotClient client) {
+	/**
+	 * Creates a new {@link SpotPoolDriver}.
+	 *
+	 * @param client
+	 *            The client used to communicate with the EC2 API.
+	 * @param eventBus
+	 *            Used to post {@link Alert}s that are to notify webhook/email
+	 *            recipients configured for the cloud pool (if any).
+	 */
+	public SpotPoolDriver(SpotClient client, EventBus eventBus) {
 		this.client = client;
+		this.eventBus = eventBus;
+
 		this.poolName = Atomics.newReference();
 		this.poolConfig = Atomics.newReference();
 		this.driverConfig = Atomics.newReference();
 		ThreadFactory threadFactory = new ThreadFactoryBuilder()
 				.setDaemon(true).setNameFormat("spotdriver-tasks-%d").build();
-		this.threadPool = Executors.newScheduledThreadPool(MAX_THREADS,
-				threadFactory);
+		this.executor = new StandardRestartableScheduledExecutorService(
+				MAX_THREADS, threadFactory);
 	}
 
 	@Override
@@ -225,16 +253,20 @@ public class SpotPoolDriver implements CloudPoolDriver {
 	/**
 	 * Starts periodical cleanup tasks.
 	 */
-	private void start() {
+	private void start() throws InterruptedException {
+		if (this.executor.isStarted()) {
+			// stop any already running tasks
+			this.executor.stop(TASK_TERMINATION_GRACETIME, TimeUnit.SECONDS);
+		}
+		this.executor.start();
 		LOG.info("starting periodical execution of cleanup tasks");
 		long period = driverConfig().getDanglingInstanceCleanupPeriod();
-		this.threadPool.scheduleWithFixedDelay(new DanglingInstanceCleaner(),
+		this.executor.scheduleWithFixedDelay(new DanglingInstanceCleaner(),
 				period, period, TimeUnit.SECONDS);
 
 		long bidReplacePeriod = driverConfig().getBidReplacementPeriod();
-		this.threadPool.scheduleWithFixedDelay(
-				new WrongPricedRequestCanceller(), bidReplacePeriod,
-				bidReplacePeriod, TimeUnit.SECONDS);
+		this.executor.scheduleWithFixedDelay(new WrongPricedRequestCanceller(),
+				bidReplacePeriod, bidReplacePeriod, TimeUnit.SECONDS);
 	}
 
 	@Override
@@ -622,11 +654,57 @@ public class SpotPoolDriver implements CloudPoolDriver {
 						"cancelling unfulfilled spot request {} with wrong bid "
 								+ "price {} ", requestId, spotPrice);
 				// cancel
-				terminateMachine(requestId);
-				cancelledRequests.add(requestId);
+				try {
+					terminateMachine(requestId);
+					cancelledRequests.add(requestId);
+				} catch (Exception e) {
+					postCancellationFailureAlert(requestId, e);
+				}
 			}
 		}
+
+		postCancellationAlert(cancelledRequests);
 		return cancelledRequests;
+	}
+
+	/**
+	 * Posts a spot request cancellation failure {@link Alert} on the
+	 * {@link EventBus}.
+	 *
+	 * @param spotRequestId
+	 *            The spot request that could not be cancelled.
+	 * @param error
+	 *            The error that occurred.
+	 */
+	private void postCancellationFailureAlert(String spotRequestId,
+			Exception error) {
+		String message = String.format(
+				"failed to cancel wrong-priced spot request %s: %s",
+				spotRequestId, error.getMessage());
+		LOG.error("{}", message, error);
+		this.eventBus.post(new Alert(AlertTopics.SPOT_REQUEST_CANCELLATION
+				.name(), AlertSeverity.WARN, UtcTime.now(), message));
+	}
+
+	/**
+	 * Posts a spot request cancellation {@link Alert} on the {@link EventBus}.
+	 *
+	 * @param cancelledRequests
+	 *            The spot requests that were cancelled.
+	 */
+	private void postCancellationAlert(List<String> cancelledRequests) {
+		if (cancelledRequests.isEmpty()) {
+			return;
+		}
+
+		String message = String.format(
+				"cancelled %d unfulfilled spot instance request(s) "
+						+ "with an out-dated bid price",
+				cancelledRequests.size());
+		Map<String, JsonElement> metadata = ImmutableMap.of(
+				"cancelledRequests", JsonUtils.toJson(cancelledRequests));
+		this.eventBus.post(new Alert(AlertTopics.SPOT_REQUEST_CANCELLATION
+				.name(), AlertSeverity.INFO, UtcTime.now(), message, metadata));
 	}
 
 	/**

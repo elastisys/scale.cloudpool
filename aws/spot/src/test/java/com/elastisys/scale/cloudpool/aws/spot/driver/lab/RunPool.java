@@ -14,6 +14,7 @@ import com.elastisys.scale.cloudpool.aws.spot.driver.SpotPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.util.cli.CloudPoolCommandLineDriver;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonObject;
 
 /**
@@ -33,8 +34,9 @@ public class RunPool {
 			.newScheduledThreadPool(10);
 
 	public static void main(String[] args) throws Exception {
+		EventBus eventBus = new EventBus();
 		CloudPool pool = new BaseCloudPool(new SpotPoolDriver(
-				new AwsSpotClient()));
+				new AwsSpotClient(), eventBus), eventBus);
 
 		JsonObject config = JsonUtils.parseJsonFile(cloudPoolConfig.toFile())
 				.getAsJsonObject();

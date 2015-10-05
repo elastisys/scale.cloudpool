@@ -24,8 +24,6 @@ import com.amazonaws.services.ec2.model.SpotInstanceState;
  * For a detailed description of supported {@link Filter}s refer to the <a href=
  * "http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSpotInstanceRequests.html"
  * >Amazon EC2 API</a>.
- *
- * @see PersistentGetInstances
  */
 public class GetSpotInstanceRequests extends
 		AmazonEc2Request<List<SpotInstanceRequest>> {

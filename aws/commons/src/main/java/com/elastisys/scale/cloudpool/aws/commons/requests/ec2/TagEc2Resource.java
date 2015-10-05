@@ -11,11 +11,23 @@ import org.slf4j.LoggerFactory;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.Tag;
+import com.elastisys.scale.commons.net.retryable.Retryable;
+import com.elastisys.scale.commons.net.retryable.Retryers;
 import com.google.common.collect.Lists;
 
 /**
  * A {@link Callable} task that, when executed, applies {@link Tag}s to an EC2
  * resource (such as an instance) in a given region.
+ * <p/>
+ * Note that due to the <a href=
+ * "http://docs.aws.amazon.com/AWSEC2/latest/APIReference/query-api-troubleshooting.html#eventual-consistency"
+ * >eventual consistency semantics</a> of the Amazon API, a recently created EC2
+ * instance or spot instance request may not be immediately available for
+ * tagging. Therefore, it might be wise to use a retry strategy (with
+ * exponential back-off) when tagging a recently created resource.
+ *
+ * @see Retryable
+ * @see Retryers
  */
 public class TagEc2Resource extends AmazonEc2Request<Void> {
 	static Logger LOG = LoggerFactory.getLogger(TagEc2Resource.class);

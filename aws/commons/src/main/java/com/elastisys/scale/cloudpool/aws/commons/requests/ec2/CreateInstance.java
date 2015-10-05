@@ -22,8 +22,10 @@ import com.google.common.collect.Iterables;
  * instance to be created and waits for the instance to appear started in
  * {@code DescribeInstances}.
  * <p/>
- * Due to the eventual consistency semantics of the Amazon API, operations may
- * need time to propagate through the system and results may not be immediate.
+ * Due to the <a href=
+ * "http://docs.aws.amazon.com/AWSEC2/latest/APIReference/query-api-troubleshooting.html#eventual-consistency"
+ * >eventual consistency semantics</a> of the Amazon API, operations may need
+ * time to propagate through the system and results may not be immediate.
  */
 public class CreateInstance extends AmazonEc2Request<Instance> {
 

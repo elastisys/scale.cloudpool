@@ -27,8 +27,10 @@ import com.google.common.collect.Iterables;
  * waits for the {@link SpotInstanceRequest} to appear in
  * {@code DescribeSpotInstanceRequests}.
  * <p/>
- * Due to the eventual consistency semantics of the Amazon API, operations may
- * need time to propagate through the system and results may not be immediate.
+ * Due to the <a href=
+ * "http://docs.aws.amazon.com/AWSEC2/latest/APIReference/query-api-troubleshooting.html#eventual-consistency"
+ * >eventual consistency semantics</a> of the Amazon API, operations may need
+ * time to propagate through the system and results may not be immediate.
  */
 public class PlaceSpotInstanceRequest extends
 		AmazonEc2Request<SpotInstanceRequest> {

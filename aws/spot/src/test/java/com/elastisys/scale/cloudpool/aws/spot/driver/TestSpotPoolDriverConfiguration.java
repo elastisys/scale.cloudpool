@@ -18,6 +18,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.google.common.eventbus.EventBus;
 
 /**
  * Verifies the behavior of the {@link SpotPoolDriver} with respect to
@@ -27,6 +28,8 @@ public class TestSpotPoolDriverConfiguration {
 
 	/** Mocked EC2 client. */
 	private SpotClient mockClient = mock(SpotClient.class);
+	/** Mocked event bus. */
+	private EventBus mockEventBus = mock(EventBus.class);
 	/** Object under test. */
 	private SpotPoolDriver driver;
 
@@ -35,7 +38,7 @@ public class TestSpotPoolDriverConfiguration {
 	 */
 	@Before
 	public void onSetup() {
-		this.driver = new SpotPoolDriver(this.mockClient);
+		this.driver = new SpotPoolDriver(this.mockClient, this.mockEventBus);
 	}
 
 	@Test
