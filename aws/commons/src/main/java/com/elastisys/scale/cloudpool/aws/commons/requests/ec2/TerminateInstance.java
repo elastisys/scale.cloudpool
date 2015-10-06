@@ -1,9 +1,7 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.ec2;
 
-import static com.elastisys.scale.cloudpool.aws.commons.predicates.InstancePredicates.instanceStateIn;
-import static java.util.Arrays.asList;
+import static com.elastisys.scale.cloudpool.aws.commons.predicates.InstancePredicates.inAnyOfStates;
 
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -53,12 +51,11 @@ public class TerminateInstance extends AmazonEc2Request<InstanceStateChange> {
 		String name = String.format("await-terminal-state{%s}", instanceId);
 		Callable<Instance> stateRequester = new GetInstance(
 				getAwsCredentials(), getRegion(), instanceId);
-		List<String> terminalStates = asList("shutting-down", "terminated");
 		int initialDelay = 1;
 		int maxRetries = 8;
 		Retryable<Instance> retryer = Retryers.exponentialBackoffRetryer(name,
 				stateRequester, initialDelay, TimeUnit.SECONDS, maxRetries,
-				instanceStateIn(terminalStates));
+				inAnyOfStates("shutting-down", "terminated"));
 
 		try {
 			retryer.call();

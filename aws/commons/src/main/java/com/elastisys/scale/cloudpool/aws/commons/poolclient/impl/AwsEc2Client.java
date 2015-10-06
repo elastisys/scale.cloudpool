@@ -16,7 +16,7 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
-import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CreateInstance;
+import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CreateInstances;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstance;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstances;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TagEc2Resource;
@@ -73,8 +73,8 @@ public class AwsEc2Client implements Ec2Client {
 	}
 
 	@Override
-	public Instance launchInstance(ScaleOutConfig provisioningDetails)
-			throws AmazonClientException {
+	public List<Instance> launchInstances(ScaleOutConfig provisioningDetails,
+			int count, List<Tag> tags) throws AmazonClientException {
 		checkArgument(isConfigured(), "can't use client before it's configured");
 
 		// no particular availability zone
@@ -82,14 +82,14 @@ public class AwsEc2Client implements Ec2Client {
 		String bootscript = Joiner.on("\n").join(
 				provisioningDetails.getBootScript());
 
-		Instance startedInstance = new CreateInstance(awsCredentials(),
+		List<Instance> startedInstances = new CreateInstances(awsCredentials(),
 				region(), availabilityZone,
 				provisioningDetails.getSecurityGroups(),
 				provisioningDetails.getKeyPair(),
 				provisioningDetails.getSize(), provisioningDetails.getImage(),
-				bootscript).call();
+				bootscript, count, tags).call();
 
-		return startedInstance;
+		return startedInstances;
 	}
 
 	@Override

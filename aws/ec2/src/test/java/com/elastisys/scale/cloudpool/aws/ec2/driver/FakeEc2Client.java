@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.ec2.driver;
 
+import java.util.Iterator;
 import java.util.List;
 
 import com.amazonaws.AmazonClientException;
@@ -50,16 +51,21 @@ public class FakeEc2Client implements Ec2Client {
 	}
 
 	@Override
-	public Instance launchInstance(ScaleOutConfig provisioningDetails)
-			throws AmazonClientException {
-		int idNum = ++this.idSequencer;
-		Instance launchedInstance = new Instance().withInstanceId("i-" + idNum)
-				.withState(new InstanceState().withName("pending"))
-				.withPublicIpAddress("1.2.3." + idNum)
-				.withImageId(provisioningDetails.getImage())
-				.withInstanceType(provisioningDetails.getSize());
-		this.instances.add(launchedInstance);
-		return launchedInstance;
+	public List<Instance> launchInstances(ScaleOutConfig provisioningDetails,
+			int count, List<Tag> tags) throws AmazonClientException {
+		List<Instance> launchedInstances = Lists.newArrayList();
+		for (int i = 0; i < count; i++) {
+			int idNum = ++this.idSequencer;
+			Instance newInstance = new Instance().withInstanceId("i-" + idNum)
+					.withState(new InstanceState().withName("pending"))
+					.withPublicIpAddress("1.2.3." + idNum)
+					.withImageId(provisioningDetails.getImage())
+					.withInstanceType(provisioningDetails.getSize())
+					.withTags(tags);
+			this.instances.add(newInstance);
+			launchedInstances.add(newInstance);
+		}
+		return launchedInstances;
 	}
 
 	@Override
@@ -67,11 +73,30 @@ public class FakeEc2Client implements Ec2Client {
 			throws AmazonClientException {
 		try {
 			Instance instance = getInstanceMetadata(resourceId);
-			instance.withTags(tags);
+			replaceTags(instance, tags);
 		} catch (NotFoundException e) {
 			// amazon will throw an internal error
 			throw new AmazonServiceException("no such resource", e);
 		}
+	}
+
+	private void replaceTags(Instance instance, List<Tag> tags) {
+		List<Tag> filteredTags = Lists.newArrayList(instance.getTags());
+
+		// first remove any old occurrences of updated tags
+		Iterator<Tag> iterator = filteredTags.iterator();
+		while (iterator.hasNext()) {
+			Tag instanceTag = iterator.next();
+			for (Tag updatedTag : tags) {
+				if (instanceTag.getKey().equals(updatedTag.getKey())) {
+					iterator.remove();
+				}
+			}
+		}
+		instance.setTags(filteredTags);
+
+		// ... then add updated tags
+		instance.getTags().addAll(tags);
 	}
 
 	@Override

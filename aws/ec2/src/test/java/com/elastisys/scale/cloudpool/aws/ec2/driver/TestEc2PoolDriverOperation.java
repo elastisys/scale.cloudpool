@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.jetty.server.Server;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -169,7 +170,8 @@ public class TestEc2PoolDriverOperation {
 		setUpMockedScalingGroup(POOL_NAME,
 				ec2Instances(memberInstance("i-1", "running")));
 		doThrow(new AmazonClientException("API unreachable")).when(
-				this.mockClient).launchInstance(scaleUpConfig);
+				this.mockClient).launchInstances(scaleUpConfig, 1,
+				Arrays.asList(new Tag(CLOUD_POOL_TAG, POOL_NAME)));
 
 		// should raise an exception
 		try {
@@ -178,34 +180,6 @@ public class TestEc2PoolDriverOperation {
 		} catch (StartMachinesException e) {
 			assertThat(e.getRequestedMachines(), is(1));
 			assertThat(e.getStartedMachines().size(), is(0));
-		}
-	}
-
-	/**
-	 * Any machines that were started prior to encountering an error should be
-	 * listed in {@link StartMachinesException}s.
-	 */
-	@Test
-	public void startMachinesOnPartialFailure() throws Exception {
-		BaseCloudPoolConfig config = config(POOL_NAME);
-		ScaleOutConfig scaleUpConfig = config.getScaleOutConfig();
-
-		// set up mock to throw an error when asked to launch second instance
-		// (first should succeed)
-		int numLaunchesBeforeFailure = 1;
-		FakeEc2Client fakeEc2Client = new FailingFakeEc2Client(ec2Instances(),
-				numLaunchesBeforeFailure);
-		this.driver = new Ec2PoolDriver(fakeEc2Client);
-		this.driver.configure(config);
-
-		// should raise an exception on second attempt to launch
-		try {
-			this.driver.startMachines(2, scaleUpConfig);
-			fail("startMachines expected to fail");
-		} catch (StartMachinesException e) {
-			assertThat(e.getRequestedMachines(), is(2));
-			assertThat(e.getStartedMachines().size(),
-					is(numLaunchesBeforeFailure));
 		}
 	}
 

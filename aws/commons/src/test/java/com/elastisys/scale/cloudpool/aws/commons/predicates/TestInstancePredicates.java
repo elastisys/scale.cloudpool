@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.commons.predicates;
 
-import static com.elastisys.scale.cloudpool.aws.commons.predicates.InstancePredicates.instanceStateIn;
+import static com.elastisys.scale.cloudpool.aws.commons.predicates.InstancePredicates.inAnyOfStates;
 import static com.elastisys.scale.cloudpool.aws.commons.predicates.InstancePredicates.instancesPresent;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertFalse;
@@ -47,20 +47,18 @@ public class TestInstancePredicates {
 	}
 
 	@Test
-	public void testInstanceStateIn() {
-		List<String> empty = Arrays.asList();
-		Predicate<Instance> noAcceptableStates = instanceStateIn(empty);
-		Predicate<Instance> pendingOnly = instanceStateIn(asList("pending"));
-		Predicate<Instance> active = instanceStateIn(asList("pending",
-				"running"));
-		Predicate<Instance> terminal = instanceStateIn(asList("terminating",
-				"terminated"));
+	public void testInAnyOfStates() {
+		Predicate<Instance> noAcceptableStates = inAnyOfStates();
+		Predicate<Instance> pendingOnly = inAnyOfStates("pending");
+		Predicate<Instance> active = inAnyOfStates("pending", "running");
+		Predicate<Instance> terminal = inAnyOfStates("shutting-down",
+				"terminated");
 
 		Map<String, String> noTags = ImmutableMap.of();
 		Instance pending = makeInstance("i-0", "pending", noTags);
 		Instance running = makeInstance("i-1", "running", noTags);
 		Instance stopping = makeInstance("i-2", "stopping", noTags);
-		Instance terminating = makeInstance("i-2", "terminating", noTags);
+		Instance terminating = makeInstance("i-2", "shutting-down", noTags);
 		Instance terminated = makeInstance("i-3", "terminated", noTags);
 
 		assertFalse(noAcceptableStates.apply(pending));
@@ -88,14 +86,110 @@ public class TestInstancePredicates {
 		assertTrue(terminal.apply(terminated));
 	}
 
+	@Test(expected = IllegalArgumentException.class)
+	public void inAnyOfStatesWithIllegalArgument() {
+		inAnyOfStates("bad-state");
+	}
+
+	/**
+	 * Test the {@link InstancePredicates#allInAnyOfStates(String...)} predicate
+	 * when there is only a single state to match {@link Instance}s against.
+	 */
+	@Test
+	public void testAllInAnyOfStatesPredicateWithSingleMatchingState() {
+		// make sure all valid states are recognized
+		assertTrue(InstancePredicates.allInAnyOfStates("pending").apply(
+				instances()));
+		assertTrue(InstancePredicates.allInAnyOfStates("pending").apply(
+				instances("pending")));
+		assertTrue(InstancePredicates.allInAnyOfStates("pending").apply(
+				instances("pending", "pending")));
+		assertFalse(InstancePredicates.allInAnyOfStates("pending").apply(
+				instances("pending", "running")));
+
+		assertTrue(InstancePredicates.allInAnyOfStates("running").apply(
+				instances()));
+		assertTrue(InstancePredicates.allInAnyOfStates("running").apply(
+				instances("running")));
+		assertTrue(InstancePredicates.allInAnyOfStates("running").apply(
+				instances("running", "running")));
+		assertFalse(InstancePredicates.allInAnyOfStates("running").apply(
+				instances("running", "pending")));
+
+		assertTrue(InstancePredicates.allInAnyOfStates("shutting-down").apply(
+				instances()));
+		assertTrue(InstancePredicates.allInAnyOfStates("shutting-down").apply(
+				instances("shutting-down")));
+		assertTrue(InstancePredicates.allInAnyOfStates("shutting-down").apply(
+				instances("shutting-down", "shutting-down")));
+		assertFalse(InstancePredicates.allInAnyOfStates("shutting-down").apply(
+				instances("shutting-down", "running")));
+
+		assertTrue(InstancePredicates.allInAnyOfStates("stopping").apply(
+				instances()));
+		assertTrue(InstancePredicates.allInAnyOfStates("stopping").apply(
+				instances("stopping")));
+		assertTrue(InstancePredicates.allInAnyOfStates("stopping").apply(
+				instances("stopping", "stopping")));
+		assertFalse(InstancePredicates.allInAnyOfStates("stopping").apply(
+				instances("stopping", "pending")));
+
+		assertTrue(InstancePredicates.allInAnyOfStates("stopped").apply(
+				instances()));
+		assertTrue(InstancePredicates.allInAnyOfStates("stopped").apply(
+				instances("stopped")));
+		assertTrue(InstancePredicates.allInAnyOfStates("stopped").apply(
+				instances("stopped", "stopped")));
+		assertFalse(InstancePredicates.allInAnyOfStates("stopped").apply(
+				instances("stopped", "running")));
+
+		assertTrue(InstancePredicates.allInAnyOfStates("terminated").apply(
+				instances()));
+		assertTrue(InstancePredicates.allInAnyOfStates("terminated").apply(
+				instances("terminated")));
+		assertTrue(InstancePredicates.allInAnyOfStates("terminated").apply(
+				instances("terminated", "terminated")));
+		assertFalse(InstancePredicates.allInAnyOfStates("terminated").apply(
+				instances("terminated", "running")));
+	}
+
+	/**
+	 * Test the {@link InstancePredicates#allInAnyOfStates(String...)} predicate
+	 * when there are more than one state to match {@link Instance}s against.
+	 */
+	@Test
+	public void testAllInAnyOfStatesPredicateWithMultipleMatchingStates() {
+		assertTrue(InstancePredicates.allInAnyOfStates("shutting-down",
+				"terminated").apply(instances()));
+		assertTrue(InstancePredicates.allInAnyOfStates("shutting-down",
+				"terminated").apply(instances("shutting-down", "terminated")));
+		assertTrue(InstancePredicates.allInAnyOfStates("shutting-down",
+				"terminated").apply(
+				instances("shutting-down", "terminated", "terminated",
+						"shutting-down")));
+		assertFalse(InstancePredicates.allInAnyOfStates("shutting-down",
+				"terminated").apply(
+				instances("shutting-down", "terminated", "running",
+						"shutting-down")));
+
+		assertTrue(InstancePredicates.allInAnyOfStates("pending", "running")
+				.apply(instances("pending", "running", "pending", "running")));
+		assertFalse(InstancePredicates.allInAnyOfStates("pending", "running")
+				.apply(instances("pending", "running", "shutting-down")));
+		assertFalse(InstancePredicates.allInAnyOfStates("pending", "running")
+				.apply(instances("pending", "running", "pending", "stopped")));
+		assertFalse(InstancePredicates
+				.allInAnyOfStates("pending", "running")
+				.apply(instances("pending", "running", "terminated", "stopped")));
+	}
+
 	@Test
 	public void testInstancesPresent() {
-
 		Map<String, String> noTags = ImmutableMap.of();
 		Instance i0 = makeInstance("i-0", "pending", noTags);
 		Instance i1 = makeInstance("i-1", "running", noTags);
 		Instance i2 = makeInstance("i-2", "running", noTags);
-		Instance i3 = makeInstance("i-3", "terminating", noTags);
+		Instance i3 = makeInstance("i-3", "shutting-down", noTags);
 
 		List<Instance> noInstances = Arrays.asList();
 
@@ -117,7 +211,6 @@ public class TestInstancePredicates {
 		assertTrue(instancesPresent(expectedIds).apply(asList(i0, i3)));
 		assertFalse(instancesPresent(expectedIds).apply(asList(i0, i1, i2)));
 		assertTrue(instancesPresent(expectedIds).apply(asList(i0, i1, i2, i3)));
-
 	}
 
 	private Instance makeInstance(String id, String state,
@@ -131,5 +224,15 @@ public class TestInstancePredicates {
 		return new Instance().withInstanceId(id)
 				.withState(new InstanceState().withName(state))
 				.withTags(tagList);
+	}
+
+	private List<Instance> instances(String... states) {
+		List<Instance> instances = Lists.newArrayList();
+		int index = 1;
+		for (String state : states) {
+			instances.add(new Instance().withInstanceId("i-" + index++)
+					.withState(new InstanceState().withName(state)));
+		}
+		return instances;
 	}
 }

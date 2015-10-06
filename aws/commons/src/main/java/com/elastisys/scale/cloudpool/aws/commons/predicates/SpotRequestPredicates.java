@@ -30,7 +30,8 @@ public class SpotRequestPredicates {
 	 * @param states
 	 * @return
 	 */
-	public static Predicate<SpotInstanceRequest> inAnyOfStates(final String... states) {
+	public static Predicate<SpotInstanceRequest> inAnyOfStates(
+			final String... states) {
 		// validate states
 		for (String state : states) {
 			Preconditions.checkArgument(VALID_STATES.contains(state),
@@ -50,6 +51,7 @@ public class SpotRequestPredicates {
 	 * set of {@link SpotInstanceState}s.
 	 *
 	 * @param states
+	 *            The acceptable states.
 	 * @return
 	 */
 	public static Predicate<List<SpotInstanceRequest>> allInAnyOfStates(

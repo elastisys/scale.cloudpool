@@ -127,15 +127,16 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 
 		List<Machine> startedMachines = Lists.newArrayList();
 		try {
-			for (int i = 0; i < count; i++) {
-				Instance newInstance = launchInstance(scaleUpConfig);
-				startedMachines.add(InstanceToMachine.convert(newInstance));
+			// launch instances and set cloud pool tag to make sure machines are
+			// recognized as pool members
+			List<Instance> newInstances = this.client.launchInstances(
+					scaleUpConfig, count, asList(cloudPoolTag()));
+			startedMachines = Lists.transform(newInstances,
+					new InstanceToMachine());
 
-				// set cloud pool tag to make sure machine is recognized as a
-				// cloud pool member
-				List<Tag> tags = instanceTags(newInstance);
-				newInstance = tagInstance(newInstance.getInstanceId(), tags);
-				startedMachines.set(i, InstanceToMachine.convert(newInstance));
+			// set instance Name tags
+			for (Instance instance : newInstances) {
+				tagInstance(instance.getInstanceId(), nameTag(instance));
 			}
 		} catch (Exception e) {
 			throw new StartMachinesException(count, startedMachines, e);
@@ -171,8 +172,8 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 		this.client.getInstanceMetadata(machineId);
 
 		try {
-			Tag tag = createTag(ScalingTags.CLOUD_POOL_TAG, getPoolName());
-			tagInstance(machineId, Arrays.asList(tag));
+			Tag tag = new Tag(ScalingTags.CLOUD_POOL_TAG, getPoolName());
+			tagInstance(machineId, tag);
 		} catch (Exception e) {
 			Throwables.propagateIfInstanceOf(e, NotFoundException.class);
 			throw new CloudPoolDriverException(String.format(
@@ -189,7 +190,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 		// verify that machine exists in group
 		getMachineOrFail(machineId);
 
-		Tag membershipTag = createTag(ScalingTags.CLOUD_POOL_TAG, getPoolName());
+		Tag membershipTag = new Tag(ScalingTags.CLOUD_POOL_TAG, getPoolName());
 		try {
 			this.client.untagResource(machineId, asList(membershipTag));
 		} catch (Exception e) {
@@ -208,9 +209,9 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 		getMachineOrFail(machineId);
 
 		try {
-			Tag tag = createTag(ScalingTags.SERVICE_STATE_TAG,
+			Tag tag = new Tag(ScalingTags.SERVICE_STATE_TAG,
 					serviceState.name());
-			tagInstance(machineId, Arrays.asList(tag));
+			tagInstance(machineId, tag);
 		} catch (Exception e) {
 			Throwables.propagateIfInstanceOf(e, NotFoundException.class);
 			throw new CloudPoolDriverException(String.format(
@@ -229,9 +230,9 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 		getMachineOrFail(machineId);
 
 		try {
-			Tag tag = createTag(ScalingTags.MEMBERSHIP_STATUS_TAG,
+			Tag tag = new Tag(ScalingTags.MEMBERSHIP_STATUS_TAG,
 					JsonUtils.toString(toJson(membershipStatus)));
-			tagInstance(machineId, Arrays.asList(tag));
+			tagInstance(machineId, tag);
 		} catch (Exception e) {
 			Throwables.propagateIfInstanceOf(e, NotFoundException.class);
 			throw new CloudPoolDriverException(String.format(
@@ -260,16 +261,6 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 		return this.config.get();
 	}
 
-	private Instance launchInstance(ScaleOutConfig scaleUpConfig)
-			throws CloudPoolDriverException {
-		try {
-			return this.client.launchInstance(scaleUpConfig);
-		} catch (Exception e) {
-			throw new CloudPoolDriverException(format(
-					"failed to launch instance: %s", e.getMessage()), e);
-		}
-	}
-
 	/**
 	 * Retrieves a particular member instance from the pool or throws an
 	 * exception if it could not be found.
@@ -291,25 +282,21 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 				"no machine with id '%s' found in cloud pool", machineId));
 	}
 
-	private Tag createTag(String key, String value) {
-		return new Tag().withKey(key).withValue(value);
-	}
-
 	/**
-	 * Creates tags to assign to a new {@link Instance}.
+	 * Creates a name tag to assign to a new pool member {@link Instance}.
 	 *
 	 * @param instance
 	 * @return
 	 */
-	private List<Tag> instanceTags(Instance instance) {
+	private Tag nameTag(Instance instance) {
 		// assign a name to the instance
 		String instanceName = String.format("%s-%s", getPoolName(),
 				instance.getInstanceId());
-		Tag nameTag = createTag(ScalingTags.INSTANCE_NAME_TAG, instanceName);
+		return new Tag(ScalingTags.INSTANCE_NAME_TAG, instanceName);
+	}
 
-		// tag new instance with cloud pool
-		Tag cloudPoolTag = createTag(ScalingTags.CLOUD_POOL_TAG, getPoolName());
-		return Arrays.asList(nameTag, cloudPoolTag);
+	private Tag cloudPoolTag() {
+		return new Tag(ScalingTags.CLOUD_POOL_TAG, getPoolName());
 	}
 
 	/**
@@ -323,9 +310,9 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 	 *         {@link NotFoundException}
 	 * @throws CloudPoolDriverException
 	 */
-	private Instance tagInstance(String instanceId, List<Tag> tags)
+	private Instance tagInstance(String instanceId, Tag... tags)
 			throws NotFoundException, CloudPoolDriverException {
-		this.client.tagResource(instanceId, tags);
+		this.client.tagResource(instanceId, Arrays.asList(tags));
 		return this.client.getInstanceMetadata(instanceId);
 	}
 

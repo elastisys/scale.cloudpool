@@ -16,14 +16,13 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.InstanceStateName;
+import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.SpotInstanceState;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
-import com.elastisys.scale.cloudpool.aws.spot.util.SpotTestUtil;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.google.common.collect.Lists;
 
@@ -55,6 +54,7 @@ public class FakeSpotClient implements SpotClient {
 	}
 	private final Map<String, SpotInstanceRequest> spotRequests;
 	private final Map<String, Instance> instances;
+	private int idSequencer = 0;
 
 	public FakeSpotClient() {
 		this.spotRequests = new HashMap<>();
@@ -126,14 +126,24 @@ public class FakeSpotClient implements SpotClient {
 	}
 
 	@Override
-	public Instance launchInstance(ScaleOutConfig provisioningDetails)
-			throws AmazonClientException {
-		String id = "i-" + System.currentTimeMillis();
-		LOG.info("launching instance {} into fake account ...", id);
-		Instance instance = SpotTestUtil.instance(id,
-				InstanceStateName.Pending, null);
-		this.instances.put(instance.getInstanceId(), instance);
-		return instance;
+	public List<Instance> launchInstances(ScaleOutConfig provisioningDetails,
+			int count, List<Tag> tags) throws AmazonClientException {
+
+		List<Instance> launchedInstances = Lists.newArrayList();
+		for (int i = 0; i < count; i++) {
+			int idNum = ++this.idSequencer;
+			String id = "i-" + idNum;
+			LOG.info("launching instance {} into fake account ...", id);
+			Instance newInstance = new Instance().withInstanceId(id)
+					.withState(new InstanceState().withName("pending"))
+					.withPublicIpAddress("1.2.3." + idNum)
+					.withImageId(provisioningDetails.getImage())
+					.withInstanceType(provisioningDetails.getSize())
+					.withTags(tags);
+			this.instances.put(newInstance.getInstanceId(), newInstance);
+			launchedInstances.add(newInstance);
+		}
+		return launchedInstances;
 	}
 
 	@Override

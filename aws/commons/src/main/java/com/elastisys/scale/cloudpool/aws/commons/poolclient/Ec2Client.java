@@ -60,17 +60,22 @@ public interface Ec2Client {
 			AmazonClientException;
 
 	/**
-	 * Launches a new EC2 {@link Instance}.
+	 * Requests a number of new EC2 {@link Instance}s to be launched and
+	 * (optionally) tags the instances with a given set of {@link Tag}s.
 	 *
 	 * @param provisioningDetails
 	 *            The provisioning details on how to launch the new machine
-	 *            {@link Instance}.
-	 * @return The launched {@link Instance}.
+	 *            {@link Instance}s.
+	 * @param count
+	 *            The number of {@link Instance}s to launch.
+	 * @param tags
+	 *            Tags to set on the launched instances. May be empty.
+	 * @return The launched {@link Instance}s.
 	 * @throws AmazonClientException
 	 *             if the request failed
 	 */
-	Instance launchInstance(ScaleOutConfig provisioningDetails)
-			throws AmazonClientException;
+	List<Instance> launchInstances(ScaleOutConfig provisioningDetails,
+			int count, List<Tag> tags) throws AmazonClientException;
 
 	/**
 	 * Sets a collection of tags on an EC2 resource (such as an instance or a

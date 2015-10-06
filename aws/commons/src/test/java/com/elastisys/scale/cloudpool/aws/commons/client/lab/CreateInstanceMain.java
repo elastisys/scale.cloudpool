@@ -5,9 +5,12 @@ import static java.lang.String.format;
 import java.util.Arrays;
 import java.util.List;
 
+import jersey.repackaged.com.google.common.collect.Iterables;
+
 import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.services.ec2.model.Instance;
-import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CreateInstance;
+import com.amazonaws.services.ec2.model.Tag;
+import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CreateInstances;
 
 public class CreateInstanceMain extends AbstractClient {
 
@@ -39,10 +42,12 @@ public class CreateInstanceMain extends AbstractClient {
 
 		PropertiesCredentials awsCredentials = new PropertiesCredentials(
 				credentialsFile);
-		CreateInstance request = new CreateInstance(awsCredentials, region,
+		CreateInstances request = new CreateInstances(awsCredentials, region,
 				availabilityZone, securityGroups, keyPair, instanceType,
-				imageId, bootScript);
-		Instance instance = request.call();
+				imageId, bootScript, 1, Arrays.asList(new Tag("Name",
+						"myinstance")));
+		List<Instance> instances = request.call();
+		Instance instance = Iterables.getOnlyElement(instances);
 		logger.info("Launched instance : " + instance.getInstanceId() + ": "
 				+ instance.getState());
 	}

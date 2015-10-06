@@ -51,7 +51,7 @@ public interface SpotClient extends Ec2Client {
 	 * @param count
 	 *            The number of spot instances to request.
 	 * @param tags
-	 *            Tags to set on the created spot instance requests. Can be
+	 *            Tags to set on the created spot instance requests. May be
 	 *            empty.
 	 * @return The placed {@link SpotInstanceRequest}s.
 	 * @throws AmazonClientException

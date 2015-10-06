@@ -3,13 +3,17 @@ package com.elastisys.scale.cloudpool.aws.commons.predicates;
 import static com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions.toInstanceId;
 import static com.google.common.collect.Collections2.transform;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.InstanceState;
+import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.amazonaws.services.ec2.model.Tag;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 /**
@@ -19,6 +23,15 @@ import com.google.common.collect.ImmutableSet;
  *
  */
 public class InstancePredicates {
+
+	/** The range of permissible states an {@link Instance} can be in. */
+	private static final ImmutableList<String> VALID_STATES = ImmutableList.of(
+			InstanceStateName.Pending.toString(),
+			InstanceStateName.Running.toString(),
+			InstanceStateName.ShuttingDown.toString(),
+			InstanceStateName.Stopping.toString(),
+			InstanceStateName.Stopped.toString(),
+			InstanceStateName.Terminated.toString());
 
 	/**
 	 * Returns a {@link Predicate} that returns <code>true</code> for any EC2
@@ -69,16 +82,45 @@ public class InstancePredicates {
 	 *            The set of acceptable states.
 	 * @return
 	 */
-	public static Predicate<Instance> instanceStateIn(
-			Collection<String> acceptableStates) {
-		return new InstanceStatePredicate(acceptableStates);
+	public static Predicate<Instance> inAnyOfStates(String... acceptableStates) {
+		return new InStatePredicate(Arrays.asList(acceptableStates));
+	}
+
+	/**
+	 * Returns a {@link Predicate} that returns <code>true</code> if every
+	 * instance in a collection of instances is in a given set of
+	 * {@link InstanceState}s.
+	 *
+	 * @param states
+	 *            The acceptable states.
+	 * @return
+	 */
+	public static Predicate<List<Instance>> allInAnyOfStates(
+			final String... states) {
+		// validate states
+		for (String state : states) {
+			Preconditions.checkArgument(VALID_STATES.contains(state),
+					"unrecognized spot instance request state '%s'", state);
+		}
+		final List<String> expectedStates = ImmutableList.copyOf(states);
+		return new Predicate<List<Instance>>() {
+			@Override
+			public boolean apply(List<Instance> instances) {
+				for (Instance instance : instances) {
+					if (!expectedStates.contains(instance.getState().getName())) {
+						return false;
+					}
+				}
+				return true;
+			}
+		};
 	}
 
 	/**
 	 * Predicates that determines if an {@link Instance} is in any of a set of
 	 * acceptable states.
 	 */
-	public static class InstanceStatePredicate implements Predicate<Instance> {
+	public static class InStatePredicate implements Predicate<Instance> {
 
 		/**
 		 * The collection of instance states we are waiting for the instance to
@@ -87,13 +129,18 @@ public class InstancePredicates {
 		private final Collection<String> acceptableStates;
 
 		/**
-		 * Constructs a new {@link InstanceStatePredicate}.
+		 * Constructs a new {@link InStatePredicate}.
 		 *
 		 * @param acceptableStates
 		 *            The collection of instance states we are waiting for the
 		 *            instance to reach.
 		 */
-		public InstanceStatePredicate(Collection<String> acceptableStates) {
+		public InStatePredicate(Collection<String> acceptableStates) {
+			for (String state : acceptableStates) {
+				Preconditions.checkArgument(VALID_STATES.contains(state),
+						"unrecognized instance state '%s'", state);
+			}
+
 			this.acceptableStates = acceptableStates;
 		}
 
