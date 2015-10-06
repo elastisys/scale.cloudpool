@@ -334,7 +334,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
 						.getInstanceId();
 				LOG.debug("terminating {}'s spot instance {}", spotRequestId,
 						instanceId);
-				this.client.terminateInstance(instanceId);
+				this.client.terminateInstances(asList(instanceId));
 			}
 		} catch (Exception e) {
 			Throwables.propagateIfInstanceOf(e, NotFoundException.class);
@@ -623,7 +623,8 @@ public class SpotPoolDriver implements CloudPoolDriver {
 					+ "to dead spot request {}",
 					danglingInstance.getInstanceId(),
 					danglingInstance.getSpotInstanceRequestId());
-			client().terminateInstance(danglingInstance.getInstanceId());
+			client().terminateInstances(
+					asList(danglingInstance.getInstanceId()));
 		}
 		return danglingInstances;
 	}

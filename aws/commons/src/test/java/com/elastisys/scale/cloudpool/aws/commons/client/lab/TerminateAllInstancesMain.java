@@ -9,8 +9,10 @@ import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceStateChange;
+import com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstances;
-import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TerminateInstance;
+import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TerminateInstances;
+import com.google.common.collect.Lists;
 
 public class TerminateAllInstancesMain extends AbstractClient {
 
@@ -26,12 +28,11 @@ public class TerminateAllInstancesMain extends AbstractClient {
 				credentialsFile);
 		List<Instance> runningInstances = new GetInstances(awsCredentials,
 				region).withFilters(asList(filter)).call();
-		for (Instance instance : runningInstances) {
-			logger.debug("  Terminating instance " + instance);
-			InstanceStateChange stateChange = new TerminateInstance(
-					awsCredentials, region, instance.getInstanceId()).call();
-			logger.debug("  Result: " + stateChange);
-		}
-
+		List<String> instanceIds = Lists.transform(runningInstances,
+				AwsEc2Functions.toInstanceId());
+		logger.debug("Terminating instances {}", instanceIds);
+		List<InstanceStateChange> stateChanges = new TerminateInstances(
+				awsCredentials, region, instanceIds).call();
+		logger.debug("Result: " + stateChanges);
 	}
 }

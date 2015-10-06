@@ -112,10 +112,12 @@ public class FakeEc2Client implements Ec2Client {
 	}
 
 	@Override
-	public void terminateInstance(String instanceId) throws NotFoundException,
-			AmazonClientException {
-		Instance instance = getInstanceMetadata(instanceId);
-		this.instances.remove(instance);
+	public void terminateInstances(List<String> instanceIds)
+			throws NotFoundException, AmazonClientException {
+		for (String instanceId : instanceIds) {
+			Instance instance = getInstanceMetadata(instanceId);
+			this.instances.remove(instance);
+		}
 	}
 
 }

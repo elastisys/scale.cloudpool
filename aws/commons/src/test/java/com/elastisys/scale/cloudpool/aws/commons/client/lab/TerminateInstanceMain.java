@@ -2,9 +2,11 @@ package com.elastisys.scale.cloudpool.aws.commons.client.lab;
 
 import static java.lang.String.format;
 
+import java.util.List;
+
 import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.services.ec2.model.InstanceStateChange;
-import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TerminateInstance;
+import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TerminateInstances;
 
 public class TerminateInstanceMain extends AbstractClient {
 
@@ -16,10 +18,10 @@ public class TerminateInstanceMain extends AbstractClient {
 	public static void main(String[] args) throws Exception {
 		logger.info(format("Terminating instance %s in region %s", instanceId,
 				region));
-		InstanceStateChange stateChange = new TerminateInstance(
+		List<InstanceStateChange> stateChanges = new TerminateInstances(
 				new PropertiesCredentials(credentialsFile), region, instanceId)
 				.call();
-		logger.info("Terminating instances: " + stateChange);
+		logger.info("Terminating instances: {}", stateChanges);
 	}
 
 }

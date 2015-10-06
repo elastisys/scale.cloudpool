@@ -3,7 +3,6 @@ package com.elastisys.scale.cloudpool.aws.commons.requests.ec2;
 import static com.amazonaws.services.ec2.model.SpotInstanceState.Cancelled;
 import static com.elastisys.scale.cloudpool.aws.commons.predicates.SpotRequestPredicates.allInAnyOfStates;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -12,9 +11,7 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.CancelSpotInstanceRequestsRequest;
 import com.amazonaws.services.ec2.model.CancelSpotInstanceRequestsResult;
-import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
-import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
 import com.google.common.collect.ImmutableList;
@@ -61,11 +58,8 @@ public class CancelSpotInstanceRequests extends
 	 */
 	private void awaitCancellation(List<String> spotRequestIds) {
 		String name = String.format("await-cancelled{%s}", spotRequestIds);
-		Filter idFilter = new Filter().withName(
-				ScalingFilters.SPOT_REQUEST_ID_FILTER).withValues(
-				spotRequestIds);
 		GetSpotInstanceRequests requester = new GetSpotInstanceRequests(
-				getAwsCredentials(), getRegion(), Arrays.asList(idFilter));
+				getAwsCredentials(), getRegion(), spotRequestIds, null);
 		Retryable<List<SpotInstanceRequest>> retryer = Retryers
 				.exponentialBackoffRetryer(name, requester,
 						INITIAL_BACKOFF_DELAY, TimeUnit.MILLISECONDS,

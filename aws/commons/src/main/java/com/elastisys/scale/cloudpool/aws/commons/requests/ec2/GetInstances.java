@@ -9,6 +9,8 @@ import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Reservation;
+import com.elastisys.scale.commons.net.retryable.Retryable;
+import com.elastisys.scale.commons.net.retryable.Retryers;
 import com.google.common.collect.Lists;
 
 /**
@@ -20,18 +22,21 @@ import com.google.common.collect.Lists;
  * narrow down the result set. Note that without {@link Filter}s, the result may
  * contain instances in all states: pending, running, terminated, etc.
  * <p/>
- * If a set of instance ids is specified, the query will be retried until meta
- * data could be retrieved for all requested instances. This behavior is useful
- * to handle the eventually consistent semantics of the EC2 API.
- * <p/>
  * AWS limits the number of filter values to some number (at the time of
- * writing, that number is 200).
- * <p/>
- * For a detailed description of supported {@link Filter}s refer to the <a href=
+ * writing, that number is 200). For a detailed description of supported
+ * {@link Filter}s refer to the <a href=
  * "http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-query-DescribeInstances.html"
  * >Amazon EC2 API</a>.
+ * <p/>
+ * Note that due to the <a href=
+ * "http://docs.aws.amazon.com/AWSEC2/latest/APIReference/query-api-troubleshooting.html#eventual-consistency"
+ * >eventual consistency semantics</a> of the Amazon API, a recently created EC2
+ * instance or spot instance request may not be immediately available for
+ * tagging. Therefore, it might be wise to use a retry strategy (with
+ * exponential back-off) when tagging a recently created resource.
  *
- * @see PersistentGetInstances
+ * @see Retryable
+ * @see Retryers
  */
 public class GetInstances extends AmazonEc2Request<List<Instance>> {
 

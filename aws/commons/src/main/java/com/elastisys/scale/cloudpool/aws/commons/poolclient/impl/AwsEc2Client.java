@@ -20,7 +20,7 @@ import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CreateInstances;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstance;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstances;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TagEc2Resource;
-import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TerminateInstance;
+import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TerminateInstances;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.UntagEc2Resource;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.google.common.base.Joiner;
@@ -110,14 +110,11 @@ public class AwsEc2Client implements Ec2Client {
 	}
 
 	@Override
-	public void terminateInstance(String instanceId) throws NotFoundException,
-			AmazonClientException {
+	public void terminateInstances(List<String> instanceIds)
+			throws NotFoundException, AmazonClientException {
 		checkArgument(isConfigured(), "can't use client before it's configured");
 
-		// verify that instance exists
-		getInstanceMetadata(instanceId);
-
-		new TerminateInstance(awsCredentials(), region(), instanceId).call();
+		new TerminateInstances(awsCredentials(), region(), instanceIds).call();
 	}
 
 	private boolean isConfigured() {

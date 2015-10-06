@@ -210,7 +210,7 @@ public class TestEc2PoolDriverOperation {
 		setUpMockedScalingGroup(POOL_NAME,
 				ec2Instances(memberInstance("i-1", "running")));
 		doThrow(new AmazonClientException("API unreachable")).when(
-				this.mockClient).terminateInstance("i-1");
+				this.mockClient).terminateInstances(asList("i-1"));
 
 		this.driver.terminateMachine("i-1");
 	}

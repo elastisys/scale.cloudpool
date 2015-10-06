@@ -155,7 +155,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 
 		try {
 			LOG.info("terminating instance {}", machineId);
-			this.client.terminateInstance(machineId);
+			this.client.terminateInstances(asList(machineId));
 		} catch (Exception e) {
 			String message = format("failed to terminate instance \"%s\": %s",
 					machineId, e.getMessage());

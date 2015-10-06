@@ -106,15 +106,15 @@ public interface Ec2Client {
 			throws AmazonClientException;
 
 	/**
-	 * Terminates a particular EC2 {@link Instance}.
+	 * Terminates a collection of EC2 {@link Instance}s.
 	 *
-	 * @param instanceId
-	 *            Identifier of the {@link Instance} to be terminated.
+	 * @param instanceIds
+	 *            The identifiers of the {@link Instance}s to be terminated.
 	 * @throws NotFoundException
 	 *             if the instance doesn't exist
 	 * @throws AmazonClientException
 	 *             if the request failed
 	 */
-	void terminateInstance(String instanceId) throws NotFoundException,
+	void terminateInstances(List<String> instanceIds) throws NotFoundException,
 			AmazonClientException;
 }

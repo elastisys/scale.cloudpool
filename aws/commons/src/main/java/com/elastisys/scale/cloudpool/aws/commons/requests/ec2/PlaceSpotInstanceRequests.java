@@ -1,13 +1,10 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.ec2;
 
-import static java.util.Arrays.asList;
-
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.LaunchSpecification;
 import com.amazonaws.services.ec2.model.RequestSpotInstancesRequest;
 import com.amazonaws.services.ec2.model.RequestSpotInstancesResult;
@@ -15,7 +12,6 @@ import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.SpotInstanceType;
 import com.amazonaws.services.ec2.model.SpotPlacement;
 import com.amazonaws.services.ec2.model.Tag;
-import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.client.AmazonApiUtils;
 import com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions;
 import com.elastisys.scale.commons.net.retryable.Retryable;
@@ -144,11 +140,8 @@ public class PlaceSpotInstanceRequests extends
 			List<String> spotRequestIds) {
 
 		String name = String.format("await-spot-requests{%s}", spotRequestIds);
-		Filter idFilter = new Filter().withName(
-				ScalingFilters.SPOT_REQUEST_ID_FILTER).withValues(
-				spotRequestIds);
 		Callable<List<SpotInstanceRequest>> requester = new GetSpotInstanceRequests(
-				getAwsCredentials(), getRegion(), asList(idFilter));
+				getAwsCredentials(), getRegion(), spotRequestIds, null);
 
 		Retryable<List<SpotInstanceRequest>> retryer = Retryers
 				.exponentialBackoffRetryer(name, requester,

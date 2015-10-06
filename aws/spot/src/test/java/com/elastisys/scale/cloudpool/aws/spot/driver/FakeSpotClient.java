@@ -192,18 +192,20 @@ public class FakeSpotClient implements SpotClient {
 	}
 
 	@Override
-	public void terminateInstance(String instanceId) throws NotFoundException,
-			AmazonClientException {
-		if (!this.instances.containsKey(instanceId)) {
-			throw new AmazonServiceException(
-					String.format(
-							"The instance ID '%s' does not exist "
-									+ "(Service: AmazonEC2; Status Code: 400; Error Code: "
-									+ "InvalidInstanceID.NotFound;"
-									+ " Request ID: 12a2ebaf-c480-4998-95fb-6d47b4393e00)",
-							instanceId));
+	public void terminateInstances(List<String> instanceIds)
+			throws NotFoundException, AmazonClientException {
+		for (String instanceId : instanceIds) {
+			if (!this.instances.containsKey(instanceId)) {
+				throw new AmazonServiceException(
+						String.format(
+								"The instance ID '%s' does not exist "
+										+ "(Service: AmazonEC2; Status Code: 400; Error Code: "
+										+ "InvalidInstanceID.NotFound;"
+										+ " Request ID: 12a2ebaf-c480-4998-95fb-6d47b4393e00)",
+								instanceId));
+			}
+			this.instances.remove(instanceId);
 		}
-		this.instances.remove(instanceId);
 	}
 
 	@Override
