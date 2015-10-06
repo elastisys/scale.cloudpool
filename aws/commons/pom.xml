@@ -14,7 +14,7 @@
   </description>
 
   <properties>
-    <aws.sdk.version>1.9.37</aws.sdk.version>
+    <aws.sdk.version>1.10.22</aws.sdk.version>
   </properties>
 
   <dependencies>
@@ -44,16 +44,6 @@
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk-ec2</artifactId>
-      <version>${aws.sdk.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.amazonaws</groupId>
-      <artifactId>aws-java-sdk-cloudwatch</artifactId>
-      <version>${aws.sdk.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.amazonaws</groupId>
-      <artifactId>aws-java-sdk-elasticloadbalancing</artifactId>
       <version>${aws.sdk.version}</version>
     </dependency>
     
