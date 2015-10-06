@@ -1,6 +1,7 @@
 package com.elastisys.scale.cloudpool.aws.spot.driver.lab;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 import jersey.repackaged.com.google.common.collect.Lists;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
+import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.impl.AwsSpotClient;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
@@ -38,22 +40,18 @@ public class SpotRequestLimit extends BaseClient {
 				BaseCloudPoolConfig.class);
 		LOG.info("config: {}", config.getScaleOutConfig());
 		List<SpotInstanceRequest> placedRequests = Lists.newArrayList();
-		int completedRequests = 0;
 		int MAX = 200;
 		try {
-			while (completedRequests < MAX) {
-				placedRequests.add(client.placeSpotRequest(0.001,
-						config.getScaleOutConfig()));
-				completedRequests++;
-				LOG.info("completed request {}", completedRequests);
-			}
+			placedRequests.addAll(client.placeSpotRequests(0.001,
+					config.getScaleOutConfig(), MAX,
+					Arrays.asList(new Tag("key", "value"))));
 		} catch (Exception e) {
-			LOG.error("failed after {} request(s): {}", completedRequests,
-					e.getMessage(), e);
+			LOG.error("failed: {}", e.getMessage(), e);
 		} finally {
 			LOG.info("cancelling all placed requests ...");
 			for (SpotInstanceRequest request : placedRequests) {
-				client.cancelSpotRequest(request.getSpotInstanceRequestId());
+				client.cancelSpotRequests(Arrays.asList(request
+						.getSpotInstanceRequestId()));
 			}
 			LOG.info("cancelled all requests.");
 		}

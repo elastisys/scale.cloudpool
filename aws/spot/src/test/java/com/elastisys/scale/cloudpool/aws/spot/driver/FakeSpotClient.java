@@ -240,22 +240,29 @@ public class FakeSpotClient implements SpotClient {
 	}
 
 	@Override
-	public SpotInstanceRequest placeSpotRequest(double bidPrice,
-			ScaleOutConfig scaleOutConfig) throws AmazonClientException {
-		String id = "sir-" + System.currentTimeMillis();
-		SpotInstanceRequest request = new SpotInstanceRequest()
-				.withSpotInstanceRequestId(id)
-				.withState(SpotInstanceState.Open)
-				.withSpotPrice(String.valueOf(bidPrice));
-		this.spotRequests.put(id, request);
-		return request;
+	public List<SpotInstanceRequest> placeSpotRequests(double bidPrice,
+			ScaleOutConfig scaleOutConfig, int count, List<Tag> tags)
+			throws AmazonClientException {
+		List<SpotInstanceRequest> requests = Lists.newArrayList();
+		for (int i = 0; i < count; i++) {
+			String id = "sir-" + (System.currentTimeMillis() + count);
+			SpotInstanceRequest request = new SpotInstanceRequest()
+					.withSpotInstanceRequestId(id)
+					.withState(SpotInstanceState.Open)
+					.withSpotPrice(String.valueOf(bidPrice)).withTags(tags);
+			this.spotRequests.put(id, request);
+			requests.add(request);
+		}
+		return requests;
 	}
 
 	@Override
-	public void cancelSpotRequest(String spotInstanceRequestId)
+	public void cancelSpotRequests(List<String> spotInstanceRequestIds)
 			throws AmazonClientException {
-		getSpotInstanceRequest(spotInstanceRequestId).setState(
-				SpotInstanceState.Cancelled);
+		for (String spotInstanceRequestId : spotInstanceRequestIds) {
+			getSpotInstanceRequest(spotInstanceRequestId).setState(
+					SpotInstanceState.Cancelled);
+		}
 	}
 
 	private boolean matches(Filter filter, SpotInstanceRequest spotRequest) {

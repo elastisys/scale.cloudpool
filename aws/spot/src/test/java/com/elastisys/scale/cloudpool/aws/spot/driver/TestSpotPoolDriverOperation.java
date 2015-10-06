@@ -212,8 +212,9 @@ public class TestSpotPoolDriverOperation {
 		this.driver.configure(config());
 
 		doThrow(new AmazonServiceException("something went wrong")).when(
-				this.mockClient).placeSpotRequest(Mockito.anyDouble(),
-				Mockito.any(ScaleOutConfig.class));
+				this.mockClient).placeSpotRequests(Mockito.anyDouble(),
+				Mockito.any(ScaleOutConfig.class), Mockito.anyInt(),
+				Mockito.anyListOf(Tag.class));
 
 		this.driver.startMachines(1, config().getScaleOutConfig());
 	}
@@ -267,7 +268,7 @@ public class TestSpotPoolDriverOperation {
 		this.driver.configure(config());
 
 		doThrow(new AmazonServiceException("something went wrong")).when(
-				this.mockClient).cancelSpotRequest("sir-1");
+				this.mockClient).cancelSpotRequests(asList("sir-1"));
 
 		this.driver.terminateMachine("sir-1");
 	}

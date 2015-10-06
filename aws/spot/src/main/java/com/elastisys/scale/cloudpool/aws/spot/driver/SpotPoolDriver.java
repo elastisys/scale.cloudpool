@@ -19,7 +19,9 @@ import static com.google.common.collect.Lists.transform;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadFactory;
@@ -45,6 +47,7 @@ import com.elastisys.scale.cloudpool.api.types.PoolIdentifier;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
+import com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
 import com.elastisys.scale.cloudpool.aws.spot.driver.alerts.AlertTopics;
 import com.elastisys.scale.cloudpool.aws.spot.functions.InstancePairedSpotRequestToMachine;
@@ -290,20 +293,18 @@ public class SpotPoolDriver implements CloudPoolDriver {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 		List<Machine> startedMachines = Lists.newArrayList();
 		try {
-			for (int i = 0; i < count; i++) {
-				SpotInstanceRequest newSpotRequest = this.client
-						.placeSpotRequest(driverConfig().getBidPrice(),
-								scaleOutConfig);
-				LOG.info("placed spot request {}",
-						newSpotRequest.getSpotInstanceRequestId());
+
+			List<SpotInstanceRequest> spotRequests = this.client
+					.placeSpotRequests(driverConfig().getBidPrice(),
+							scaleOutConfig, count, asList(poolMembershipTag()));
+			List<String> spotIds = Lists.transform(spotRequests,
+					AwsEc2Functions.toSpotRequestId());
+			LOG.info("placed spot requests: {}", spotIds);
+			for (SpotInstanceRequest spotRequest : spotRequests) {
 				InstancePairedSpotRequest pairedSpotRequest = new InstancePairedSpotRequest(
-						newSpotRequest, null);
+						spotRequest, null);
 				startedMachines.add(InstancePairedSpotRequestToMachine
 						.convert(pairedSpotRequest));
-
-				// set pool membership tag to make sure spot request is
-				// recognized as a pool member
-				setPoolMembershipTag(newSpotRequest);
 			}
 		} catch (Exception e) {
 			throw new StartMachinesException(count, startedMachines, e);
@@ -325,7 +326,8 @@ public class SpotPoolDriver implements CloudPoolDriver {
 			SpotInstanceRequest request = instancePairedSpotRequest
 					.getRequest();
 			// cancel spot request
-			this.client.cancelSpotRequest(request.getSpotInstanceRequestId());
+			this.client.cancelSpotRequests(asList(request
+					.getSpotInstanceRequestId()));
 			if (instancePairedSpotRequest.hasInstance()) {
 				// terminate spot instance (if spot request is fulfilled)
 				String instanceId = instancePairedSpotRequest.getInstance()
@@ -642,45 +644,47 @@ public class SpotPoolDriver implements CloudPoolDriver {
 				+ "other than {} ...", currentBidPrice);
 		List<InstancePairedSpotRequest> unfulfilledRequests = getPoolSpotRequests(asList(Open
 				.toString()));
-
-		List<String> cancelledRequests = Lists.newArrayList();
+		List<String> wrongPricedSpotIds = new ArrayList<>();
 		for (InstancePairedSpotRequest unfulfilledRequest : unfulfilledRequests) {
 			SpotInstanceRequest request = unfulfilledRequest.getRequest();
 			double spotPrice = Double.valueOf(request.getSpotPrice());
-			// wrong bid price. cancel.
 			if (spotPrice != currentBidPrice) {
-				String requestId = request.getSpotInstanceRequestId();
-				LOG.info(
-						"cancelling unfulfilled spot request {} with wrong bid "
-								+ "price {} ", requestId, spotPrice);
-				// cancel
-				try {
-					terminateMachine(requestId);
-					cancelledRequests.add(requestId);
-				} catch (Exception e) {
-					postCancellationFailureAlert(requestId, e);
-				}
+				wrongPricedSpotIds.add(request.getSpotInstanceRequestId());
 			}
 		}
+		if (wrongPricedSpotIds.isEmpty()) {
+			return Collections.emptyList();
+		}
 
-		postCancellationAlert(cancelledRequests);
-		return cancelledRequests;
+		LOG.info("cancelling unfulfilled spot requests with wrong bid "
+				+ "price: {}", wrongPricedSpotIds);
+		try {
+			// Note: there is a possibility that a wrong-priced spot request has
+			// been fulfilled after we decided to cancel it. If so, it will
+			// become a dangling instance that gets cleaned up eventually.
+			this.client.cancelSpotRequests(wrongPricedSpotIds);
+		} catch (Exception e) {
+			postCancellationFailureAlert(wrongPricedSpotIds, e);
+		}
+
+		postCancellationAlert(wrongPricedSpotIds);
+		return wrongPricedSpotIds;
 	}
 
 	/**
 	 * Posts a spot request cancellation failure {@link Alert} on the
 	 * {@link EventBus}.
 	 *
-	 * @param spotRequestId
-	 *            The spot request that could not be cancelled.
+	 * @param spotRequestIds
+	 *            The spot requests that could not be cancelled.
 	 * @param error
 	 *            The error that occurred.
 	 */
-	private void postCancellationFailureAlert(String spotRequestId,
+	private void postCancellationFailureAlert(List<String> spotRequestIds,
 			Exception error) {
 		String message = String.format(
-				"failed to cancel wrong-priced spot request %s: %s",
-				spotRequestId, error.getMessage());
+				"failed to cancel wrong-priced spot requests %s: %s",
+				spotRequestIds, error.getMessage());
 		LOG.error("{}", message, error);
 		this.eventBus.post(new Alert(AlertTopics.SPOT_REQUEST_CANCELLATION
 				.name(), AlertSeverity.WARN, UtcTime.now(), message));

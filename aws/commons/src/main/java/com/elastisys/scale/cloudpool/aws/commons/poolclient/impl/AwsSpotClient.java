@@ -6,11 +6,12 @@ import java.util.List;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
+import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
-import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CancelSpotInstanceRequest;
+import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CancelSpotInstanceRequests;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetSpotInstanceRequest;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetSpotInstanceRequests;
-import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.PlaceSpotInstanceRequest;
+import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.PlaceSpotInstanceRequests;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.google.common.base.Joiner;
 
@@ -35,24 +36,24 @@ public class AwsSpotClient extends AwsEc2Client implements SpotClient {
 	}
 
 	@Override
-	public SpotInstanceRequest placeSpotRequest(double bidPrice,
-			ScaleOutConfig scaleOutConfig) {
+	public List<SpotInstanceRequest> placeSpotRequests(double bidPrice,
+			ScaleOutConfig scaleOutConfig, int count, List<Tag> tags) {
 		String bootscript = Joiner.on("\n")
 				.join(scaleOutConfig.getBootScript());
 		// no particular availability zone
 		String availabilityZone = null;
-		PlaceSpotInstanceRequest request = new PlaceSpotInstanceRequest(
+		PlaceSpotInstanceRequests request = new PlaceSpotInstanceRequests(
 				awsCredentials(), region(), bidPrice, availabilityZone,
 				scaleOutConfig.getSecurityGroups(),
 				scaleOutConfig.getKeyPair(), scaleOutConfig.getSize(),
-				scaleOutConfig.getImage(), bootscript);
+				scaleOutConfig.getImage(), bootscript, count, tags);
 		return request.call();
 	}
 
 	@Override
-	public void cancelSpotRequest(String spotInstanceRequestId) {
-		new CancelSpotInstanceRequest(awsCredentials(), region(),
-				spotInstanceRequestId).call();
+	public void cancelSpotRequests(List<String> spotInstanceRequestIds) {
+		new CancelSpotInstanceRequests(awsCredentials(), region(),
+				spotInstanceRequestIds).call();
 	}
 
 }

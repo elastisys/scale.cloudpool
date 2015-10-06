@@ -7,6 +7,7 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
+import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 
 /**
@@ -40,26 +41,33 @@ public interface SpotClient extends Ec2Client {
 			throws AmazonClientException;
 
 	/**
-	 * Places a new {@link SpotInstanceRequest}.
+	 * Places a number of new {@link SpotInstanceRequest}s and (optionally) tags
+	 * the spot instance requests with a given set of {@link Tag}s.
 	 *
 	 * @param bidPrice
 	 *            The bid price to set for the {@link SpotInstanceRequest}.
 	 * @param scaleOutConfig
 	 *            A description of the desired spot {@link Instance}.
-	 * @return The placed {@link SpotInstanceRequest}.
+	 * @param count
+	 *            The number of spot instances to request.
+	 * @param tags
+	 *            Tags to set on the created spot instance requests. Can be
+	 *            empty.
+	 * @return The placed {@link SpotInstanceRequest}s.
 	 * @throws AmazonClientException
 	 */
-	public SpotInstanceRequest placeSpotRequest(double bidPrice,
-			ScaleOutConfig scaleOutConfig) throws AmazonClientException;
+	public List<SpotInstanceRequest> placeSpotRequests(double bidPrice,
+			ScaleOutConfig scaleOutConfig, int count, List<Tag> tags)
+			throws AmazonClientException;
 
 	/**
-	 * Cancels a {@link SpotInstanceRequest}.
+	 * Cancels a collection of {@link SpotInstanceRequest}s.
 	 *
-	 * @param spotInstanceRequestId
-	 *            The identifier of {@link SpotInstanceRequest} to cancel.
+	 * @param spotInstanceRequestIds
+	 *            The identifiers of all {@link SpotInstanceRequest}s to cancel.
 	 * @throws AmazonClientException
 	 */
-	void cancelSpotRequest(String spotInstanceRequestId)
+	void cancelSpotRequests(List<String> spotInstanceRequestIds)
 			throws AmazonClientException;
 
 }
