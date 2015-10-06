@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.aws.commons.poolclient.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -19,7 +20,7 @@ import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CreateInstances;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstance;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstances;
-import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TagEc2Resource;
+import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TagEc2Resources;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TerminateInstances;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.UntagEc2Resource;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
@@ -97,7 +98,8 @@ public class AwsEc2Client implements Ec2Client {
 			throws AmazonClientException {
 		checkArgument(isConfigured(), "can't use client before it's configured");
 
-		new TagEc2Resource(awsCredentials(), region(), resourceId, tags).call();
+		new TagEc2Resources(awsCredentials(), region(),
+				Arrays.asList(resourceId), tags).call();
 	}
 
 	@Override

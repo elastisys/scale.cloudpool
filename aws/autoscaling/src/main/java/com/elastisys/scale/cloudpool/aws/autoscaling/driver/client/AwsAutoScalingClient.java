@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.aws.autoscaling.driver.client;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -19,7 +20,7 @@ import com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling.GetAutoSca
 import com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling.SetDesiredAutoScalingGroupSize;
 import com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling.TerminateAutoScalingGroupInstance;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstance;
-import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TagEc2Resource;
+import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TagEc2Resources;
 import com.google.common.util.concurrent.Atomics;
 
 /**
@@ -109,7 +110,8 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 		// verify that instance exists
 		getInstanceOrFail(instanceId);
 
-		new TagEc2Resource(awsCredentials(), region(), instanceId, tags).call();
+		new TagEc2Resources(awsCredentials(), region(),
+				Arrays.asList(instanceId), tags).call();
 	}
 
 	private Instance getInstanceOrFail(String instanceId)
