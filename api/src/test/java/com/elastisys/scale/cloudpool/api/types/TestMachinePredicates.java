@@ -68,13 +68,13 @@ public class TestMachinePredicates {
 		for (MachineState machineState : machineStates) {
 			for (ServiceState serviceState : serviceStates) {
 				for (MembershipStatus membershipStatus : membershipStatuses) {
-					String combo = String.format(
-							"tested combination: %s-%s-%s", machineState,
-							membershipStatus, serviceState);
+					String combo = String.format("tested combination: %s-%s-%s",
+							machineState, membershipStatus, serviceState);
 					LOG.info(combo);
 					final DateTime timestamp = UtcTime.now();
 					Machine machine = Machine.builder().id("id")
-							.machineState(machineState)
+							.machineState(machineState).cloudProvider("AWS-EC2")
+							.machineSize("m1.small")
 							.membershipStatus(membershipStatus)
 							.serviceState(serviceState).requestTime(timestamp)
 							.launchTime(timestamp).publicIps(ips("1.2.3.4"))
@@ -116,13 +116,13 @@ public class TestMachinePredicates {
 		for (MachineState machineState : machineStates) {
 			for (ServiceState serviceState : serviceStates) {
 				for (MembershipStatus membershipStatus : membershipStatuses) {
-					String combo = String.format(
-							"tested combination: %s-%s-%s", machineState,
-							membershipStatus, serviceState);
+					String combo = String.format("tested combination: %s-%s-%s",
+							machineState, membershipStatus, serviceState);
 					LOG.info(combo);
 					final DateTime timestamp = UtcTime.now();
 					Machine machine = Machine.builder().id("id")
-							.machineState(machineState)
+							.machineState(machineState).cloudProvider("AWS-EC2")
+							.machineSize("m1.small")
 							.membershipStatus(membershipStatus)
 							.serviceState(serviceState).requestTime(timestamp)
 							.launchTime(timestamp).publicIps(ips("1.2.3.4"))
@@ -162,13 +162,13 @@ public class TestMachinePredicates {
 		for (MachineState machineState : machineStates) {
 			for (ServiceState serviceState : serviceStates) {
 				for (MembershipStatus membershipStatus : membershipStatuses) {
-					String combo = String.format(
-							"tested combination: %s-%s-%s", machineState,
-							membershipStatus, serviceState);
+					String combo = String.format("tested combination: %s-%s-%s",
+							machineState, membershipStatus, serviceState);
 					LOG.info(combo);
 					final DateTime timestamp = UtcTime.now();
 					Machine machine = Machine.builder().id("id")
-							.machineState(machineState)
+							.machineState(machineState).cloudProvider("AWS-EC2")
+							.machineSize("m1.small")
 							.membershipStatus(membershipStatus)
 							.serviceState(serviceState).requestTime(timestamp)
 							.launchTime(timestamp).publicIps(ips("1.2.3.4"))
@@ -201,19 +201,22 @@ public class TestMachinePredicates {
 		Machine m1 = machineNoIp("id", MachineState.REQUESTED, UtcTime.now());
 		// not evictable
 		Machine m2 = Machine.builder().id("id")
-				.machineState(MachineState.RUNNING)
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small")
 				.membershipStatus(MembershipStatus.blessed())
 				.requestTime(UtcTime.now()).launchTime(UtcTime.now())
 				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5")).build();
 		// evictable
 		Machine m3 = Machine.builder().id("id")
-				.machineState(MachineState.RUNNING)
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small")
 				.membershipStatus(MembershipStatus.disposable())
 				.requestTime(UtcTime.now()).launchTime(UtcTime.now())
 				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5")).build();
 		// not evictable
 		Machine m4 = Machine.builder().id("id")
-				.machineState(MachineState.RUNNING)
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small")
 				.membershipStatus(MembershipStatus.awaitingService())
 				.requestTime(UtcTime.now()).launchTime(UtcTime.now())
 				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5")).build();

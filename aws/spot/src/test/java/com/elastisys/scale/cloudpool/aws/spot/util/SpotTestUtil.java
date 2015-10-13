@@ -6,6 +6,8 @@ import java.util.List;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.InstanceStateName;
+import com.amazonaws.services.ec2.model.InstanceType;
+import com.amazonaws.services.ec2.model.LaunchSpecification;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.Tag;
 
@@ -22,6 +24,8 @@ public class SpotTestUtil {
 	public static SpotInstanceRequest spotRequest(String id, String state,
 			String instanceId, Tag... tags) {
 		return new SpotInstanceRequest().withSpotInstanceRequestId(id)
+				.withLaunchSpecification(new LaunchSpecification()
+						.withInstanceType(InstanceType.M1Medium))
 				.withState(state).withInstanceId(instanceId).withTags(tags);
 	}
 
@@ -37,6 +41,7 @@ public class SpotTestUtil {
 	public static Instance instance(String id, InstanceStateName state,
 			String spotRequestId) {
 		return new Instance().withInstanceId(id)
+				.withInstanceType(InstanceType.M1Medium)
 				.withState(new InstanceState().withName(state.toString()))
 				.withSpotInstanceRequestId(spotRequestId);
 	}

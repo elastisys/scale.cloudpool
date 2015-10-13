@@ -35,7 +35,7 @@ import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.PoolIdentifier;
+import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.api.types.TestUtils;
@@ -79,14 +79,15 @@ public class TestCloudPoolHandlerDispatch {
 		JsonObject metadata = parseJsonString("{\"id\": \"i-1\"}")
 				.getAsJsonObject();
 		Machine machine = Machine.builder().id("i-1")
-				.machineState(MachineState.PENDING)
+				.machineState(MachineState.PENDING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small")
 				.membershipStatus(MembershipStatus.defaultStatus())
 				.serviceState(ServiceState.BOOTING)
 				.launchTime(UtcTime.parse("2014-01-13T11:00:00.000Z"))
 				.publicIps(publicIps).privateIps(privateIps).metadata(metadata)
 				.build();
-		MachinePool pool = TestUtils.pool(
-				DateTime.parse("2014-01-13T12:00:00.000Z"), machine);
+		MachinePool pool = TestUtils
+				.pool(DateTime.parse("2014-01-13T12:00:00.000Z"), machine);
 		when(this.cloudPoolMock.getMachinePool()).thenReturn(pool);
 
 		// call rest endpoint and verify proper dispatching to mock
@@ -103,8 +104,8 @@ public class TestCloudPoolHandlerDispatch {
 	@Test
 	public void testGetPoolDispatchOnInternalError() throws Exception {
 		// set up mock response
-		when(this.cloudPoolMock.getMachinePool()).thenThrow(
-				CloudPoolException.class);
+		when(this.cloudPoolMock.getMachinePool())
+				.thenThrow(CloudPoolException.class);
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.getPool();
@@ -136,8 +137,8 @@ public class TestCloudPoolHandlerDispatch {
 	public void testSetDesiredSizeDispatchOnInternalError()
 			throws CloudPoolException {
 		// set up mock response: should throw error
-		doThrow(new CloudPoolException("null pointer"))
-				.when(this.cloudPoolMock).setDesiredSize(anyInt());
+		doThrow(new CloudPoolException("null pointer")).when(this.cloudPoolMock)
+				.setDesiredSize(anyInt());
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint
@@ -188,8 +189,8 @@ public class TestCloudPoolHandlerDispatch {
 	@Test
 	public void testGetPoolSizeDispatchOnInternalError() throws Exception {
 		// set up mock response
-		doThrow(new CloudPoolException("cloud api outage")).when(
-				this.cloudPoolMock).getPoolSize();
+		doThrow(new CloudPoolException("cloud api outage"))
+				.when(this.cloudPoolMock).getPoolSize();
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.getPoolSize();
@@ -206,7 +207,7 @@ public class TestCloudPoolHandlerDispatch {
 	public void testGetMetadataDispatch() throws Exception {
 		// set up mock response
 		CloudPoolMetadata metadata = new CloudPoolMetadata(
-				PoolIdentifier.AWS_EC2, Lists.<String> newArrayList("3.1"));
+				PoolIdentifiers.AWS_EC2, Lists.<String> newArrayList("3.1"));
 
 		when(this.cloudPoolMock.getMetadata()).thenReturn(metadata);
 
@@ -223,8 +224,8 @@ public class TestCloudPoolHandlerDispatch {
 	@Test
 	public void testGetMetadataDispatchOnInternalError() throws Exception {
 		// set up mock response
-		doThrow(new CloudPoolException("cloud api outage")).when(
-				this.cloudPoolMock).getMetadata();
+		doThrow(new CloudPoolException("cloud api outage"))
+				.when(this.cloudPoolMock).getMetadata();
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.getMetadata();
@@ -272,8 +273,8 @@ public class TestCloudPoolHandlerDispatch {
 	@Test
 	public void testTerminateMachineDispatchOnInternalError() throws Exception {
 		// set up mock response
-		doThrow(new CloudPoolException("cloud api outage")).when(
-				this.cloudPoolMock).terminateMachine("i-1", false);
+		doThrow(new CloudPoolException("cloud api outage"))
+				.when(this.cloudPoolMock).terminateMachine("i-1", false);
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.terminateMachine("i-1",
@@ -322,8 +323,8 @@ public class TestCloudPoolHandlerDispatch {
 	@Test
 	public void testDetachMachineDispatchOnInternalError() throws Exception {
 		// set up mock response
-		doThrow(new CloudPoolException("cloud api outage")).when(
-				this.cloudPoolMock).detachMachine("i-1", false);
+		doThrow(new CloudPoolException("cloud api outage"))
+				.when(this.cloudPoolMock).detachMachine("i-1", false);
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.detachMachine("i-1",
@@ -370,8 +371,8 @@ public class TestCloudPoolHandlerDispatch {
 	@Test
 	public void testAttachMachineDispatchOnInternalError() throws Exception {
 		// set up mock response
-		doThrow(new CloudPoolException("cloud api outage")).when(
-				this.cloudPoolMock).attachMachine("i-1");
+		doThrow(new CloudPoolException("cloud api outage"))
+				.when(this.cloudPoolMock).attachMachine("i-1");
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.attachMachine("i-1");
@@ -420,9 +421,9 @@ public class TestCloudPoolHandlerDispatch {
 	@Test
 	public void testSetServiceStateDispatchOnInternalError() throws Exception {
 		// set up mock response
-		doThrow(new CloudPoolException("cloud api outage")).when(
-				this.cloudPoolMock).setServiceState("i-1",
-				ServiceState.IN_SERVICE);
+		doThrow(new CloudPoolException("cloud api outage"))
+				.when(this.cloudPoolMock)
+				.setServiceState("i-1", ServiceState.IN_SERVICE);
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.setServiceState("i-1",
@@ -443,10 +444,9 @@ public class TestCloudPoolHandlerDispatch {
 				MembershipStatus.awaitingService());
 
 		// call rest endpoint and verify proper dispatching to mock
-		Response response = this.restEndpoint.setMembershipStatus(
-				"i-1",
-				new SetMembershipStatusRequest(MembershipStatus
-						.awaitingService()));
+		Response response = this.restEndpoint.setMembershipStatus("i-1",
+				new SetMembershipStatusRequest(
+						MembershipStatus.awaitingService()));
 		assertEquals(response.getStatus(), Status.OK.getStatusCode());
 	}
 
@@ -462,10 +462,9 @@ public class TestCloudPoolHandlerDispatch {
 				.setMembershipStatus("i-X", MembershipStatus.awaitingService());
 
 		// call rest endpoint and verify proper dispatching to mock
-		Response response = this.restEndpoint.setMembershipStatus(
-				"i-X",
-				new SetMembershipStatusRequest(MembershipStatus
-						.awaitingService()));
+		Response response = this.restEndpoint.setMembershipStatus("i-X",
+				new SetMembershipStatusRequest(
+						MembershipStatus.awaitingService()));
 		assertEquals(response.getStatus(), Status.NOT_FOUND.getStatusCode());
 		assertThat(response.getEntity(), instanceOf(ErrorType.class));
 	}
@@ -478,15 +477,14 @@ public class TestCloudPoolHandlerDispatch {
 	public void testSetMembershipStatusDispatchOnInternalError()
 			throws Exception {
 		// set up mock response
-		doThrow(new RuntimeException("cloud api outage")).when(
-				this.cloudPoolMock).setMembershipStatus("i-X",
-				MembershipStatus.awaitingService());
+		doThrow(new RuntimeException("cloud api outage"))
+				.when(this.cloudPoolMock)
+				.setMembershipStatus("i-X", MembershipStatus.awaitingService());
 
 		// call rest endpoint and verify proper dispatching to mock
-		Response response = this.restEndpoint.setMembershipStatus(
-				"i-X",
-				new SetMembershipStatusRequest(MembershipStatus
-						.awaitingService()));
+		Response response = this.restEndpoint.setMembershipStatus("i-X",
+				new SetMembershipStatusRequest(
+						MembershipStatus.awaitingService()));
 		assertEquals(response.getStatus(),
 				Status.INTERNAL_SERVER_ERROR.getStatusCode());
 		assertThat(response.getEntity(), instanceOf(ErrorType.class));

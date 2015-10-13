@@ -53,38 +53,45 @@ public class TestMachinePool {
 
 		// on a pool with a mix of machines in different states
 		Machine requested1 = Machine.builder().id("i-1")
-				.machineState(MachineState.REQUESTED).build();
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		Machine requested2 = Machine.builder().id("i-2")
-				.machineState(MachineState.REQUESTED).build();
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		Machine pending1 = Machine.builder().id("i-3")
-				.machineState(MachineState.PENDING)
-				.serviceState(ServiceState.BOOTING).requestTime(now)
-				.launchTime(now).build();
+				.machineState(MachineState.PENDING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").serviceState(ServiceState.BOOTING)
+				.requestTime(now).launchTime(now).build();
 		Machine running1 = Machine.builder().id("i-4")
-				.machineState(MachineState.RUNNING)
-				.serviceState(ServiceState.IN_SERVICE).requestTime(now)
-				.launchTime(now).publicIps(asList("1.2.3.4")).build();
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").serviceState(ServiceState.IN_SERVICE)
+				.requestTime(now).launchTime(now).publicIps(asList("1.2.3.4"))
+				.build();
 		Machine running2 = Machine.builder().id("i-5")
-				.machineState(MachineState.RUNNING)
-				.serviceState(ServiceState.UNHEALTHY).requestTime(now)
-				.launchTime(now).publicIps(asList("1.2.3.4")).build();
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").serviceState(ServiceState.UNHEALTHY)
+				.requestTime(now).launchTime(now).publicIps(asList("1.2.3.4"))
+				.build();
 		Machine running3 = Machine.builder().id("i-5.1")
-				.machineState(MachineState.RUNNING)
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small")
 				.serviceState(ServiceState.OUT_OF_SERVICE).requestTime(now)
 				.launchTime(now).publicIps(asList("1.2.3.5")).build();
 		Machine terminating = Machine.builder().id("i-6")
-				.machineState(MachineState.TERMINATING).build();
+				.machineState(MachineState.TERMINATING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		Machine terminated1 = Machine.builder().id("i-7")
-				.machineState(MachineState.TERMINATED).build();
+				.machineState(MachineState.TERMINATED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		Machine terminated2 = Machine.builder().id("i-8")
-				.machineState(MachineState.TERMINATED).build();
+				.machineState(MachineState.TERMINATED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		pool = new MachinePool(Arrays.asList(requested1, requested2, pending1,
 				running1, running2, running3, terminating, terminated1,
 				terminated2), now);
 		// verify machines
 		assertThat(pool.getMachines().size(), is(9));
-		assertThat(
-				pool.getMachines(),
+		assertThat(pool.getMachines(),
 				is(asList(requested1, requested2, pending1, running1, running2,
 						running3, terminating, terminated1, terminated2)));
 	}
@@ -102,40 +109,46 @@ public class TestMachinePool {
 
 		// on a pool with a mix of machines in different states
 		Machine requested1 = Machine.builder().id("i-1")
-				.machineState(MachineState.REQUESTED).build();
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		Machine requested2 = Machine.builder().id("i-2")
-				.machineState(MachineState.REQUESTED).build();
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		Machine pending1 = Machine.builder().id("i-3")
-				.machineState(MachineState.PENDING)
-				.serviceState(ServiceState.BOOTING).requestTime(now)
-				.launchTime(now).build();
+				.machineState(MachineState.PENDING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").serviceState(ServiceState.BOOTING)
+				.requestTime(now).launchTime(now).build();
 		Machine running1 = Machine.builder().id("i-4")
-				.machineState(MachineState.RUNNING)
-				.serviceState(ServiceState.IN_SERVICE).requestTime(now)
-				.launchTime(now).publicIps(asList("1.2.3.4")).build();
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").serviceState(ServiceState.IN_SERVICE)
+				.requestTime(now).launchTime(now).publicIps(asList("1.2.3.4"))
+				.build();
 		Machine running2 = Machine.builder().id("i-5")
-				.machineState(MachineState.RUNNING)
-				.serviceState(ServiceState.UNHEALTHY).requestTime(now)
-				.launchTime(now).publicIps(asList("1.2.3.4")).build();
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").serviceState(ServiceState.UNHEALTHY)
+				.requestTime(now).launchTime(now).publicIps(asList("1.2.3.4"))
+				.build();
 		Machine running3 = Machine.builder().id("i-5.1")
-				.machineState(MachineState.RUNNING)
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small")
 				.serviceState(ServiceState.OUT_OF_SERVICE).requestTime(now)
 				.launchTime(now).publicIps(asList("1.2.3.5")).build();
 		Machine terminating = Machine.builder().id("i-6")
-				.machineState(MachineState.TERMINATING).build();
+				.machineState(MachineState.TERMINATING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		Machine terminated1 = Machine.builder().id("i-7")
-				.machineState(MachineState.TERMINATED).build();
+				.machineState(MachineState.TERMINATED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		Machine terminated2 = Machine.builder().id("i-8")
-				.machineState(MachineState.TERMINATED).build();
+				.machineState(MachineState.TERMINATED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		pool = new MachinePool(Arrays.asList(requested1, requested2, pending1,
 				running1, running2, running3, terminating, terminated1,
 				terminated2), now);
 		// verify allocated machines: 2 requested + 1 pending + 3 running
 		assertThat(pool.getAllocatedMachines().size(), is(6));
-		assertThat(
-				pool.getAllocatedMachines(),
-				is(asList(requested1, requested2, pending1, running1, running2,
-						running3)));
+		assertThat(pool.getAllocatedMachines(), is(asList(requested1,
+				requested2, pending1, running1, running2, running3)));
 	}
 
 	/**
@@ -151,43 +164,49 @@ public class TestMachinePool {
 
 		// on a pool with a mix of machines in different states
 		Machine requested1 = Machine.builder().id("i-1")
-				.machineState(MachineState.REQUESTED).build();
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		Machine requested2 = Machine.builder().id("i-2")
-				.machineState(MachineState.REQUESTED).build();
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		Machine pending1 = Machine.builder().id("i-3")
-				.machineState(MachineState.PENDING)
-				.serviceState(ServiceState.BOOTING).requestTime(now)
-				.launchTime(now).build();
+				.machineState(MachineState.PENDING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").serviceState(ServiceState.BOOTING)
+				.requestTime(now).launchTime(now).build();
 		Machine running1 = Machine.builder().id("i-4")
-				.machineState(MachineState.RUNNING)
-				.serviceState(ServiceState.IN_SERVICE)
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").serviceState(ServiceState.IN_SERVICE)
 				.membershipStatus(MembershipStatus.blessed()).requestTime(now)
 				.launchTime(now).publicIps(asList("1.2.3.4")).build();
 		Machine running2 = Machine.builder().id("i-5")
-				.machineState(MachineState.RUNNING)
-				.serviceState(ServiceState.UNHEALTHY).requestTime(now)
-				.launchTime(now).publicIps(asList("1.2.3.4")).build();
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").serviceState(ServiceState.UNHEALTHY)
+				.requestTime(now).launchTime(now).publicIps(asList("1.2.3.4"))
+				.build();
 		Machine running3 = Machine.builder().id("i-5.1")
-				.machineState(MachineState.RUNNING)
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small")
 				.serviceState(ServiceState.OUT_OF_SERVICE)
 				.membershipStatus(MembershipStatus.awaitingService())
 				.requestTime(now).launchTime(now).publicIps(asList("1.2.3.5"))
 				.build();
 		Machine terminating = Machine.builder().id("i-6")
-				.machineState(MachineState.TERMINATING).build();
+				.machineState(MachineState.TERMINATING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		Machine terminated1 = Machine.builder().id("i-7")
-				.machineState(MachineState.TERMINATED).build();
+				.machineState(MachineState.TERMINATED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		Machine terminated2 = Machine.builder().id("i-8")
-				.machineState(MachineState.TERMINATED).build();
+				.machineState(MachineState.TERMINATED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		pool = new MachinePool(Arrays.asList(requested1, requested2, pending1,
 				running1, running2, running3, terminating, terminated1,
 				terminated2), now);
 		// verify effective machines: 2 requested + 1 pending + 2 running that
 		// don't have an inactive membership status
 		assertThat(pool.getActiveMachines().size(), is(5));
-		assertThat(
-				pool.getActiveMachines(),
-				is(asList(requested1, requested2, pending1, running1, running2)));
+		assertThat(pool.getActiveMachines(), is(
+				asList(requested1, requested2, pending1, running1, running2)));
 	}
 
 	/**
@@ -203,34 +222,41 @@ public class TestMachinePool {
 
 		// on a pool with a mix of machines in different states
 		Machine requested1 = Machine.builder().id("i-1")
-				.machineState(MachineState.REQUESTED).build();
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		Machine requested2 = Machine.builder().id("i-2")
-				.machineState(MachineState.REQUESTED).build();
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		Machine pending1 = Machine.builder().id("i-3")
-				.machineState(MachineState.PENDING)
-				.serviceState(ServiceState.BOOTING).requestTime(now)
-				.launchTime(now).build();
+				.machineState(MachineState.PENDING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").serviceState(ServiceState.BOOTING)
+				.requestTime(now).launchTime(now).build();
 		Machine running1 = Machine.builder().id("i-4")
-				.machineState(MachineState.RUNNING)
-				.serviceState(ServiceState.IN_SERVICE)
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").serviceState(ServiceState.IN_SERVICE)
 				.membershipStatus(MembershipStatus.blessed()).requestTime(now)
 				.launchTime(now).publicIps(asList("1.2.3.4")).build();
 		Machine running2 = Machine.builder().id("i-5")
-				.machineState(MachineState.RUNNING)
-				.serviceState(ServiceState.UNHEALTHY).requestTime(now)
-				.launchTime(now).publicIps(asList("1.2.3.4")).build();
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").serviceState(ServiceState.UNHEALTHY)
+				.requestTime(now).launchTime(now).publicIps(asList("1.2.3.4"))
+				.build();
 		Machine running3 = Machine.builder().id("i-5.1")
-				.machineState(MachineState.RUNNING)
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small")
 				.serviceState(ServiceState.OUT_OF_SERVICE)
 				.membershipStatus(MembershipStatus.awaitingService())
 				.requestTime(now).launchTime(now).publicIps(asList("1.2.3.5"))
 				.build();
 		Machine terminating = Machine.builder().id("i-6")
-				.machineState(MachineState.TERMINATING).build();
+				.machineState(MachineState.TERMINATING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		Machine terminated1 = Machine.builder().id("i-7")
-				.machineState(MachineState.TERMINATED).build();
+				.machineState(MachineState.TERMINATED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		Machine terminated2 = Machine.builder().id("i-8")
-				.machineState(MachineState.TERMINATED).build();
+				.machineState(MachineState.TERMINATED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		pool = new MachinePool(Arrays.asList(requested1, requested2, pending1,
 				running1, running2, running3, terminating, terminated1,
 				terminated2), now);
@@ -247,14 +273,13 @@ public class TestMachinePool {
 	@Test
 	public void testEquality() throws IOException {
 		MachinePool empty1 = pool(UtcTime.parse("2014-01-13T12:00:00.000Z"));
-		MachinePool empty1Clone = pool(DateTime
-				.parse("2014-01-13T12:00:00.000Z"));
+		MachinePool empty1Clone = pool(
+				DateTime.parse("2014-01-13T12:00:00.000Z"));
 		// different timestamp
 		MachinePool empty2 = pool(UtcTime.parse("2014-01-14T15:00:00.000Z"));
 
 		// single-member pool
-		MachinePool singlePool = pool(
-				UtcTime.parse("2014-01-13T12:00:00.000Z"),
+		MachinePool singlePool = pool(UtcTime.parse("2014-01-13T12:00:00.000Z"),
 				machineNoIp("m1", MachineState.PENDING,
 						UtcTime.parse("2014-01-13T11:00:00.000Z")));
 		MachinePool singlePoolClone = pool(
@@ -263,8 +288,7 @@ public class TestMachinePool {
 						UtcTime.parse("2014-01-13T11:00:00.000Z")));
 
 		// multi-member pool
-		MachinePool multiPool = pool(
-				UtcTime.parse("2014-01-13T12:00:00.000Z"),
+		MachinePool multiPool = pool(UtcTime.parse("2014-01-13T12:00:00.000Z"),
 				machineNoIp("m1", MachineState.RUNNING,
 						UtcTime.parse("2014-01-13T11:00:00.000Z")),
 				machineNoIp("m2", MachineState.REQUESTED, null));
@@ -287,11 +311,13 @@ public class TestMachinePool {
 
 		// a bit far-fetched but test with null timestamps (*could* occur if a
 		// bad machine pool was parsed from json)
-		MachinePool noTimestamp = JsonUtils.toObject(JsonUtils
-				.parseJsonResource("json/invalidpool-missing-timestamp.json"),
+		MachinePool noTimestamp = JsonUtils.toObject(
+				JsonUtils.parseJsonResource(
+						"json/invalidpool-missing-timestamp.json"),
 				MachinePool.class);
-		MachinePool noTimestampClone = JsonUtils.toObject(JsonUtils
-				.parseJsonResource("json/invalidpool-missing-timestamp.json"),
+		MachinePool noTimestampClone = JsonUtils.toObject(
+				JsonUtils.parseJsonResource(
+						"json/invalidpool-missing-timestamp.json"),
 				MachinePool.class);
 		assertThat(noTimestamp, is(noTimestampClone));
 		assertThat(empty1, is(not(noTimestamp)));
@@ -306,14 +332,13 @@ public class TestMachinePool {
 	@Test
 	public void testHashcode() throws IOException {
 		MachinePool empty1 = pool(UtcTime.parse("2014-01-13T12:00:00.000Z"));
-		MachinePool empty1Clone = pool(DateTime
-				.parse("2014-01-13T12:00:00.000Z"));
+		MachinePool empty1Clone = pool(
+				DateTime.parse("2014-01-13T12:00:00.000Z"));
 		// different timestamp
 		MachinePool empty2 = pool(UtcTime.parse("2014-01-14T15:00:00.000Z"));
 
 		// single-member pool
-		MachinePool singlePool = pool(
-				UtcTime.parse("2014-01-13T12:00:00.000Z"),
+		MachinePool singlePool = pool(UtcTime.parse("2014-01-13T12:00:00.000Z"),
 				machineNoIp("m1", MachineState.PENDING,
 						UtcTime.parse("2014-01-13T11:00:00.000Z")));
 		MachinePool singlePoolClone = pool(
@@ -322,8 +347,7 @@ public class TestMachinePool {
 						UtcTime.parse("2014-01-13T11:00:00.000Z")));
 
 		// multi-member pool
-		MachinePool multiPool = pool(
-				UtcTime.parse("2014-01-13T12:00:00.000Z"),
+		MachinePool multiPool = pool(UtcTime.parse("2014-01-13T12:00:00.000Z"),
 				machineNoIp("m1", MachineState.RUNNING,
 						UtcTime.parse("2014-01-13T11:00:00.000Z")),
 				machineNoIp("m2", MachineState.REQUESTED, null));
@@ -351,8 +375,8 @@ public class TestMachinePool {
 	 */
 	@Test
 	public void parseEmptyMachinePoolFromJson() throws IOException {
-		MachinePool expectedPool = pool(DateTime
-				.parse("2014-01-13T12:00:00.000Z"));
+		MachinePool expectedPool = pool(
+				DateTime.parse("2014-01-13T12:00:00.000Z"));
 
 		MachinePool parsedPool = MachinePool.fromJson(loadJson(emptyPoolJson));
 		assertThat(parsedPool, is(expectedPool));
@@ -379,15 +403,12 @@ public class TestMachinePool {
 	 */
 	@Test
 	public void parseSingleMachinePoolFromJson() throws IOException {
-		Machine machine1 = Machine
-				.builder()
-				.id("m1")
-				.machineState(MachineState.PENDING)
-				.serviceState(ServiceState.IN_SERVICE)
+		Machine machine1 = Machine.builder().id("m1")
+				.machineState(MachineState.PENDING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").serviceState(ServiceState.IN_SERVICE)
 				.requestTime(UtcTime.parse("2014-01-13T11:00:00.000Z"))
 				.launchTime(UtcTime.parse("2014-01-13T11:00:00.000Z"))
-				.publicIps(ips("1.2.3.4"))
-				.privateIps(ips("1.2.3.5"))
+				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5"))
 				.metadata(parseJsonString("{\"k1\": \"v1\"}").getAsJsonObject())
 				.build();
 		MachinePool expectedPool = pool(
@@ -406,15 +427,12 @@ public class TestMachinePool {
 	 */
 	@Test
 	public void convertSingleMachinePoolToJson() throws IOException {
-		Machine machine1 = Machine
-				.builder()
-				.id("m1")
-				.machineState(MachineState.PENDING)
-				.serviceState(ServiceState.IN_SERVICE)
+		Machine machine1 = Machine.builder().id("m1")
+				.machineState(MachineState.PENDING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").serviceState(ServiceState.IN_SERVICE)
 				.requestTime(UtcTime.parse("2014-01-13T11:00:00.000Z"))
 				.launchTime(UtcTime.parse("2014-01-13T11:00:00.000Z"))
-				.publicIps(ips("1.2.3.4"))
-				.privateIps(ips("1.2.3.5"))
+				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5"))
 				.metadata(parseJsonString("{\"k1\": \"v1\"}").getAsJsonObject())
 				.build();
 		MachinePool pool = pool(UtcTime.parse("2014-01-13T12:00:00.000Z"),
@@ -433,10 +451,9 @@ public class TestMachinePool {
 	 */
 	@Test
 	public void parseMultiMachinePoolFromJson() throws IOException {
-		Machine machine1 = Machine
-				.builder()
-				.id("m1")
-				.machineState(MachineState.RUNNING)
+		Machine machine1 = Machine.builder().id("m1")
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small")
 				.membershipStatus(new MembershipStatus(true, false))
 				.serviceState(ServiceState.IN_SERVICE)
 				.requestTime(UtcTime.parse("2014-01-13T11:00:00.000Z"))
@@ -445,7 +462,8 @@ public class TestMachinePool {
 				.metadata(parseJsonString("{\"k1\": \"v1\"}").getAsJsonObject())
 				.build();
 		Machine machine2 = Machine.builder().id("m2")
-				.machineState(MachineState.REQUESTED).build();
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		MachinePool expectedPool = pool(
 				UtcTime.parse("2014-01-13T12:00:00.000Z"), machine1, machine2);
 
@@ -463,10 +481,9 @@ public class TestMachinePool {
 	 */
 	@Test
 	public void convertMultiMachinePoolToJson() throws IOException {
-		Machine machine1 = Machine
-				.builder()
-				.id("m1")
-				.machineState(MachineState.RUNNING)
+		Machine machine1 = Machine.builder().id("m1")
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small")
 				.membershipStatus(new MembershipStatus(true, false))
 				.serviceState(ServiceState.IN_SERVICE)
 				.requestTime(UtcTime.parse("2014-01-13T11:00:00.000Z"))
@@ -475,7 +492,8 @@ public class TestMachinePool {
 				.metadata(parseJsonString("{\"k1\": \"v1\"}").getAsJsonObject())
 				.build();
 		Machine machine2 = Machine.builder().id("m2")
-				.machineState(MachineState.REQUESTED).build();
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		MachinePool pool = pool(UtcTime.parse("2014-01-13T12:00:00.000Z"),
 				machine1, machine2);
 
@@ -504,8 +522,8 @@ public class TestMachinePool {
 	@Test(expected = NullPointerException.class)
 	public void parseInvalidPoolWithMachineMissingMachineState()
 			throws IOException {
-		MachinePool
-				.fromJson(loadJson("json/invalidpool-machine-missing-machinestate.json"));
+		MachinePool.fromJson(
+				loadJson("json/invalidpool-machine-missing-machinestate.json"));
 	}
 
 	private String loadJson(String resourcePath) {
@@ -513,9 +531,10 @@ public class TestMachinePool {
 			return JsonUtils
 					.toString(JsonUtils.parseJsonResource(resourcePath));
 		} catch (Exception e) {
-			throw new RuntimeException(String.format(
-					"failed to parse JSON resource '%s': %s", resourcePath,
-					e.getMessage()), e);
+			throw new RuntimeException(
+					String.format("failed to parse JSON resource '%s': %s",
+							resourcePath, e.getMessage()),
+					e);
 		}
 	}
 

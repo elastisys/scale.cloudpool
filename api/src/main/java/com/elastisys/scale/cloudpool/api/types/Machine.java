@@ -29,9 +29,9 @@ import com.google.gson.JsonObject;
  * Represents a machine that is a member of a {@link MachinePool} managed by a
  * {@link CloudPool}.
  * <p/>
- * As explained in the <a
- * href="http://cloudpoolrestapi.readthedocs.org/en/latest/api.html">cloud pool
- * REST API</a>, a {@link Machine} has three different states of interest:
+ * As explained in the
+ * <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/api.html">cloud
+ * pool REST API</a>, a {@link Machine} has three different states of interest:
  * <ul>
  * <li>The <i>machine state</i>, being the execution state of the machine as
  * reported by the cloud API.</li>
@@ -100,6 +100,25 @@ public class Machine {
 	private final List<String> privateIps;
 
 	/**
+	 * The name of the cloud provider that this machine origins from, for
+	 * example {@code AWS-EC2}. It might not be immediately apparent why this
+	 * field is required since the cloud pool itself states which cloud provider
+	 * it supports, but it is useful to distinguish where different machines
+	 * originate from in multi-cloud scenarios where multiple down-stream cloud
+	 * pools are abstracted by an upstream aggregating cloud pool (such as a
+	 * splitter pool). Without this field, an autoscaler would not be able to
+	 * tell from which clouds different machines originate (which it may need to
+	 * know, from an accounting/billing perspective).
+	 */
+	private final String cloudProvider;
+
+	/**
+	 * The size (or type) of the {@link Machine}. For example, {@code m1.medium}
+	 * for an Amazon EC2 {@link CloudPool}.
+	 */
+	private final String machineSize;
+
+	/**
 	 * Additional cloud provider-specific meta data about the {@link Machine}.
 	 * This field is optional (may be <code>null</code>).
 	 */
@@ -117,6 +136,12 @@ public class Machine {
 	 * @param serviceState
 	 *            The operational state of the service running on the
 	 *            {@link Machine}.
+	 * @param cloudProvider
+	 *            The name of the cloud provider that this {@link Machine}
+	 *            origins from. For example, {@code AWS-EC2}.
+	 * @param machineSize
+	 *            The size (or type) of the {@link Machine}. For example,
+	 *            {@code m1.medium} for an Amazon EC2 {@link CloudPool}.
 	 * @param requestTime
 	 *            The request time of the {@link Machine}, if this time is
 	 *            known. If the time when the machine was initially and
@@ -142,23 +167,28 @@ public class Machine {
 	 */
 	protected Machine(String id, MachineState machineState,
 			MembershipStatus membershipStatus, ServiceState serviceState,
-			DateTime requestTime, DateTime launchTime, List<String> publicIps,
+			String cloudProvider, String machineSize, DateTime requestTime,
+			DateTime launchTime, List<String> publicIps,
 			List<String> privateIps, JsonObject metadata) {
 		checkNotNull(id, "missing id");
 		checkNotNull(machineState, "missing machineState");
 		checkNotNull(membershipStatus, "missing membershipStatus");
 		checkNotNull(serviceState, "missing serviceState");
+		checkNotNull(cloudProvider, "missing cloudProvider");
+		checkNotNull(machineSize, "missing machineSize");
 
 		this.id = id;
 		this.machineState = machineState;
 		this.membershipStatus = membershipStatus;
 		this.serviceState = serviceState;
+		this.cloudProvider = cloudProvider;
+		this.machineSize = machineSize;
 		this.requestTime = requestTime;
 		this.launchTime = launchTime;
-		this.publicIps = Optional.fromNullable(publicIps).or(
-				new ArrayList<String>());
-		this.privateIps = Optional.fromNullable(privateIps).or(
-				new ArrayList<String>());
+		this.publicIps = Optional.fromNullable(publicIps)
+				.or(new ArrayList<String>());
+		this.privateIps = Optional.fromNullable(privateIps)
+				.or(new ArrayList<String>());
 		this.metadata = metadata;
 	}
 
@@ -205,6 +235,33 @@ public class Machine {
 	 */
 	public ServiceState getServiceState() {
 		return this.serviceState;
+	}
+
+	/**
+	 * Returns The name of the cloud provider that this machine origins from,
+	 * for example {@code AWS-EC2}. It might not be immediately apparent why
+	 * this field is required since the cloud pool itself states which cloud
+	 * provider it supports, but it is useful to distinguish where different
+	 * machines originate from in multi-cloud scenarios where multiple
+	 * down-stream cloud pools are abstracted by an upstream aggregating cloud
+	 * pool (such as a splitter pool). Without this field, an autoscaler would
+	 * not be able to tell from which clouds different machines originate (which
+	 * it may need to know, from an accounting/billing perspective).
+	 *
+	 * @return
+	 */
+	public String getCloudProvider() {
+		return this.cloudProvider;
+	}
+
+	/**
+	 * Return the size (or type) of the {@link Machine}. For example,
+	 * {@code m1.medium} for an Amazon EC2 {@link CloudPool}.
+	 *
+	 * @return
+	 */
+	public String getMachineSize() {
+		return this.machineSize;
 	}
 
 	/**
@@ -267,9 +324,9 @@ public class Machine {
 	@Override
 	public int hashCode() {
 		return Objects.hashCode(this.id, this.machineState,
-				this.membershipStatus, this.serviceState, this.launchTime,
-				this.requestTime, this.publicIps, this.privateIps,
-				this.metadata);
+				this.membershipStatus, this.serviceState, this.cloudProvider,
+				this.machineSize, this.launchTime, this.requestTime,
+				this.publicIps, this.privateIps, this.metadata);
 	}
 
 	@Override
@@ -277,17 +334,18 @@ public class Machine {
 		if (obj instanceof Machine) {
 			Machine that = (Machine) obj;
 			final boolean launchtimesEqual;
-			if (this.launchTime != null && that.launchTime != null) {
+			if ((this.launchTime != null) && (that.launchTime != null)) {
 				launchtimesEqual = this.launchTime.isEqual(that.launchTime);
-			} else if (this.launchTime == null && that.launchTime == null) {
+			} else if ((this.launchTime == null) && (that.launchTime == null)) {
 				launchtimesEqual = true;
 			} else {
 				launchtimesEqual = false;
 			}
 			final boolean requesttimesEqual;
-			if (this.requestTime != null && that.requestTime != null) {
+			if ((this.requestTime != null) && (that.requestTime != null)) {
 				requesttimesEqual = this.requestTime.isEqual(that.requestTime);
-			} else if (this.requestTime == null && that.requestTime == null) {
+			} else if ((this.requestTime == null)
+					&& (that.requestTime == null)) {
 				requesttimesEqual = true;
 			} else {
 				requesttimesEqual = false;
@@ -297,6 +355,8 @@ public class Machine {
 					&& Objects.equal(this.membershipStatus,
 							that.membershipStatus)
 					&& Objects.equal(this.serviceState, that.serviceState)
+					&& Objects.equal(this.cloudProvider, that.cloudProvider)
+					&& Objects.equal(this.machineSize, that.machineSize)
 					&& launchtimesEqual && requesttimesEqual
 					&& Objects.equal(this.publicIps, that.publicIps)
 					&& Objects.equal(this.privateIps, that.privateIps)
@@ -311,6 +371,8 @@ public class Machine {
 				.add("machineState", this.machineState)
 				.add("membershipStatus", this.membershipStatus)
 				.add("serviceState", this.serviceState)
+				.add("cloudProvider", this.cloudProvider)
+				.add("machineSize", this.machineSize)
 				.add("requestTime", this.requestTime)
 				.add("launchTime", this.launchTime)
 				.add("publicIps", this.publicIps)
@@ -329,8 +391,9 @@ public class Machine {
 	 */
 	public Machine withMetadata(JsonObject metadata) {
 		return new Machine(this.id, this.machineState, this.membershipStatus,
-				this.serviceState, this.requestTime, this.launchTime,
-				this.publicIps, this.privateIps, metadata);
+				this.serviceState, this.cloudProvider, this.machineSize,
+				this.requestTime, this.launchTime, this.publicIps,
+				this.privateIps, metadata);
 	}
 
 	/**
@@ -430,8 +493,8 @@ public class Machine {
 	 *
 	 * @see http://code.google.com/p/guava-libraries/wiki/FunctionalExplained
 	 */
-	public static class MachineStateExtractor implements
-			Function<Machine, MachineState> {
+	public static class MachineStateExtractor
+			implements Function<Machine, MachineState> {
 		/**
 		 * Extracts the state of a {@link Machine}.
 		 *
@@ -454,7 +517,8 @@ public class Machine {
 	 *
 	 *
 	 */
-	public static class MachineIdExtractor implements Function<Machine, String> {
+	public static class MachineIdExtractor
+			implements Function<Machine, String> {
 		/**
 		 * Extracts the id of a {@link Machine}.
 		 *
@@ -545,7 +609,8 @@ public class Machine {
 	 * infrastructure (machine state {@link MachineState#REQUESTED},
 	 * {@link MachineState#PENDING} or {@link MachineState#RUNNING}).
 	 */
-	public static class AllocatedMachinePredicate implements Predicate<Machine> {
+	public static class AllocatedMachinePredicate
+			implements Predicate<Machine> {
 		private static final Set<MachineState> allocatedStates = Sets
 				.newHashSet(MachineState.REQUESTED, MachineState.PENDING,
 						MachineState.RUNNING);
@@ -565,8 +630,8 @@ public class Machine {
 	 * @see MachineState
 	 */
 	public static class StartedMachinePredicate implements Predicate<Machine> {
-		private static final Set<MachineState> startedStates = Sets.newHashSet(
-				MachineState.PENDING, MachineState.RUNNING);
+		private static final Set<MachineState> startedStates = Sets
+				.newHashSet(MachineState.PENDING, MachineState.RUNNING);
 
 		@Override
 		public boolean apply(Machine machine) {
@@ -580,8 +645,8 @@ public class Machine {
 	 * <p/>
 	 * The {@link Machine} must have its launch time set.
 	 */
-	public static class InstanceHourStart implements
-			Function<Machine, DateTime> {
+	public static class InstanceHourStart
+			implements Function<Machine, DateTime> {
 
 		/**
 		 * Calculates the starting point of the machine's current hour.
@@ -606,8 +671,8 @@ public class Machine {
 			// millis into wall-clock hour machine was launched
 			long wallclockhourOffset = epochMillis % millisPerHour;
 			// apply the wallclock hour offset to the current hour
-			DateTime currentHour = now.withMinuteOfHour(0)
-					.withSecondOfMinute(0).withMillisOfSecond(0);
+			DateTime currentHour = now.withMinuteOfHour(0).withSecondOfMinute(0)
+					.withMillisOfSecond(0);
 			DateTime HourStart = currentHour.plus(wallclockhourOffset);
 			// if that results in a time instant that lies in the future, the
 			// start of the current billing hour was in the previous
@@ -625,7 +690,8 @@ public class Machine {
 	 * not all cloud infrastructures support returning this value, the return
 	 * value from the function is {@link Optional}.
 	 */
-	public static class RequestAge implements Function<Machine, Optional<Long>> {
+	public static class RequestAge
+			implements Function<Machine, Optional<Long>> {
 		private final DateTime now;
 
 		/**
@@ -642,8 +708,9 @@ public class Machine {
 		@Override
 		public Optional<Long> apply(Machine machine) {
 			if (machine.getRequestTime() != null) {
-				return Optional.of(this.now.minus(
-						machine.getRequestTime().getMillis()).getMillis());
+				return Optional
+						.of(this.now.minus(machine.getRequestTime().getMillis())
+								.getMillis());
 			} else {
 				return Optional.absent();
 			}
@@ -656,8 +723,8 @@ public class Machine {
 	 *
 	 *
 	 */
-	public static class RemainingInstanceHourTime implements
-			Function<Machine, Long> {
+	public static class RemainingInstanceHourTime
+			implements Function<Machine, Long> {
 
 		/**
 		 * Calculates the remaining time (in seconds) of the machine's last
@@ -710,8 +777,8 @@ public class Machine {
 	 * the {@link Machine} that excludes the meta data field of the original
 	 * {@link Machine}.
 	 */
-	public static class ToShortMachineFormat implements
-			Function<Machine, Machine> {
+	public static class ToShortMachineFormat
+			implements Function<Machine, Machine> {
 
 		@Override
 		public Machine apply(Machine machine) {
@@ -733,8 +800,8 @@ public class Machine {
 	 * representation that excludes any {@link Machine} meta data (which can
 	 * produce quite some log noise).
 	 */
-	public static class ToShortMachineString implements
-			Function<Machine, String> {
+	public static class ToShortMachineString
+			implements Function<Machine, String> {
 
 		@Override
 		public String apply(Machine machine) {
@@ -768,6 +835,8 @@ public class Machine {
 		private ServiceState serviceState = ServiceState.UNKNOWN;
 		private MembershipStatus membershipStatus = MembershipStatus
 				.defaultStatus();
+		private String cloudProvider;
+		private String machineSize;
 		private DateTime launchTime = null;
 		private DateTime requestTime = null;
 		private final List<String> publicIps = Lists.newArrayList();
@@ -787,13 +856,19 @@ public class Machine {
 			checkArgument(this.id != null, "machine: no id given");
 			checkArgument(this.machineState != null,
 					"machine: no machineState given");
-			if (this.requestTime != null && this.launchTime != null) {
-				checkArgument(this.requestTime.isBefore(this.launchTime)
-						|| this.requestTime.isEqual(this.launchTime),
+			checkArgument(this.cloudProvider != null,
+					"machine: no cloudProvider given");
+			checkArgument(this.machineSize != null,
+					"machine: no machineSize given");
+			if ((this.requestTime != null) && (this.launchTime != null)) {
+				checkArgument(
+						this.requestTime.isBefore(this.launchTime)
+								|| this.requestTime.isEqual(this.launchTime),
 						"requestTime cannot be later than launchTime");
 			}
 			return new Machine(this.id, this.machineState,
-					this.membershipStatus, this.serviceState, this.requestTime,
+					this.membershipStatus, this.serviceState,
+					this.cloudProvider, this.machineSize, this.requestTime,
 					this.launchTime, this.publicIps, this.privateIps,
 					this.metadata);
 		}
@@ -848,6 +923,33 @@ public class Machine {
 			checkArgument(membershipStatus != null,
 					"membershipStatus cannot be null");
 			this.membershipStatus = membershipStatus;
+			return this;
+		}
+
+		/**
+		 * The name of the cloud provider that this {@link Machine} origins
+		 * from. Required attribute. For example, {@code AWS-EC2}.
+		 *
+		 * @param cloudProvider
+		 * @return
+		 */
+		public Builder cloudProvider(String cloudProvider) {
+			checkArgument(cloudProvider != null,
+					"cloudProvider cannot be null");
+			this.cloudProvider = cloudProvider;
+			return this;
+		}
+
+		/**
+		 * The size (or type) of the {@link Machine}. Required attribute. For
+		 * example, {@code m1.medium} for an Amazon EC2 {@link CloudPool}.
+		 *
+		 * @param machineSize
+		 * @return
+		 */
+		public Builder machineSize(String machineSize) {
+			checkArgument(machineSize != null, "machineSize cannot be null");
+			this.machineSize = machineSize;
 			return this;
 		}
 

@@ -27,9 +27,12 @@ public class TestMachineBuilder {
 	@Test
 	public void createMinimal() {
 		Machine m1 = Machine.builder().id("i-1")
-				.machineState(MachineState.RUNNING).build();
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").build();
 		assertThat(m1.getId(), is("i-1"));
 		assertThat(m1.getMachineState(), is(MachineState.RUNNING));
+		assertThat(m1.getCloudProvider(), is("AWS-EC2"));
+		assertThat(m1.getMachineSize(), is("m1.small"));
 
 		// check defaults
 		assertThat(m1.getServiceState(), is(ServiceState.UNKNOWN));
@@ -59,11 +62,30 @@ public class TestMachineBuilder {
 		Machine.builder().id("i-1").build();
 	}
 
+	/**
+	 * A {@link Machine} must have a cloud provider.
+	 */
+	@Test(expected = IllegalArgumentException.class)
+	public void createWithoutCloudProvider() {
+		Machine.builder().id("i-1").machineState(MachineState.RUNNING)
+				.machineSize("m1.small").build();
+	}
+
+	/**
+	 * A {@link Machine} must have a size.
+	 */
+	@Test(expected = IllegalArgumentException.class)
+	public void createWithoutMachineSize() {
+		Machine.builder().id("i-1").machineState(MachineState.RUNNING)
+				.cloudProvider("AWS-EC2").build();
+	}
+
 	@Test
 	public void createWithServiceState() {
 		Machine withServiceState = Machine.builder().id("i-1")
-				.machineState(MachineState.REQUESTED)
-				.serviceState(ServiceState.IN_SERVICE).build();
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").serviceState(ServiceState.IN_SERVICE)
+				.build();
 		assertThat(withServiceState.getServiceState(),
 				is(ServiceState.IN_SERVICE));
 	}
@@ -77,7 +99,8 @@ public class TestMachineBuilder {
 	@Test
 	public void createWithMembershipStatus() {
 		Machine machine = Machine.builder().id("i-1")
-				.machineState(MachineState.RUNNING)
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small")
 				.membershipStatus(MembershipStatus.blessed()).build();
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.blessed()));
@@ -93,7 +116,8 @@ public class TestMachineBuilder {
 	public void createWithRequestTime() {
 		DateTime now = UtcTime.now();
 		Machine machine = Machine.builder().id("i-1")
-				.machineState(MachineState.RUNNING).requestTime(now).build();
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").requestTime(now).build();
 		assertThat(machine.getRequestTime(), is(now));
 		assertThat(machine.getLaunchTime(), is(nullValue()));
 	}
@@ -101,6 +125,7 @@ public class TestMachineBuilder {
 	@Test
 	public void createWithNullRequestTime() {
 		Machine.builder().id("i-1").machineState(MachineState.RUNNING)
+				.cloudProvider("AWS-EC2").machineSize("m1.small")
 				.requestTime(null).build();
 	}
 
@@ -108,7 +133,8 @@ public class TestMachineBuilder {
 	public void createWithLaunchTime() {
 		DateTime now = UtcTime.now();
 		Machine machine = Machine.builder().id("i-1")
-				.machineState(MachineState.RUNNING).launchTime(now).build();
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").launchTime(now).build();
 		assertThat(machine.getLaunchTime(), is(now));
 		assertThat(machine.getRequestTime(), is(nullValue()));
 	}
@@ -116,18 +142,21 @@ public class TestMachineBuilder {
 	@Test
 	public void createWithNullLaunchTime() {
 		Machine.builder().id("i-1").machineState(MachineState.RUNNING)
+				.cloudProvider("AWS-EC2").machineSize("m1.small")
 				.launchTime(null).build();
 	}
 
 	@Test
 	public void createWithPrivateIpAddress() {
 		Machine m = Machine.builder().id("i-1")
-				.machineState(MachineState.REQUESTED).privateIp("1.2.3.4")
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").privateIp("1.2.3.4")
 				.privateIp("1.2.3.5").build();
 		assertThat(m.getPublicIps(), is(ips()));
 		assertThat(m.getPrivateIps(), is(ips("1.2.3.4", "1.2.3.5")));
 
 		m = Machine.builder().id("i-1").machineState(MachineState.REQUESTED)
+				.cloudProvider("AWS-EC2").machineSize("m1.small")
 				.privateIps(ips("1.2.3.4", "1.2.3.5")).build();
 		assertThat(m.getPublicIps(), is(ips()));
 		assertThat(m.getPrivateIps(), is(ips("1.2.3.4", "1.2.3.5")));
@@ -142,12 +171,14 @@ public class TestMachineBuilder {
 	@Test
 	public void createWithPublicIpAddress() {
 		Machine m = Machine.builder().id("i-1")
-				.machineState(MachineState.REQUESTED).publicIp("1.2.3.4")
-				.publicIp("1.2.3.5").build();
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").publicIp("1.2.3.4").publicIp("1.2.3.5")
+				.build();
 		assertThat(m.getPrivateIps(), is(ips()));
 		assertThat(m.getPublicIps(), is(ips("1.2.3.4", "1.2.3.5")));
 
 		m = Machine.builder().id("i-1").machineState(MachineState.REQUESTED)
+				.cloudProvider("AWS-EC2").machineSize("m1.small")
 				.publicIps(ips("1.2.3.4", "1.2.3.5")).build();
 		assertThat(m.getPrivateIps(), is(ips()));
 		assertThat(m.getPublicIps(), is(ips("1.2.3.4", "1.2.3.5")));
@@ -161,18 +192,20 @@ public class TestMachineBuilder {
 
 	@Test
 	public void createWithMetadata() {
-		JsonObject metadata = JsonUtils.parseJsonString(
-				"{'a': 1, 'b': 2, c: {'d': 4}}").getAsJsonObject();
+		JsonObject metadata = JsonUtils
+				.parseJsonString("{'a': 1, 'b': 2, c: {'d': 4}}")
+				.getAsJsonObject();
 		Machine machine = Machine.builder().id("i-1")
-				.machineState(MachineState.RUNNING).metadata(metadata).build();
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").metadata(metadata).build();
 		assertThat(machine.getMetadata(), is(metadata));
 	}
 
 	@Test
 	public void createWithOnlyPublicIpAddress() {
 		Machine onlyPublicIps = Machine.builder().id("i-1")
-				.machineState(MachineState.REQUESTED).publicIps(ips("1.2.3.4"))
-				.build();
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").publicIps(ips("1.2.3.4")).build();
 		assertThat(onlyPublicIps.getPrivateIps(), is(ips()));
 		assertThat(onlyPublicIps.getPublicIps(), is(ips("1.2.3.4")));
 	}

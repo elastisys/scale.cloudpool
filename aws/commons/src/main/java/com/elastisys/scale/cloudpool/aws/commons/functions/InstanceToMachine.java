@@ -10,6 +10,7 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
+import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.commons.json.JsonUtils;
@@ -82,8 +83,17 @@ public class InstanceToMachine implements Function<Instance, Machine> {
 			serviceState = ServiceState.valueOf(serviceStateTag.get());
 		}
 
+		// if this is a spot request instance, the provider should be AWS_SPOT
+		// rather than AWS_EC2
+		String cloudProvider = PoolIdentifiers.AWS_EC2;
+		if (instance.getSpotInstanceRequestId() != null) {
+			cloudProvider = PoolIdentifiers.AWS_SPOT;
+		}
+
 		JsonObject metadata = JsonUtils.toJson(instance).getAsJsonObject();
 		return Machine.builder().id(id).machineState(machineState)
+				.cloudProvider(cloudProvider)
+				.machineSize(instance.getInstanceType())
 				.membershipStatus(membershipStatus).serviceState(serviceState)
 				.launchTime(launchtime).publicIps(publicIps)
 				.privateIps(privateIps).metadata(metadata).build();

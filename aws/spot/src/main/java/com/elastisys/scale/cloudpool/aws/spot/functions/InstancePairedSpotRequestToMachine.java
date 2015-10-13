@@ -13,6 +13,7 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
+import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.spot.metadata.InstancePairedSpotRequest;
@@ -26,8 +27,8 @@ import com.google.gson.JsonObject;
  * {@link Function} that converts an {@link InstancePairedSpotRequest} to its
  * {@link Machine} representation.
  */
-public class InstancePairedSpotRequestToMachine implements
-		Function<InstancePairedSpotRequest, Machine> {
+public class InstancePairedSpotRequestToMachine
+		implements Function<InstancePairedSpotRequest, Machine> {
 
 	/**
 	 * Converts an {@link InstancePairedSpotRequest} to a {@link Machine}.
@@ -50,8 +51,8 @@ public class InstancePairedSpotRequestToMachine implements
 
 		String id = request.getSpotInstanceRequestId();
 		MachineState machineState = spotInstanceRequest.getMachineState();
-		final DateTime requestTime = new DateTime(spotInstanceRequest
-				.getRequest().getCreateTime(), UTC);
+		final DateTime requestTime = new DateTime(
+				spotInstanceRequest.getRequest().getCreateTime(), UTC);
 		DateTime launchTime = null;
 		List<String> publicIps = Lists.newArrayList();
 		List<String> privateIps = Lists.newArrayList();
@@ -88,6 +89,8 @@ public class InstancePairedSpotRequestToMachine implements
 		JsonObject metadata = JsonUtils.toJson(spotInstanceRequest)
 				.getAsJsonObject();
 		return Machine.builder().id(id).machineState(machineState)
+				.cloudProvider(PoolIdentifiers.AWS_SPOT)
+				.machineSize(request.getLaunchSpecification().getInstanceType())
 				.membershipStatus(membershipStatus).serviceState(serviceState)
 				.requestTime(requestTime).launchTime(launchTime)
 				.publicIps(publicIps).privateIps(privateIps).metadata(metadata)

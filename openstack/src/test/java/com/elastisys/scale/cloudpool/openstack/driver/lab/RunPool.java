@@ -35,9 +35,9 @@ public class RunPool {
 			.newScheduledThreadPool(10);
 
 	public static void main(String[] args) throws Exception {
-		CloudPoolDriver openstackScalingGroup = new OpenStackPoolDriver(
+		CloudPoolDriver openstackDriver = new OpenStackPoolDriver(
 				new StandardOpenstackClient());
-		CloudPool pool = new BaseCloudPool(openstackScalingGroup);
+		CloudPool pool = new BaseCloudPool(openstackDriver);
 
 		JsonObject config = JsonUtils.parseJsonFile(cloudPoolConfig.toFile())
 				.getAsJsonObject();

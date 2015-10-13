@@ -6,8 +6,10 @@ import java.util.List;
 
 import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
 import com.amazonaws.services.autoscaling.model.Instance;
+import com.amazonaws.services.autoscaling.model.LaunchConfiguration;
 import com.amazonaws.services.autoscaling.model.LifecycleState;
 import com.amazonaws.services.ec2.model.InstanceState;
+import com.amazonaws.services.ec2.model.InstanceType;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.commons.basepool.config.AlertsConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
@@ -27,11 +29,11 @@ public class TestUtils {
 		AwsAsPoolDriverConfig awsApiConfig = new AwsAsPoolDriverConfig(
 				"awsAccessKeyId", "awsSecretAccessKey", "eu-west-1");
 		CloudPoolConfig scalingGroupConfig = new CloudPoolConfig(
-				scalingGroupName, JsonUtils.toJson(awsApiConfig)
-						.getAsJsonObject());
+				scalingGroupName,
+				JsonUtils.toJson(awsApiConfig).getAsJsonObject());
 		ScaleOutConfig scaleUpConfig = new ScaleOutConfig("m1.small", "",
-				"instancekey", Arrays.asList("webserver"), Arrays.asList(
-						"#!/bin/bash", "sudo apt-get update -qy",
+				"instancekey", Arrays.asList("webserver"),
+				Arrays.asList("#!/bin/bash", "sudo apt-get update -qy",
 						"sudo apt-get install apache2 -qy"));
 		ScaleInConfig scaleDownConfig = new ScaleInConfig(
 				VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR, 300);
@@ -39,8 +41,8 @@ public class TestUtils {
 		SmtpAlerterConfig smtpAlerter = new SmtpAlerterConfig(
 				Arrays.asList("receiver@destination.com"),
 				"noreply@elastisys.com", "cloud pool alert!",
-				"INFO|WARN|ERROR|FATAL", new SmtpClientConfig("smtp.host.com",
-						25, null, false));
+				"INFO|WARN|ERROR|FATAL",
+				new SmtpClientConfig("smtp.host.com", 25, null, false));
 		List<HttpAlerterConfig> httpAlerters = Arrays.asList();
 		AlertsConfig alertSettings = new AlertsConfig(
 				Arrays.asList(smtpAlerter), httpAlerters);
@@ -50,10 +52,13 @@ public class TestUtils {
 				scaleDownConfig, alertSettings, poolUpdatePeriod);
 	}
 
-	public static AutoScalingGroup group(String name, int desiredCapacity,
+	public static AutoScalingGroup group(String name,
+			LaunchConfiguration launchConfig, int desiredCapacity,
 			Collection<com.amazonaws.services.ec2.model.Instance> ec2Instances) {
 		AutoScalingGroup autoScalingGroup = new AutoScalingGroup()
 				.withAutoScalingGroupName(name)
+				.withLaunchConfigurationName(
+						launchConfig.getLaunchConfigurationName())
 				.withDesiredCapacity(desiredCapacity)
 				.withInstances(toAsInstances(ec2Instances));
 		return autoScalingGroup;
@@ -76,15 +81,17 @@ public class TestUtils {
 			Collection<com.amazonaws.services.ec2.model.Instance> ec2Instances) {
 		List<Instance> asInstances = Lists.newArrayList();
 		for (com.amazonaws.services.ec2.model.Instance ec2Instance : ec2Instances) {
-			Instance asInstance = new Instance().withInstanceId(
-					ec2Instance.getInstanceId()).withLifecycleState(
-					ec2StateToLifecycleState(ec2Instance.getState()));
+			Instance asInstance = new Instance()
+					.withInstanceId(ec2Instance.getInstanceId())
+					.withLifecycleState(
+							ec2StateToLifecycleState(ec2Instance.getState()));
 			asInstances.add(asInstance);
 		}
 		return asInstances;
 	}
 
-	private static LifecycleState ec2StateToLifecycleState(InstanceState state) {
+	private static LifecycleState ec2StateToLifecycleState(
+			InstanceState state) {
 		switch (state.getName()) {
 		case "pending":
 			return LifecycleState.Pending;
@@ -99,14 +106,25 @@ public class TestUtils {
 		case "stopped":
 			return LifecycleState.Terminated;
 		default:
-			throw new IllegalArgumentException(String.format(
-					"unrecognized instance state: '%s'", state));
+			throw new IllegalArgumentException(
+					String.format("unrecognized instance state: '%s'", state));
 		}
 	}
 
 	public static com.amazonaws.services.ec2.model.Instance ec2Instance(
 			String id, String state) {
-		return new com.amazonaws.services.ec2.model.Instance().withInstanceId(
-				id).withState(new InstanceState().withName(state));
+		return new com.amazonaws.services.ec2.model.Instance()
+				.withInstanceId(id).withInstanceType(InstanceType.M1Medium)
+				.withState(new InstanceState().withName(state));
 	}
+
+	public static com.amazonaws.services.ec2.model.Instance spotInstance(
+			String spotId, String instanceId, String state) {
+		return new com.amazonaws.services.ec2.model.Instance()
+				.withInstanceId(instanceId)
+				.withInstanceType(InstanceType.M1Medium)
+				.withState(new InstanceState().withName(state))
+				.withSpotInstanceRequestId(spotId);
+	}
+
 }

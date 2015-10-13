@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
+import com.amazonaws.services.autoscaling.model.LaunchConfiguration;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
@@ -17,6 +18,7 @@ import com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling.AttachAuto
 import com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling.DetachAutoScalingGroupInstance;
 import com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling.GetAutoScalingGroup;
 import com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling.GetAutoScalingGroupInstances;
+import com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling.GetLaunchConfiguration;
 import com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling.SetDesiredAutoScalingGroupSize;
 import com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling.TerminateAutoScalingGroupInstance;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstance;
@@ -44,15 +46,28 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 
 	@Override
 	public AutoScalingGroup getAutoScalingGroup(String autoScalingGroupName) {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
 		return new GetAutoScalingGroup(awsCredentials(), region(),
 				autoScalingGroupName).call();
 	}
 
 	@Override
-	public List<Instance> getAutoScalingGroupMembers(String autoScalingGroupName) {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+	public LaunchConfiguration getLaunchConfiguration(
+			String launchConfigurationName) {
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
+
+		return new GetLaunchConfiguration(awsCredentials(), region(),
+				launchConfigurationName).call();
+	}
+
+	@Override
+	public List<Instance> getAutoScalingGroupMembers(
+			String autoScalingGroupName) {
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
 		return new GetAutoScalingGroupInstances(awsCredentials(), region(),
 				autoScalingGroupName).call();
@@ -60,16 +75,18 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 
 	@Override
 	public void setDesiredSize(String autoScalingGroupName, int desiredSize) {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
-		new SetDesiredAutoScalingGroupSize(awsCredentials(), config()
-				.getRegion(), autoScalingGroupName, desiredSize).call();
+		new SetDesiredAutoScalingGroupSize(awsCredentials(),
+				config().getRegion(), autoScalingGroupName, desiredSize).call();
 	}
 
 	@Override
-	public void terminateInstance(String autoScalingGroupName, String instanceId)
-			throws NotFoundException {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+	public void terminateInstance(String autoScalingGroupName,
+			String instanceId) throws NotFoundException {
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
 		// verify that instance exists
 		getInstanceOrFail(instanceId);
@@ -81,7 +98,8 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 	@Override
 	public void attachInstance(String autoScalingGroupName, String instanceId)
 			throws NotFoundException {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
 		// verify that instance exists
 		getInstanceOrFail(instanceId);
@@ -93,7 +111,8 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 	@Override
 	public void detachInstance(String autoScalingGroupName, String instanceId)
 			throws NotFoundException {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
 		// verify that instance exists
 		getInstanceOrFail(instanceId);
@@ -105,7 +124,8 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 	@Override
 	public void tagInstance(String instanceId, List<Tag> tags)
 			throws NotFoundException {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
 		// verify that instance exists
 		getInstanceOrFail(instanceId);
@@ -116,7 +136,8 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 
 	private Instance getInstanceOrFail(String instanceId)
 			throws NotFoundException {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
 		return new GetInstance(awsCredentials(), region(), instanceId).call();
 	}
@@ -130,8 +151,8 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 	}
 
 	private AWSCredentials awsCredentials() {
-		return new BasicAWSCredentials(config().getAwsAccessKeyId(), config()
-				.getAwsSecretAccessKey());
+		return new BasicAWSCredentials(config().getAwsAccessKeyId(),
+				config().getAwsSecretAccessKey());
 	}
 
 	private String region() {

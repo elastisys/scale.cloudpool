@@ -29,13 +29,20 @@ public class ServerToMachine implements Function<Server, Machine> {
 	private static final String FLOATING = "floating";
 
 	/**
-	 * Converts a {@link Server} to its {@link Machine} representation.
-	 *
-	 * @param server
-	 * @return
+	 * The name of the cloud provider (for example, "OpenStack", "RackSpace",
+	 * "CityCloud").
 	 */
-	public static Machine convert(Server server) {
-		return new ServerToMachine().apply(server);
+	private final String cloudProvider;
+
+	/**
+	 * Constructs a {@link ServerToMachine} conversion {@link Function}.
+	 *
+	 * @param cloudProvider
+	 *            The name of the cloud provider (for example, "OpenStack",
+	 *            "RackSpace", "CityCloud").
+	 */
+	public ServerToMachine(String cloudProvider) {
+		this.cloudProvider = cloudProvider;
 	}
 
 	/**
@@ -55,9 +62,9 @@ public class ServerToMachine implements Function<Server, Machine> {
 	 * Converts a {@link Server} from the OpenStack API to its {@link Machine}
 	 * representation.
 	 */
-	private static Machine asMachine(Server server) {
-		MachineState machineState = new StatusToMachineState().apply(server
-				.getStatus());
+	private Machine asMachine(Server server) {
+		MachineState machineState = new StatusToMachineState()
+				.apply(server.getStatus());
 
 		final DateTime creationTime = new DateTime(server.getCreated(),
 				DateTimeZone.UTC);
@@ -86,19 +93,21 @@ public class ServerToMachine implements Function<Server, Machine> {
 		MembershipStatus membershipStatus = MembershipStatus.defaultStatus();
 		if (server.getMetadata().containsKey(Constants.MEMBERSHIP_STATUS_TAG)) {
 			membershipStatus = JsonUtils.toObject(
-					JsonUtils.parseJsonString(server.getMetadata().get(
-							Constants.MEMBERSHIP_STATUS_TAG)),
+					JsonUtils.parseJsonString(server.getMetadata()
+							.get(Constants.MEMBERSHIP_STATUS_TAG)),
 					MembershipStatus.class);
 		}
 
 		// extract service state if tag has been set on server
 		ServiceState serviceState = ServiceState.UNKNOWN;
 		if (server.getMetadata().containsKey(Constants.SERVICE_STATE_TAG)) {
-			serviceState = ServiceState.valueOf(server.getMetadata().get(
-					Constants.SERVICE_STATE_TAG));
+			serviceState = ServiceState.valueOf(
+					server.getMetadata().get(Constants.SERVICE_STATE_TAG));
 		}
 		JsonObject metadata = JsonUtils.toJson(server).getAsJsonObject();
 		return Machine.builder().id(server.getId()).machineState(machineState)
+				.cloudProvider(this.cloudProvider)
+				.machineSize(server.getFlavor().getName())
 				.membershipStatus(membershipStatus).serviceState(serviceState)
 				.requestTime(creationTime).launchTime(launchedAtTime)
 				.publicIps(publicIps).privateIps(privateIps).metadata(metadata)

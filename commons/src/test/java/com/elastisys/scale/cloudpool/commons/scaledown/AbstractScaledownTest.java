@@ -19,6 +19,7 @@ public abstract class AbstractScaledownTest {
 		List<String> publicIps = Lists.newArrayList();
 		List<String> privateIps = Lists.newArrayList();
 		return Machine.builder().id(withId).machineState(MachineState.RUNNING)
+				.cloudProvider("AWS-EC2").machineSize("m1.small")
 				.launchTime(UtcTime.parse(withLaunchTime)).build();
 	}
 }

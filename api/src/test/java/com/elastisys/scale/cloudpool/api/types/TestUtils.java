@@ -36,6 +36,7 @@ public class TestUtils {
 	public static Machine machineNoIp(String id, MachineState state,
 			DateTime requesttime, DateTime launchtime) {
 		return Machine.builder().id(id).machineState(state)
+				.cloudProvider("AWS-EC2").machineSize("m1.small")
 				.requestTime(requesttime).launchTime(launchtime).build();
 	}
 
@@ -64,6 +65,7 @@ public class TestUtils {
 	public static Machine machine(String id, DateTime requesttime,
 			DateTime launchtime) {
 		return Machine.builder().id(id).machineState(MachineState.RUNNING)
+				.cloudProvider("AWS-EC2").machineSize("m1.small")
 				.requestTime(requesttime).launchTime(launchtime).build();
 	}
 
@@ -94,6 +96,7 @@ public class TestUtils {
 			DateTime requesttime, DateTime launchtime, List<String> publicIps,
 			List<String> privateIps) {
 		return Machine.builder().id(id).machineState(state)
+				.cloudProvider("AWS-EC2").machineSize("m1.small")
 				.requestTime(requesttime).launchTime(launchtime)
 				.publicIps(publicIps).privateIps(privateIps).build();
 	}
@@ -110,8 +113,10 @@ public class TestUtils {
 	 * @return
 	 */
 	public static Machine machine(String id, MachineState state,
-			DateTime launchtime, List<String> publicIps, List<String> privateIps) {
-		return machine(id, state, launchtime, launchtime, publicIps, privateIps);
+			DateTime launchtime, List<String> publicIps,
+			List<String> privateIps) {
+		return machine(id, state, launchtime, launchtime, publicIps,
+				privateIps);
 	}
 
 	public static List<String> ips(String... ipAddresses) {

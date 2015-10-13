@@ -23,8 +23,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import jersey.repackaged.com.google.common.collect.Lists;
-
 import org.eclipse.jetty.server.Server;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
@@ -50,14 +48,16 @@ import com.google.common.base.Optional;
 import com.google.common.io.Resources;
 import com.google.gson.JsonObject;
 
+import jersey.repackaged.com.google.common.collect.Lists;
+
 /**
  * Tests that verify the behavior of the {@link CloudPoolServer} REST API backed
  * by a mocked {@link CloudPool}.
  */
 public class TestRestApi {
 
-	private static final String SERVER_KEYSTORE = Resources.getResource(
-			"security/server/server_keystore.p12").toString();
+	private static final String SERVER_KEYSTORE = Resources
+			.getResource("security/server/server_keystore.p12").toString();
 	private static final String SERVER_KEYSTORE_PASSWORD = "serverpass";
 
 	/** Web server to use throughout the tests. */
@@ -65,8 +65,8 @@ public class TestRestApi {
 	/** Server port to use for HTTPS. */
 	private static int httpsPort;
 	/** Storage dir for configurations. */
-	private static final String storageDir = Paths.get("target", "cloudpool",
-			"storage").toString();
+	private static final String storageDir = Paths
+			.get("target", "cloudpool", "storage").toString();
 
 	private static CloudPool cloudPool = mock(CloudPool.class);
 
@@ -108,8 +108,8 @@ public class TestRestApi {
 	public void testGetConfig() throws IOException {
 		// set up mocked cloud pool response
 		String configDoc = "{\"setting\": \"true\"}";
-		Optional<JsonObject> config = Optional.of(JsonUtils.parseJsonString(
-				configDoc).getAsJsonObject());
+		Optional<JsonObject> config = Optional
+				.of(JsonUtils.parseJsonString(configDoc).getAsJsonObject());
 		when(cloudPool.getConfiguration()).thenReturn(config);
 
 		// run test
@@ -147,8 +147,8 @@ public class TestRestApi {
 	@Test
 	public void testGetConfigOnCloudPoolError() throws IOException {
 		// set up mocked cloud pool response
-		doThrow(new IllegalStateException("something went wrong!")).when(
-				cloudPool).getConfiguration();
+		doThrow(new IllegalStateException("something went wrong!"))
+				.when(cloudPool).getConfiguration();
 
 		Client client = RestClients.httpsNoAuth();
 		Response response = client.target(url("/config")).request().get();
@@ -187,8 +187,8 @@ public class TestRestApi {
 	@Test
 	public void testPostConfigOnCloudPoolError() throws IOException {
 		// set up mocked cloud pool response
-		doThrow(new IllegalStateException("something went wrong!")).when(
-				cloudPool).configure(Matchers.any(JsonObject.class));
+		doThrow(new IllegalStateException("something went wrong!"))
+				.when(cloudPool).configure(Matchers.any(JsonObject.class));
 
 		String configDoc = "{\"setting\": \"true\"}";
 		JsonObject config = JsonUtils.parseJsonString(configDoc)
@@ -226,7 +226,8 @@ public class TestRestApi {
 		Client client = RestClients.httpsNoAuth();
 		Response response = client.target(url("/start"))
 				.request(MediaType.APPLICATION_JSON).post(null);
-		assertThat(response.getStatus(), is(Status.BAD_REQUEST.getStatusCode()));
+		assertThat(response.getStatus(),
+				is(Status.BAD_REQUEST.getStatusCode()));
 		assertThat(response.readEntity(String.class),
 				containsString("cannot start without config!"));
 
@@ -277,10 +278,11 @@ public class TestRestApi {
 		List<Machine> machines = Lists.newArrayList();
 		final DateTime now = UtcTime.now();
 		final DateTime anHourAgo = now.minusHours(1);
-		machines.add(Machine.builder().id("i-1")
-				.machineState(MachineState.RUNNING).requestTime(anHourAgo)
-				.launchTime(anHourAgo).publicIps(Arrays.asList("1.2.3.4"))
-				.build());
+		machines.add(
+				Machine.builder().id("i-1").machineState(MachineState.RUNNING)
+						.cloudProvider("AWS-EC2").machineSize("m1.small")
+						.requestTime(anHourAgo).launchTime(anHourAgo)
+						.publicIps(Arrays.asList("1.2.3.4")).build());
 
 		MachinePool pool = new MachinePool(machines, now);
 		when(cloudPool.getMachinePool()).thenReturn(pool);
@@ -308,9 +310,8 @@ public class TestRestApi {
 		Response response = client.target(url("/pool")).request().get();
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
-		assertThat(
-				response.readEntity(String.class),
-				containsString("attempt to invoke cloudpool before being started"));
+		assertThat(response.readEntity(String.class), containsString(
+				"attempt to invoke cloudpool before being started"));
 
 		verify(cloudPool).getStatus();
 		verifyNoMoreInteractions(cloudPool);
@@ -323,8 +324,8 @@ public class TestRestApi {
 	@Test
 	public void testGetPoolOnCloudPoolError() throws IOException {
 		// set up mocked cloud pool response
-		doThrow(new IllegalStateException("something went wrong!")).when(
-				cloudPool).getMachinePool();
+		doThrow(new IllegalStateException("something went wrong!"))
+				.when(cloudPool).getMachinePool();
 
 		Client client = RestClients.httpsNoAuth();
 		Response response = client.target(url("/pool")).request().get();
@@ -366,9 +367,8 @@ public class TestRestApi {
 		Response response = client.target(url("/pool/size")).request().get();
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
-		assertThat(
-				response.readEntity(String.class),
-				containsString("attempt to invoke cloudpool before being started"));
+		assertThat(response.readEntity(String.class), containsString(
+				"attempt to invoke cloudpool before being started"));
 
 		verify(cloudPool).getStatus();
 		verifyNoMoreInteractions(cloudPool);
@@ -381,8 +381,8 @@ public class TestRestApi {
 	@Test
 	public void testGetPoolSizeOnCloudPoolError() throws IOException {
 		// set up mocked cloud pool response
-		doThrow(new IllegalStateException("something went wrong!")).when(
-				cloudPool).getPoolSize();
+		doThrow(new IllegalStateException("something went wrong!"))
+				.when(cloudPool).getPoolSize();
 
 		Client client = RestClients.httpsNoAuth();
 		Response response = client.target(url("/pool/size")).request().get();
@@ -425,9 +425,8 @@ public class TestRestApi {
 				.post(request);
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
-		assertThat(
-				response.readEntity(String.class),
-				containsString("attempt to invoke cloudpool before being started"));
+		assertThat(response.readEntity(String.class), containsString(
+				"attempt to invoke cloudpool before being started"));
 
 		verify(cloudPool).getStatus();
 		verifyNoMoreInteractions(cloudPool);
@@ -440,8 +439,8 @@ public class TestRestApi {
 	@Test
 	public void testSetDesiredSizeOnCloudPoolError() {
 		// set up mocked cloud pool response
-		doThrow(new IllegalStateException("something went wrong!")).when(
-				cloudPool).setDesiredSize(15);
+		doThrow(new IllegalStateException("something went wrong!"))
+				.when(cloudPool).setDesiredSize(15);
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
@@ -455,8 +454,8 @@ public class TestRestApi {
 	}
 
 	/**
-	 * Verifies a {@code 200} response on a successful
-	 * {@code POST /pool/<machine>/terminate} request.
+	 * Verifies a {@code 200} response on a successful {@code POST /pool/
+	 * <machine>/terminate} request.
 	 */
 	@Test
 	public void testTerminateMachine() {
@@ -489,18 +488,16 @@ public class TestRestApi {
 				.post(request);
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
-		assertThat(
-				response.readEntity(String.class),
-				containsString("attempt to invoke cloudpool before being started"));
+		assertThat(response.readEntity(String.class), containsString(
+				"attempt to invoke cloudpool before being started"));
 
 		verify(cloudPool).getStatus();
 		verifyNoMoreInteractions(cloudPool);
 	}
 
 	/**
-	 * Verifies a {@code 404} response on a
-	 * {@code POST /pool/<machine>/terminate} request for an unrecognized
-	 * member.
+	 * Verifies a {@code 404} response on a {@code POST /pool/
+	 * <machine>/terminate} request for an unrecognized member.
 	 */
 	@Test
 	public void testTerminateMachineOnNotFoundError() {
@@ -544,8 +541,8 @@ public class TestRestApi {
 	}
 
 	/**
-	 * Verifies a {@code 200} response on a successful
-	 * {@code POST /pool/<machine>/detach} request.
+	 * Verifies a {@code 200} response on a successful {@code POST /pool/
+	 * <machine>/detach} request.
 	 */
 	@Test
 	public void testDetachMachine() {
@@ -578,9 +575,8 @@ public class TestRestApi {
 				.post(request);
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
-		assertThat(
-				response.readEntity(String.class),
-				containsString("attempt to invoke cloudpool before being started"));
+		assertThat(response.readEntity(String.class), containsString(
+				"attempt to invoke cloudpool before being started"));
 
 		verify(cloudPool).getStatus();
 		verifyNoMoreInteractions(cloudPool);
@@ -615,8 +611,8 @@ public class TestRestApi {
 	@Test
 	public void testDetachMachineOnCloudPoolError() {
 		// set up expected call on mock
-		doThrow(new RuntimeException("failed!")).when(cloudPool).detachMachine(
-				"i-1", true);
+		doThrow(new RuntimeException("failed!")).when(cloudPool)
+				.detachMachine("i-1", true);
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
@@ -632,8 +628,8 @@ public class TestRestApi {
 	}
 
 	/**
-	 * Verifies a {@code 200} response on a successful
-	 * {@code POST /pool/<machine>/attach} request.
+	 * Verifies a {@code 200} response on a successful {@code POST /pool/
+	 * <machine>/attach} request.
 	 */
 	@Test
 	public void testAttachMachine() {
@@ -662,9 +658,8 @@ public class TestRestApi {
 				.post(null);
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
-		assertThat(
-				response.readEntity(String.class),
-				containsString("attempt to invoke cloudpool before being started"));
+		assertThat(response.readEntity(String.class), containsString(
+				"attempt to invoke cloudpool before being started"));
 
 		verify(cloudPool).getStatus();
 		verifyNoMoreInteractions(cloudPool);
@@ -697,8 +692,8 @@ public class TestRestApi {
 	@Test
 	public void testAttachMachineOnCloudPoolError() {
 		// set up expected call on mock
-		doThrow(new RuntimeException("failed!")).when(cloudPool).attachMachine(
-				"i-1");
+		doThrow(new RuntimeException("failed!")).when(cloudPool)
+				.attachMachine("i-1");
 
 		// run test
 		Client client = RestClients.httpsNoAuth();
@@ -712,8 +707,8 @@ public class TestRestApi {
 	}
 
 	/**
-	 * Verifies a {@code 200} response on a successful
-	 * {@code POST /pool/<machine>/serviceState} request.
+	 * Verifies a {@code 200} response on a successful {@code POST /pool/
+	 * <machine>/serviceState} request.
 	 */
 	@Test
 	public void testSetServiceState() {
@@ -747,18 +742,16 @@ public class TestRestApi {
 				.request().post(request);
 		assertThat(response.getStatus(),
 				is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
-		assertThat(
-				response.readEntity(String.class),
-				containsString("attempt to invoke cloudpool before being started"));
+		assertThat(response.readEntity(String.class), containsString(
+				"attempt to invoke cloudpool before being started"));
 
 		verify(cloudPool).getStatus();
 		verifyNoMoreInteractions(cloudPool);
 	}
 
 	/**
-	 * Verifies a {@code 404} response on a
-	 * {@code POST /pool/<machine>/serviceState} request for an unrecognized
-	 * machine.
+	 * Verifies a {@code 404} response on a {@code POST /pool/
+	 * <machine>/serviceState} request for an unrecognized machine.
 	 */
 	@Test
 	public void testSetServiceStateOnNotFoundError() {
@@ -779,9 +772,8 @@ public class TestRestApi {
 	}
 
 	/**
-	 * Verifies a {@code 404} response on a
-	 * {@code POST /pool/<machine>/serviceState} request to a cloud pool that
-	 * unexpectedly fails.
+	 * Verifies a {@code 404} response on a {@code POST /pool/
+	 * <machine>/serviceState} request to a cloud pool that unexpectedly fails.
 	 */
 	@Test
 	public void testSetServiceStateOnCloudPoolError() {

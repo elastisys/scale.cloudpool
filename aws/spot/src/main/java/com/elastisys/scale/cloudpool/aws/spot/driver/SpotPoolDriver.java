@@ -43,7 +43,7 @@ import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.PoolIdentifier;
+import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
@@ -202,7 +202,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
 	 * Cloud pool metadata for this implementation.
 	 */
 	private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
-			PoolIdentifier.AWS_SPOT_INSTANCES, supportedApiVersions);
+			PoolIdentifiers.AWS_SPOT, supportedApiVersions);
 
 	/**
 	 * Creates a new {@link SpotPoolDriver}.

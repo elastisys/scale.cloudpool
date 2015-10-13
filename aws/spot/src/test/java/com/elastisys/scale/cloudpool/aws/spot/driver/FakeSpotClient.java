@@ -17,6 +17,7 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceState;
+import com.amazonaws.services.ec2.model.LaunchSpecification;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.SpotInstanceState;
 import com.amazonaws.services.ec2.model.Tag;
@@ -33,8 +34,11 @@ import com.google.common.collect.Lists;
 public class FakeSpotClient implements SpotClient {
 	private static Logger LOG = LoggerFactory.getLogger(FakeSpotClient.class);
 
-	/** {@link Filter} matchers used when filtering {@link SpotInstanceRequest}s. */
+	/**
+	 * {@link Filter} matchers used when filtering {@link SpotInstanceRequest}s.
+	 */
 	private static final Map<String, SpotRequestFilterMatcher> spotRequestFilterMatchers = new TreeMap<>();
+
 	static {
 		spotRequestFilterMatchers.put(ScalingFilters.SPOT_REQUEST_ID_FILTER,
 				new SpotRequestIdFilterMatcher());
@@ -44,14 +48,17 @@ public class FakeSpotClient implements SpotClient {
 				new SpotRequestCloudPoolFilterMatcher());
 
 	}
+
 	/** {@link Filter} matchers used when filtering {@link Instance}s. */
 	private static final Map<String, InstanceFilterMatcher> instanceFilterMatchers = new TreeMap<>();
+
 	static {
 		instanceFilterMatchers.put(ScalingFilters.INSTANCE_STATE_FILTER,
 				new InstanceStateFilterMatcher());
 		instanceFilterMatchers.put(ScalingFilters.SPOT_REQUEST_ID_FILTER,
 				new InstanceSpotRequestFilterMatcher());
 	}
+
 	private final Map<String, SpotInstanceRequest> spotRequests;
 	private final Map<String, Instance> instances;
 	private int idSequencer = 0;
@@ -114,13 +121,12 @@ public class FakeSpotClient implements SpotClient {
 	public Instance getInstanceMetadata(String instanceId)
 			throws NotFoundException, AmazonClientException {
 		if (!this.instances.containsKey(instanceId)) {
-			throw new AmazonServiceException(
-					String.format(
-							"The instance ID '%s' does not exist (Service: AmazonEC2; "
-									+ "Status Code: 400; Error Code: "
-									+ "InvalidInstanceID.NotFound; "
-									+ "Request ID: ea111d31-62e8-41b7-97b8-95719b0fa055)",
-							instanceId));
+			throw new AmazonServiceException(String.format(
+					"The instance ID '%s' does not exist (Service: AmazonEC2; "
+							+ "Status Code: 400; Error Code: "
+							+ "InvalidInstanceID.NotFound; "
+							+ "Request ID: ea111d31-62e8-41b7-97b8-95719b0fa055)",
+					instanceId));
 		}
 		return this.instances.get(instanceId);
 	}
@@ -151,12 +157,11 @@ public class FakeSpotClient implements SpotClient {
 			throws AmazonClientException {
 		if (!this.instances.containsKey(resourceId)
 				&& !this.spotRequests.containsKey(resourceId)) {
-			throw new AmazonServiceException(
-					String.format(
-							"The ID '%s' is not valid (Service: AmazonEC2; "
-									+ "Status Code: 400; Error Code: InvalidID; "
-									+ "Request ID: 05ee0a2b-737b-4749-9b83-eb7eec710c68)",
-							resourceId));
+			throw new AmazonServiceException(String.format(
+					"The ID '%s' is not valid (Service: AmazonEC2; "
+							+ "Status Code: 400; Error Code: InvalidID; "
+							+ "Request ID: 05ee0a2b-737b-4749-9b83-eb7eec710c68)",
+					resourceId));
 		}
 		if (this.instances.containsKey(resourceId)) {
 			List<Tag> instanceTags = this.instances.get(resourceId).getTags();
@@ -174,12 +179,11 @@ public class FakeSpotClient implements SpotClient {
 			throws AmazonClientException {
 		if (!this.instances.containsKey(resourceId)
 				&& !this.spotRequests.containsKey(resourceId)) {
-			throw new AmazonServiceException(
-					String.format(
-							"The ID '%s' is not valid (Service: AmazonEC2; "
-									+ "Status Code: 400; Error Code: InvalidID; "
-									+ "Request ID: 05ee0a2b-737b-4749-9b83-eb7eec710c68)",
-							resourceId));
+			throw new AmazonServiceException(String.format(
+					"The ID '%s' is not valid (Service: AmazonEC2; "
+							+ "Status Code: 400; Error Code: InvalidID; "
+							+ "Request ID: 05ee0a2b-737b-4749-9b83-eb7eec710c68)",
+					resourceId));
 		}
 		if (this.instances.containsKey(resourceId)) {
 			this.instances.get(resourceId).getTags().removeAll(tags);
@@ -196,13 +200,12 @@ public class FakeSpotClient implements SpotClient {
 			throws NotFoundException, AmazonClientException {
 		for (String instanceId : instanceIds) {
 			if (!this.instances.containsKey(instanceId)) {
-				throw new AmazonServiceException(
-						String.format(
-								"The instance ID '%s' does not exist "
-										+ "(Service: AmazonEC2; Status Code: 400; Error Code: "
-										+ "InvalidInstanceID.NotFound;"
-										+ " Request ID: 12a2ebaf-c480-4998-95fb-6d47b4393e00)",
-								instanceId));
+				throw new AmazonServiceException(String.format(
+						"The instance ID '%s' does not exist "
+								+ "(Service: AmazonEC2; Status Code: 400; Error Code: "
+								+ "InvalidInstanceID.NotFound;"
+								+ " Request ID: 12a2ebaf-c480-4998-95fb-6d47b4393e00)",
+						instanceId));
 			}
 			this.instances.remove(instanceId);
 		}
@@ -212,13 +215,12 @@ public class FakeSpotClient implements SpotClient {
 	public SpotInstanceRequest getSpotInstanceRequest(String spotRequestId)
 			throws AmazonClientException {
 		if (!this.spotRequests.containsKey(spotRequestId)) {
-			throw new AmazonServiceException(
-					String.format(
-							"The spot instance request ID '%s' does not exist (Service: AmazonEC2; "
-									+ "Status Code: 400; Error Code: "
-									+ "InvalidSpotInstanceRequestID.NotFound; "
-									+ "Request ID: 5fc1854f-ceb4-4f6a-8178-a9e918371d46)",
-							spotRequestId));
+			throw new AmazonServiceException(String.format(
+					"The spot instance request ID '%s' does not exist (Service: AmazonEC2; "
+							+ "Status Code: 400; Error Code: "
+							+ "InvalidSpotInstanceRequestID.NotFound; "
+							+ "Request ID: 5fc1854f-ceb4-4f6a-8178-a9e918371d46)",
+					spotRequestId));
 		}
 		return this.spotRequests.get(spotRequestId);
 	}
@@ -244,8 +246,8 @@ public class FakeSpotClient implements SpotClient {
 		Collections.sort(requests, new Comparator<SpotInstanceRequest>() {
 			@Override
 			public int compare(SpotInstanceRequest o1, SpotInstanceRequest o2) {
-				return o1.getSpotInstanceRequestId().compareTo(
-						o2.getSpotInstanceRequestId());
+				return o1.getSpotInstanceRequestId()
+						.compareTo(o2.getSpotInstanceRequestId());
 			}
 		});
 		return requests;
@@ -254,12 +256,14 @@ public class FakeSpotClient implements SpotClient {
 	@Override
 	public List<SpotInstanceRequest> placeSpotRequests(double bidPrice,
 			ScaleOutConfig scaleOutConfig, int count, List<Tag> tags)
-			throws AmazonClientException {
+					throws AmazonClientException {
 		List<SpotInstanceRequest> requests = Lists.newArrayList();
 		for (int i = 0; i < count; i++) {
 			String id = "sir-" + (System.currentTimeMillis() + count);
 			SpotInstanceRequest request = new SpotInstanceRequest()
 					.withSpotInstanceRequestId(id)
+					.withLaunchSpecification(new LaunchSpecification()
+							.withInstanceType(scaleOutConfig.getSize()))
 					.withState(SpotInstanceState.Open)
 					.withSpotPrice(String.valueOf(bidPrice)).withTags(tags);
 			this.spotRequests.put(id, request);
@@ -272,8 +276,8 @@ public class FakeSpotClient implements SpotClient {
 	public void cancelSpotRequests(List<String> spotInstanceRequestIds)
 			throws AmazonClientException {
 		for (String spotInstanceRequestId : spotInstanceRequestIds) {
-			getSpotInstanceRequest(spotInstanceRequestId).setState(
-					SpotInstanceState.Cancelled);
+			getSpotInstanceRequest(spotInstanceRequestId)
+					.setState(SpotInstanceState.Cancelled);
 		}
 	}
 
@@ -306,25 +310,25 @@ public class FakeSpotClient implements SpotClient {
 		boolean matches(SpotInstanceRequest spotRequest, Filter filter);
 	}
 
-	private static class SpotRequestIdFilterMatcher implements
-			SpotRequestFilterMatcher {
+	private static class SpotRequestIdFilterMatcher
+			implements SpotRequestFilterMatcher {
 		@Override
 		public boolean matches(SpotInstanceRequest spotRequest, Filter filter) {
-			return filter.getValues().contains(
-					spotRequest.getSpotInstanceRequestId());
+			return filter.getValues()
+					.contains(spotRequest.getSpotInstanceRequestId());
 		}
 	}
 
-	private static class SpotRequestStateFilterMatcher implements
-			SpotRequestFilterMatcher {
+	private static class SpotRequestStateFilterMatcher
+			implements SpotRequestFilterMatcher {
 		@Override
 		public boolean matches(SpotInstanceRequest spotRequest, Filter filter) {
 			return filter.getValues().contains(spotRequest.getState());
 		}
 	}
 
-	private static class SpotRequestCloudPoolFilterMatcher implements
-			SpotRequestFilterMatcher {
+	private static class SpotRequestCloudPoolFilterMatcher
+			implements SpotRequestFilterMatcher {
 		@Override
 		public boolean matches(SpotInstanceRequest spotRequest, Filter filter) {
 			// filter name is "tag:<tagname>"
@@ -339,20 +343,20 @@ public class FakeSpotClient implements SpotClient {
 		}
 	}
 
-	private static class InstanceStateFilterMatcher implements
-			InstanceFilterMatcher {
+	private static class InstanceStateFilterMatcher
+			implements InstanceFilterMatcher {
 		@Override
 		public boolean matches(Instance instance, Filter filter) {
 			return filter.getValues().contains(instance.getState().getName());
 		}
 	}
 
-	private static class InstanceSpotRequestFilterMatcher implements
-			InstanceFilterMatcher {
+	private static class InstanceSpotRequestFilterMatcher
+			implements InstanceFilterMatcher {
 		@Override
 		public boolean matches(Instance instance, Filter filter) {
-			return filter.getValues().contains(
-					instance.getSpotInstanceRequestId());
+			return filter.getValues()
+					.contains(instance.getSpotInstanceRequestId());
 		}
 	}
 

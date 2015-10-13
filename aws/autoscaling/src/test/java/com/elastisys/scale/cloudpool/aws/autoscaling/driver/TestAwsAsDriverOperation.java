@@ -6,6 +6,7 @@ import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.TestUtils.con
 import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.TestUtils.ec2Instance;
 import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.TestUtils.ec2Instances;
 import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.TestUtils.group;
+import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.TestUtils.spotInstance;
 import static com.elastisys.scale.cloudpool.aws.commons.ScalingTags.SERVICE_STATE_TAG;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
@@ -29,12 +30,15 @@ import org.slf4j.LoggerFactory;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
+import com.amazonaws.services.autoscaling.model.LaunchConfiguration;
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.InstanceType;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
+import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AutoScalingClient;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
@@ -59,6 +63,17 @@ public class TestAwsAsDriverOperation {
 
 	private static final String GROUP_NAME = "MyScalingGroup";
 
+	/** Launch config that orders spot instances. */
+	private static final LaunchConfiguration SPOT_LAUNCH_CONFIG = new LaunchConfiguration()
+			.withLaunchConfigurationName("SpotTemplate")
+			.withInstanceType(InstanceType.M1Medium.toString())
+			.withSpotPrice("0.010");
+
+	/** Launch config that orders on-demand instances. */
+	private static final LaunchConfiguration ONDEMAND_LAUNCH_CONFIG = new LaunchConfiguration()
+			.withLaunchConfigurationName("OnDemandTemplate")
+			.withInstanceType(InstanceType.M1Medium.toString());
+
 	/** Object under test. */
 	private AwsAsPoolDriver cloudPool;
 
@@ -77,22 +92,25 @@ public class TestAwsAsDriverOperation {
 	@Test
 	public void listMachines() throws CloudPoolDriverException {
 		// empty Auto Scaling Group
-		setUpMockedAutoScalingGroup(GROUP_NAME, 0, ec2Instances());
+		setUpMockedAutoScalingGroup(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, 0,
+				ec2Instances());
 		assertThat(this.cloudPool.listMachines(),
 				is(MachinesMatcher.machines()));
 		verify(this.mockAwsClient).getAutoScalingGroup(GROUP_NAME);
 		verify(this.mockAwsClient).getAutoScalingGroupMembers(GROUP_NAME);
 
 		// non-empty group
-		setUpMockedAutoScalingGroup(GROUP_NAME, 0,
+		setUpMockedAutoScalingGroup(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, 0,
 				ec2Instances(ec2Instance("i-1", "running")));
 		assertThat(this.cloudPool.listMachines(),
 				is(MachinesMatcher.machines("i-1")));
 
 		// group with machines in different states
 		List<Instance> members = ec2Instances(ec2Instance("i-1", "running"),
-				ec2Instance("i-2", "pending"), ec2Instance("i-3", "terminated"));
-		setUpMockedAutoScalingGroup(GROUP_NAME, 0, members);
+				ec2Instance("i-2", "pending"),
+				ec2Instance("i-3", "terminated"));
+		setUpMockedAutoScalingGroup(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, 0,
+				members);
 		List<Machine> machines = this.cloudPool.listMachines();
 		assertThat(machines, is(MachinesMatcher.machines("i-1", "i-2", "i-3")));
 		// verify that listMachines returns cloud-specific metadata about each
@@ -116,17 +134,67 @@ public class TestAwsAsDriverOperation {
 			throws CloudPoolDriverException {
 		// two missing instances: desired capacity: 3, actual capacity: 1
 		int desiredCapacity = 3;
-		setUpMockedAutoScalingGroup(GROUP_NAME, desiredCapacity,
-				ec2Instances(ec2Instance("i-1", "running")));
+		setUpMockedAutoScalingGroup(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG,
+				desiredCapacity, ec2Instances(ec2Instance("i-1", "running")));
 		List<Machine> groupMembers = this.cloudPool.listMachines();
 		assertThat(groupMembers, is(MachinesMatcher.machines("i-1",
 				"i-requested1", "i-requested2")));
 		assertThat(groupMembers.get(0).getMachineState(),
 				is(MachineState.RUNNING));
+		assertThat(groupMembers.get(0).getCloudProvider(),
+				is(PoolIdentifiers.AWS_EC2));
+		assertThat(groupMembers.get(0).getMachineSize(),
+				is(InstanceType.M1Medium.toString()));
+
 		assertThat(groupMembers.get(1).getMachineState(),
 				is(MachineState.REQUESTED));
+		assertThat(groupMembers.get(1).getCloudProvider(),
+				is(PoolIdentifiers.AWS_EC2));
+		assertThat(groupMembers.get(1).getMachineSize(),
+				is(InstanceType.M1Medium.toString()));
+
 		assertThat(groupMembers.get(2).getMachineState(),
 				is(MachineState.REQUESTED));
+		assertThat(groupMembers.get(2).getCloudProvider(),
+				is(PoolIdentifiers.AWS_EC2));
+		assertThat(groupMembers.get(2).getMachineSize(),
+				is(InstanceType.M1Medium.toString()));
+	}
+
+	/**
+	 * Make sure that requested but not yet acquired pseudo instances get
+	 * correctly reported for an Auto Scaling Group of spot instances as well.
+	 */
+	@Test
+	public void listPsuedoMachinesOnGroupWithSpotInstances() {
+		// two missing instances: desired capacity: 3, actual capacity: 1
+		int desiredCapacity = 3;
+		setUpMockedAutoScalingGroup(GROUP_NAME, SPOT_LAUNCH_CONFIG,
+				desiredCapacity,
+				ec2Instances(spotInstance("sir-1", "i-1", "running")));
+		List<Machine> groupMembers = this.cloudPool.listMachines();
+		assertThat(groupMembers, is(MachinesMatcher.machines("i-1",
+				"i-requested1", "i-requested2")));
+		assertThat(groupMembers.get(0).getMachineState(),
+				is(MachineState.RUNNING));
+		assertThat(groupMembers.get(0).getCloudProvider(),
+				is(PoolIdentifiers.AWS_SPOT));
+		assertThat(groupMembers.get(0).getMachineSize(),
+				is(InstanceType.M1Medium.toString()));
+
+		assertThat(groupMembers.get(1).getMachineState(),
+				is(MachineState.REQUESTED));
+		assertThat(groupMembers.get(1).getCloudProvider(),
+				is(PoolIdentifiers.AWS_SPOT));
+		assertThat(groupMembers.get(1).getMachineSize(),
+				is(InstanceType.M1Medium.toString()));
+
+		assertThat(groupMembers.get(2).getMachineState(),
+				is(MachineState.REQUESTED));
+		assertThat(groupMembers.get(2).getCloudProvider(),
+				is(PoolIdentifiers.AWS_SPOT));
+		assertThat(groupMembers.get(2).getMachineSize(),
+				is(InstanceType.M1Medium.toString()));
 	}
 
 	/**
@@ -136,8 +204,8 @@ public class TestAwsAsDriverOperation {
 	@Test(expected = CloudPoolDriverException.class)
 	public void listMachinesOnError() throws CloudPoolDriverException {
 		// set up Amazon API call to fail
-		when(this.mockAwsClient.getAutoScalingGroup(GROUP_NAME)).thenThrow(
-				new AmazonServiceException("API unreachable"));
+		when(this.mockAwsClient.getAutoScalingGroup(GROUP_NAME))
+				.thenThrow(new AmazonServiceException("API unreachable"));
 		this.cloudPool.listMachines();
 	}
 
@@ -153,8 +221,9 @@ public class TestAwsAsDriverOperation {
 
 		// scale up from 0 -> 1
 		int desiredCapacity = 0;
-		this.cloudPool = new AwsAsPoolDriver(new FakeAutoScalingClient(
-				GROUP_NAME, desiredCapacity, ec2Instances()));
+		this.cloudPool = new AwsAsPoolDriver(
+				new FakeAutoScalingClient(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG,
+						desiredCapacity, ec2Instances()));
 		this.cloudPool.configure(config);
 		List<Machine> startedMachines = this.cloudPool.startMachines(1,
 				scaleUpConfig);
@@ -164,8 +233,8 @@ public class TestAwsAsDriverOperation {
 		// scale up from 1 -> 2
 		desiredCapacity = 1;
 		this.cloudPool = new AwsAsPoolDriver(new FakeAutoScalingClient(
-				GROUP_NAME, desiredCapacity, ec2Instances(ec2Instance("i-1",
-						"running"))));
+				GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, desiredCapacity,
+				ec2Instances(ec2Instance("i-1", "running"))));
 		this.cloudPool.configure(config);
 		startedMachines = this.cloudPool.startMachines(1, scaleUpConfig);
 		assertThat(startedMachines,
@@ -174,8 +243,8 @@ public class TestAwsAsDriverOperation {
 		// scale up from 2 -> 4
 		desiredCapacity = 2;
 		this.cloudPool = new AwsAsPoolDriver(new FakeAutoScalingClient(
-				GROUP_NAME, desiredCapacity, ec2Instances(
-						ec2Instance("i-1", "running"),
+				GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, desiredCapacity,
+				ec2Instances(ec2Instance("i-1", "running"),
 						ec2Instance("i-2", "pending"))));
 		this.cloudPool.configure(config);
 		startedMachines = this.cloudPool.startMachines(2, scaleUpConfig);
@@ -191,10 +260,10 @@ public class TestAwsAsDriverOperation {
 	public void startMachinesOnFailure() throws StartMachinesException {
 		// set up mock to throw an error whenever setDesiredSize is called
 		int desiredCapacity = 1;
-		setUpMockedAutoScalingGroup(GROUP_NAME, desiredCapacity,
-				ec2Instances(ec2Instance("i-1", "running")));
-		doThrow(new AmazonClientException("API unreachable")).when(
-				this.mockAwsClient).setDesiredSize(GROUP_NAME, 2);
+		setUpMockedAutoScalingGroup(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG,
+				desiredCapacity, ec2Instances(ec2Instance("i-1", "running")));
+		doThrow(new AmazonClientException("API unreachable"))
+				.when(this.mockAwsClient).setDesiredSize(GROUP_NAME, 2);
 
 		ScaleOutConfig scaleUpConfig = config(GROUP_NAME).getScaleOutConfig();
 		// should raise an exception
@@ -216,8 +285,8 @@ public class TestAwsAsDriverOperation {
 
 		int desiredCapacity = 2;
 		this.cloudPool = new AwsAsPoolDriver(new FakeAutoScalingClient(
-				GROUP_NAME, desiredCapacity, ec2Instances(
-						ec2Instance("i-1", "running"),
+				GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, desiredCapacity,
+				ec2Instances(ec2Instance("i-1", "running"),
 						ec2Instance("i-2", "pending"))));
 		this.cloudPool.configure(config);
 		this.cloudPool.terminateMachine("i-1");
@@ -239,7 +308,8 @@ public class TestAwsAsDriverOperation {
 		BaseCloudPoolConfig config = config(GROUP_NAME);
 		int desiredCapacity = 2;
 		FakeAutoScalingClient client = new FakeAutoScalingClient(GROUP_NAME,
-				desiredCapacity, ec2Instances(ec2Instance("i-1", "running"),
+				ONDEMAND_LAUNCH_CONFIG, desiredCapacity,
+				ec2Instances(ec2Instance("i-1", "running"),
 						ec2Instance("i-2", "pending")));
 		this.cloudPool = new AwsAsPoolDriver(client);
 		this.cloudPool.configure(config);
@@ -274,10 +344,10 @@ public class TestAwsAsDriverOperation {
 	public void terminateOnError() throws Exception {
 		// set up mock to throw an error whenever terminateInstance is called
 		int desiredCapacity = 1;
-		setUpMockedAutoScalingGroup(GROUP_NAME, desiredCapacity,
-				ec2Instances(ec2Instance("i-1", "running")));
-		doThrow(new AmazonClientException("API unreachable")).when(
-				this.mockAwsClient).terminateInstance(GROUP_NAME, "i-1");
+		setUpMockedAutoScalingGroup(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG,
+				desiredCapacity, ec2Instances(ec2Instance("i-1", "running")));
+		doThrow(new AmazonClientException("API unreachable"))
+				.when(this.mockAwsClient).terminateInstance(GROUP_NAME, "i-1");
 
 		this.cloudPool.terminateMachine("i-1");
 	}
@@ -291,8 +361,9 @@ public class TestAwsAsDriverOperation {
 		int desiredCapacity = 1;
 		List<Instance> members = ec2Instances(ec2Instance("i-1", "running"));
 		List<Instance> nonMembers = ec2Instances(ec2Instance("i-2", "running"));
-		this.cloudPool = new AwsAsPoolDriver(new FakeAutoScalingClient(
-				GROUP_NAME, desiredCapacity, members, nonMembers));
+		this.cloudPool = new AwsAsPoolDriver(
+				new FakeAutoScalingClient(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG,
+						desiredCapacity, members, nonMembers));
 		this.cloudPool.configure(TestUtils.config(GROUP_NAME));
 
 		this.cloudPool.terminateMachine("i-2");
@@ -307,8 +378,9 @@ public class TestAwsAsDriverOperation {
 		int desiredCapacity = 1;
 		List<Instance> members = ec2Instances(ec2Instance("i-1", "running"));
 		List<Instance> nonMembers = ec2Instances();
-		this.cloudPool = new AwsAsPoolDriver(new FakeAutoScalingClient(
-				GROUP_NAME, desiredCapacity, members, nonMembers));
+		this.cloudPool = new AwsAsPoolDriver(
+				new FakeAutoScalingClient(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG,
+						desiredCapacity, members, nonMembers));
 		this.cloudPool.configure(TestUtils.config(GROUP_NAME));
 
 		this.cloudPool.detachMachine("i-1");
@@ -325,8 +397,9 @@ public class TestAwsAsDriverOperation {
 		int desiredCapacity = 1;
 		List<Instance> members = ec2Instances(ec2Instance("i-1", "running"));
 		List<Instance> nonMembers = ec2Instances(ec2Instance("i-2", "running"));
-		this.cloudPool = new AwsAsPoolDriver(new FakeAutoScalingClient(
-				GROUP_NAME, desiredCapacity, members, nonMembers));
+		this.cloudPool = new AwsAsPoolDriver(
+				new FakeAutoScalingClient(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG,
+						desiredCapacity, members, nonMembers));
 		this.cloudPool.configure(TestUtils.config(GROUP_NAME));
 
 		this.cloudPool.detachMachine("i-2");
@@ -339,11 +412,11 @@ public class TestAwsAsDriverOperation {
 	@Test(expected = CloudPoolDriverException.class)
 	public void detachOnError() throws Exception {
 		int desiredCapacity = 1;
-		setUpMockedAutoScalingGroup(GROUP_NAME, desiredCapacity,
-				ec2Instances(ec2Instance("i-1", "running")));
+		setUpMockedAutoScalingGroup(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG,
+				desiredCapacity, ec2Instances(ec2Instance("i-1", "running")));
 
-		doThrow(new RuntimeException("API unreachable")).when(
-				this.mockAwsClient).detachInstance(GROUP_NAME, "i-1");
+		doThrow(new RuntimeException("API unreachable"))
+				.when(this.mockAwsClient).detachInstance(GROUP_NAME, "i-1");
 
 		this.cloudPool.detachMachine("i-1");
 	}
@@ -357,8 +430,9 @@ public class TestAwsAsDriverOperation {
 		int desiredCapacity = 1;
 		List<Instance> members = ec2Instances(ec2Instance("i-1", "running"));
 		List<Instance> nonMembers = ec2Instances(ec2Instance("i-2", "running"));
-		this.cloudPool = new AwsAsPoolDriver(new FakeAutoScalingClient(
-				GROUP_NAME, desiredCapacity, members, nonMembers));
+		this.cloudPool = new AwsAsPoolDriver(
+				new FakeAutoScalingClient(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG,
+						desiredCapacity, members, nonMembers));
 		this.cloudPool.configure(TestUtils.config(GROUP_NAME));
 
 		assertThat(groupIds(this.cloudPool), is(Arrays.asList("i-1")));
@@ -373,8 +447,9 @@ public class TestAwsAsDriverOperation {
 	@Test(expected = NotFoundException.class)
 	public void attachNonExistingMachine() {
 		int desiredCapacity = 0;
-		this.cloudPool = new AwsAsPoolDriver(new FakeAutoScalingClient(
-				GROUP_NAME, desiredCapacity, ec2Instances(), ec2Instances()));
+		this.cloudPool = new AwsAsPoolDriver(
+				new FakeAutoScalingClient(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG,
+						desiredCapacity, ec2Instances(), ec2Instances()));
 		this.cloudPool.configure(TestUtils.config(GROUP_NAME));
 
 		this.cloudPool.attachMachine("i-3");
@@ -390,11 +465,11 @@ public class TestAwsAsDriverOperation {
 		int desiredCapacity = 1;
 		List<Instance> members = ec2Instances(ec2Instance("i-1", "running"));
 		List<Instance> nonMembers = ec2Instances(ec2Instance("i-2", "running"));
-		setUpMockedAutoScalingGroup(GROUP_NAME, desiredCapacity, members,
-				nonMembers);
+		setUpMockedAutoScalingGroup(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG,
+				desiredCapacity, members, nonMembers);
 
-		doThrow(new RuntimeException("API unreachable")).when(
-				this.mockAwsClient).attachInstance(GROUP_NAME, "i-2");
+		doThrow(new RuntimeException("API unreachable"))
+				.when(this.mockAwsClient).attachInstance(GROUP_NAME, "i-2");
 
 		this.cloudPool.attachMachine("i-2");
 	}
@@ -407,12 +482,12 @@ public class TestAwsAsDriverOperation {
 	@Test
 	public void setServiceState() {
 		int desiredCapacity = 1;
-		setUpMockedAutoScalingGroup(GROUP_NAME, desiredCapacity,
-				ec2Instances(ec2Instance("i-1", "running")));
+		setUpMockedAutoScalingGroup(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG,
+				desiredCapacity, ec2Instances(ec2Instance("i-1", "running")));
 
-		List<Tag> stateTag = asList(new Tag().withKey(
-				ScalingTags.SERVICE_STATE_TAG).withValue(
-				ServiceState.IN_SERVICE.name()));
+		List<Tag> stateTag = asList(
+				new Tag().withKey(ScalingTags.SERVICE_STATE_TAG)
+						.withValue(ServiceState.IN_SERVICE.name()));
 		this.cloudPool.setServiceState("i-1", ServiceState.IN_SERVICE);
 
 		verify(this.mockAwsClient).tagInstance("i-1", stateTag);
@@ -425,8 +500,8 @@ public class TestAwsAsDriverOperation {
 	@Test(expected = NotFoundException.class)
 	public void setServiceStateOnNonGroupMember() {
 		int desiredCapacity = 1;
-		setUpMockedAutoScalingGroup(GROUP_NAME, desiredCapacity,
-				ec2Instances(ec2Instance("i-1", "running")));
+		setUpMockedAutoScalingGroup(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG,
+				desiredCapacity, ec2Instances(ec2Instance("i-1", "running")));
 
 		this.cloudPool.setServiceState("i-2", ServiceState.IN_SERVICE);
 	}
@@ -438,13 +513,13 @@ public class TestAwsAsDriverOperation {
 	@Test(expected = CloudPoolDriverException.class)
 	public void setServiceStateOnError() {
 		int desiredCapacity = 1;
-		setUpMockedAutoScalingGroup(GROUP_NAME, desiredCapacity,
-				ec2Instances(ec2Instance("i-1", "running")));
+		setUpMockedAutoScalingGroup(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG,
+				desiredCapacity, ec2Instances(ec2Instance("i-1", "running")));
 
 		List<Tag> serviceStateTag = asList(new Tag().withKey(SERVICE_STATE_TAG)
 				.withValue(IN_SERVICE.name()));
-		doThrow(new RuntimeException("API unreachable")).when(
-				this.mockAwsClient).tagInstance("i-1", serviceStateTag);
+		doThrow(new RuntimeException("API unreachable"))
+				.when(this.mockAwsClient).tagInstance("i-1", serviceStateTag);
 
 		this.cloudPool.setServiceState("i-1", IN_SERVICE);
 	}
@@ -457,14 +532,15 @@ public class TestAwsAsDriverOperation {
 	@Test
 	public void setMembershipStatus() {
 		int desiredCapacity = 1;
-		setUpMockedAutoScalingGroup(GROUP_NAME, desiredCapacity,
-				ec2Instances(ec2Instance("i-1", "running")));
+		setUpMockedAutoScalingGroup(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG,
+				desiredCapacity, ec2Instances(ec2Instance("i-1", "running")));
 
 		MembershipStatus status = MembershipStatus.awaitingService();
 		String tagValue = JsonUtils.toString(JsonUtils.toJson(status));
 
-		List<Tag> statusTag = asList(new Tag().withKey(
-				ScalingTags.MEMBERSHIP_STATUS_TAG).withValue(tagValue));
+		List<Tag> statusTag = asList(
+				new Tag().withKey(ScalingTags.MEMBERSHIP_STATUS_TAG)
+						.withValue(tagValue));
 		this.cloudPool.setMembershipStatus("i-1", status);
 
 		verify(this.mockAwsClient).tagInstance("i-1", statusTag);
@@ -477,8 +553,8 @@ public class TestAwsAsDriverOperation {
 	@Test(expected = NotFoundException.class)
 	public void setMembershipStatusOnNonGroupMember() {
 		int desiredCapacity = 1;
-		setUpMockedAutoScalingGroup(GROUP_NAME, desiredCapacity,
-				ec2Instances(ec2Instance("i-1", "running")));
+		setUpMockedAutoScalingGroup(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG,
+				desiredCapacity, ec2Instances(ec2Instance("i-1", "running")));
 
 		this.cloudPool.setMembershipStatus("i-2",
 				MembershipStatus.awaitingService());
@@ -491,15 +567,16 @@ public class TestAwsAsDriverOperation {
 	@Test(expected = CloudPoolDriverException.class)
 	public void setMembershipStatusOnError() {
 		int desiredCapacity = 1;
-		setUpMockedAutoScalingGroup(GROUP_NAME, desiredCapacity,
-				ec2Instances(ec2Instance("i-1", "running")));
+		setUpMockedAutoScalingGroup(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG,
+				desiredCapacity, ec2Instances(ec2Instance("i-1", "running")));
 
 		MembershipStatus status = MembershipStatus.awaitingService();
 		String tagValue = JsonUtils.toString(JsonUtils.toJson(status));
-		List<Tag> statusTag = asList(new Tag().withKey(
-				ScalingTags.MEMBERSHIP_STATUS_TAG).withValue(tagValue));
-		doThrow(new RuntimeException("API unreachable")).when(
-				this.mockAwsClient).tagInstance("i-1", statusTag);
+		List<Tag> statusTag = asList(
+				new Tag().withKey(ScalingTags.MEMBERSHIP_STATUS_TAG)
+						.withValue(tagValue));
+		doThrow(new RuntimeException("API unreachable"))
+				.when(this.mockAwsClient).tagInstance("i-1", statusTag);
 
 		this.cloudPool.setMembershipStatus("i-1", status);
 
@@ -511,13 +588,15 @@ public class TestAwsAsDriverOperation {
 	 * instances that are actual members of the Auto Scaling Group.
 	 *
 	 * @param autoScalingGroupName
+	 * @param launchConfig
 	 * @param desiredCapacity
 	 * @param memberInstances
 	 */
 	private void setUpMockedAutoScalingGroup(String autoScalingGroupName,
-			int desiredCapacity, List<Instance> memberInstances) {
-		setUpMockedAutoScalingGroup(autoScalingGroupName, desiredCapacity,
-				memberInstances, new ArrayList<Instance>());
+			LaunchConfiguration launchConfig, int desiredCapacity,
+			List<Instance> memberInstances) {
+		setUpMockedAutoScalingGroup(autoScalingGroupName, launchConfig,
+				desiredCapacity, memberInstances, new ArrayList<Instance>());
 	}
 
 	/**
@@ -526,6 +605,7 @@ public class TestAwsAsDriverOperation {
 	 * are not members.
 	 *
 	 * @param autoScalingGroupName
+	 * @param launchConfig
 	 * @param desiredCapacity
 	 * @param memberInstances
 	 *            Auto Scaling Group members.
@@ -534,20 +614,22 @@ public class TestAwsAsDriverOperation {
 	 *            members of the Auto Scaling Group.
 	 */
 	private void setUpMockedAutoScalingGroup(String autoScalingGroupName,
-			int desiredCapacity, List<Instance> memberInstances,
-			List<Instance> nonMemberInstances) {
+			LaunchConfiguration launchConfig, int desiredCapacity,
+			List<Instance> memberInstances, List<Instance> nonMemberInstances) {
 		AutoScalingGroup autoScalingGroup = group(autoScalingGroupName,
-				desiredCapacity, memberInstances);
-		LOG.debug("setting up mocked group: {}", Lists.transform(
-				autoScalingGroup.getInstances(),
-				AwsAutoScalingFunctions.toAutoScalingInstanceId()));
+				launchConfig, desiredCapacity, memberInstances);
+		LOG.debug("setting up mocked group: {}",
+				Lists.transform(autoScalingGroup.getInstances(),
+						AwsAutoScalingFunctions.toAutoScalingInstanceId()));
 
 		when(this.mockAwsClient.getAutoScalingGroup(autoScalingGroupName))
 				.thenReturn(autoScalingGroup);
-		when(
-				this.mockAwsClient
-						.getAutoScalingGroupMembers(autoScalingGroupName))
-				.thenReturn(memberInstances);
+		when(this.mockAwsClient.getLaunchConfiguration(
+				launchConfig.getLaunchConfigurationName()))
+						.thenReturn(launchConfig);
+		when(this.mockAwsClient
+				.getAutoScalingGroupMembers(autoScalingGroupName))
+						.thenReturn(memberInstances);
 	}
 
 	/**

@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.aws.autoscaling.driver.client;
 import java.util.List;
 
 import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
+import com.amazonaws.services.autoscaling.model.LaunchConfiguration;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
@@ -38,6 +39,16 @@ public interface AutoScalingClient {
 	 * @return
 	 */
 	AutoScalingGroup getAutoScalingGroup(String autoScalingGroupName);
+
+	/**
+	 * Retrieves a particular {@link LaunchConfiguration} (describing how to
+	 * launch on-demand or spot instances for an Auto Scaling Group).
+	 *
+	 * @param launchConfigurationName
+	 *            The name of the Launch configuration.
+	 * @return
+	 */
+	LaunchConfiguration getLaunchConfiguration(String launchConfigurationName);
 
 	/**
 	 * Retrieves all members of a particular {@link AutoScalingGroup}.

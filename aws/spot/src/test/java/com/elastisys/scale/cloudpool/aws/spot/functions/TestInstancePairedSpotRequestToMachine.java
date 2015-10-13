@@ -15,6 +15,7 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
+import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.spot.metadata.InstancePairedSpotRequest;
@@ -47,6 +48,8 @@ public class TestInstancePairedSpotRequestToMachine {
 				.convert(openRequest);
 		assertThat(machine.getId(), is("sir-1"));
 		assertThat(machine.getMachineState(), is(MachineState.REQUESTED));
+		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+		assertThat(machine.getMachineSize(), is("m1.medium"));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
 		assertThat(machine.getLaunchTime(), is(nullValue()));
@@ -66,6 +69,8 @@ public class TestInstancePairedSpotRequestToMachine {
 				.convert(closedRequest);
 		assertThat(machine.getId(), is("sir-1"));
 		assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
+		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+		assertThat(machine.getMachineSize(), is("m1.medium"));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
 		assertThat(machine.getLaunchTime(), is(nullValue()));
@@ -86,6 +91,8 @@ public class TestInstancePairedSpotRequestToMachine {
 				.convert(failedRequest);
 		assertThat(machine.getId(), is("sir-1"));
 		assertThat(machine.getMachineState(), is(MachineState.REJECTED));
+		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+		assertThat(machine.getMachineSize(), is("m1.medium"));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
 		assertThat(machine.getLaunchTime(), is(nullValue()));
@@ -105,6 +112,8 @@ public class TestInstancePairedSpotRequestToMachine {
 				.convert(cancelledRequest);
 		assertThat(machine.getId(), is("sir-1"));
 		assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
+		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+		assertThat(machine.getMachineSize(), is("m1.medium"));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
 		assertThat(machine.getLaunchTime(), is(nullValue()));
@@ -123,13 +132,15 @@ public class TestInstancePairedSpotRequestToMachine {
 	public void testConversionOfCancelledRequestWithRunningInstance() {
 		InstancePairedSpotRequest cancelledRequest = new InstancePairedSpotRequest(
 				SpotTestUtil.spotRequest("sir-1", "cancelled", "i-1"),
-				SpotTestUtil
-						.instance("i-1", InstanceStateName.Running, "sir-1"));
+				SpotTestUtil.instance("i-1", InstanceStateName.Running,
+						"sir-1"));
 
 		Machine machine = InstancePairedSpotRequestToMachine
 				.convert(cancelledRequest);
 		assertThat(machine.getId(), is("sir-1"));
 		assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
+		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+		assertThat(machine.getMachineSize(), is("m1.medium"));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
 		assertThat(machine.getLaunchTime(), is(FrozenTime.now()));
@@ -157,9 +168,9 @@ public class TestInstancePairedSpotRequestToMachine {
 	public void testConversionWithMembershipStatusTag() {
 		SpotInstanceRequest spotRequest = SpotTestUtil.spotRequest("sir-1",
 				"open", null);
-		spotRequest.withTags(new Tag().withKey(
-				ScalingTags.MEMBERSHIP_STATUS_TAG).withValue(
-				MembershipStatus.blessed().toString()));
+		spotRequest
+				.withTags(new Tag().withKey(ScalingTags.MEMBERSHIP_STATUS_TAG)
+						.withValue(MembershipStatus.blessed().toString()));
 		InstancePairedSpotRequest request = new InstancePairedSpotRequest(
 				spotRequest, null);
 

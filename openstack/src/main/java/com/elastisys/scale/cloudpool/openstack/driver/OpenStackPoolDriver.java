@@ -20,7 +20,7 @@ import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.PoolIdentifier;
+import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
@@ -33,6 +33,7 @@ import com.elastisys.scale.cloudpool.openstack.driver.client.OpenstackClient;
 import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
 import com.elastisys.scale.cloudpool.openstack.functions.ServerToMachine;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -64,7 +65,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 	 * Cloud pool metadata for this implementation.
 	 */
 	private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
-			PoolIdentifier.OPENSTACK, supportedApiVersions);
+			PoolIdentifiers.OPENSTACK, supportedApiVersions);
 
 	/**
 	 * Creates a new {@link OpenStackPoolDriver}. Needs to be configured before
@@ -98,7 +99,8 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 			Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
 			throw new CloudPoolDriverException(
 					format("failed to apply driver configuration: %s",
-							e.getMessage()), e);
+							e.getMessage()),
+					e);
 		}
 	}
 
@@ -107,13 +109,14 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 
 		try {
-			List<Server> servers = this.client.getServers(
-					Constants.CLOUD_POOL_TAG, getPoolName());
-			return transform(servers, new ServerToMachine());
+			List<Server> servers = this.client
+					.getServers(Constants.CLOUD_POOL_TAG, getPoolName());
+			return transform(servers, serverToMachine());
 		} catch (Exception e) {
-			throw new CloudPoolDriverException(format(
-					"failed to retrieve machines in cloud pool \"%s\": %s",
-					this.poolName, e.getMessage()), e);
+			throw new CloudPoolDriverException(
+					format("failed to retrieve machines in cloud pool \"%s\": %s",
+							this.poolName, e.getMessage()),
+					e);
 		}
 	}
 
@@ -126,18 +129,18 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 		try {
 			for (int i = 0; i < count; i++) {
 				// tag new server with cloud pool membership
-				Map<String, String> tags = ImmutableMap.of(
-						Constants.CLOUD_POOL_TAG, getPoolName());
+				Map<String, String> tags = ImmutableMap
+						.of(Constants.CLOUD_POOL_TAG, getPoolName());
 				Server newServer = this.client.launchServer(uniqueServerName(),
 						scaleUpConfig, tags);
-				startedMachines.add(ServerToMachine.convert(newServer));
+				startedMachines.add(serverToMachine().apply(newServer));
 
 				if (config().isAssignFloatingIp()) {
 					String serverId = newServer.getId();
 					this.client.assignFloatingIp(serverId);
 					// update meta data to include the public IP
-					startedMachines.set(i, ServerToMachine.convert(this.client
-							.getServer(serverId)));
+					startedMachines.set(i, serverToMachine()
+							.apply(this.client.getServer(serverId)));
 				}
 			}
 		} catch (Exception e) {
@@ -165,8 +168,8 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 	}
 
 	@Override
-	public void attachMachine(String machineId) throws NotFoundException,
-			CloudPoolDriverException {
+	public void attachMachine(String machineId)
+			throws NotFoundException, CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 
 		Map<String, String> tags = ImmutableMap.of(Constants.CLOUD_POOL_TAG,
@@ -184,8 +187,8 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 	}
 
 	@Override
-	public void detachMachine(String machineId) throws NotFoundException,
-			CloudPoolDriverException {
+	public void detachMachine(String machineId)
+			throws NotFoundException, CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 
 		// verify that machine exists in group
@@ -214,8 +217,8 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 			LOG.debug("service state {} reported for {}", serviceState.name(),
 					machineId);
 			// set serviceState as tag on machine instance
-			Map<String, String> tags = ImmutableMap.of(
-					Constants.SERVICE_STATE_TAG, serviceState.name());
+			Map<String, String> tags = ImmutableMap
+					.of(Constants.SERVICE_STATE_TAG, serviceState.name());
 			this.client.tagServer(machineId, tags);
 		} catch (Exception e) {
 			Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
@@ -228,8 +231,8 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 
 	@Override
 	public void setMembershipStatus(String machineId,
-			MembershipStatus membershipStatus) throws NotFoundException,
-			CloudPoolDriverException {
+			MembershipStatus membershipStatus)
+					throws NotFoundException, CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 
 		// verify that machine exists in group
@@ -273,7 +276,8 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 	 * @return
 	 * @throws NotFoundException
 	 */
-	private Machine getMachineOrFail(String machineId) throws NotFoundException {
+	private Machine getMachineOrFail(String machineId)
+			throws NotFoundException {
 		List<Machine> machines = listMachines();
 		for (Machine machine : machines) {
 			if (machine.getId().equals(machineId)) {
@@ -296,6 +300,15 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 		String prefix = getPoolName();
 		String suffix = UUID.randomUUID().toString();
 		return String.format("%s-%s", prefix, suffix);
+	}
+
+	/**
+	 * A {@link Function} that converts from {@link Server} to {@link Machine}.
+	 *
+	 * @return
+	 */
+	private ServerToMachine serverToMachine() {
+		return new ServerToMachine(getMetadata().poolIdentifier());
 	}
 
 	boolean isConfigured() {

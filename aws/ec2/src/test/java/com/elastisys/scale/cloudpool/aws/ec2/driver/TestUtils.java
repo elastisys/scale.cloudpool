@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceState;
+import com.amazonaws.services.ec2.model.InstanceType;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.commons.basepool.config.AlertsConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
@@ -24,19 +25,19 @@ public class TestUtils {
 		Ec2PoolDriverConfig awsApiConfig = new Ec2PoolDriverConfig(
 				"awsAccessKeyId", "awsSecretAccessKey", "eu-west-1");
 		CloudPoolConfig scalingGroupConfig = new CloudPoolConfig(
-				scalingGroupName, JsonUtils.toJson(awsApiConfig)
-						.getAsJsonObject());
+				scalingGroupName,
+				JsonUtils.toJson(awsApiConfig).getAsJsonObject());
 		ScaleOutConfig scaleUpConfig = new ScaleOutConfig("m1.small", "",
-				"instancekey", Arrays.asList("webserver"), Arrays.asList(
-						"#!/bin/bash", "sudo apt-get update -qy",
+				"instancekey", Arrays.asList("webserver"),
+				Arrays.asList("#!/bin/bash", "sudo apt-get update -qy",
 						"sudo apt-get install apache2 -qy"));
 		ScaleInConfig scaleDownConfig = new ScaleInConfig(
 				VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR, 300);
 		SmtpAlerterConfig smtpAlerter = new SmtpAlerterConfig(
 				Arrays.asList("receiver@destination.com"),
 				"noreply@elastisys.com", "cloud pool alert!",
-				"INFO|WARN|ERROR|FATAL", new SmtpClientConfig("smtp.host.com",
-						25, null, false));
+				"INFO|WARN|ERROR|FATAL",
+				new SmtpClientConfig("smtp.host.com", 25, null, false));
 		List<HttpAlerterConfig> httpAlerters = Arrays.asList();
 		AlertsConfig alertSettings = new AlertsConfig(
 				Arrays.asList(smtpAlerter), httpAlerters);
@@ -50,8 +51,10 @@ public class TestUtils {
 		return Lists.newArrayList(instances);
 	}
 
-	public static Instance ec2Instance(String id, String state, List<Tag> tags) {
+	public static Instance ec2Instance(String id, String state,
+			List<Tag> tags) {
 		return new Instance().withInstanceId(id)
+				.withInstanceType(InstanceType.M1Small)
 				.withState(new InstanceState().withName(state)).withTags(tags);
 	}
 }

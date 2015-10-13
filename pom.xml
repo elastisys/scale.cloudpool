@@ -35,6 +35,7 @@
     <module>commons</module>
     <module>aws</module>
     <module>openstack</module>
+    <module>citycloud</module>
   </modules>
 
   <!-- Location of Git repository. Used to tag releases. -->
@@ -49,7 +50,7 @@
       UTF-8 source file encoding. -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- Required JDK version -->
-    <java.version>1.7</java.version>
+    <java.version>1.8</java.version>
 
     <!-- scale.commons version to use -->
     <commons.version>2.1.1-SNAPSHOT</commons.version>
@@ -126,7 +127,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.1</version>
+        <version>3.3</version>
         <configuration>
           <source>${java.version}</source>
           <target>${java.version}</target>

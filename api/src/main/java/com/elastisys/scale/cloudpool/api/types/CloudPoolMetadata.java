@@ -51,28 +51,13 @@ public class CloudPoolMetadata {
 		Preconditions.checkState(!supportedApiVersions.isEmpty(),
 				"supportedApiVersion cannot be empty");
 		for (String apiVersion : supportedApiVersions) {
-			Preconditions.checkState(apiVersionPattern.matcher(apiVersion)
-					.matches(), String.format("%s is not a valid API version",
-					apiVersion));
+			Preconditions.checkState(
+					apiVersionPattern.matcher(apiVersion).matches(),
+					String.format("%s is not a valid API version", apiVersion));
 		}
 
 		this.poolIdentifier = poolIdentifier;
 		this.supportedApiVersions = ImmutableList.copyOf(supportedApiVersions);
-	}
-
-	/**
-	 * Creates a new instance describing the cloud pool and the cloud it
-	 * manages.
-	 *
-	 * @param poolIdentifier
-	 *            The unique identifier for the cloud infrastructure managed by
-	 *            this cloud pool.
-	 * @param supportedApiVersions
-	 *            List of supported API versions.
-	 */
-	public CloudPoolMetadata(PoolIdentifier poolIdentifier,
-			List<String> supportedApiVersions) {
-		this(poolIdentifier.name(), supportedApiVersions);
 	}
 
 	/**
@@ -92,7 +77,7 @@ public class CloudPoolMetadata {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -102,7 +87,7 @@ public class CloudPoolMetadata {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override

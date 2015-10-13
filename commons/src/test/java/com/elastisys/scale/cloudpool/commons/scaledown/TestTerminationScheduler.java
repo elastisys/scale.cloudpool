@@ -30,47 +30,42 @@ public class TestTerminationScheduler extends AbstractScaledownTest {
 				prepaidHourTerminationMargin);
 
 		// single victim
-		List<Machine> victims = Arrays.asList(instance("i-1",
-				"2013-06-01T10:30:00"));
+		List<Machine> victims = Arrays
+				.asList(instance("i-1", "2013-06-01T10:30:00"));
 		List<ScheduledTermination> terminations = scheduler
 				.scheduleEvictions(victims);
 		// termination time should be five minutes prior to XX:30
 		assertThat(terminations.size(), is(1));
-		assertThat(
-				terminations.get(0),
-				is(new ScheduledTermination(victims.get(0), UtcTime
-						.parse("2013-06-01T12:25:00"))));
+		assertThat(terminations.get(0),
+				is(new ScheduledTermination(victims.get(0),
+						UtcTime.parse("2013-06-01T12:25:00"))));
 
 		// multiple victims
 		victims = Arrays.asList(instance("i-1", "2013-06-01T10:30:00"),
 				instance("i-2", "2013-05-31T14:50:00"));
 		terminations = scheduler.scheduleEvictions(victims);
 		assertThat(terminations.size(), is(2));
-		assertThat(
-				terminations.get(0),
-				is(new ScheduledTermination(victims.get(0), UtcTime
-						.parse("2013-06-01T12:25:00"))));
-		assertThat(
-				terminations.get(1),
-				is(new ScheduledTermination(victims.get(1), UtcTime
-						.parse("2013-06-01T12:45:00"))));
+		assertThat(terminations.get(0),
+				is(new ScheduledTermination(victims.get(0),
+						UtcTime.parse("2013-06-01T12:25:00"))));
+		assertThat(terminations.get(1),
+				is(new ScheduledTermination(victims.get(1),
+						UtcTime.parse("2013-06-01T12:45:00"))));
 
 		// corner case: just started next instance hour
 		victims = Arrays.asList(instance("i-1", "2013-06-01T10:00:00"));
 		terminations = scheduler.scheduleEvictions(victims);
-		assertThat(
-				terminations.get(0),
-				is(new ScheduledTermination(victims.get(0), UtcTime
-						.parse("2013-06-01T12:55:00"))));
+		assertThat(terminations.get(0),
+				is(new ScheduledTermination(victims.get(0),
+						UtcTime.parse("2013-06-01T12:55:00"))));
 
 		// corner case: closer than margin (5 min) to end of billing hour
 		// in that case, instance is scheduled for immediate termination
 		victims = Arrays.asList(instance("i-1", "2013-06-01T10:02:00"));
 		terminations = scheduler.scheduleEvictions(victims);
-		assertThat(
-				terminations.get(0),
-				is(new ScheduledTermination(victims.get(0), UtcTime
-						.parse("2013-06-01T12:00:00"))));
+		assertThat(terminations.get(0),
+				is(new ScheduledTermination(victims.get(0),
+						UtcTime.parse("2013-06-01T12:00:00"))));
 	}
 
 	/**
@@ -85,30 +80,27 @@ public class TestTerminationScheduler extends AbstractScaledownTest {
 				prepaidHourTerminationMargin);
 
 		// single victim
-		List<Machine> victims = Arrays.asList(instance("i-1",
-				"2013-06-01T10:30:00"));
+		List<Machine> victims = Arrays
+				.asList(instance("i-1", "2013-06-01T10:30:00"));
 		List<ScheduledTermination> terminations = scheduler
 				.scheduleEvictions(victims);
 		// termination time should be now
 		assertThat(terminations.size(), is(1));
-		assertThat(
-				terminations.get(0),
-				is(new ScheduledTermination(victims.get(0), UtcTime
-						.parse("2013-06-01T12:00:00"))));
+		assertThat(terminations.get(0),
+				is(new ScheduledTermination(victims.get(0),
+						UtcTime.parse("2013-06-01T12:00:00"))));
 
 		// multiple victims
 		victims = Arrays.asList(instance("i-1", "2013-06-01T10:30:00"),
 				instance("i-2", "2013-05-31T14:50:00"));
 		terminations = scheduler.scheduleEvictions(victims);
 		assertThat(terminations.size(), is(2));
-		assertThat(
-				terminations.get(0),
-				is(new ScheduledTermination(victims.get(0), UtcTime
-						.parse("2013-06-01T12:00:00"))));
-		assertThat(
-				terminations.get(1),
-				is(new ScheduledTermination(victims.get(1), UtcTime
-						.parse("2013-06-01T12:00:00"))));
+		assertThat(terminations.get(0),
+				is(new ScheduledTermination(victims.get(0),
+						UtcTime.parse("2013-06-01T12:00:00"))));
+		assertThat(terminations.get(1),
+				is(new ScheduledTermination(victims.get(1),
+						UtcTime.parse("2013-06-01T12:00:00"))));
 	}
 
 	/**
@@ -122,14 +114,13 @@ public class TestTerminationScheduler extends AbstractScaledownTest {
 		TerminationScheduler scheduler = new TerminationScheduler(
 				prepaidHourTerminationMargin);
 
-		List<Machine> victims = Arrays.asList(instance("i-1",
-				"2013-06-01T10:30:00"));
+		List<Machine> victims = Arrays
+				.asList(instance("i-1", "2013-06-01T10:30:00"));
 		List<ScheduledTermination> terminations = scheduler
 				.scheduleEvictions(victims);
-		assertThat(
-				terminations.get(0),
-				is(new ScheduledTermination(victims.get(0), UtcTime
-						.parse("2013-06-01T12:00:00"))));
+		assertThat(terminations.get(0),
+				is(new ScheduledTermination(victims.get(0),
+						UtcTime.parse("2013-06-01T12:00:00"))));
 	}
 
 	@Test
@@ -165,7 +156,8 @@ public class TestTerminationScheduler extends AbstractScaledownTest {
 	public void candidateWithNullLaunchTime() {
 		DateTime launchTime = null;
 		Machine machine = Machine.builder().id("i-1")
-				.machineState(MachineState.REQUESTED).launchTime(null).build();
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").launchTime(null).build();
 		new TerminationScheduler(60).scheduleEviction(machine);
 	}
 }

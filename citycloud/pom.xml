@@ -1,0 +1,143 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.elastisys.scale</groupId>
+    <artifactId>cloudpool.root</artifactId>
+    <version>4.0.1-SNAPSHOT</version>
+  </parent>
+  <artifactId>cloudpool.citycloud</artifactId>
+  <packaging>jar</packaging>
+  <name>elastisys:scale :: cloudpool :: citycloud</name>
+  <description>
+    A cloud pool capable of managing a pool of CityCloud servers.
+    This build is a simple extension of the OpenStack cloudpool.
+    This build module produces an all-in-one "server and application" executable
+    jar file. When executed, it starts an embedded web server that publishes 
+    the cloud pool REST API endpoint.
+  </description>
+
+  <properties>
+    <!-- Default version to use when tagging docker image. -->
+    <docker.image.version>${project.version}</docker.image.version>  
+  </properties>
+
+  <dependencies>
+    <!-- The CityCloud cloudpool extends the Openstack cloudpool -->
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>cloudpool.openstack</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- Test dependencies -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>    
+      <!-- Dockerfile needs placeholder substitution for project version 
+        to include the (version-qualified) server jar. -->
+      <resource>
+        <directory>src/main/docker</directory>
+        <targetPath>${project.build.directory}</targetPath>
+        <filtering>true</filtering>
+        <includes>
+          <include>Dockerfile</include>
+        </includes>        
+      </resource>
+      <resource>
+        <directory>src/main/docker</directory>
+        <targetPath>${project.build.directory}</targetPath>
+        <filtering>false</filtering>       
+        <excludes>
+          <exclude>Dockerfile</exclude>
+        </excludes>        
+      </resource>
+    </resources>
+  
+    <plugins>
+      <!-- Build a standalone executable jar file that embeds all classpath 
+        dependencies. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+          <transformers>
+            <!-- Make jar file executable (add Main-Class header to jar manifest) -->
+            <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+              <mainClass>com.elastisys.scale.cloudpool.citycloud.server.Main</mainClass>
+            </transformer>
+          </transformers>
+          <!-- Make shaded jar file the main artifact output by the build. -->
+          <shadedArtifactAttached>false</shadedArtifactAttached>
+          <createDependencyReducedPom>false</createDependencyReducedPom>
+          <filters>
+            <filter>
+              <artifact>*:*</artifact>
+              <excludes>
+                <exclude>META-INF/*.SF</exclude>
+                <exclude>META-INF/*.DSA</exclude>
+                <exclude>META-INF/*.RSA</exclude>
+              </excludes>
+            </filter>
+          </filters>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Runs docker build to create a docker image for the server.
+           Execute from command-line as follows:
+           
+             mvn exec:exec -Dexec.executable=docker [-Ddocker.image.version=<version>]
+           
+           NOTE: to be able to use docker without sudo/root privileges, you need
+           to add yourself to the "docker" group. See:
+           https://docs.docker.com/installation/ubuntulinux/#giving-non-root-access       
+        -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.3.2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <executable>docker</executable>
+          <workingDirectory>${project.build.directory}</workingDirectory>
+          <arguments>
+            <argument>build</argument>
+            <argument>--tag</argument>
+            <argument>elastisys/citycloudpool:${docker.image.version}</argument>
+            <argument>.</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+
+</project>

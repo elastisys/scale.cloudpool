@@ -19,24 +19,28 @@ public class BasePoolTestUtils {
 
 	public static Machine machine(String id, MachineState machineState) {
 		return Machine.builder().id(id).machineState(machineState)
+				.cloudProvider("AWS-EC2").machineSize("m1.small")
 				.launchTime(UtcTime.now()).build();
 	}
 
 	public static Machine machine(String id, MachineState machineState,
 			DateTime launchTime) {
 		return Machine.builder().id(id).machineState(machineState)
+				.cloudProvider("AWS-EC2").machineSize("m1.small")
 				.launchTime(launchTime).build();
 	}
 
 	public static Machine machine(String id, MachineState machineState,
 			MembershipStatus membershipStatus, DateTime launchTime) {
 		return Machine.builder().id(id).machineState(machineState)
+				.cloudProvider("AWS-EC2").machineSize("m1.small")
 				.membershipStatus(membershipStatus).launchTime(launchTime)
 				.build();
 	}
 
 	public static Machine machine(String id, String publicIp) {
 		return Machine.builder().id(id).machineState(MachineState.RUNNING)
+				.cloudProvider("AWS-EC2").machineSize("m1.small")
 				.publicIp(publicIp).build();
 	}
 

@@ -1,6 +1,7 @@
 package com.elastisys.scale.cloudpool.aws.autoscaling.driver;
 
 import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.TestUtils.group;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,12 +10,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
+import com.amazonaws.services.autoscaling.model.LaunchConfiguration;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
-import com.elastisys.scale.cloudpool.aws.autoscaling.driver.AwsAsPoolDriverConfig;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AutoScalingClient;
 import com.google.common.collect.Lists;
 
@@ -29,6 +30,7 @@ public class FakeAutoScalingClient implements AutoScalingClient {
 	protected int idSequencer = 0;
 
 	protected String autoScalingGroupName;
+	protected LaunchConfiguration launchConfig;
 	protected int desiredCapacity;
 	/** The current Auto Scaling Group members. */
 	protected List<Instance> memberInstances;
@@ -40,12 +42,14 @@ public class FakeAutoScalingClient implements AutoScalingClient {
 	 * Scaling Group members are all instances in the cloud account.
 	 *
 	 * @param autoScalingGroupName
+	 * @param launchConfig
 	 * @param desiredCapacity
-	 * @param groupMmembers
+	 * @param groupMembers
 	 */
 	public FakeAutoScalingClient(String autoScalingGroupName,
-			int desiredCapacity, List<Instance> groupMmembers) {
-		this(autoScalingGroupName, desiredCapacity, groupMmembers,
+			LaunchConfiguration launchConfig, int desiredCapacity,
+			List<Instance> groupMembers) {
+		this(autoScalingGroupName, launchConfig, desiredCapacity, groupMembers,
 				new ArrayList<Instance>());
 	}
 
@@ -55,14 +59,16 @@ public class FakeAutoScalingClient implements AutoScalingClient {
 	 * cloud account.
 	 *
 	 * @param autoScalingGroupName
+	 * @param launchConfig
 	 * @param desiredCapacity
 	 * @param groupMmembers
 	 * @param nonGroupMembers
 	 */
 	public FakeAutoScalingClient(String autoScalingGroupName,
-			int desiredCapacity, List<Instance> groupMmembers,
-			List<Instance> nonGroupMembers) {
+			LaunchConfiguration launchConfig, int desiredCapacity,
+			List<Instance> groupMmembers, List<Instance> nonGroupMembers) {
 		this.autoScalingGroupName = autoScalingGroupName;
+		this.launchConfig = launchConfig;
 		this.desiredCapacity = desiredCapacity;
 		this.memberInstances = Lists.newArrayList(groupMmembers);
 
@@ -78,12 +84,23 @@ public class FakeAutoScalingClient implements AutoScalingClient {
 
 	@Override
 	public AutoScalingGroup getAutoScalingGroup(String autoScalingGroupName) {
-		return group(autoScalingGroupName, this.desiredCapacity,
-				this.memberInstances);
+		return group(autoScalingGroupName, this.launchConfig,
+				this.desiredCapacity, this.memberInstances);
 	}
 
 	@Override
-	public List<Instance> getAutoScalingGroupMembers(String autoScalingGroupName) {
+	public LaunchConfiguration getLaunchConfiguration(
+			String launchConfigurationName) {
+		checkArgument(
+				launchConfigurationName
+						.equals(this.launchConfig.getLaunchConfigurationName()),
+				"unknown launch configuration '%s'", launchConfigurationName);
+		return this.launchConfig;
+	}
+
+	@Override
+	public List<Instance> getAutoScalingGroupMembers(
+			String autoScalingGroupName) {
 		return Lists.newArrayList(this.memberInstances);
 	}
 
@@ -129,8 +146,8 @@ public class FakeAutoScalingClient implements AutoScalingClient {
 	}
 
 	@Override
-	public void terminateInstance(String autoScalingGroupName, String instanceId)
-			throws NotFoundException {
+	public void terminateInstance(String autoScalingGroupName,
+			String instanceId) throws NotFoundException {
 		Instance instance = getInstanceOrFail(instanceId);
 		this.allInstances.remove(instance);
 		if (this.memberInstances.remove(instance)) {

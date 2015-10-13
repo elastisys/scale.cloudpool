@@ -37,15 +37,17 @@ public class TestMachineFunctions {
 	public void testMachineStateExtractor() {
 		DateTime now = UtcTime.now();
 		Machine m1 = Machine.builder().id("id")
-				.machineState(MachineState.REQUESTED).requestTime(now)
-				.launchTime(now).build();
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").requestTime(now).launchTime(now)
+				.build();
 		Machine m2 = Machine.builder().id("id")
-				.machineState(MachineState.RUNNING).requestTime(now)
-				.launchTime(now).publicIps(ips("1.2.3.4"))
-				.privateIps(ips("1.2.3.5")).build();
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").requestTime(now).launchTime(now)
+				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5")).build();
 		Machine m3 = Machine.builder().id("id")
-				.machineState(MachineState.PENDING).requestTime(now)
-				.launchTime(now).build();
+				.machineState(MachineState.PENDING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").requestTime(now).launchTime(now)
+				.build();
 
 		assertThat(Machine.toState().apply(m1), is(MachineState.REQUESTED));
 		assertThat(Machine.toState().apply(m2), is(MachineState.RUNNING));
@@ -59,15 +61,17 @@ public class TestMachineFunctions {
 	public void testMachineIdExtractor() {
 		DateTime now = UtcTime.now();
 		Machine m1 = Machine.builder().id("i-1")
-				.machineState(MachineState.REQUESTED).requestTime(now)
-				.launchTime(now).build();
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").requestTime(now).launchTime(now)
+				.build();
 		Machine m2 = Machine.builder().id("i-2")
-				.machineState(MachineState.RUNNING).requestTime(now)
-				.launchTime(now).publicIps(ips("1.2.3.4"))
-				.privateIps(ips("1.2.3.5")).build();
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").requestTime(now).launchTime(now)
+				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5")).build();
 		Machine m3 = Machine.builder().id("i-3")
-				.machineState(MachineState.PENDING).requestTime(now)
-				.launchTime(now).build();
+				.machineState(MachineState.PENDING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").requestTime(now).launchTime(now)
+				.build();
 
 		assertThat(Machine.toId().apply(m1), is("i-1"));
 		assertThat(Machine.toId().apply(m2), is("i-2"));
@@ -84,8 +88,8 @@ public class TestMachineFunctions {
 
 		Machine machine = machine("i-1", requesttime, null);
 
-		assertThat(Machine.requestAge(now).apply(machine).get(), is(new Long(
-				millisecondsSinceRequestTime)));
+		assertThat(Machine.requestAge(now).apply(machine).get(),
+				is(new Long(millisecondsSinceRequestTime)));
 
 		// no request time
 		machine = machine("i-1", null, null);
@@ -161,59 +165,50 @@ public class TestMachineFunctions {
 		Machine machine = machine("i-1", UtcTime.parse("2013-12-09T08:50:00Z"));
 
 		FrozenTime.setFixed(UtcTime.parse("2013-12-09T09:15:00Z"));
-		assertThat(
-				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
-						.plusHours(1))));
+		assertThat(Machine.remainingInstanceHourTime().apply(machine),
+				is(secondsBetween(UtcTime.now(),
+						machine.getLaunchTime().plusHours(1))));
 
 		FrozenTime.setFixed(UtcTime.parse("2013-12-09T08:55:00Z"));
-		assertThat(
-				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
-						.plusHours(1))));
+		assertThat(Machine.remainingInstanceHourTime().apply(machine),
+				is(secondsBetween(UtcTime.now(),
+						machine.getLaunchTime().plusHours(1))));
 
 		FrozenTime.setFixed(UtcTime.parse("2013-12-09T09:15:00Z"));
-		assertThat(
-				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
-						.plusHours(1))));
+		assertThat(Machine.remainingInstanceHourTime().apply(machine),
+				is(secondsBetween(UtcTime.now(),
+						machine.getLaunchTime().plusHours(1))));
 
 		FrozenTime.setFixed(UtcTime.parse("2013-12-09T09:49:00Z"));
-		assertThat(
-				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
-						.plusHours(1))));
+		assertThat(Machine.remainingInstanceHourTime().apply(machine),
+				is(secondsBetween(UtcTime.now(),
+						machine.getLaunchTime().plusHours(1))));
 
 		FrozenTime.setFixed(UtcTime.parse("2013-12-09T09:49:59Z"));
-		assertThat(
-				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
-						.plusHours(1))));
+		assertThat(Machine.remainingInstanceHourTime().apply(machine),
+				is(secondsBetween(UtcTime.now(),
+						machine.getLaunchTime().plusHours(1))));
 
 		FrozenTime.setFixed(UtcTime.parse("2013-12-09T09:50:00Z"));
-		assertThat(
-				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
-						.plusHours(2))));
+		assertThat(Machine.remainingInstanceHourTime().apply(machine),
+				is(secondsBetween(UtcTime.now(),
+						machine.getLaunchTime().plusHours(2))));
 		FrozenTime.setFixed(UtcTime.parse("2013-12-09T09:55:00Z"));
-		assertThat(
-				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
-						.plusHours(2))));
+		assertThat(Machine.remainingInstanceHourTime().apply(machine),
+				is(secondsBetween(UtcTime.now(),
+						machine.getLaunchTime().plusHours(2))));
 
 		FrozenTime.setFixed(UtcTime.parse("2013-12-09T10:51:00Z"));
-		assertThat(
-				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
-						.plusHours(3))));
+		assertThat(Machine.remainingInstanceHourTime().apply(machine),
+				is(secondsBetween(UtcTime.now(),
+						machine.getLaunchTime().plusHours(3))));
 
 		// with milliseconds precision
 		FrozenTime.setFixed(UtcTime.parse("2013-12-09T10:51:00.000Z"));
 		machine = machine("i-1", UtcTime.parse("2013-12-09T08:50:00.500Z"));
-		assertThat(
-				Machine.remainingInstanceHourTime().apply(machine),
-				is(secondsBetween(UtcTime.now(), machine.getLaunchTime()
-						.plusHours(3))));
+		assertThat(Machine.remainingInstanceHourTime().apply(machine),
+				is(secondsBetween(UtcTime.now(),
+						machine.getLaunchTime().plusHours(3))));
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -232,9 +227,10 @@ public class TestMachineFunctions {
 		JsonObject metadata = JsonUtils.parseJsonString("{\"id\": \"i-1\"}")
 				.getAsJsonObject();
 		Machine m1 = Machine.builder().id("i-1")
-				.machineState(MachineState.RUNNING).requestTime(now)
-				.launchTime(now).publicIps(ips("1.2.3.4"))
-				.privateIps(ips("1.2.3.5")).metadata(metadata).build();
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").requestTime(now).launchTime(now)
+				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5"))
+				.metadata(metadata).build();
 
 		assertFalse(Machine.toShortString().apply(m1).contains("metadata"));
 	}
@@ -245,9 +241,10 @@ public class TestMachineFunctions {
 		JsonObject metadata = JsonUtils.parseJsonString("{\"id\": \"i-1\"}")
 				.getAsJsonObject();
 		Machine m1 = Machine.builder().id("i-2")
-				.machineState(MachineState.RUNNING).requestTime(now)
-				.launchTime(now).publicIps(ips("1.2.3.4"))
-				.privateIps(ips("1.2.3.5")).metadata(metadata).build();
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").requestTime(now).launchTime(now)
+				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5"))
+				.metadata(metadata).build();
 
 		Machine m1Stripped = Machine.toShortFormat().apply(m1);
 		// all fields should be equal except metadata which should be null

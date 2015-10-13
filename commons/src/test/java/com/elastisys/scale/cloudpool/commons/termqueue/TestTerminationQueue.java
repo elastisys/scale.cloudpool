@@ -90,8 +90,7 @@ public class TestTerminationQueue {
 		this.queue.addAll(Arrays.asList(termination1, termination2,
 				termination3, termination4));
 		assertThat(this.queue.size(), is(4));
-		assertThat(
-				this.queue.getQueuedInstances(),
+		assertThat(this.queue.getQueuedInstances(),
 				is(instanceList(termination1, termination4, termination3,
 						termination2)));
 
@@ -139,8 +138,7 @@ public class TestTerminationQueue {
 		this.queue.addAll(Arrays.asList(termination1, termination2,
 				termination3, termination4));
 		assertThat(this.queue.size(), is(4));
-		assertThat(
-				this.queue.getQueuedInstances(),
+		assertThat(this.queue.getQueuedInstances(),
 				is(instanceList(termination1, termination4, termination3,
 						termination2)));
 
@@ -181,8 +179,7 @@ public class TestTerminationQueue {
 		this.queue.addAll(Arrays.asList(termination1, termination2,
 				termination3, termination4));
 		assertThat(this.queue.size(), is(4));
-		assertThat(
-				this.queue.getQueuedInstances(),
+		assertThat(this.queue.getQueuedInstances(),
 				is(instanceList(termination1, termination4, termination3,
 						termination2)));
 
@@ -191,8 +188,7 @@ public class TestTerminationQueue {
 				termination2.getInstance(), termination3.getInstance(),
 				termination4.getInstance()));
 		assertThat(this.queue.size(), is(4));
-		assertThat(
-				this.queue.getQueuedInstances(),
+		assertThat(this.queue.getQueuedInstances(),
 				is(instanceList(termination1, termination4, termination3,
 						termination2)));
 
@@ -226,6 +222,7 @@ public class TestTerminationQueue {
 
 	private Machine instance(String withId) {
 		return Machine.builder().id(withId).machineState(MachineState.RUNNING)
+				.cloudProvider("AWS-EC2").machineSize("m1.small")
 				.launchTime(UtcTime.now()).build();
 	}
 

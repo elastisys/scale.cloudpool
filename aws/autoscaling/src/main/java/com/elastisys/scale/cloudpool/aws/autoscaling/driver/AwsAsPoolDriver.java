@@ -7,6 +7,7 @@ import static com.google.common.collect.Lists.transform;
 import static java.lang.String.format;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -14,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
+import com.amazonaws.services.autoscaling.model.LaunchConfiguration;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.ApiVersion;
@@ -22,7 +24,7 @@ import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.PoolIdentifier;
+import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AutoScalingClient;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
@@ -74,7 +76,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 	 * Cloud pool metadata for this implementation.
 	 */
 	private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
-			PoolIdentifier.AWS_AUTO_SCALING_GROUPS, supportedApiVersions);
+			PoolIdentifiers.AWS_AUTO_SCALING_GROUP, supportedApiVersions);
 
 	/**
 	 * Creates a new {@link AwsAsPoolDriver}. Needs to be configured before use.
@@ -119,22 +121,22 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 			AutoScalingGroup group = this.client
 					.getAutoScalingGroup(getPoolName());
 			// requested, but not yet allocated, machines
-			List<Machine> requestedInstances = requestedInstances(group
-					.getInstances().size(), group.getDesiredCapacity());
+			List<Machine> requestedInstances = requestedInstances(group);
 			// actual scaling group members
 			List<Instance> groupInstances = this.client
 					.getAutoScalingGroupMembers(getPoolName());
-			List<Machine> acquiredMachines = Lists.newArrayList(transform(
-					groupInstances, new InstanceToMachine()));
+			List<Machine> acquiredMachines = Lists.newArrayList(
+					transform(groupInstances, new InstanceToMachine()));
 
 			List<Machine> pool = Lists.newArrayList();
 			pool.addAll(acquiredMachines);
 			pool.addAll(requestedInstances);
 			return pool;
 		} catch (Exception e) {
-			throw new CloudPoolDriverException(format(
-					"failed to retrieve machines in cloud pool \"%s\": %s",
-					getPoolName(), e.getMessage()), e);
+			throw new CloudPoolDriverException(
+					format("failed to retrieve machines in cloud pool \"%s\": %s",
+							getPoolName(), e.getMessage()),
+					e);
 		}
 	}
 
@@ -147,33 +149,72 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 	 * Rationale: the desired capacity of the AWS Auto Scaling Group may differ
 	 * from the actual number of instances in the group. If the desiredCapacity
 	 * of the Auto Scaling Group is greater than the actual number of instances
-	 * in the group, we should return placeholder Machines in REQUESTED state
-	 * for the missing instances. This prevents the {@link BaseCloudPool} from
-	 * regarding the scaling group too small and ordering new machines via
+	 * in the group, we should return placeholder Machines in {@code REQUESTED}
+	 * state for the missing instances. This prevents the {@link BaseCloudPool}
+	 * from regarding the scaling group too small and ordering new machines via
 	 * startMachines.
 	 * <p/>
-	 * We set the request time to null, since AWS AutoScaling does not support
-	 * reporting it and attempting to keep track of it manually is rather
-	 * awkward and brittle.
+	 * We set the request time to <code>null</code>, since AWS AutoScaling does
+	 * not support reporting it and attempting to keep track of it manually is
+	 * rather awkward and brittle.
 	 *
-	 * @param actualCapacity
-	 *            The actual scaling group size.
-	 * @param desiredCapacity
-	 *            The desired scaling group size.
+	 * @param group
+	 *            The Auto Scaling Group.
 	 * @return
 	 */
-	private List<Machine> requestedInstances(int actualCapacity,
-			int desiredCapacity) {
+	private List<Machine> requestedInstances(AutoScalingGroup group) {
+		int actualCapacity = group.getInstances().size();
+		int desiredCapacity = group.getDesiredCapacity();
 		int missingInstances = desiredCapacity - actualCapacity;
 
+		LaunchConfiguration launchConfig = this.client
+				.getLaunchConfiguration(group.getLaunchConfigurationName());
+
+		return pseudoMachines(missingInstances, launchConfig);
+	}
+
+	/**
+	 * Creates a number of "pseudo machine" in {@code REQUESTED} state as a
+	 * place-holder machines for a desired but not yet acquired Auto Scaling
+	 * Group members.
+	 *
+	 * @param missingInstances
+	 *            Number of missing Auto Scaling Group instances.
+	 * @param launchConfig
+	 *            The launch configuration of the Auto Scaling Group.
+	 * @return
+	 */
+	private List<Machine> pseudoMachines(int missingInstances,
+			LaunchConfiguration launchConfig) {
 		List<Machine> requestedInstances = Lists.newArrayList();
 		for (int i = 0; i < missingInstances; i++) {
 			String pseudoId = String.format("%s%d", REQUESTED_ID_PREFIX, i + 1);
-			requestedInstances.add(Machine.builder().id(pseudoId)
-					.machineState(MachineState.REQUESTED).build());
-
+			requestedInstances.add(pseudoMachine(pseudoId, launchConfig));
 		}
 		return requestedInstances;
+	}
+
+	/**
+	 * Creates a "pseudo machine" in {@code REQUESTED} state as a place-holder
+	 * machine for a desired but not yet acquired Auto Scaling Group member.
+	 *
+	 * @param pseudoId
+	 *            The identifier to assign to the pseudo machine.
+	 * @param launchConfig
+	 *            The launch configuration that describes how to launch an Auto
+	 *            Scaling Group on-demand instance (or spot instance).
+	 * @return The pseudo machine.
+	 */
+	private Machine pseudoMachine(String pseudoId,
+			LaunchConfiguration launchConfig) {
+		// are spot instances or on-demand instances being launched for the Auto
+		// Scaling Group
+		String cloudProvider = launchConfig.getSpotPrice() != null
+				? PoolIdentifiers.AWS_SPOT : PoolIdentifiers.AWS_EC2;
+		String instanceType = launchConfig.getInstanceType();
+		return Machine.builder().id(pseudoId)
+				.machineState(MachineState.REQUESTED)
+				.cloudProvider(cloudProvider).machineSize(instanceType).build();
 	}
 
 	@Override
@@ -181,7 +222,6 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 			throws StartMachinesException {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 
-		List<Machine> requestedMachines = Lists.newArrayList();
 		try {
 			// We simply set the desired size of the scaling group without
 			// waiting for the request to be fulfilled, simply because there is
@@ -191,18 +231,20 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 			// be set to some other value while we are waiting.
 			AutoScalingGroup group = this.client
 					.getAutoScalingGroup(getPoolName());
+			LaunchConfiguration launchConfig = this.client
+					.getLaunchConfiguration(group.getLaunchConfigurationName());
 			int newDesiredSize = group.getDesiredCapacity() + count;
-			LOG.info("starting {} new instance(s) in scaling group '{}': "
-					+ "changing desired capacity from {} to {}", count,
-					getPoolName(), group.getDesiredCapacity(), newDesiredSize);
-			this.client.setDesiredSize(getPoolName(), newDesiredSize);
-			requestedMachines = requestedInstances(group.getInstances().size(),
+			LOG.info(
+					"starting {} new instance(s) in scaling group '{}': "
+							+ "changing desired capacity from {} to {}",
+					count, getPoolName(), group.getDesiredCapacity(),
 					newDesiredSize);
+			this.client.setDesiredSize(getPoolName(), newDesiredSize);
+			return pseudoMachines(count, launchConfig);
 		} catch (Exception e) {
-			throw new StartMachinesException(count, requestedMachines, e);
+			List<Machine> empty = Collections.emptyList();
+			throw new StartMachinesException(count, empty, e);
 		}
-
-		return requestedMachines;
 	}
 
 	@Override
@@ -219,9 +261,10 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 						.getAutoScalingGroup(getPoolName());
 				int desiredSize = group.getDesiredCapacity();
 				int newSize = desiredSize - 1;
-				LOG.debug("termination request for placeholder instance {}, "
-						+ "reducing desiredCapacity from {} to {}", machineId,
-						desiredSize, newSize);
+				LOG.debug(
+						"termination request for placeholder instance {}, "
+								+ "reducing desiredCapacity from {} to {}",
+						machineId, desiredSize, newSize);
 				this.client.setDesiredSize(getPoolName(), newSize);
 			} else {
 				// verify that machine exists in group
@@ -252,8 +295,8 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 	}
 
 	@Override
-	public void detachMachine(String machineId) throws NotFoundException,
-			CloudPoolDriverException {
+	public void detachMachine(String machineId)
+			throws NotFoundException, CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 
 		// verify that machine exists in group
@@ -291,8 +334,8 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 
 	@Override
 	public void setMembershipStatus(String machineId,
-			MembershipStatus membershipStatus) throws NotFoundException,
-			CloudPoolDriverException {
+			MembershipStatus membershipStatus)
+					throws NotFoundException, CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured driver");
 
 		// verify that machine exists in group
@@ -320,7 +363,8 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 	 * @return
 	 * @throws NotFoundException
 	 */
-	private Machine getMachineOrFail(String machineId) throws NotFoundException {
+	private Machine getMachineOrFail(String machineId)
+			throws NotFoundException {
 		List<Machine> machines = listMachines();
 		for (Machine machine : machines) {
 			if (machine.getId().equals(machineId)) {
