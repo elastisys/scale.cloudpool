@@ -2,6 +2,8 @@ package com.elastisys.scale.cloudpool.openstack.requests;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,14 +57,17 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 	 * @param imageName
 	 *            The identifier of the machine image used to boot the machine.
 	 * @param keyPair
-	 *            The name of the key pair to use for the machine instance.
+	 *            The name of the key pair to use for the machine instance. May
+	 *            be <code>null</code>.
 	 * @param securityGroups
-	 *            The security group(s) to use for the new machine instance.
+	 *            The security group(s) to use for the new machine instance. May
+	 *            be <code>null</code>.
 	 * @param userData
 	 *            The (optional) user data (boot up script) used to
 	 *            contextualize the started instance.
 	 * @param metadata
-	 *            Any meta data tags to assign to the new server.
+	 *            Any meta data tags to assign to the new server. May be
+	 *            <code>null</code>.
 	 */
 	public CreateServerRequest(OpenStackPoolDriverConfig accessConfig,
 			String serverName, String flavorName, String imageName,
@@ -73,18 +78,15 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 		checkNotNull(serverName, "server name cannot be null");
 		checkNotNull(flavorName, "flavor name cannot be null");
 		checkNotNull(imageName, "image name cannot be null");
-		checkNotNull(keyPair, "keyPair cannot be null");
-		checkNotNull(securityGroups, "securityGroups cannot be null");
-		checkNotNull(metadata, "metadata map cannot be null");
 
 		this.serverName = serverName;
 		this.flavorName = flavorName;
 		this.imageName = imageName;
 		this.keyPair = keyPair;
-		this.securityGroups = securityGroups;
-
+		this.securityGroups = (securityGroups == null) ? new ArrayList<>()
+				: securityGroups;
 		this.userData = userData;
-		this.metadata = metadata;
+		this.metadata = (metadata == null) ? new HashMap<>() : metadata;
 	}
 
 	@Override
@@ -92,17 +94,16 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 		ServerService serverService = api.compute().servers();
 
 		ServerCreateBuilder serverCreateBuilder = serverService.serverBuilder()
-				.name(this.serverName).flavor(getFlavorId())
-				.image(getImageId()).keypairName(this.keyPair)
-				.addMetadata(this.metadata);
+				.name(this.serverName).flavor(getFlavorId()).image(getImageId())
+				.keypairName(this.keyPair).addMetadata(this.metadata);
 
 		for (String securityGroup : this.securityGroups) {
 			serverCreateBuilder.addSecurityGroup(securityGroup);
 		}
 
 		if (this.userData.isPresent()) {
-			String base64UserData = BaseEncoding.base64().encode(
-					this.userData.get().getBytes());
+			String base64UserData = BaseEncoding.base64()
+					.encode(this.userData.get().getBytes());
 			serverCreateBuilder.userData(base64UserData);
 		}
 
@@ -123,8 +124,8 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 	 * @throws CloudPoolDriverException
 	 *             If the available flavors could not be listed.
 	 */
-	private String getFlavorId() throws IllegalArgumentException,
-			CloudPoolDriverException {
+	private String getFlavorId()
+			throws IllegalArgumentException, CloudPoolDriverException {
 		List<Flavor> flavors;
 		try {
 			flavors = new ListSizesRequest(getAccessConfig()).call();
@@ -154,8 +155,8 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 	 * @throws IllegalArgumentException
 	 *             If the specified image name doesn't exist.
 	 */
-	private String getImageId() throws IllegalArgumentException,
-			CloudPoolDriverException {
+	private String getImageId()
+			throws IllegalArgumentException, CloudPoolDriverException {
 
 		List<Image> images;
 		try {
