@@ -40,11 +40,6 @@
       <groupId>org.glassfish.jersey.containers</groupId>
       <artifactId>jersey-container-servlet-core</artifactId>
     </dependency>
-    <!-- Embedded jetty server -->
-    <dependency>
-      <groupId>org.eclipse.jetty.aggregate</groupId>
-      <artifactId>jetty-all</artifactId>
-    </dependency>
     <!-- command-line parsing -->
     <dependency>
       <groupId>args4j</groupId>
