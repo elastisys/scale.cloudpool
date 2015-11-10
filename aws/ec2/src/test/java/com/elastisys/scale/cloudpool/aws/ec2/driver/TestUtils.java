@@ -17,6 +17,7 @@ import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.alerter.http.HttpAlerterConfig;
 import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerterConfig;
 import com.elastisys.scale.commons.net.smtp.SmtpClientConfig;
+import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.common.collect.Lists;
 
 public class TestUtils {
@@ -27,10 +28,10 @@ public class TestUtils {
 		CloudPoolConfig scalingGroupConfig = new CloudPoolConfig(
 				scalingGroupName,
 				JsonUtils.toJson(awsApiConfig).getAsJsonObject());
+		String encodedUserData = Base64Utils.toBase64("#!/bin/bash",
+				"sudo apt-get update -qy", "sudo apt-get install -qy apache2");
 		ScaleOutConfig scaleUpConfig = new ScaleOutConfig("m1.small", "",
-				"instancekey", Arrays.asList("webserver"),
-				Arrays.asList("#!/bin/bash", "sudo apt-get update -qy",
-						"sudo apt-get install apache2 -qy"));
+				"instancekey", Arrays.asList("webserver"), encodedUserData);
 		ScaleInConfig scaleDownConfig = new ScaleInConfig(
 				VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR, 300);
 		SmtpAlerterConfig smtpAlerter = new SmtpAlerterConfig(

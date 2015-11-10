@@ -18,8 +18,6 @@ import org.openstack4j.model.compute.builder.ServerCreateBuilder;
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
-import com.google.common.base.Optional;
-import com.google.common.io.BaseEncoding;
 
 /**
  * An request that, when executed, creates a new server instance.
@@ -32,16 +30,22 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 	private final String flavorName;
 	/** The identifier of the machine image used to boot the machine. */
 	private final String imageName;
-	/** The name of the key pair to use for the machine instance. */
+	/**
+	 * The name of the key pair to use for the machine instance. May be
+	 * <code>null</code>.
+	 */
 	private final String keyPair;
-	/** The security group(s) to use for the new machine instance. */
+	/**
+	 * The security group(s) to use for the new machine instance. May be
+	 * <code>null</code>.
+	 */
 	private final List<String> securityGroups;
 
 	/**
-	 * The (optional) user data (boot up script) used to contextualize the
-	 * started instance.
+	 * The base64-encoded user data used to contextualize the started instance.
+	 * May be <code>null</code>.
 	 */
-	private final Optional<String> userData;
+	private final String encodedUserData;
 	/** Any meta data tags to assign to the new server. */
 	private final Map<String, String> metadata;
 
@@ -62,17 +66,17 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 	 * @param securityGroups
 	 *            The security group(s) to use for the new machine instance. May
 	 *            be <code>null</code>.
-	 * @param userData
-	 *            The (optional) user data (boot up script) used to
-	 *            contextualize the started instance.
+	 * @param encodedUserData
+	 *            The base64-encoded user data used to contextualize the started
+	 *            instance. May be <code>null</code>.
 	 * @param metadata
 	 *            Any meta data tags to assign to the new server. May be
 	 *            <code>null</code>.
 	 */
 	public CreateServerRequest(OpenStackPoolDriverConfig accessConfig,
 			String serverName, String flavorName, String imageName,
-			String keyPair, List<String> securityGroups,
-			Optional<String> userData, Map<String, String> metadata) {
+			String keyPair, List<String> securityGroups, String encodedUserData,
+			Map<String, String> metadata) {
 		super(accessConfig);
 
 		checkNotNull(serverName, "server name cannot be null");
@@ -85,7 +89,7 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 		this.keyPair = keyPair;
 		this.securityGroups = (securityGroups == null) ? new ArrayList<>()
 				: securityGroups;
-		this.userData = userData;
+		this.encodedUserData = encodedUserData;
 		this.metadata = (metadata == null) ? new HashMap<>() : metadata;
 	}
 
@@ -101,10 +105,8 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 			serverCreateBuilder.addSecurityGroup(securityGroup);
 		}
 
-		if (this.userData.isPresent()) {
-			String base64UserData = BaseEncoding.base64()
-					.encode(this.userData.get().getBytes());
-			serverCreateBuilder.userData(base64UserData);
+		if (this.encodedUserData != null) {
+			serverCreateBuilder.userData(this.encodedUserData);
 		}
 
 		ServerCreate serverCreate = serverCreateBuilder.build();

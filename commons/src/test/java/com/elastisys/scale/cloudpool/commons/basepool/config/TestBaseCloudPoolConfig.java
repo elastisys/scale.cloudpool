@@ -17,6 +17,7 @@ import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerterConfig;
 import com.elastisys.scale.commons.net.smtp.SmtpClientAuthentication;
 import com.elastisys.scale.commons.net.smtp.SmtpClientConfig;
 import com.elastisys.scale.commons.net.ssl.BasicCredentials;
+import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.gson.JsonObject;
 
 /**
@@ -93,15 +94,16 @@ public class TestBaseCloudPoolConfig {
 	}
 
 	private ScaleOutConfig scaleOutConfig() {
+		String encodedUserData = Base64Utils.toBase64("#!/bin/bash",
+				"sudo apt-get update -qy", "sudo apt-get install -qy apache2");
 		ScaleOutConfig scaleUpConfig = new ScaleOutConfig("size", "image",
-				"keyPair", Arrays.asList("web"),
-				Arrays.asList("apt-get install apache2"));
+				"keyPair", Arrays.asList("web"), encodedUserData);
 		return scaleUpConfig;
 	}
 
 	private ScaleInConfig scaleInConfig() {
-		return new ScaleInConfig(
-				VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR, 500);
+		return new ScaleInConfig(VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR,
+				500);
 	}
 
 	private AlertsConfig alertSettings() {
@@ -126,8 +128,8 @@ public class TestBaseCloudPoolConfig {
 	private HttpAlerterConfig httpAlerter() {
 		List<String> urls = Arrays.asList("https://some.host/");
 		String severityFilter = "INFO|WARN|ERROR";
-		HttpAuthConfig auth = new HttpAuthConfig(new BasicCredentials("user",
-				"secret"), null);
+		HttpAuthConfig auth = new HttpAuthConfig(
+				new BasicCredentials("user", "secret"), null);
 		int connectionTimeout = 1000;
 		int socketTimeout = 1000;
 

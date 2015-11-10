@@ -15,6 +15,7 @@ import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerterConfig;
 import com.elastisys.scale.commons.net.smtp.SmtpClientAuthentication;
 import com.elastisys.scale.commons.net.smtp.SmtpClientConfig;
 import com.elastisys.scale.commons.net.ssl.BasicCredentials;
+import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.gson.JsonObject;
 
 /**
@@ -97,18 +98,20 @@ public class TestBaseCloudPoolConfigValidation {
 
 	// it is okay for config to miss /scaleOutConfig/securityGroups
 	@Test
-	public void missingScaleOutConfigSecurityGroups() throws CloudPoolException {
+	public void missingScaleOutConfigSecurityGroups()
+			throws CloudPoolException {
 		ScaleOutConfig scaleOutConfig = scaleOutConfig();
 		setPrivateField(scaleOutConfig, "securityGroups", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig,
 				scaleInConfig(), alertConfig(), null).validate();
 	}
 
-	// it is okay for config to miss /scaleOutConfig/bootScript
+	// it is okay for config to miss /scaleOutConfig/encodedUserData
 	@Test
-	public void missingScaleOutConfigBootScript() throws CloudPoolException {
+	public void missingScaleOutConfigEncodedUserData()
+			throws CloudPoolException {
 		ScaleOutConfig scaleOutConfig = scaleOutConfig();
-		setPrivateField(scaleOutConfig, "bootScript", null);
+		setPrivateField(scaleOutConfig, "encodedUserData", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig,
 				scaleInConfig(), alertConfig(), null).validate();
 	}
@@ -217,10 +220,10 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	private AlertsConfig alertConfig() {
-		List<SmtpAlerterConfig> emailAlerters = Arrays
-				.asList(emailAlerterConfig("user@elastisys.com", "ERROR|FATAL"));
-		List<HttpAlerterConfig> httpAlerters = Arrays.asList(httpAlerterConfig(
-				"https://host", "ERROR"));
+		List<SmtpAlerterConfig> emailAlerters = Arrays.asList(
+				emailAlerterConfig("user@elastisys.com", "ERROR|FATAL"));
+		List<HttpAlerterConfig> httpAlerters = Arrays
+				.asList(httpAlerterConfig("https://host", "ERROR"));
 		return new AlertsConfig(emailAlerters, httpAlerters);
 	}
 
@@ -250,15 +253,17 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	private ScaleOutConfig scaleOutConfig() {
+
 		List<String> bootScript = Arrays.asList("#!/bin/bash",
 				"apt-get update -qy && apt-get isntall apache2 -qy");
+		String encodedUserData = Base64Utils.toBase64(bootScript);
 		return new ScaleOutConfig("size", "image", "keyPair",
-				Arrays.asList("securityGroup"), bootScript);
+				Arrays.asList("securityGroup"), encodedUserData);
 	}
 
 	private ScaleInConfig scaleInConfig() {
-		return new ScaleInConfig(
-				VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR, 300);
+		return new ScaleInConfig(VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR,
+				300);
 	}
 
 	private JsonObject cloudCredentialsConfig() {

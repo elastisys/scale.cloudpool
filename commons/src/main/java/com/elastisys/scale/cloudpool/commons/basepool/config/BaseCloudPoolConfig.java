@@ -7,6 +7,7 @@ import static java.lang.String.format;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.smtp.SmtpClientAuthentication;
 import com.elastisys.scale.commons.net.smtp.SmtpClientConfig;
@@ -21,25 +22,46 @@ public class BaseCloudPoolConfig {
 	/** Default value for {@link #poolUpdatePeriod}. */
 	public static final int DEFAULT_POOL_UPDATE_PERIOD = 60;
 
+	/** Configuration for the {@link CloudPoolDriver}. */
 	private final CloudPoolConfig cloudPool;
 
+	/** Configuration that describes how to grow the cloud pool. */
 	private final ScaleOutConfig scaleOutConfig;
+
+	/** Configuration that describes how to shrink the cloud pool. */
 	private final ScaleInConfig scaleInConfig;
 
 	/**
-	 * Optional configuration that describes how to send email alerts. If left
-	 * out, alerts are disabled.
+	 * Configuration that describes how to send email alerts. May be
+	 * <code>null</code>.
 	 */
 	private final AlertsConfig alerts;
 
 	/**
 	 * The time interval (in seconds) between periodical pool size updates. A
 	 * pool size update may involve terminating termination-due instances and
-	 * placing new spot requests to replace terminated spot requests. Default:
-	 * 60.
+	 * placing new spot requests to replace terminated spot requests. May be
+	 * <code>null</code>. Default: 60.
 	 */
-	private Integer poolUpdatePeriod = DEFAULT_POOL_UPDATE_PERIOD;
+	private Integer poolUpdatePeriod;
 
+	/**
+	 * @param cloudPoolConfig
+	 *            Configuration for the {@link CloudPoolDriver}.
+	 * @param scaleOutConfig
+	 *            Configuration that describes how to grow the cloud pool.
+	 * @param scaleInConfig
+	 *            Configuration that describes how to shrink the cloud pool.
+	 * @param alertSettings
+	 *            Configuration that describes how to send email alerts. May be
+	 *            <code>null</code>.
+	 * @param poolUpdatePeriod
+	 *            The time interval (in seconds) between periodical pool size
+	 *            updates. A pool size update may involve terminating
+	 *            termination-due instances and placing new spot requests to
+	 *            replace terminated spot requests. May be <code>null</code>.
+	 *            Default: 60.
+	 */
 	public BaseCloudPoolConfig(CloudPoolConfig cloudPoolConfig,
 			ScaleOutConfig scaleOutConfig, ScaleInConfig scaleInConfig,
 			AlertsConfig alertSettings, Integer poolUpdatePeriod) {
@@ -50,25 +72,54 @@ public class BaseCloudPoolConfig {
 		this.poolUpdatePeriod = poolUpdatePeriod;
 	}
 
+	/**
+	 * Configuration for the {@link CloudPoolDriver}.
+	 * 
+	 * @return
+	 */
 	public CloudPoolConfig getCloudPool() {
 		return this.cloudPool;
 	}
 
+	/**
+	 * Configuration that describes how to grow the cloud pool.
+	 *
+	 * @return
+	 */
 	public ScaleOutConfig getScaleOutConfig() {
 		return this.scaleOutConfig;
 	}
 
+	/**
+	 * Configuration that describes how to shrink the cloud pool.
+	 *
+	 * @return
+	 */
 	public ScaleInConfig getScaleInConfig() {
 		return this.scaleInConfig;
 	}
 
+	/**
+	 * Configuration that describes how to send email alerts. May be
+	 * <code>null</code>.
+	 *
+	 * @return
+	 */
 	public AlertsConfig getAlerts() {
 		return this.alerts;
 	}
 
+	/**
+	 * The time interval (in seconds) between periodical pool size updates. A
+	 * pool size update may, for example, involve terminating termination-due
+	 * instances and placing new spot requests to replace terminated spot
+	 * requests. Default: 60.
+	 *
+	 * @return
+	 */
 	public int getPoolUpdatePeriod() {
-		return Optional.fromNullable(this.poolUpdatePeriod).or(
-				DEFAULT_POOL_UPDATE_PERIOD);
+		return Optional.fromNullable(this.poolUpdatePeriod)
+				.or(DEFAULT_POOL_UPDATE_PERIOD);
 	}
 
 	/**
@@ -178,9 +229,10 @@ public class BaseCloudPoolConfig {
 						getSmtpPort(), getAuthentication(), isUseSsl());
 				settings.validate();
 			} catch (Exception e) {
-				throw new CloudPoolException(format(
-						"failed to validate mailServerSettings: %s",
-						e.getMessage()), e);
+				throw new CloudPoolException(
+						format("failed to validate mailServerSettings: %s",
+								e.getMessage()),
+						e);
 			}
 		}
 

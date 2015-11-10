@@ -50,6 +50,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesExcept
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.alerter.Alert;
+import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.EventBus;
 
@@ -69,11 +70,11 @@ public class TestSpotPoolDriverOperation {
 	/** The name of the spot request pool used in the tests. */
 	private static final String POOL_NAME = "pool1";
 	/** Tag that is set on spot request pool members. */
-	private static final Tag POOL1_TAG = new Tag().withKey(
-			ScalingTags.CLOUD_POOL_TAG).withValue("pool1");
+	private static final Tag POOL1_TAG = new Tag()
+			.withKey(ScalingTags.CLOUD_POOL_TAG).withValue("pool1");
 	/** Tag that is set on spot request that are members of a different pool. */
-	private static final Tag POOL2_TAG = new Tag().withKey(
-			ScalingTags.CLOUD_POOL_TAG).withValue("pool2");
+	private static final Tag POOL2_TAG = new Tag()
+			.withKey(ScalingTags.CLOUD_POOL_TAG).withValue("pool2");
 
 	/** Fake stubbed {@link SpotClient}. */
 	private FakeSpotClient fakeClient;
@@ -95,15 +96,17 @@ public class TestSpotPoolDriverOperation {
 	private BaseCloudPoolConfig config() {
 		ScaleInConfig scaleInConfig = new ScaleInConfig(
 				VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR, 300);
+		String encodedUserData = Base64Utils.toBase64("#!/bin/bash",
+				"sudo apt-get update -qy", "sudo apt-get install -qy apache2");
 		ScaleOutConfig scaleOutConfig = new ScaleOutConfig("m1.small",
-				"ami-123", "instancekey", asList("webserver"), asList(
-						"apt-get update -qy", "apt-get install apache2 -qy"));
+				"ami-123", "instancekey", asList("webserver"), encodedUserData);
 		int poolUpdatePeriod = 30;
 		SpotPoolDriverConfig driverConfig = new SpotPoolDriverConfig("ABC",
 				"XYZ", "us-east-1", 0.0070, 30L, 30L);
-		return new BaseCloudPoolConfig(new CloudPoolConfig(POOL_NAME, JsonUtils
-				.toJson(driverConfig).getAsJsonObject()), scaleOutConfig,
-				scaleInConfig, null, poolUpdatePeriod);
+		return new BaseCloudPoolConfig(
+				new CloudPoolConfig(POOL_NAME,
+						JsonUtils.toJson(driverConfig).getAsJsonObject()),
+				scaleOutConfig, scaleInConfig, null, poolUpdatePeriod);
 	}
 
 	/**
@@ -119,9 +122,11 @@ public class TestSpotPoolDriverOperation {
 		assertThat(this.driver.listMachines(), is(emptyMachines));
 
 		// test against a mix of fulfilled and unfulfilled spot requests
-		this.fakeClient.setupFakeAccount(
-				asList(spotRequest("sir-1", "open", null, POOL1_TAG),
-						spotRequest("sir-2", "active", "i-2", POOL1_TAG),
+		this.fakeClient
+				.setupFakeAccount(
+						asList(spotRequest("sir-1", "open", null, POOL1_TAG),
+								spotRequest("sir-2", "active", "i-2",
+										POOL1_TAG),
 						spotRequest("sir-3", "active", "i-3", POOL1_TAG)),
 				asList(instance("i-2", Running, "sir-2"),
 						instance("i-3", Pending, "sir-3")));
@@ -136,9 +141,11 @@ public class TestSpotPoolDriverOperation {
 
 		// only open/active requests are to be returned. cancelled/closed/failed
 		// ones are ignored.
-		this.fakeClient.setupFakeAccount(
-				asList(spotRequest("sir-1", "open", null, POOL1_TAG),
-						spotRequest("sir-2", "cancelled", "i-2", POOL1_TAG),
+		this.fakeClient
+				.setupFakeAccount(
+						asList(spotRequest("sir-1", "open", null, POOL1_TAG),
+								spotRequest("sir-2", "cancelled", "i-2",
+										POOL1_TAG),
 						spotRequest("sir-3", "closed", null, POOL1_TAG),
 						spotRequest("sir-4", "failed", null, POOL1_TAG)),
 				asList(instance("i-2", Running, "sir-2")));
@@ -156,9 +163,11 @@ public class TestSpotPoolDriverOperation {
 		this.driver.configure(config());
 
 		// sir-3 should be ignored, as it is a member of a different pool
-		this.fakeClient.setupFakeAccount(
-				asList(spotRequest("sir-1", "open", null, POOL1_TAG),
-						spotRequest("sir-2", "active", "i-2", POOL1_TAG),
+		this.fakeClient
+				.setupFakeAccount(
+						asList(spotRequest("sir-1", "open", null, POOL1_TAG),
+								spotRequest("sir-2", "active", "i-2",
+										POOL1_TAG),
 						spotRequest("sir-3", "active", "i-3", POOL2_TAG)),
 				asList(instance("i-2", Running, "sir-2"),
 						instance("i-3", Pending, "sir-3")));
@@ -176,9 +185,9 @@ public class TestSpotPoolDriverOperation {
 		this.driver = new SpotPoolDriver(this.mockClient, this.mockEventBus);
 		this.driver.configure(config());
 
-		doThrow(new AmazonServiceException("something went wrong")).when(
-				this.mockClient).getSpotInstanceRequests(
-				Mockito.anyCollection());
+		doThrow(new AmazonServiceException("something went wrong"))
+				.when(this.mockClient)
+				.getSpotInstanceRequests(Mockito.anyCollection());
 
 		this.driver.listMachines();
 	}
@@ -193,13 +202,13 @@ public class TestSpotPoolDriverOperation {
 		this.driver.configure(config());
 
 		assertThat(this.driver.listMachines().size(), is(0));
-		List<Machine> started = this.driver.startMachines(1, config()
-				.getScaleOutConfig());
+		List<Machine> started = this.driver.startMachines(1,
+				config().getScaleOutConfig());
 		assertThat(started.size(), is(1));
 		SpotInstanceRequest placedSpotRequest = this.fakeClient
 				.getSpotInstanceRequest(started.get(0).getId());
-		assertTrue(placedSpotRequest.getTags().contains(
-				new Tag(CLOUD_POOL_TAG, POOL_NAME)));
+		assertTrue(placedSpotRequest.getTags()
+				.contains(new Tag(CLOUD_POOL_TAG, POOL_NAME)));
 	}
 
 	/**
@@ -211,10 +220,10 @@ public class TestSpotPoolDriverOperation {
 		this.driver = new SpotPoolDriver(this.mockClient, this.mockEventBus);
 		this.driver.configure(config());
 
-		doThrow(new AmazonServiceException("something went wrong")).when(
-				this.mockClient).placeSpotRequests(Mockito.anyDouble(),
-				Mockito.any(ScaleOutConfig.class), Mockito.anyInt(),
-				Mockito.anyListOf(Tag.class));
+		doThrow(new AmazonServiceException("something went wrong"))
+				.when(this.mockClient).placeSpotRequests(Mockito.anyDouble(),
+						Mockito.any(ScaleOutConfig.class), Mockito.anyInt(),
+						Mockito.anyListOf(Tag.class));
 
 		this.driver.startMachines(1, config().getScaleOutConfig());
 	}
@@ -228,9 +237,11 @@ public class TestSpotPoolDriverOperation {
 		this.driver.configure(config());
 
 		// terminating an unfulfilled spot request
-		this.fakeClient.setupFakeAccount(
-				asList(spotRequest("sir-1", "open", null, POOL1_TAG),
-						spotRequest("sir-2", "active", "i-2", POOL1_TAG),
+		this.fakeClient
+				.setupFakeAccount(
+						asList(spotRequest("sir-1", "open", null, POOL1_TAG),
+								spotRequest("sir-2", "active", "i-2",
+										POOL1_TAG),
 						spotRequest("sir-3", "active", "i-3", POOL1_TAG)),
 				asList(instance("i-2", Running, "sir-2"),
 						instance("i-3", Terminated, "sir-3")));
@@ -267,8 +278,8 @@ public class TestSpotPoolDriverOperation {
 		this.driver = new SpotPoolDriver(this.mockClient, this.mockEventBus);
 		this.driver.configure(config());
 
-		doThrow(new AmazonServiceException("something went wrong")).when(
-				this.mockClient).cancelSpotRequests(asList("sir-1"));
+		doThrow(new AmazonServiceException("something went wrong"))
+				.when(this.mockClient).cancelSpotRequests(asList("sir-1"));
 
 		this.driver.terminateMachine("sir-1");
 	}
@@ -318,8 +329,7 @@ public class TestSpotPoolDriverOperation {
 				POOL1_TAG);
 		spot4.setSpotPrice(String.valueOf(currentBidPrice + 0.01));
 
-		this.fakeClient.setupFakeAccount(
-				asList(spot1, spot2, spot3, spot4),
+		this.fakeClient.setupFakeAccount(asList(spot1, spot2, spot3, spot4),
 				asList(instance("i-3", Running, "sir-3"),
 						instance("i-4", Running, "sir-4")));
 
@@ -331,8 +341,8 @@ public class TestSpotPoolDriverOperation {
 				asList("sir-2", "sir-3", "sir-4"));
 
 		// verify event posted on event bus
-		verify(this.mockEventBus).post(
-				argThat(IsCancelAlert.isCancelAlert("sir-1")));
+		verify(this.mockEventBus)
+				.post(argThat(IsCancelAlert.isCancelAlert("sir-1")));
 	}
 
 	/**
@@ -372,9 +382,11 @@ public class TestSpotPoolDriverOperation {
 
 		// i-3 is a dangling instance, since its spot request (sir-3) is
 		// cancelled
-		this.fakeClient.setupFakeAccount(
-				asList(spotRequest("sir-1", "open", null, POOL1_TAG),
-						spotRequest("sir-2", "active", "i-2", POOL1_TAG),
+		this.fakeClient
+				.setupFakeAccount(
+						asList(spotRequest("sir-1", "open", null, POOL1_TAG),
+								spotRequest("sir-2", "active", "i-2",
+										POOL1_TAG),
 						spotRequest("sir-3", "cancelled", "i-3", POOL1_TAG)),
 				asList(instance("i-2", Running, "sir-2"),
 						instance("i-3", Running, "sir-3")));
@@ -399,9 +411,11 @@ public class TestSpotPoolDriverOperation {
 		this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
 		this.driver.configure(config());
 
-		this.fakeClient.setupFakeAccount(
-				asList(spotRequest("sir-1", "open", null, POOL1_TAG),
-						spotRequest("sir-2", "active", "i-2", POOL1_TAG),
+		this.fakeClient
+				.setupFakeAccount(
+						asList(spotRequest("sir-1", "open", null, POOL1_TAG),
+								spotRequest("sir-2", "active", "i-2",
+										POOL1_TAG),
 						spotRequest("sir-3", "cancelled", "i-3", POOL1_TAG)),
 				asList(instance("i-2", Running, "sir-2"),
 						instance("i-3", Running, "sir-3")));
@@ -441,13 +455,13 @@ public class TestSpotPoolDriverOperation {
 		this.driver = new SpotPoolDriver(this.mockClient, this.mockEventBus);
 		this.driver.configure(config());
 
-		List<SpotInstanceRequest> poolMembers = asList(spotRequest("sir-1",
-				"open", null, POOL1_TAG));
+		List<SpotInstanceRequest> poolMembers = asList(
+				spotRequest("sir-1", "open", null, POOL1_TAG));
 		when(this.mockClient.getSpotInstanceRequests(Mockito.anyCollection()))
 				.thenReturn(poolMembers);
 		Tag poolTag = new Tag(CLOUD_POOL_TAG, POOL_NAME);
-		doThrow(new AmazonServiceException("something went wrong")).when(
-				this.mockClient).untagResource("sir-1", asList(poolTag));
+		doThrow(new AmazonServiceException("something went wrong"))
+				.when(this.mockClient).untagResource("sir-1", asList(poolTag));
 
 		this.driver.detachMachine("sir-1");
 	}
@@ -504,13 +518,13 @@ public class TestSpotPoolDriverOperation {
 		this.driver = new SpotPoolDriver(this.mockClient, this.mockEventBus);
 		this.driver.configure(config());
 
-		List<SpotInstanceRequest> poolMembers = asList(spotRequest("sir-1",
-				"open", null, POOL1_TAG));
+		List<SpotInstanceRequest> poolMembers = asList(
+				spotRequest("sir-1", "open", null, POOL1_TAG));
 		when(this.mockClient.getSpotInstanceRequests(Mockito.anyCollection()))
 				.thenReturn(poolMembers);
 		Tag poolTag = new Tag(CLOUD_POOL_TAG, POOL_NAME);
-		doThrow(new AmazonServiceException("something went wrong")).when(
-				this.mockClient).tagResource("sir-1", asList(poolTag));
+		doThrow(new AmazonServiceException("something went wrong"))
+				.when(this.mockClient).tagResource("sir-1", asList(poolTag));
 
 		this.driver.attachMachine("sir-1");
 	}
@@ -564,13 +578,13 @@ public class TestSpotPoolDriverOperation {
 		this.driver = new SpotPoolDriver(this.mockClient, this.mockEventBus);
 		this.driver.configure(config());
 
-		List<SpotInstanceRequest> poolMembers = asList(spotRequest("sir-1",
-				"open", null, POOL1_TAG));
+		List<SpotInstanceRequest> poolMembers = asList(
+				spotRequest("sir-1", "open", null, POOL1_TAG));
 		when(this.mockClient.getSpotInstanceRequests(Mockito.anyCollection()))
 				.thenReturn(poolMembers);
 		Tag stateTag = new Tag(ScalingTags.SERVICE_STATE_TAG, "BOOTING");
-		doThrow(new AmazonServiceException("something went wrong")).when(
-				this.mockClient).tagResource("sir-1", asList(stateTag));
+		doThrow(new AmazonServiceException("something went wrong"))
+				.when(this.mockClient).tagResource("sir-1", asList(stateTag));
 
 		this.driver.setServiceState("sir-1", ServiceState.BOOTING);
 	}
@@ -624,14 +638,14 @@ public class TestSpotPoolDriverOperation {
 		this.driver = new SpotPoolDriver(this.mockClient, this.mockEventBus);
 		this.driver.configure(config());
 
-		List<SpotInstanceRequest> poolMembers = asList(spotRequest("sir-1",
-				"open", null, POOL1_TAG));
+		List<SpotInstanceRequest> poolMembers = asList(
+				spotRequest("sir-1", "open", null, POOL1_TAG));
 		when(this.mockClient.getSpotInstanceRequests(Mockito.anyCollection()))
 				.thenReturn(poolMembers);
 		Tag statusTag = new Tag(ScalingTags.MEMBERSHIP_STATUS_TAG,
 				MembershipStatus.blessed().toString());
-		doThrow(new AmazonServiceException("something went wrong")).when(
-				this.mockClient).tagResource("sir-1", asList(statusTag));
+		doThrow(new AmazonServiceException("something went wrong"))
+				.when(this.mockClient).tagResource("sir-1", asList(statusTag));
 
 		this.driver.setMembershipStatus("sir-1", MembershipStatus.blessed());
 	}

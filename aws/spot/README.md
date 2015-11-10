@@ -41,11 +41,7 @@ The `spotpool` is configured with a JSON document such as the following:
       "image": "ami-018c9568",
       "keyPair": "instancekey",
       "securityGroups": ["webserver"],
-      "bootScript": [
-        "#!/bin/bash",
-        "sudo apt-get update -qy",
-        "sudo apt-get install -qy apache2"
-      ]
+      "encodedUserData": "<base-64 encoded data>"
     },
     "scaleInConfig": {
       "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
@@ -103,7 +99,11 @@ The configuration keys have the following meaning:
     - ``image``: The name of the machine image used to boot new servers.
     - ``keyPair``: The name of the key pair to use for new machine instances.
     - ``securityGroups``: The security group(s) to use for new machine instances.
-    - ``bootScript``: The script to run after first boot of a new instance.
+    - ``encodedUserData``: A [base64-encoded](http://tools.ietf.org/html/rfc4648)
+      blob of data used to pass custom data to started machines typically in
+      the form of a boot-up shell script or cloud-init parameters. Can, for
+      instance, be produced via `cat bootscript.sh | base64 -w 0`.
+      Refer to the [Amazon documentation](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html) for details.
   - ``scaleInConfig``: Describes how to decommission servers (on scale-in).
     - ``victimSelectionPolicy``: Policy for selecting which spot instance to 
       terminate. Allowed values: ``NEWEST_INSTANCE``, ``OLDEST_INSTANCE``, 

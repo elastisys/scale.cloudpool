@@ -13,7 +13,6 @@ import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.Tag;
-import com.elastisys.scale.cloudpool.aws.commons.client.AmazonApiUtils;
 import com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
@@ -49,8 +48,12 @@ public class CreateInstances extends AmazonEc2Request<List<Instance>> {
 	/** The AMI (amazon machine image) id to use for the created instance. */
 	private final String imageId;
 
-	/** The user data boot script to use for the created instance. */
-	private final String bootScript;
+	/**
+	 * The base64-encoded <a href=
+	 * "http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html">
+	 * user data</a> boot to pass to the created instance.
+	 */
+	private final String encodedUserData;
 
 	/** The number of spot instances to request. */
 	private final int count;
@@ -64,14 +67,14 @@ public class CreateInstances extends AmazonEc2Request<List<Instance>> {
 	public CreateInstances(AWSCredentials awsCredentials, String region,
 			String availabilityZone, List<String> securityGroups,
 			String keyPair, String instanceType, String imageId,
-			String bootScript, int count, List<Tag> tags) {
+			String encodedUserData, int count, List<Tag> tags) {
 		super(awsCredentials, region);
 		this.availabilityZone = availabilityZone;
 		this.securityGroups = securityGroups;
 		this.keyPair = keyPair;
 		this.instanceType = instanceType;
 		this.imageId = imageId;
-		this.bootScript = bootScript;
+		this.encodedUserData = encodedUserData;
 		this.count = count;
 		this.tags = tags;
 	}
@@ -83,7 +86,7 @@ public class CreateInstances extends AmazonEc2Request<List<Instance>> {
 		RunInstancesRequest request = new RunInstancesRequest()
 				.withMinCount(this.count).withMaxCount(this.count)
 				.withImageId(this.imageId).withInstanceType(this.instanceType)
-				.withUserData(AmazonApiUtils.base64Encode(this.bootScript))
+				.withUserData(this.encodedUserData)
 				.withSecurityGroupIds(this.securityGroups)
 				.withKeyName(this.keyPair).withPlacement(placement);
 		RunInstancesResult result = getClient().getApi().runInstances(request);
@@ -116,9 +119,10 @@ public class CreateInstances extends AmazonEc2Request<List<Instance>> {
 		try {
 			retryable.call();
 		} catch (Exception e) {
-			throw new RuntimeException(String.format(
-					"gave up trying to tag instances %s: %s", instanceIds,
-					e.getMessage()), e);
+			throw new RuntimeException(
+					String.format("gave up trying to tag instances %s: %s",
+							instanceIds, e.getMessage()),
+					e);
 		}
 	}
 

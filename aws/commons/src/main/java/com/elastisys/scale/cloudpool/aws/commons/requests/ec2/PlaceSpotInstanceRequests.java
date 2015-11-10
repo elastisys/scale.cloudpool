@@ -12,7 +12,6 @@ import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.SpotInstanceType;
 import com.amazonaws.services.ec2.model.SpotPlacement;
 import com.amazonaws.services.ec2.model.Tag;
-import com.elastisys.scale.cloudpool.aws.commons.client.AmazonApiUtils;
 import com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
@@ -28,8 +27,8 @@ import com.google.common.collect.Lists;
  * "http://docs.aws.amazon.com/AWSEC2/latest/APIReference/query-api-troubleshooting.html#eventual-consistency"
  * >eventual consistency semantics</a> of the Amazon API.
  */
-public class PlaceSpotInstanceRequests extends
-		AmazonEc2Request<List<SpotInstanceRequest>> {
+public class PlaceSpotInstanceRequests
+		extends AmazonEc2Request<List<SpotInstanceRequest>> {
 
 	/** Initial exponential back-off delay in ms. */
 	private static final int INITIAL_BACKOFF_DELAY = 1000;
@@ -49,8 +48,12 @@ public class PlaceSpotInstanceRequests extends
 	/** The AMI (amazon machine image) id to use for the created instance. */
 	private final String imageId;
 
-	/** The user data boot script to use for the created instance. */
-	private final String bootScript;
+	/**
+	 * The base64-encoded <a href=
+	 * "http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html">
+	 * user data</a> boot to pass to the created instance.
+	 */
+	private final String encodedUserData;
 	/** The bid price to set for the spot request. */
 	private final String bidPrice;
 
@@ -66,7 +69,7 @@ public class PlaceSpotInstanceRequests extends
 	public PlaceSpotInstanceRequests(AWSCredentials awsCredentials,
 			String region, double bidPrice, String availabilityZone,
 			List<String> securityGroups, String keyPair, String instanceType,
-			String imageId, String bootScript, int count, List<Tag> tags) {
+			String imageId, String encodedUserData, int count, List<Tag> tags) {
 		super(awsCredentials, region);
 		this.bidPrice = String.valueOf(bidPrice);
 		this.availabilityZone = availabilityZone;
@@ -74,7 +77,7 @@ public class PlaceSpotInstanceRequests extends
 		this.keyPair = keyPair;
 		this.instanceType = instanceType;
 		this.imageId = imageId;
-		this.bootScript = bootScript;
+		this.encodedUserData = encodedUserData;
 		this.count = count;
 		this.tags = tags;
 	}
@@ -87,8 +90,7 @@ public class PlaceSpotInstanceRequests extends
 				.withInstanceType(this.instanceType).withImageId(this.imageId)
 				.withPlacement(placement)
 				.withSecurityGroups(this.securityGroups)
-				.withKeyName(this.keyPair)
-				.withUserData(AmazonApiUtils.base64Encode(this.bootScript));
+				.withKeyName(this.keyPair).withUserData(this.encodedUserData);
 		RequestSpotInstancesRequest request = new RequestSpotInstancesRequest()
 				.withInstanceCount(this.count)
 				.withType(SpotInstanceType.Persistent)
@@ -153,8 +155,8 @@ public class PlaceSpotInstanceRequests extends
 		} catch (Exception e) {
 			throw new RuntimeException(String.format(
 					"gave up waiting for spot instance "
-							+ "requests to appear %s: %s", spotRequestIds,
-					e.getMessage()), e);
+							+ "requests to appear %s: %s",
+					spotRequestIds, e.getMessage()), e);
 		}
 	}
 
@@ -168,13 +170,10 @@ public class PlaceSpotInstanceRequests extends
 	 */
 	private static Predicate<List<SpotInstanceRequest>> contains(
 			final List<String> expectedSpotRequestIds) {
-		return new Predicate<List<SpotInstanceRequest>>() {
-			@Override
-			public boolean apply(List<SpotInstanceRequest> input) {
-				List<String> inputIds = Lists.transform(input,
-						AwsEc2Functions.toSpotRequestId());
-				return inputIds.containsAll(expectedSpotRequestIds);
-			}
+		return input -> {
+			List<String> inputIds = Lists.transform(input,
+					AwsEc2Functions.toSpotRequestId());
+			return inputIds.containsAll(expectedSpotRequestIds);
 		};
 	}
 }

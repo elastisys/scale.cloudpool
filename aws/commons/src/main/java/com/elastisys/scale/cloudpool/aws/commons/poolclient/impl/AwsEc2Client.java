@@ -24,7 +24,6 @@ import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TagEc2Resources;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TerminateInstances;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.UntagEc2Resource;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
-import com.google.common.base.Joiner;
 import com.google.common.util.concurrent.Atomics;
 
 /**
@@ -48,7 +47,8 @@ public class AwsEc2Client implements Ec2Client {
 	public void configure(String awsAccessKeyId, String awsSecretAccessKey,
 			String region) {
 		checkArgument(awsAccessKeyId != null, "no awsAccessKeyId given");
-		checkArgument(awsSecretAccessKey != null, "no awsSecretAccessKey given");
+		checkArgument(awsSecretAccessKey != null,
+				"no awsSecretAccessKey given");
 		checkArgument(region != null, "no region given");
 		this.awsAccessKeyId.set(awsAccessKeyId);
 		this.awsSecretAccessKey.set(awsSecretAccessKey);
@@ -58,7 +58,8 @@ public class AwsEc2Client implements Ec2Client {
 	@Override
 	public List<Instance> getInstances(List<Filter> filters)
 			throws AmazonClientException {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
 		List<Instance> instances = new GetInstances(awsCredentials(), region())
 				.withFilters(filters).call();
@@ -68,7 +69,8 @@ public class AwsEc2Client implements Ec2Client {
 	@Override
 	public Instance getInstanceMetadata(String instanceId)
 			throws NotFoundException, AmazonClientException {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
 		return new GetInstance(awsCredentials(), region(), instanceId).call();
 	}
@@ -76,19 +78,18 @@ public class AwsEc2Client implements Ec2Client {
 	@Override
 	public List<Instance> launchInstances(ScaleOutConfig provisioningDetails,
 			int count, List<Tag> tags) throws AmazonClientException {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
 		// no particular availability zone
 		String availabilityZone = null;
-		String bootscript = Joiner.on("\n").join(
-				provisioningDetails.getBootScript());
 
 		List<Instance> startedInstances = new CreateInstances(awsCredentials(),
 				region(), availabilityZone,
 				provisioningDetails.getSecurityGroups(),
-				provisioningDetails.getKeyPair(),
-				provisioningDetails.getSize(), provisioningDetails.getImage(),
-				bootscript, count, tags).call();
+				provisioningDetails.getKeyPair(), provisioningDetails.getSize(),
+				provisioningDetails.getImage(),
+				provisioningDetails.getEncodedUserData(), count, tags).call();
 
 		return startedInstances;
 	}
@@ -96,7 +97,8 @@ public class AwsEc2Client implements Ec2Client {
 	@Override
 	public void tagResource(String resourceId, List<Tag> tags)
 			throws AmazonClientException {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
 		new TagEc2Resources(awsCredentials(), region(),
 				Arrays.asList(resourceId), tags).call();
@@ -105,7 +107,8 @@ public class AwsEc2Client implements Ec2Client {
 	@Override
 	public void untagResource(String resourceId, List<Tag> tags)
 			throws AmazonClientException {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
 		new UntagEc2Resource(awsCredentials(), region(), resourceId, tags)
 				.call();
@@ -114,7 +117,8 @@ public class AwsEc2Client implements Ec2Client {
 	@Override
 	public void terminateInstances(List<String> instanceIds)
 			throws NotFoundException, AmazonClientException {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
 		new TerminateInstances(awsCredentials(), region(), instanceIds).call();
 	}

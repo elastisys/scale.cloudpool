@@ -13,13 +13,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
-import com.elastisys.scale.cloudpool.aws.autoscaling.driver.AwsAsPoolDriver;
-import com.elastisys.scale.cloudpool.aws.autoscaling.driver.AwsAsPoolDriverConfig;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AutoScalingClient;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.util.base64.Base64Utils;
 
 /**
  * Tests the behavior of the {@link AwsAsPoolDriver} with respect to
@@ -40,12 +39,13 @@ public class TestAwsAsDriverConfiguration {
 	@Test
 	public void configureWithValidConfig() throws CloudPoolException {
 		assertFalse(this.driver.isConfigured());
-		BaseCloudPoolConfig config = loadCloudPoolConfig("config/valid-awsasdriver-config.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig(
+				"config/valid-awsasdriver-config.json");
 		this.driver.configure(config);
 
 		assertTrue(this.driver.isConfigured());
-		AwsAsPoolDriverConfig expectedConfig = new AwsAsPoolDriverConfig(
-				"ABC", "XYZ", "us-west-1");
+		AwsAsPoolDriverConfig expectedConfig = new AwsAsPoolDriverConfig("ABC",
+				"XYZ", "us-west-1");
 		assertThat(this.driver.config(), is(expectedConfig));
 
 		// verify that config is passed on to cloud client
@@ -55,16 +55,18 @@ public class TestAwsAsDriverConfiguration {
 	@Test
 	public void reconfigure() throws CloudPoolException {
 		// configure
-		BaseCloudPoolConfig config1 = loadCloudPoolConfig("config/valid-awsasdriver-config.json");
+		BaseCloudPoolConfig config1 = loadCloudPoolConfig(
+				"config/valid-awsasdriver-config.json");
 		this.driver.configure(config1);
-		assertThat(this.driver.config(), is(new AwsAsPoolDriverConfig(
-				"ABC", "XYZ", "us-west-1")));
+		assertThat(this.driver.config(),
+				is(new AwsAsPoolDriverConfig("ABC", "XYZ", "us-west-1")));
 
 		// re-configure
-		BaseCloudPoolConfig config2 = loadCloudPoolConfig("config/valid-awsasdriver-config2.json");
+		BaseCloudPoolConfig config2 = loadCloudPoolConfig(
+				"config/valid-awsasdriver-config2.json");
 		this.driver.configure(config2);
-		assertThat(this.driver.config(), is(new AwsAsPoolDriverConfig(
-				"DEF", "TUV", "us-east-1")));
+		assertThat(this.driver.config(),
+				is(new AwsAsPoolDriverConfig("DEF", "TUV", "us-east-1")));
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -75,9 +77,10 @@ public class TestAwsAsDriverConfiguration {
 	@Test(expected = IllegalStateException.class)
 	public void invokeStartMachineBeforeBeingConfigured()
 			throws CloudPoolException {
-		ScaleOutConfig scaleUpConfig = new ScaleOutConfig(
-				"size", "image", "keyPair", Arrays.asList("webserver"),
-				Arrays.asList("#!/bin/bash", "apt-get update"));
+		String encodedUserData = Base64Utils.toBase64("#!/bin/bash",
+				"sudo apt-get update -qy", "sudo apt-get install -qy apache2");
+		ScaleOutConfig scaleUpConfig = new ScaleOutConfig("size", "image",
+				"keyPair", Arrays.asList("webserver"), encodedUserData);
 		this.driver.startMachines(3, scaleUpConfig);
 	}
 
@@ -94,19 +97,22 @@ public class TestAwsAsDriverConfiguration {
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithConfigMissingAccessKeyId() throws Exception {
-		BaseCloudPoolConfig config = loadCloudPoolConfig("config/invalid-awsasdriver-config-missing-accesskeyid.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig(
+				"config/invalid-awsasdriver-config-missing-accesskeyid.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithConfigMissingSecretAccessKey() throws Exception {
-		BaseCloudPoolConfig config = loadCloudPoolConfig("config/invalid-awsasdriver-config-missing-secretaccesskey.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig(
+				"config/invalid-awsasdriver-config-missing-secretaccesskey.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithConfigMissingRegion() throws Exception {
-		BaseCloudPoolConfig config = loadCloudPoolConfig("config/invalid-awsasdriver-config-missing-region.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig(
+				"config/invalid-awsasdriver-config-missing-region.json");
 		this.driver.configure(config);
 	}
 

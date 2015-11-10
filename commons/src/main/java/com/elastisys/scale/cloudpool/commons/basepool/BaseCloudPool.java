@@ -111,11 +111,7 @@ import com.google.gson.JsonObject;
  *     "image": "ami-018c9568",
  *     "keyPair": "instancekey",
  *     "securityGroups": ["webserver"],
- *     "bootScript": [
- *       "#!/bin/bash",
- *       "sudo apt-get update -qy",
- *       "sudo apt-get install -qy apache2"
- *     ]
+ *     "encodedUserData": "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg=="
  *   },
  *   "scaleInConfig": {
  *     "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
@@ -282,10 +278,10 @@ public class BaseCloudPool implements CloudPool {
 		this.cloudDriver = cloudDriver;
 		this.eventBus = eventBus;
 
-		ThreadFactory threadFactory = new ThreadFactoryBuilder()
-				.setDaemon(true).setNameFormat("cloudpool-%d").build();
-		this.executorService = Executors.newScheduledThreadPool(
-				MAX_CONCURRENCY, threadFactory);
+		ThreadFactory threadFactory = new ThreadFactoryBuilder().setDaemon(true)
+				.setNameFormat("cloudpool-%d").build();
+		this.executorService = Executors.newScheduledThreadPool(MAX_CONCURRENCY,
+				threadFactory);
 
 		this.config = Atomics.newReference();
 		this.started = new AtomicBoolean(false);
@@ -324,7 +320,8 @@ public class BaseCloudPool implements CloudPool {
 			Throwables.propagateIfInstanceOf(e, IllegalArgumentException.class);
 			throw new IllegalArgumentException(
 					"failed to validate cloud pool configuration: "
-							+ e.getMessage(), e);
+							+ e.getMessage(),
+					e);
 		}
 	}
 
@@ -479,8 +476,9 @@ public class BaseCloudPool implements CloudPool {
 		ensureStarted();
 
 		MachinePool pool = getMachinePool();
-		return new PoolSizeSummary(this.desiredSize.get(), pool
-				.getAllocatedMachines().size(), pool.getActiveMachines().size());
+		return new PoolSizeSummary(this.desiredSize.get(),
+				pool.getAllocatedMachines().size(),
+				pool.getActiveMachines().size());
 	}
 
 	/**
@@ -576,8 +574,8 @@ public class BaseCloudPool implements CloudPool {
 
 	@Override
 	public void setMembershipStatus(String machineId,
-			MembershipStatus membershipStatus) throws NotFoundException,
-			CloudPoolException {
+			MembershipStatus membershipStatus)
+					throws NotFoundException, CloudPoolException {
 		ensureStarted();
 
 		LOG.debug("membership status {} assigned to {}", membershipStatus,
@@ -699,9 +697,10 @@ public class BaseCloudPool implements CloudPool {
 			try {
 				doPoolUpdate(targetSize);
 			} catch (Throwable e) {
-				String message = format("failed to adjust pool "
-						+ "\"%s\" to desired size %d: %s\n%s", poolName(),
-						targetSize, e.getMessage(),
+				String message = format(
+						"failed to adjust pool "
+								+ "\"%s\" to desired size %d: %s\n%s",
+						poolName(), targetSize, e.getMessage(),
 						Throwables.getStackTraceAsString(e));
 				this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
 						AlertSeverity.ERROR, UtcTime.now(), message));
@@ -718,9 +717,9 @@ public class BaseCloudPool implements CloudPool {
 				Lists.transform(pool.getMachines(), Machine.toShortString()));
 		this.terminationQueue.filter(pool.getActiveMachines());
 		ResizePlanner resizePlanner = new ResizePlanner(pool,
-				this.terminationQueue, scaleInConfig()
-						.getVictimSelectionPolicy(), scaleInConfig()
-						.getInstanceHourMargin());
+				this.terminationQueue,
+				scaleInConfig().getVictimSelectionPolicy(),
+				scaleInConfig().getInstanceHourMargin());
 		int netSize = resizePlanner.getNetSize();
 
 		ResizePlan resizePlan = resizePlanner.calculateResizePlan(newSize);
@@ -749,14 +748,15 @@ public class BaseCloudPool implements CloudPool {
 
 	private List<Machine> scaleOut(ResizePlan resizePlan)
 			throws StartMachinesException {
-		LOG.info("sparing {} machine(s) from termination, "
-				+ "placing {} new request(s)", resizePlan.getToSpare(),
-				resizePlan.getToRequest());
+		LOG.info(
+				"sparing {} machine(s) from termination, "
+						+ "placing {} new request(s)",
+				resizePlan.getToSpare(), resizePlan.getToRequest());
 		this.terminationQueue.spare(resizePlan.getToSpare());
 
 		try {
-			List<Machine> startedMachines = this.cloudDriver.startMachines(
-					resizePlan.getToRequest(), scaleOutConfig());
+			List<Machine> startedMachines = this.cloudDriver
+					.startMachines(resizePlan.getToRequest(), scaleOutConfig());
 			startAlert(startedMachines);
 			return startedMachines;
 		} catch (StartMachinesException e) {
@@ -919,8 +919,8 @@ public class BaseCloudPool implements CloudPool {
 			MembershipStatus membershipStatus) {
 		Map<String, JsonElement> tags = ImmutableMap.of();
 		String message = String.format(
-				"Membership status set to %s for machine %s.",
-				membershipStatus, machineId);
+				"Membership status set to %s for machine %s.", membershipStatus,
+				machineId);
 		this.eventBus.post(new Alert(AlertTopics.MEMBERSHIP_STATUS.name(),
 				AlertSeverity.DEBUG, UtcTime.now(), message, tags));
 	}
@@ -934,8 +934,8 @@ public class BaseCloudPool implements CloudPool {
 			return JsonUtils.toJson(shortFormatMembers);
 		} catch (Exception e) {
 			LOG.warn("failed to retrieve pool members: {}", e.getMessage());
-			return JsonUtils.toJson(String.format("N/A (call failed: %s)",
-					e.getMessage()));
+			return JsonUtils.toJson(
+					String.format("N/A (call failed: %s)", e.getMessage()));
 		}
 	}
 
@@ -948,9 +948,8 @@ public class BaseCloudPool implements CloudPool {
 			try {
 				updateMachinePool();
 			} catch (CloudPoolException e) {
-				LOG.error(
-						format("machine pool update task failed: %s",
-								e.getMessage()), e);
+				LOG.error(format("machine pool update task failed: %s",
+						e.getMessage()), e);
 			}
 		}
 	}

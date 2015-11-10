@@ -13,7 +13,6 @@ import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetSpotInstanceReq
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetSpotInstanceRequests;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.PlaceSpotInstanceRequests;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
-import com.google.common.base.Joiner;
 
 public class AwsSpotClient extends AwsEc2Client implements SpotClient {
 
@@ -38,15 +37,13 @@ public class AwsSpotClient extends AwsEc2Client implements SpotClient {
 	@Override
 	public List<SpotInstanceRequest> placeSpotRequests(double bidPrice,
 			ScaleOutConfig scaleOutConfig, int count, List<Tag> tags) {
-		String bootscript = Joiner.on("\n")
-				.join(scaleOutConfig.getBootScript());
 		// no particular availability zone
 		String availabilityZone = null;
 		PlaceSpotInstanceRequests request = new PlaceSpotInstanceRequests(
 				awsCredentials(), region(), bidPrice, availabilityZone,
-				scaleOutConfig.getSecurityGroups(),
-				scaleOutConfig.getKeyPair(), scaleOutConfig.getSize(),
-				scaleOutConfig.getImage(), bootscript, count, tags);
+				scaleOutConfig.getSecurityGroups(), scaleOutConfig.getKeyPair(),
+				scaleOutConfig.getSize(), scaleOutConfig.getImage(),
+				scaleOutConfig.getEncodedUserData(), count, tags);
 		return request.call();
 	}
 

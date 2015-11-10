@@ -50,7 +50,7 @@ The `awsaspool` is configured with a JSON document such as the following:
       "image": "N/A",
       "keyPair": "N/A",
       "securityGroups": [],
-      "bootScript": []
+      "encodedUserData": "N/A"
     },
     "scaleInConfig": {
       "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
@@ -108,7 +108,7 @@ The configuration keys have the following meaning:
     - ``image``: Not applicable.
     - ``keyPair``: Not applicable.
     - ``securityGroups``: Not applicable.
-    - ``bootScript``: Not applicable.
+    - ``encodedUserData``: Not applicable.
   - ``scaleInConfig``: Describes how to decommission servers (on scale-in).
     - ``victimSelectionPolicy``: Policy for selecting which instance to 
       terminate. Allowed values: ``NEWEST_INSTANCE``, ``OLDEST_INSTANCE``, 

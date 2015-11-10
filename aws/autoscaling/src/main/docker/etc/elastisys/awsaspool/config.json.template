@@ -1,51 +1,51 @@
 {
-  "cloudPool": {
-    "name": "${CLOUD_POOL_NAME}",
-    "driverConfig": {
-      "awsAccessKeyId": "${AWS_ACCESS_KEY_ID}",
-      "awsSecretAccessKey": "${AWS_SECRET_ACCESS_KEY}",
-      "region": "${AWS_REGION}"
-    }
-  },
-  "scaleOutConfig": {
-    "_comment": "These properties are specified in an AWS Launch Configuration for the Auto Scaling Group.",
-    "size": "N/A",
-    "image": "N/A",
-    "keyPair": "N/A",
-    "securityGroups": [],
-    "bootScript": []
-  },
-  "scaleInConfig": {
-    "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
-    "instanceHourMargin": 300
-  },
-  "alerts": {
-    "smtp": [
-      {
-        "subject": "[elastisys:scale] cloud pool alert for ${CLOUD_POOL_NAME}",    
-        "recipients": ["${EMAIL_ADDRESS}"],
-        "sender": "noreply@elastisys.com",
-        "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
-        "smtpClientConfig": {
-          "smtpHost": "${EMAIL_SERVER}",
-          "smtpPort": 465,
-          "authentication": {
-            "userName": "${EMAIL_USER}", 
-            "password": "${EMAIL_PASSWORD}"
-          },
-          "useSsl": true
+    "cloudPool": {
+        "name": "${CLOUD_POOL_NAME}",
+        "driverConfig": {
+            "awsAccessKeyId": "${AWS_ACCESS_KEY_ID}",
+            "awsSecretAccessKey": "${AWS_SECRET_ACCESS_KEY}",
+            "region": "${AWS_REGION}"
         }
-      }
-    ],
-    "http": [
-      {
-        "destinationUrls": ["${WEBHOOK_URL}"],
-        "severityFilter": "INFO|WARN|ERROR|FATAL", 
-        "auth": {
-          "basicCredentials": { "username": "${USERNAME}", "password": "${PASSWORD}" }
-        }      
-      }    
-    ]
-  },
-  "poolUpdatePeriod": 15            
+    },
+    "scaleOutConfig": {
+        "_comment": "These properties are specified in an AWS Launch Configuration for the Auto Scaling Group.",
+        "size": "N/A",
+        "image": "N/A",
+        "keyPair": "N/A",
+        "securityGroups": [],
+        "encodedUserData": "N/A"
+    },
+    "scaleInConfig": {
+        "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
+        "instanceHourMargin": 300
+    },
+    "alerts": {
+        "smtp": [
+            {
+                "subject": "[elastisys:scale] cloud pool alert for ${CLOUD_POOL_NAME}",    
+                "recipients": ["${EMAIL_ADDRESS}"],
+                "sender": "noreply@elastisys.com",
+                "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
+                "smtpClientConfig": {
+                    "smtpHost": "${EMAIL_SERVER}",
+                    "smtpPort": 465,
+                    "authentication": {
+                        "userName": "${EMAIL_USER}", 
+                        "password": "${EMAIL_PASSWORD}"
+                    },
+                    "useSsl": true
+                }
+            }
+        ],
+        "http": [
+            {
+                "destinationUrls": ["${WEBHOOK_URL}"],
+                "severityFilter": "INFO|WARN|ERROR|FATAL", 
+                "auth": {
+                    "basicCredentials": { "username": "${USERNAME}", "password": "${PASSWORD}" }
+                }      
+            }    
+        ]
+    },
+    "poolUpdatePeriod": 15            
 }  

@@ -18,8 +18,6 @@ import com.elastisys.scale.cloudpool.openstack.requests.DeleteServerRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.GetServerRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.ListServersWithTagRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.UpdateServerMetadataRequest;
-import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import com.google.common.util.concurrent.Atomics;
 
 /**
@@ -43,14 +41,16 @@ public class StandardOpenstackClient implements OpenstackClient {
 
 	@Override
 	public List<Server> getServers(String tag, String tagValue) {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
 		return new ListServersWithTagRequest(config(), tag, tagValue).call();
 	}
 
 	@Override
 	public Server getServer(String serverId) throws NotFoundException {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
 		return new GetServerRequest(config(), serverId).call();
 	}
@@ -58,16 +58,15 @@ public class StandardOpenstackClient implements OpenstackClient {
 	@Override
 	public Server launchServer(String serverName,
 			ScaleOutConfig provisioningDetails, Map<String, String> tags) {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
-		String userData = Joiner.on("\n").join(
-				provisioningDetails.getBootScript());
 		CreateServerRequest request = new CreateServerRequest(config(),
 				serverName, provisioningDetails.getSize(),
 				provisioningDetails.getImage(),
 				provisioningDetails.getKeyPair(),
-				provisioningDetails.getSecurityGroups(), Optional.of(userData),
-				tags);
+				provisioningDetails.getSecurityGroups(),
+				provisioningDetails.getEncodedUserData(), tags);
 		return request.call();
 	}
 
@@ -79,20 +78,23 @@ public class StandardOpenstackClient implements OpenstackClient {
 
 	@Override
 	public void terminateServer(String serverId) throws NotFoundException {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 		new DeleteServerRequest(config(), serverId).call();
 	}
 
 	@Override
 	public void tagServer(String serverId, Map<String, String> tags) {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
 		new UpdateServerMetadataRequest(config(), serverId, tags).call();
 	}
 
 	@Override
 	public void untagServer(String serverId, List<String> tagKeys) {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+		checkArgument(isConfigured(),
+				"can't use client before it's configured");
 
 		new DeleteServerMetadataRequest(config(), serverId, tagKeys).call();
 	}

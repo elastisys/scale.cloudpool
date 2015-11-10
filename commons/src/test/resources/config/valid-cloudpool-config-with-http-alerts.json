@@ -13,11 +13,8 @@
       "size": "m1.small", 
       "image": "Ubuntu Server 12.04",
       "keyPair": "openstack_p11",
-      "securityGroups": ["web"],               
-      "bootScript": [
-        "sudo apt-get update",
-        "sudo apt-get install -y --force-yes apache2"
-      ]
+      "securityGroups": ["web"],
+      "encodedUserData": "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg=="                     
     },
     "scaleInConfig": {
       "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",

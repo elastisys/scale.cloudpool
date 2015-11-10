@@ -18,6 +18,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.common.eventbus.EventBus;
 
 /**
@@ -45,7 +46,8 @@ public class TestSpotPoolDriverConfiguration {
 	public void configureWithCompleteDriverConfig() throws CloudPoolException {
 		assertThat(this.driver.driverConfig(), is(nullValue()));
 
-		BaseCloudPoolConfig config = loadCloudPoolConfig("config/complete-driver-config.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig(
+				"config/complete-driver-config.json");
 		this.driver.configure(config);
 		assertThat(this.driver.poolConfig(), is(config));
 
@@ -56,8 +58,9 @@ public class TestSpotPoolDriverConfiguration {
 		assertThat(this.driver.driverConfig().getBidPrice(), is(0.0070));
 		assertThat(this.driver.driverConfig().getBidReplacementPeriod(),
 				is(35L));
-		assertThat(this.driver.driverConfig()
-				.getDanglingInstanceCleanupPeriod(), is(45L));
+		assertThat(
+				this.driver.driverConfig().getDanglingInstanceCleanupPeriod(),
+				is(45L));
 
 	}
 
@@ -66,7 +69,8 @@ public class TestSpotPoolDriverConfiguration {
 	 */
 	@Test
 	public void configureWithMissingBidReplacementPeriod() {
-		BaseCloudPoolConfig config = loadCloudPoolConfig("config/valid-config-relying-on-defaults.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig(
+				"config/valid-config-relying-on-defaults.json");
 		this.driver.configure(config);
 		assertThat(this.driver.driverConfig().getBidReplacementPeriod(),
 				is(SpotPoolDriverConfig.DEFAULT_BID_REPLACEMENT_PERIOD));
@@ -77,7 +81,8 @@ public class TestSpotPoolDriverConfiguration {
 	 */
 	@Test
 	public void configureWithMissingDanglingInstanceCleanupPeriod() {
-		BaseCloudPoolConfig config = loadCloudPoolConfig("config/valid-config-relying-on-defaults.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig(
+				"config/valid-config-relying-on-defaults.json");
 		this.driver.configure(config);
 		assertThat(
 				this.driver.driverConfig().getDanglingInstanceCleanupPeriod(),
@@ -90,46 +95,54 @@ public class TestSpotPoolDriverConfiguration {
 	@Test
 	public void reconfigure() throws CloudPoolException {
 		// configure
-		BaseCloudPoolConfig config1 = loadCloudPoolConfig("config/valid-config-relying-on-defaults.json");
+		BaseCloudPoolConfig config1 = loadCloudPoolConfig(
+				"config/valid-config-relying-on-defaults.json");
 		this.driver.configure(config1);
 		assertThat(this.driver.poolConfig(), is(config1));
 
 		// re-configure
-		BaseCloudPoolConfig config2 = loadCloudPoolConfig("config/complete-driver-config.json");
+		BaseCloudPoolConfig config2 = loadCloudPoolConfig(
+				"config/complete-driver-config.json");
 		this.driver.configure(config2);
 		assertThat(this.driver.poolConfig(), is(config2));
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithConfigMissingAccessKeyId() throws Exception {
-		BaseCloudPoolConfig config = loadCloudPoolConfig("config/invalid-config-missing-accesskeyid.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig(
+				"config/invalid-config-missing-accesskeyid.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithConfigMissingSecretAccessKey() throws Exception {
-		BaseCloudPoolConfig config = loadCloudPoolConfig("config/invalid-config-missing-secretaccesskey.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig(
+				"config/invalid-config-missing-secretaccesskey.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithConfigMissingRegion() throws Exception {
-		BaseCloudPoolConfig config = loadCloudPoolConfig("config/invalid-config-missing-region.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig(
+				"config/invalid-config-missing-region.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithConfigMissingbidPrice() throws Exception {
-		BaseCloudPoolConfig config = loadCloudPoolConfig("config/invalid-config-missing-bidprice.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig(
+				"config/invalid-config-missing-bidprice.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = IllegalStateException.class)
 	public void invokeStartMachineBeforeBeingConfigured()
 			throws CloudPoolException {
+		String encodedUserData = Base64Utils.toBase64("#!/bin/bash",
+				"sudo apt-get update -qy", "sudo apt-get install -qy apache2");
+
 		ScaleOutConfig scaleUpConfig = new ScaleOutConfig("size", "image",
-				"keyPair", Arrays.asList("webserver"), Arrays.asList(
-						"#!/bin/bash", "apt-get update"));
+				"keyPair", Arrays.asList("webserver"), encodedUserData);
 		this.driver.startMachines(3, scaleUpConfig);
 	}
 

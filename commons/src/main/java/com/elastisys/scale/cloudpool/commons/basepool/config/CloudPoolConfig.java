@@ -33,15 +33,43 @@ public class CloudPoolConfig {
 	 */
 	private final JsonObject driverConfig;
 
+	/**
+	 * Creates a new {@link CloudPoolConfig}.
+	 *
+	 * @param name
+	 *            The name of the logical group of servers managed by the
+	 *            {@link CloudPoolDriver}.
+	 * @param driverConfig
+	 *            {@link CloudPoolDriver}-specific JSON configuration document,
+	 *            the contents of which depends on the particular
+	 *            {@link CloudPoolDriver} -implementation being used. Typically,
+	 *            a minimum amount of configuration includes login credentials
+	 *            for connecting to the particular cloud API endpoint.
+	 */
 	public CloudPoolConfig(String name, JsonObject driverConfig) {
 		this.name = name;
 		this.driverConfig = driverConfig;
 	}
 
+	/**
+	 * The name of the logical group of servers managed by the
+	 * {@link CloudPoolDriver}.
+	 *
+	 * @return
+	 */
 	public String getName() {
 		return this.name;
 	}
 
+	/**
+	 * {@link CloudPoolDriver}-specific JSON configuration document, the
+	 * contents of which depends on the particular {@link CloudPoolDriver}
+	 * -implementation being used. Typically, a minimum amount of configuration
+	 * includes login credentials for connecting to the particular cloud API
+	 * endpoint.
+	 *
+	 * @return
+	 */
 	public JsonObject getDriverConfig() {
 		return this.driverConfig;
 	}
@@ -56,9 +84,10 @@ public class CloudPoolConfig {
 			checkNotNull(this.name, "missing name");
 			checkNotNull(this.driverConfig, "missing driverConfig");
 		} catch (Exception e) {
-			throw new CloudPoolException(format(
-					"failed to validate cloudPool configuration: %s",
-					e.getMessage()), e);
+			throw new CloudPoolException(
+					format("failed to validate cloudPool configuration: %s",
+							e.getMessage()),
+					e);
 		}
 	}
 

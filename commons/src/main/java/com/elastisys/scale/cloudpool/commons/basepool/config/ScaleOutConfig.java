@@ -34,40 +34,92 @@ public class ScaleOutConfig {
 	 */
 	private final List<String> securityGroups;
 	/**
-	 * The script to run after first boot of a new instance. May be
-	 * <code>null</code>.
+	 * A <a href="http://tools.ietf.org/html/rfc4648">base 64-encoded</a> blob
+	 * of data used to pass custom data to started machines. It is supported by
+	 * many cloud providers and is typically used to pass a boot-up shell script
+	 * or cloud-init parameters to launched machines. May be <code>null</code>.
 	 */
-	private final List<String> bootScript;
+	private final String encodedUserData;
 
+	/**
+	 * Creates a new {@link ScaleOutConfig}.
+	 *
+	 * @param size
+	 *            The name of the server type to launch. For example, m1.medium.
+	 * @param image
+	 *            The name of the machine image used to boot new servers.
+	 * @param keyPair
+	 *            The name of the key pair to use for new machine instances. May
+	 *            be <code>null</code>.
+	 * @param securityGroups
+	 *            The security group(s) to use for new machine instances. May be
+	 *            <code>null</code>.
+	 * @param encodedUserData
+	 *            A <a href="http://tools.ietf.org/html/rfc4648">base
+	 *            64-encoded</a> blob of data used to pass custom data to
+	 *            started machines. It is supported by many cloud providers and
+	 *            is typically used to pass a boot-up shell script or cloud-init
+	 *            parameters to launched machines. May be <code>null</code>.
+	 */
 	public ScaleOutConfig(String size, String image, String keyPair,
-			List<String> securityGroups, List<String> bootScript) {
+			List<String> securityGroups, String encodedUserData) {
 		this.size = size;
 		this.image = image;
 		this.keyPair = keyPair;
 		List<String> emptyList = ImmutableList.of();
-		this.securityGroups = Optional.fromNullable(securityGroups).or(
-				emptyList);
-		this.bootScript = Optional.fromNullable(bootScript).or(emptyList);
+		this.securityGroups = Optional.fromNullable(securityGroups)
+				.or(emptyList);
+		this.encodedUserData = encodedUserData;
 	}
 
+	/**
+	 * The name of the server type to launch. For example, m1.medium.
+	 *
+	 * @return
+	 */
 	public String getSize() {
 		return this.size;
 	}
 
+	/**
+	 * The name of the machine image used to boot new servers.
+	 *
+	 * @return
+	 */
 	public String getImage() {
 		return this.image;
 	}
 
+	/**
+	 * The name of the key pair to use for new machine instances. May be
+	 * <code>null</code>.
+	 *
+	 * @return
+	 */
 	public String getKeyPair() {
 		return this.keyPair;
 	}
 
+	/**
+	 * The security group(s) to use for new machine instances. May be
+	 * <code>null</code>.
+	 *
+	 * @return
+	 */
 	public List<String> getSecurityGroups() {
 		return this.securityGroups;
 	}
 
-	public List<String> getBootScript() {
-		return this.bootScript;
+	/**
+	 * A <a href="http://tools.ietf.org/html/rfc4648">base 64-encoded</a> blob
+	 * of data used to pass custom data to started machines. It is supported by
+	 * many cloud providers and is typically used to pass a boot-up shell script
+	 * or cloud-init parameters to launched machines. May be <code>null</code>.
+	 *
+	 * @return
+	 */
+	public String getEncodedUserData() {
+		return this.encodedUserData;
 	}
 
 	/**
@@ -80,15 +132,17 @@ public class ScaleOutConfig {
 			checkNotNull(this.size, "missing size");
 			checkNotNull(this.image, "missing image");
 		} catch (Exception e) {
-			throw new CloudPoolException(format(
-					"failed to validate scaleOutConfig: %s", e.getMessage()), e);
+			throw new CloudPoolException(
+					format("failed to validate scaleOutConfig: %s",
+							e.getMessage()),
+					e);
 		}
 	}
 
 	@Override
 	public int hashCode() {
 		return Objects.hashCode(this.size, this.image, this.keyPair,
-				this.securityGroups, this.bootScript);
+				this.securityGroups, this.encodedUserData);
 	}
 
 	@Override
@@ -98,7 +152,7 @@ public class ScaleOutConfig {
 			return equal(this.size, that.size) && equal(this.image, that.image)
 					&& equal(this.keyPair, that.keyPair)
 					&& equal(this.securityGroups, that.securityGroups)
-					&& equal(this.bootScript, that.bootScript);
+					&& equal(this.encodedUserData, that.encodedUserData);
 		}
 		return false;
 	}

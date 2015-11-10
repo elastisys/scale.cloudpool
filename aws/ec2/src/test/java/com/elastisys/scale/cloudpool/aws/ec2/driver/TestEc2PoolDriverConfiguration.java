@@ -18,6 +18,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.util.base64.Base64Utils;
 
 /**
  * Verifies the behavior of the {@link Ec2PoolDriver} with respect to
@@ -36,7 +37,8 @@ public class TestEc2PoolDriverConfiguration {
 	@Test
 	public void configureWithValidConfig() throws CloudPoolException {
 		assertFalse(this.driver.isConfigured());
-		BaseCloudPoolConfig config = loadCloudPoolConfig("config/valid-ec2pool-config.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig(
+				"config/valid-ec2pool-config.json");
 		this.driver.configure(config);
 
 		assertTrue(this.driver.isConfigured());
@@ -51,24 +53,27 @@ public class TestEc2PoolDriverConfiguration {
 	@Test
 	public void reconfigure() throws CloudPoolException {
 		// configure
-		BaseCloudPoolConfig config1 = loadCloudPoolConfig("config/valid-ec2pool-config.json");
+		BaseCloudPoolConfig config1 = loadCloudPoolConfig(
+				"config/valid-ec2pool-config.json");
 		this.driver.configure(config1);
-		assertThat(this.driver.config(), is(new Ec2PoolDriverConfig("ABC",
-				"XYZ", "us-west-1")));
+		assertThat(this.driver.config(),
+				is(new Ec2PoolDriverConfig("ABC", "XYZ", "us-west-1")));
 
 		// re-configure
-		BaseCloudPoolConfig config2 = loadCloudPoolConfig("config/valid-ec2pool-config2.json");
+		BaseCloudPoolConfig config2 = loadCloudPoolConfig(
+				"config/valid-ec2pool-config2.json");
 		this.driver.configure(config2);
-		assertThat(this.driver.config(), is(new Ec2PoolDriverConfig("DEF",
-				"TUV", "us-east-1")));
+		assertThat(this.driver.config(),
+				is(new Ec2PoolDriverConfig("DEF", "TUV", "us-east-1")));
 	}
 
 	@Test(expected = IllegalStateException.class)
 	public void invokeStartMachineBeforeBeingConfigured()
 			throws CloudPoolException {
-		ScaleOutConfig scaleUpConfig = new ScaleOutConfig(
-				"size", "image", "keyPair", Arrays.asList("webserver"),
-				Arrays.asList("#!/bin/bash", "apt-get update"));
+		String encodedUserData = Base64Utils.toBase64("#!/bin/bash",
+				"sudo apt-get update -qy", "sudo apt-get install -qy apache2");
+		ScaleOutConfig scaleUpConfig = new ScaleOutConfig("size", "image",
+				"keyPair", Arrays.asList("webserver"), encodedUserData);
 		this.driver.startMachines(3, scaleUpConfig);
 	}
 
@@ -85,19 +90,22 @@ public class TestEc2PoolDriverConfiguration {
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithConfigMissingAccessKeyId() throws Exception {
-		BaseCloudPoolConfig config = loadCloudPoolConfig("config/invalid-ec2pool-config-missing-accesskeyid.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig(
+				"config/invalid-ec2pool-config-missing-accesskeyid.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithConfigMissingSecretAccessKey() throws Exception {
-		BaseCloudPoolConfig config = loadCloudPoolConfig("config/invalid-ec2pool-config-missing-secretaccesskey.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig(
+				"config/invalid-ec2pool-config-missing-secretaccesskey.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithConfigMissingRegion() throws Exception {
-		BaseCloudPoolConfig config = loadCloudPoolConfig("config/invalid-ec2pool-config-missing-region.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig(
+				"config/invalid-ec2pool-config-missing-region.json");
 		this.driver.configure(config);
 	}
 

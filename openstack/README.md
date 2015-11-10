@@ -41,11 +41,7 @@ The `openstackpool` is configured with a JSON document such as the following:
       "image": "ami-018c9568",
       "keyPair": "instancekey",
       "securityGroups": ["webserver"],
-      "bootScript": [
-        "#!/bin/bash",
-        "sudo apt-get update -qy",
-        "sudo apt-get install -qy apache2"
-      ]
+      "encodedUserData": "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg=="
     },
     "scaleInConfig": {
       "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
@@ -109,7 +105,12 @@ The configuration keys have the following meaning:
     - ``image``: The name of the machine image used to boot new servers.
     - ``keyPair``: The name of the key pair to use for new servers.
     - ``securityGroups``: The security group(s) to use for new servers.
-    - ``bootScript``: The script to run after first boot of a new server.
+    - ``encodedUserData``: A [base64-encoded](http://tools.ietf.org/html/rfc4648)
+      blob of data used to pass custom data to started machines typically in the form 
+      of a boot-up shell script or cloud-init parameters. Can, for instance, be produced 
+      via `cat bootscript.sh | base64 -w 0`. Refer to the 
+      [OpenStack documentation](http://docs.openstack.org/user-guide/cli_provide_user_data_to_instances.html) 
+      for details.
   - ``scaleInConfig``: Describes how to decommission servers (on scale-down).
     - ``victimSelectionPolicy``: Policy for selecting which server to 
       terminate. Allowed values: ``NEWEST_INSTANCE``, ``OLDEST_INSTANCE``, 
