@@ -860,12 +860,13 @@ public class Machine {
 					"machine: no cloudProvider given");
 			checkArgument(this.machineSize != null,
 					"machine: no machineSize given");
-			if ((this.requestTime != null) && (this.launchTime != null)) {
-				checkArgument(
-						this.requestTime.isBefore(this.launchTime)
-								|| this.requestTime.isEqual(this.launchTime),
-						"requestTime cannot be later than launchTime");
-			}
+
+			// Note: we don't verify that launchTime is later than requestTime,
+			// since this is typically meta data given by the cloud provider and
+			// if it's wrong there is not much we can do about it. Furthermore,
+			// from an operational standpoint, it shouldn't matter if the times
+			// don't make sense.
+
 			return new Machine(this.id, this.machineState,
 					this.membershipStatus, this.serviceState,
 					this.cloudProvider, this.machineSize, this.requestTime,

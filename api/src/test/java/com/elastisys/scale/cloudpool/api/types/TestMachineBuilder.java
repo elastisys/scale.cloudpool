@@ -146,6 +146,22 @@ public class TestMachineBuilder {
 				.launchTime(null).build();
 	}
 
+	/**
+	 * There have been times when a cloud provider returns a request time that
+	 * is later than the launch time. Even though this cannot be true, we still
+	 * need to allow it to prevent bad meta data from raising exceptions.
+	 */
+	@Test
+	public void createWithLaunchTimeBeforeRequestTime() {
+		// requestTime later than launchTime
+		DateTime requestTime = UtcTime.parse("2015-10-10T14:00:00.000Z");
+		DateTime launchTime = UtcTime.parse("2015-10-10T12:00:00.000Z");
+
+		Machine.builder().id("i-1").machineState(MachineState.RUNNING)
+				.cloudProvider("AWS-EC2").machineSize("m1.small")
+				.requestTime(requestTime).launchTime(launchTime).build();
+	}
+
 	@Test
 	public void createWithPrivateIpAddress() {
 		Machine m = Machine.builder().id("i-1")
