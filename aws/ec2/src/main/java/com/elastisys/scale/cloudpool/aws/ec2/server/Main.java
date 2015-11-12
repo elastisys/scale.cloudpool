@@ -1,10 +1,12 @@
 package com.elastisys.scale.cloudpool.aws.ec2.server;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
+import com.elastisys.scale.cloudpool.api.server.CloudPoolOptions;
 import com.elastisys.scale.cloudpool.api.server.CloudPoolServer;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.impl.AwsEc2Client;
 import com.elastisys.scale.cloudpool.aws.ec2.driver.Ec2PoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
+import com.elastisys.scale.cloudpool.commons.basepool.StateStorage;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 
 /**
@@ -13,7 +15,10 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 public class Main {
 
 	public static void main(String[] args) throws Exception {
+		CloudPoolOptions options = CloudPoolServer.parseArgs(args);
+		StateStorage stateStorage = StateStorage.builder(options.storageDir)
+				.build();
 		CloudPoolDriver driver = new Ec2PoolDriver(new AwsEc2Client());
-		CloudPoolServer.main(new BaseCloudPool(driver), args);
+		CloudPoolServer.main(new BaseCloudPool(stateStorage, driver), args);
 	}
 }

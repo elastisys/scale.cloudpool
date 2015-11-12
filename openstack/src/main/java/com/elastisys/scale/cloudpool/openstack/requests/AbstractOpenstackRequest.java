@@ -52,9 +52,13 @@ public abstract class AbstractOpenstackRequest<R> implements Callable<R> {
 
 	@Override
 	public R call() throws RuntimeException {
-		OSClient api = new OSClientFactory()
+		OSClientFactory clientFactory = new OSClientFactory(
+				this.accessConfig.getConnectionTimeout(),
+				this.accessConfig.getSocketTimeout());
+		OSClient api = clientFactory
 				.createAuthenticatedClient(this.accessConfig.getAuth());
 		api.useRegion(this.accessConfig.getRegion());
+
 		return doRequest(api);
 	}
 

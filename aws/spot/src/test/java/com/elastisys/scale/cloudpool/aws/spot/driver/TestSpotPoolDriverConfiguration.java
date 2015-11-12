@@ -1,9 +1,12 @@
 package com.elastisys.scale.cloudpool.aws.spot.driver;
 
+import static com.elastisys.scale.cloudpool.aws.spot.driver.IsClientConfigMatcher.isClientConfig;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import java.util.Arrays;
 
@@ -16,7 +19,6 @@ import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.common.eventbus.EventBus;
@@ -61,7 +63,14 @@ public class TestSpotPoolDriverConfiguration {
 		assertThat(
 				this.driver.driverConfig().getDanglingInstanceCleanupPeriod(),
 				is(45L));
+		assertThat(this.driver.driverConfig().getConnectionTimeout(), is(7000));
+		assertThat(this.driver.driverConfig().getSocketTimeout(), is(5000));
 
+		// verify that driver calls through to configure spot client
+		// appropriately
+		verify(this.mockClient).configure(argThat(is("ABC")),
+				argThat(is("XYZ")), argThat(is("us-west-1")),
+				argThat(is(isClientConfig(7000, 5000))));
 	}
 
 	/**
@@ -98,37 +107,41 @@ public class TestSpotPoolDriverConfiguration {
 		BaseCloudPoolConfig config1 = loadCloudPoolConfig(
 				"config/valid-config-relying-on-defaults.json");
 		this.driver.configure(config1);
-		assertThat(this.driver.poolConfig(), is(config1));
+		assertThat(this.driver.driverConfig(),
+				is(new SpotPoolDriverConfig("ABC", "XYZ", "us-west-1", 0.0070,
+						null, null)));
 
 		// re-configure
 		BaseCloudPoolConfig config2 = loadCloudPoolConfig(
 				"config/complete-driver-config.json");
 		this.driver.configure(config2);
-		assertThat(this.driver.poolConfig(), is(config2));
+		assertThat(this.driver.driverConfig(),
+				is(new SpotPoolDriverConfig("ABC", "XYZ", "us-west-1", 0.0070,
+						35L, 45L, 7000, 5000)));
 	}
 
-	@Test(expected = CloudPoolDriverException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void configureWithConfigMissingAccessKeyId() throws Exception {
 		BaseCloudPoolConfig config = loadCloudPoolConfig(
 				"config/invalid-config-missing-accesskeyid.json");
 		this.driver.configure(config);
 	}
 
-	@Test(expected = CloudPoolDriverException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void configureWithConfigMissingSecretAccessKey() throws Exception {
 		BaseCloudPoolConfig config = loadCloudPoolConfig(
 				"config/invalid-config-missing-secretaccesskey.json");
 		this.driver.configure(config);
 	}
 
-	@Test(expected = CloudPoolDriverException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void configureWithConfigMissingRegion() throws Exception {
 		BaseCloudPoolConfig config = loadCloudPoolConfig(
 				"config/invalid-config-missing-region.json");
 		this.driver.configure(config);
 	}
 
-	@Test(expected = CloudPoolDriverException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void configureWithConfigMissingbidPrice() throws Exception {
 		BaseCloudPoolConfig config = loadCloudPoolConfig(
 				"config/invalid-config-missing-bidprice.json");

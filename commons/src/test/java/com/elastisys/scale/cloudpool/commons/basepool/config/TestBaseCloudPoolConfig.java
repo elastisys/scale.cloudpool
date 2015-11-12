@@ -6,6 +6,7 @@ import static org.junit.Assert.assertThat;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
@@ -28,14 +29,15 @@ public class TestBaseCloudPoolConfig {
 	@Test
 	public void basicSanity() {
 		BaseCloudPoolConfig config = new BaseCloudPoolConfig(cloudPoolConfig(),
-				scaleOutConfig(), scaleInConfig(), alertSettings(),
-				poolUpdatePeriod());
+				scaleOutConfig(), scaleInConfig(), alertSettings(), poolFetch(),
+				poolUpdate());
 		config.validate();
 		assertThat(config.getCloudPool(), is(cloudPoolConfig()));
 		assertThat(config.getScaleOutConfig(), is(scaleOutConfig()));
 		assertThat(config.getScaleInConfig(), is(scaleInConfig()));
 		assertThat(config.getAlerts(), is(alertSettings()));
-		assertThat(config.getPoolUpdatePeriod(), is(poolUpdatePeriod()));
+		assertThat(config.getPoolFetch(), is(poolFetch()));
+		assertThat(config.getPoolUpdate(), is(poolUpdate()));
 	}
 
 	/**
@@ -44,42 +46,59 @@ public class TestBaseCloudPoolConfig {
 	@Test
 	public void missingAlertSettings() {
 		BaseCloudPoolConfig config = new BaseCloudPoolConfig(cloudPoolConfig(),
-				scaleOutConfig(), scaleInConfig(), null, poolUpdatePeriod());
+				scaleOutConfig(), scaleInConfig(), null, poolFetch(),
+				poolUpdate());
 		config.validate();
 		assertThat(config.getAlerts(), is(nullValue()));
 	}
 
 	/**
-	 * It is okay to not specify a poolUpdatePeriod.
+	 * It is okay to not specify poolFetch.
 	 */
 	@Test
-	public void missingPoolUpdatePeriod() {
+	public void missingPoolFetch() {
 		BaseCloudPoolConfig config = new BaseCloudPoolConfig(cloudPoolConfig(),
-				scaleOutConfig(), scaleInConfig(), alertSettings(), null);
+				scaleOutConfig(), scaleInConfig(), alertSettings(), null,
+				poolUpdate());
 		config.validate();
-		assertThat(config.getPoolUpdatePeriod(),
-				is(BaseCloudPoolConfig.DEFAULT_POOL_UPDATE_PERIOD));
+		assertThat(config.getPoolFetch(),
+				is(BaseCloudPoolConfig.DEFAULT_POOL_FETCH_CONFIG));
+	}
+
+	/**
+	 * It is okay to not specify poolUpdate.
+	 */
+	@Test
+	public void missingPoolUpdate() {
+		BaseCloudPoolConfig config = new BaseCloudPoolConfig(cloudPoolConfig(),
+				scaleOutConfig(), scaleInConfig(), alertSettings(), poolFetch(),
+				null);
+		config.validate();
+		assertThat(config.getPoolUpdate(),
+				is(BaseCloudPoolConfig.DEFAULT_POOL_UPDATE_CONFIG));
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void missingCloudPool() {
 		BaseCloudPoolConfig config = new BaseCloudPoolConfig(null,
-				scaleOutConfig(), scaleInConfig(), alertSettings(),
-				poolUpdatePeriod());
+				scaleOutConfig(), scaleInConfig(), alertSettings(), poolFetch(),
+				poolUpdate());
 		config.validate();
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void missingScaleOutConfig() {
 		BaseCloudPoolConfig config = new BaseCloudPoolConfig(cloudPoolConfig(),
-				null, scaleInConfig(), alertSettings(), poolUpdatePeriod());
+				null, scaleInConfig(), alertSettings(), poolFetch(),
+				poolUpdate());
 		config.validate();
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void missingScaleInConfig() {
 		BaseCloudPoolConfig config = new BaseCloudPoolConfig(cloudPoolConfig(),
-				scaleOutConfig(), null, alertSettings(), poolUpdatePeriod());
+				scaleOutConfig(), null, alertSettings(), poolFetch(),
+				poolUpdate());
 		config.validate();
 	}
 
@@ -137,7 +156,18 @@ public class TestBaseCloudPoolConfig {
 				connectionTimeout, socketTimeout);
 	}
 
-	private int poolUpdatePeriod() {
-		return 15;
+	private PoolFetchConfig poolFetch() {
+		RetriesConfig retriesConfig = new RetriesConfig(3,
+				new TimeInterval(2L, TimeUnit.SECONDS));
+		TimeInterval refreshInterval = new TimeInterval(20L, TimeUnit.SECONDS);
+		TimeInterval reachabilityTimeout = new TimeInterval(2L,
+				TimeUnit.MINUTES);
+		return new PoolFetchConfig(retriesConfig, refreshInterval,
+				reachabilityTimeout);
 	}
+
+	private PoolUpdateConfig poolUpdate() {
+		return new PoolUpdateConfig(new TimeInterval(1L, TimeUnit.MINUTES));
+	}
+
 }

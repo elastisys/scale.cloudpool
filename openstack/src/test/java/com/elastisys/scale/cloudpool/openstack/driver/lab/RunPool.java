@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.openstack.driver.lab;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Executors;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
+import com.elastisys.scale.cloudpool.commons.basepool.StateStorage;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.util.cli.CloudPoolCommandLineDriver;
 import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriver;
@@ -35,9 +37,11 @@ public class RunPool {
 			.newScheduledThreadPool(10);
 
 	public static void main(String[] args) throws Exception {
+		StateStorage stateStorage = StateStorage
+				.builder(new File("target/state")).build();
 		CloudPoolDriver openstackDriver = new OpenStackPoolDriver(
 				new StandardOpenstackClient());
-		CloudPool pool = new BaseCloudPool(openstackDriver);
+		CloudPool pool = new BaseCloudPool(stateStorage, openstackDriver);
 
 		JsonObject config = JsonUtils.parseJsonFile(cloudPoolConfig.toFile())
 				.getAsJsonObject();

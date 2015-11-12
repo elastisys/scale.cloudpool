@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.jetty.server.Server;
+import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -44,8 +45,8 @@ import com.google.gson.JsonObject;
  * a mocked back-end.
  */
 public class TestCloudPoolClient {
-	private static final String SERVER_KEYSTORE = Resources.getResource(
-			"security/server/server_keystore.p12").toString();
+	private static final String SERVER_KEYSTORE = Resources
+			.getResource("security/server/server_keystore.p12").toString();
 	private static final String SERVER_KEYSTORE_PASSWORD = "serverpass";
 
 	/** Web server to use throughout the tests. */
@@ -53,8 +54,8 @@ public class TestCloudPoolClient {
 	/** Server port to use for HTTPS. */
 	private static int httpsPort;
 	/** Storage dir for configurations. */
-	private static final String storageDir = Paths.get("target", "cloudpool",
-			"storage").toString();
+	private static final String storageDir = Paths
+			.get("target", "cloudpool", "storage").toString();
 
 	private static CloudPool cloudPool = mock(CloudPool.class);
 
@@ -66,8 +67,8 @@ public class TestCloudPoolClient {
 		List<Integer> freePorts = HostUtils.findFreePorts(1);
 		httpsPort = freePorts.get(0);
 
-		client = new CloudPoolClient(new AuthenticatedHttpClient(),
-				"localhost", httpsPort);
+		client = new CloudPoolClient(new AuthenticatedHttpClient(), "localhost",
+				httpsPort);
 
 		CloudPoolOptions options = new CloudPoolOptions();
 		options.httpsPort = httpsPort;
@@ -184,9 +185,12 @@ public class TestCloudPoolClient {
 
 	@Test
 	public void getPoolSize() {
-		when(cloudPool.getPoolSize()).thenReturn(new PoolSizeSummary(3, 2, 1));
+		DateTime time = UtcTime.parse("2015-01-01T12:00:00.000Z");
+		when(cloudPool.getPoolSize())
+				.thenReturn(new PoolSizeSummary(time, 3, 2, 1));
 
-		assertThat(client.getPoolSize(), is(new PoolSizeSummary(3, 2, 1)));
+		assertThat(client.getPoolSize(),
+				is(new PoolSizeSummary(time, 3, 2, 1)));
 	}
 
 	@Test
@@ -199,8 +203,8 @@ public class TestCloudPoolClient {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void setDesiredSizeWithIllegalInput() {
-		doThrow(new IllegalArgumentException("negative value!"))
-				.when(cloudPool).setDesiredSize(-1);
+		doThrow(new IllegalArgumentException("negative value!")).when(cloudPool)
+				.setDesiredSize(-1);
 
 		client.setDesiredSize(-1);
 	}
@@ -242,8 +246,8 @@ public class TestCloudPoolClient {
 		client.setMembershipStatus("i-1", MembershipStatus.blessed());
 
 		// verify that call was made to cloudpool backend
-		verify(cloudPool)
-				.setMembershipStatus("i-1", MembershipStatus.blessed());
+		verify(cloudPool).setMembershipStatus("i-1",
+				MembershipStatus.blessed());
 	}
 
 	@Test(expected = NotFoundException.class)

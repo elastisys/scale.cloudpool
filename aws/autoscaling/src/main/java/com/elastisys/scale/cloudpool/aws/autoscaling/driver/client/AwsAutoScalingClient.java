@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
@@ -50,7 +51,7 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 				"can't use client before it's configured");
 
 		return new GetAutoScalingGroup(awsCredentials(), region(),
-				autoScalingGroupName).call();
+				clientConfig(), autoScalingGroupName).call();
 	}
 
 	@Override
@@ -60,7 +61,7 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 				"can't use client before it's configured");
 
 		return new GetLaunchConfiguration(awsCredentials(), region(),
-				launchConfigurationName).call();
+				clientConfig(), launchConfigurationName).call();
 	}
 
 	@Override
@@ -70,7 +71,7 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 				"can't use client before it's configured");
 
 		return new GetAutoScalingGroupInstances(awsCredentials(), region(),
-				autoScalingGroupName).call();
+				clientConfig(), autoScalingGroupName).call();
 	}
 
 	@Override
@@ -78,8 +79,8 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 		checkArgument(isConfigured(),
 				"can't use client before it's configured");
 
-		new SetDesiredAutoScalingGroupSize(awsCredentials(),
-				config().getRegion(), autoScalingGroupName, desiredSize).call();
+		new SetDesiredAutoScalingGroupSize(awsCredentials(), region(),
+				clientConfig(), autoScalingGroupName, desiredSize).call();
 	}
 
 	@Override
@@ -92,7 +93,7 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 		getInstanceOrFail(instanceId);
 
 		new TerminateAutoScalingGroupInstance(awsCredentials(), region(),
-				instanceId).call();
+				clientConfig(), instanceId).call();
 	}
 
 	@Override
@@ -105,7 +106,7 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 		getInstanceOrFail(instanceId);
 
 		new AttachAutoScalingGroupInstance(awsCredentials(), region(),
-				autoScalingGroupName, instanceId).call();
+				clientConfig(), autoScalingGroupName, instanceId).call();
 	}
 
 	@Override
@@ -118,7 +119,7 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 		getInstanceOrFail(instanceId);
 
 		new DetachAutoScalingGroupInstance(awsCredentials(), region(),
-				autoScalingGroupName, instanceId).call();
+				clientConfig(), autoScalingGroupName, instanceId).call();
 	}
 
 	@Override
@@ -130,7 +131,7 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 		// verify that instance exists
 		getInstanceOrFail(instanceId);
 
-		new TagEc2Resources(awsCredentials(), region(),
+		new TagEc2Resources(awsCredentials(), region(), clientConfig(),
 				Arrays.asList(instanceId), tags).call();
 	}
 
@@ -139,7 +140,8 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 		checkArgument(isConfigured(),
 				"can't use client before it's configured");
 
-		return new GetInstance(awsCredentials(), region(), instanceId).call();
+		return new GetInstance(awsCredentials(), region(), clientConfig(),
+				instanceId).call();
 	}
 
 	private boolean isConfigured() {
@@ -150,12 +152,34 @@ public class AwsAutoScalingClient implements AutoScalingClient {
 		return this.config.get();
 	}
 
+	/**
+	 * The AWS credentials that the client has been configured to use.
+	 *
+	 * @return
+	 */
 	private AWSCredentials awsCredentials() {
 		return new BasicAWSCredentials(config().getAwsAccessKeyId(),
 				config().getAwsSecretAccessKey());
 	}
 
+	/**
+	 * The region that the client has been configured to operate against.
+	 *
+	 * @return
+	 */
 	private String region() {
 		return config().getRegion();
+	}
+
+	/**
+	 * Returns a {@link ClientConfiguration} that captures the connection
+	 * settings that the client has been configured to use.
+	 *
+	 * @return
+	 */
+	private ClientConfiguration clientConfig() {
+		return new ClientConfiguration()
+				.withConnectionTimeout(config().getConnectionTimeout())
+				.withSocketTimeout(config().getSocketTimeout());
 	}
 }

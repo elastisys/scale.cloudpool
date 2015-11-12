@@ -93,7 +93,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 
 	@Override
 	public void configure(BaseCloudPoolConfig configuration)
-			throws CloudPoolDriverException {
+			throws IllegalArgumentException, CloudPoolDriverException {
 		checkArgument(configuration != null, "config cannot be null");
 		CloudPoolConfig poolConfig = configuration.getCloudPool();
 		checkArgument(poolConfig != null, "missing cloudPool config");
@@ -107,6 +107,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 			this.poolName.set(poolConfig.getName());
 			this.client.configure(config);
 		} catch (Exception e) {
+			Throwables.propagateIfInstanceOf(e, IllegalArgumentException.class);
 			Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
 			throw new CloudPoolDriverException(String.format(
 					"failed to apply configuration: %s", e.getMessage()));

@@ -21,6 +21,7 @@
       "instanceHourMargin": 0
     },
     "alerts": {
+      "duplicateSuppression": { "time": 15, "unit": "minutes" },
       "smtp": [
         {
           "subject": "[elastisys:scale] alert for scaling group 'my-cloud-pool'",
@@ -36,5 +37,7 @@
         }
       ]
     },    
-    "poolUpdatePeriod": 60            
+    "poolUpdate": {
+      "updateInterval": {"time": 1, "unit": "minutes"}
+    }            
 }  

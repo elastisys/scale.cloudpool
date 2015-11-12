@@ -24,14 +24,14 @@ public class AwsSpotClient extends AwsEc2Client implements SpotClient {
 	public SpotInstanceRequest getSpotInstanceRequest(
 			String spotInstanceRequestId) throws AmazonClientException {
 		return new GetSpotInstanceRequest(awsCredentials(), region(),
-				spotInstanceRequestId).call();
+				clientConfig(), spotInstanceRequestId).call();
 	}
 
 	@Override
 	public List<SpotInstanceRequest> getSpotInstanceRequests(
 			Collection<Filter> filters) throws AmazonClientException {
-		return new GetSpotInstanceRequests(awsCredentials(), region(), filters)
-				.call();
+		return new GetSpotInstanceRequests(awsCredentials(), region(),
+				clientConfig(), filters).call();
 	}
 
 	@Override
@@ -40,17 +40,18 @@ public class AwsSpotClient extends AwsEc2Client implements SpotClient {
 		// no particular availability zone
 		String availabilityZone = null;
 		PlaceSpotInstanceRequests request = new PlaceSpotInstanceRequests(
-				awsCredentials(), region(), bidPrice, availabilityZone,
-				scaleOutConfig.getSecurityGroups(), scaleOutConfig.getKeyPair(),
-				scaleOutConfig.getSize(), scaleOutConfig.getImage(),
-				scaleOutConfig.getEncodedUserData(), count, tags);
+				awsCredentials(), region(), clientConfig(), bidPrice,
+				availabilityZone, scaleOutConfig.getSecurityGroups(),
+				scaleOutConfig.getKeyPair(), scaleOutConfig.getSize(),
+				scaleOutConfig.getImage(), scaleOutConfig.getEncodedUserData(),
+				count, tags);
 		return request.call();
 	}
 
 	@Override
 	public void cancelSpotRequests(List<String> spotInstanceRequestIds) {
 		new CancelSpotInstanceRequests(awsCredentials(), region(),
-				spotInstanceRequestIds).call();
+				clientConfig(), spotInstanceRequestIds).call();
 	}
 
 }

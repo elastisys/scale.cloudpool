@@ -97,15 +97,33 @@ public class TestCloudPoolHandlerDispatch {
 	}
 
 	/**
-	 * Verify proper handling of {@code getPool} calls when an error is thrown
-	 * from the backing {@link CloudPool}.
+	 * Verify proper handling of {@code getPool} calls when a cloud error is
+	 * thrown from the backing {@link CloudPool}. In these cases, the server
+	 * should respond with {@code 502}.
 	 */
 	@SuppressWarnings("unchecked")
+	@Test
+	public void testGetPoolDispatchOnCloudError() throws Exception {
+		// set up mock response
+		when(this.cloudPoolMock.getMachinePool())
+				.thenThrow(CloudPoolException.class);
+
+		// call rest endpoint and verify proper dispatching to mock
+		Response response = this.restEndpoint.getPool();
+		assertEquals(response.getStatus(), Status.BAD_GATEWAY.getStatusCode());
+		assertThat(response.getEntity(), instanceOf(ErrorType.class));
+	}
+
+	/**
+	 * Verify proper handling of {@code getPool} calls when an internal error is
+	 * thrown from the backing {@link CloudPool}. In these cases, the server
+	 * should respond with {@code 500}.
+	 */
 	@Test
 	public void testGetPoolDispatchOnInternalError() throws Exception {
 		// set up mock response
 		when(this.cloudPoolMock.getMachinePool())
-				.thenThrow(CloudPoolException.class);
+				.thenThrow(new RuntimeException("buggy code"));
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.getPool();
@@ -130,14 +148,34 @@ public class TestCloudPoolHandlerDispatch {
 	}
 
 	/**
+	 * Verify proper handling of {@code setDesiredSize} calls when a cloud error
+	 * is thrown from the backing {@link CloudPool}. In these cases, the server
+	 * should respond with {@code 502}.
+	 */
+	@Test
+	public void testSetDesiredSizeDispatchOnCloudError()
+			throws CloudPoolException {
+		// set up mock response: should throw error
+		doThrow(new CloudPoolException("api outage")).when(this.cloudPoolMock)
+				.setDesiredSize(anyInt());
+
+		// call rest endpoint and verify proper dispatching to mock
+		Response response = this.restEndpoint
+				.setDesiredSize(new SetDesiredSizeRequest(2));
+		assertEquals(response.getStatus(), Status.BAD_GATEWAY.getStatusCode());
+		assertThat(response.getEntity(), instanceOf(ErrorType.class));
+	}
+
+	/**
 	 * Verify proper handling of {@code setDesiredSize} calls when an unexpected
-	 * error is thrown from the backing {@link CloudPool}.
+	 * internal error is thrown from the backing {@link CloudPool}. In these
+	 * cases, the server should respond with {@code 500}.
 	 */
 	@Test
 	public void testSetDesiredSizeDispatchOnInternalError()
 			throws CloudPoolException {
 		// set up mock response: should throw error
-		doThrow(new CloudPoolException("null pointer")).when(this.cloudPoolMock)
+		doThrow(new RuntimeException("null pointer")).when(this.cloudPoolMock)
 				.setDesiredSize(anyInt());
 
 		// call rest endpoint and verify proper dispatching to mock
@@ -150,7 +188,8 @@ public class TestCloudPoolHandlerDispatch {
 
 	/**
 	 * Verify proper handling of {@code setDesiredSize} calls when an illegal
-	 * input error is thrown from the backing {@link CloudPool}.
+	 * input error is thrown from the backing {@link CloudPool}. In these cases,
+	 * the server should respond with {@code 400}.
 	 */
 	@Test
 	public void testSetDesiredSizeDispatchOnIllegalInputError()
@@ -183,14 +222,32 @@ public class TestCloudPoolHandlerDispatch {
 	}
 
 	/**
-	 * Verify proper handling of {@code getPoolsize} calls when an error is
-	 * thrown from the backing {@link CloudPool}.
+	 * Verify proper handling of {@code getPoolsize} calls when a cloud error is
+	 * thrown from the backing {@link CloudPool}. In these cases, the server
+	 * should respond with {@code 502}.
+	 */
+	@Test
+	public void testGetPoolSizeDispatchOnCloudError() throws Exception {
+		// set up mock response
+		doThrow(new CloudPoolException("cloud api outage"))
+				.when(this.cloudPoolMock).getPoolSize();
+
+		// call rest endpoint and verify proper dispatching to mock
+		Response response = this.restEndpoint.getPoolSize();
+		assertEquals(response.getStatus(), Status.BAD_GATEWAY.getStatusCode());
+		assertThat(response.getEntity(), instanceOf(ErrorType.class));
+	}
+
+	/**
+	 * Verify proper handling of {@code getPoolsize} calls when an internal
+	 * error is thrown from the backing {@link CloudPool}. In these cases, the
+	 * server should respond with {@code 500}.
 	 */
 	@Test
 	public void testGetPoolSizeDispatchOnInternalError() throws Exception {
 		// set up mock response
-		doThrow(new CloudPoolException("cloud api outage"))
-				.when(this.cloudPoolMock).getPoolSize();
+		doThrow(new RuntimeException("buggy code")).when(this.cloudPoolMock)
+				.getPoolSize();
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.getPoolSize();
@@ -219,7 +276,8 @@ public class TestCloudPoolHandlerDispatch {
 
 	/**
 	 * Verify proper handling of {@code getMetadata} calls when an error is
-	 * thrown from the backing {@link CloudPool}.
+	 * thrown from the backing {@link CloudPool}. In these cases, the server
+	 * should respond with {@code 500}.
 	 */
 	@Test
 	public void testGetMetadataDispatchOnInternalError() throws Exception {
@@ -251,7 +309,8 @@ public class TestCloudPoolHandlerDispatch {
 
 	/**
 	 * Verify proper handling of {@code terminateMachine} calls when a
-	 * {@link NotFoundException} is thrown from the backing {@link CloudPool} .
+	 * {@link NotFoundException} is thrown from the backing {@link CloudPool}.
+	 * In these cases, the server should respond with {@code 404}.
 	 */
 	@Test
 	public void testTerminateMachineOnNotFoundError() throws Exception {
@@ -267,14 +326,33 @@ public class TestCloudPoolHandlerDispatch {
 	}
 
 	/**
+	 * Verify proper handling of {@code terminateMachine} calls when a cloud
+	 * error is thrown from the backing {@link CloudPool}. In these cases, the
+	 * server should respond with {@code 502}.
+	 */
+	@Test
+	public void testTerminateMachineDispatchOnCloudError() throws Exception {
+		// set up mock response
+		doThrow(new CloudPoolException("cloud api outage"))
+				.when(this.cloudPoolMock).terminateMachine("i-1", false);
+
+		// call rest endpoint and verify proper dispatching to mock
+		Response response = this.restEndpoint.terminateMachine("i-1",
+				new TerminateMachineRequest(false));
+		assertEquals(response.getStatus(), Status.BAD_GATEWAY.getStatusCode());
+		assertThat(response.getEntity(), instanceOf(ErrorType.class));
+	}
+
+	/**
 	 * Verify proper handling of {@code terminateMachine} calls when an internal
-	 * error is thrown from the backing {@link CloudPool}.
+	 * error is thrown from the backing {@link CloudPool}. In these cases, the
+	 * server should respond with {@code 500}.
 	 */
 	@Test
 	public void testTerminateMachineDispatchOnInternalError() throws Exception {
 		// set up mock response
-		doThrow(new CloudPoolException("cloud api outage"))
-				.when(this.cloudPoolMock).terminateMachine("i-1", false);
+		doThrow(new RuntimeException("buggy code")).when(this.cloudPoolMock)
+				.terminateMachine("i-1", false);
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.terminateMachine("i-1",
@@ -301,7 +379,8 @@ public class TestCloudPoolHandlerDispatch {
 
 	/**
 	 * Verify proper handling of {@code detachMachine} calls when a
-	 * {@link NotFoundException} is thrown from the backing {@link CloudPool} .
+	 * {@link NotFoundException} is thrown from the backing {@link CloudPool}.
+	 * In these cases, the server should respond with {@code 404}.
 	 */
 	@Test
 	public void testDetachMachineOnNotFoundError() throws Exception {
@@ -317,14 +396,33 @@ public class TestCloudPoolHandlerDispatch {
 	}
 
 	/**
+	 * Verify proper handling of {@code detachMachine} calls when a cloud error
+	 * is thrown from the backing {@link CloudPool}. In these cases, the server
+	 * should respond with {@code 502}.
+	 */
+	@Test
+	public void testDetachMachineDispatchOnCloudError() throws Exception {
+		// set up mock response
+		doThrow(new CloudPoolException("cloud api outage"))
+				.when(this.cloudPoolMock).detachMachine("i-1", false);
+
+		// call rest endpoint and verify proper dispatching to mock
+		Response response = this.restEndpoint.detachMachine("i-1",
+				new DetachMachineRequest(false));
+		assertEquals(response.getStatus(), Status.BAD_GATEWAY.getStatusCode());
+		assertThat(response.getEntity(), instanceOf(ErrorType.class));
+	}
+
+	/**
 	 * Verify proper handling of {@code detachMachine} calls when an internal
-	 * error is thrown from the backing {@link CloudPool}.
+	 * error is thrown from the backing {@link CloudPool}. In these cases, the
+	 * server should respond with {@code 500}.
 	 */
 	@Test
 	public void testDetachMachineDispatchOnInternalError() throws Exception {
 		// set up mock response
-		doThrow(new CloudPoolException("cloud api outage"))
-				.when(this.cloudPoolMock).detachMachine("i-1", false);
+		doThrow(new RuntimeException("buggy code")).when(this.cloudPoolMock)
+				.detachMachine("i-1", false);
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.detachMachine("i-1",
@@ -350,7 +448,8 @@ public class TestCloudPoolHandlerDispatch {
 
 	/**
 	 * Verify proper handling of {@code attachMachine} calls when a
-	 * {@link NotFoundException} is thrown from the backing {@link CloudPool} .
+	 * {@link NotFoundException} is thrown from the backing {@link CloudPool}.
+	 * In these cases, the server should respond with {@code 404}.
 	 */
 	@Test
 	public void testAttachMachineOnNotFoundError() throws Exception {
@@ -365,14 +464,32 @@ public class TestCloudPoolHandlerDispatch {
 	}
 
 	/**
+	 * Verify proper handling of {@code attachMachine} calls when a cloud error
+	 * is thrown from the backing {@link CloudPool}. In these cases, the server
+	 * should respond with {@code 502}.
+	 */
+	@Test
+	public void testAttachMachineDispatchOnCloudError() throws Exception {
+		// set up mock response
+		doThrow(new CloudPoolException("cloud api outage"))
+				.when(this.cloudPoolMock).attachMachine("i-1");
+
+		// call rest endpoint and verify proper dispatching to mock
+		Response response = this.restEndpoint.attachMachine("i-1");
+		assertEquals(response.getStatus(), Status.BAD_GATEWAY.getStatusCode());
+		assertThat(response.getEntity(), instanceOf(ErrorType.class));
+	}
+
+	/**
 	 * Verify proper handling of {@code attachMachine} calls when an internal
-	 * error is thrown from the backing {@link CloudPool}.
+	 * error is thrown from the backing {@link CloudPool}. In these cases, the
+	 * server should respond with {@code 500}.
 	 */
 	@Test
 	public void testAttachMachineDispatchOnInternalError() throws Exception {
 		// set up mock response
-		doThrow(new CloudPoolException("cloud api outage"))
-				.when(this.cloudPoolMock).attachMachine("i-1");
+		doThrow(new RuntimeException("buggy code")).when(this.cloudPoolMock)
+				.attachMachine("i-1");
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.attachMachine("i-1");
@@ -399,7 +516,8 @@ public class TestCloudPoolHandlerDispatch {
 
 	/**
 	 * Verify proper handling of {@code setServiceState} calls when a
-	 * {@link NotFoundException} is thrown from the backing {@link CloudPool} .
+	 * {@link NotFoundException} is thrown from the backing {@link CloudPool}.
+	 * In these cases, the server should respond with {@code 404}.
 	 */
 	@Test
 	public void testSetServiceStateOnNotFoundError() throws Exception {
@@ -415,14 +533,33 @@ public class TestCloudPoolHandlerDispatch {
 	}
 
 	/**
+	 * Verify proper handling of {@code setServiceState} calls when a cloud
+	 * error is thrown from the backing {@link CloudPool}. In these cases, the
+	 * server should respond with {@code 502}.
+	 */
+	@Test
+	public void testSetServiceStateDispatchOnCloudError() throws Exception {
+		// set up mock response
+		doThrow(new CloudPoolException("cloud api outage"))
+				.when(this.cloudPoolMock)
+				.setServiceState("i-1", ServiceState.IN_SERVICE);
+
+		// call rest endpoint and verify proper dispatching to mock
+		Response response = this.restEndpoint.setServiceState("i-1",
+				new SetServiceStateRequest(ServiceState.IN_SERVICE));
+		assertEquals(response.getStatus(), Status.BAD_GATEWAY.getStatusCode());
+		assertThat(response.getEntity(), instanceOf(ErrorType.class));
+	}
+
+	/**
 	 * Verify proper handling of {@code setServiceState} calls when an internal
-	 * error is thrown from the backing {@link CloudPool}.
+	 * error is thrown from the backing {@link CloudPool}. In these cases, the
+	 * server should respond with {@code 500}.
 	 */
 	@Test
 	public void testSetServiceStateDispatchOnInternalError() throws Exception {
 		// set up mock response
-		doThrow(new CloudPoolException("cloud api outage"))
-				.when(this.cloudPoolMock)
+		doThrow(new RuntimeException("buggy code")).when(this.cloudPoolMock)
 				.setServiceState("i-1", ServiceState.IN_SERVICE);
 
 		// call rest endpoint and verify proper dispatching to mock
@@ -452,7 +589,8 @@ public class TestCloudPoolHandlerDispatch {
 
 	/**
 	 * Verify proper handling of {@code setMembershipStatus} calls when a
-	 * {@link NotFoundException} is thrown from the backing {@link CloudPool} .
+	 * {@link NotFoundException} is thrown from the backing {@link CloudPool}.
+	 * In these cases, the server should respond with {@code 404}.
 	 */
 	@Test
 	public void testSetMembershipStatusDispatchOnNotFoundError()
@@ -470,15 +608,35 @@ public class TestCloudPoolHandlerDispatch {
 	}
 
 	/**
+	 * Verify proper handling of {@code setMembershipStatus} calls when a cloud
+	 * error is thrown from the backing {@link CloudPool}. In these cases, the
+	 * server should respond with {@code 502}.
+	 */
+	@Test
+	public void testSetMembershipStatusDispatchOnCloudError() throws Exception {
+		// set up mock response
+		doThrow(new CloudPoolException("cloud api outage"))
+				.when(this.cloudPoolMock)
+				.setMembershipStatus("i-X", MembershipStatus.awaitingService());
+
+		// call rest endpoint and verify proper dispatching to mock
+		Response response = this.restEndpoint.setMembershipStatus("i-X",
+				new SetMembershipStatusRequest(
+						MembershipStatus.awaitingService()));
+		assertEquals(response.getStatus(), Status.BAD_GATEWAY.getStatusCode());
+		assertThat(response.getEntity(), instanceOf(ErrorType.class));
+	}
+
+	/**
 	 * Verify proper handling of {@code setMembershipStatus} calls when an
-	 * internal error is thrown from the backing {@link CloudPool} .
+	 * internal error is thrown from the backing {@link CloudPool}. In these
+	 * cases, the server should respond with {@code 500}.
 	 */
 	@Test
 	public void testSetMembershipStatusDispatchOnInternalError()
 			throws Exception {
 		// set up mock response
-		doThrow(new RuntimeException("cloud api outage"))
-				.when(this.cloudPoolMock)
+		doThrow(new RuntimeException("null pointer")).when(this.cloudPoolMock)
 				.setMembershipStatus("i-X", MembershipStatus.awaitingService());
 
 		// call rest endpoint and verify proper dispatching to mock

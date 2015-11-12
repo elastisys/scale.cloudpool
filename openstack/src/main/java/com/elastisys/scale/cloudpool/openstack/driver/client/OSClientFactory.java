@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.openstack.driver.client;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.openstack4j.api.OSClient;
+import org.openstack4j.core.transport.Config;
 import org.openstack4j.model.common.Identifier;
 import org.openstack4j.openstack.OSFactory;
 
@@ -23,10 +24,19 @@ public class OSClientFactory {
 
 	/**
 	 * Creates an {@link OSClientFactory} with a {@link StandardOSClientCreator}
-	 * .
+	 * creating clients with the given connection timeouts.
+	 *
+	 * @param connectionTimeout
+	 *            The timeout in milliseconds until a connection is established.
+	 * @param socketTimeout
+	 *            The socket timeout ({@code SO_TIMEOUT}) in milliseconds, which
+	 *            is the timeout for waiting for data or, put differently, a
+	 *            maximum period inactivity between two consecutive data
+	 *            packets).
+	 *
 	 */
-	public OSClientFactory() {
-		this(new StandardOSClientCreator());
+	public OSClientFactory(int connectionTimeout, int socketTimeout) {
+		this(new StandardOSClientCreator(connectionTimeout, socketTimeout));
 	}
 
 	/**
@@ -61,14 +71,16 @@ public class OSClientFactory {
 			checkArgument(v3Creds.isDomainScoped() ^ v3Creds.isProjectScoped(),
 					"version 3 type credentials msut be either domain- or project-scoped");
 			if (v3Creds.isDomainScoped()) {
-				return this.creator.fromDomainScopedV3Auth(authConfig
-						.getKeystoneUrl(), v3Creds.getScope().getDomainId(),
-						v3Creds.getUserId(), v3Creds.getPassword());
+				return this.creator.fromDomainScopedV3Auth(
+						authConfig.getKeystoneUrl(),
+						v3Creds.getScope().getDomainId(), v3Creds.getUserId(),
+						v3Creds.getPassword());
 			} else {
 				// project scoped v3 auth
-				return this.creator.fromProjectScopedV3Auth(authConfig
-						.getKeystoneUrl(), v3Creds.getScope().getProjectId(),
-						v3Creds.getUserId(), v3Creds.getPassword());
+				return this.creator.fromProjectScopedV3Auth(
+						authConfig.getKeystoneUrl(),
+						v3Creds.getScope().getProjectId(), v3Creds.getUserId(),
+						v3Creds.getPassword());
 			}
 		}
 	}
@@ -92,30 +104,66 @@ public class OSClientFactory {
 	 * Default {@link OSClientCreator} implementation.
 	 */
 	private static class StandardOSClientCreator implements OSClientCreator {
+
+		/**
+		 * The timeout in milliseconds until a connection is established.
+		 */
+		private final int connectionTimeout;
+
+		/**
+		 * The socket timeout ({@code SO_TIMEOUT}) in milliseconds, which is the
+		 * timeout for waiting for data or, put differently, a maximum period
+		 * inactivity between two consecutive data packets).
+		 */
+		private final int socketTimeout;
+
+		/**
+		 * Creates a new {@link StandardOSClientCreator}.
+		 *
+		 * @param connectionTimeout
+		 *            The timeout in milliseconds until a connection is
+		 *            established.
+		 * @param socketTimeout
+		 *            The socket timeout ({@code SO_TIMEOUT}) in milliseconds,
+		 *            which is the timeout for waiting for data or, put
+		 *            differently, a maximum period inactivity between two
+		 *            consecutive data packets).
+		 */
+		public StandardOSClientCreator(int connectionTimeout,
+				int socketTimeout) {
+			this.connectionTimeout = connectionTimeout;
+			this.socketTimeout = socketTimeout;
+		}
+
 		@Override
 		public OSClient fromV2Auth(String keystoneUrl, String tenantName,
 				String user, String password) {
-			return OSFactory.builder().endpoint(keystoneUrl)
-					.credentials(user, password).tenantName(tenantName)
-					.authenticate();
+			return OSFactory.builder().withConfig(clientConfig())
+					.endpoint(keystoneUrl).credentials(user, password)
+					.tenantName(tenantName).authenticate();
+		}
+
+		private Config clientConfig() {
+			return Config.newConfig()
+					.withConnectionTimeout(this.connectionTimeout)
+					.withReadTimeout(this.socketTimeout);
 		}
 
 		@Override
 		public OSClient fromProjectScopedV3Auth(String keystoneUrl,
 				String projectId, String userId, String password) {
-			return OSFactory
-					.builderV3()
-					.endpoint(keystoneUrl)
-					.credentials(userId, password)
+			return OSFactory.builderV3().withConfig(clientConfig())
+					.endpoint(keystoneUrl).credentials(userId, password)
 					.scopeToProject(Identifier.byId(projectId),
-							Identifier.byId(projectId)).authenticate();
+							Identifier.byId(projectId))
+					.authenticate();
 		}
 
 		@Override
 		public OSClient fromDomainScopedV3Auth(String keystoneUrl,
 				String domainId, String userId, String password) {
-			return OSFactory.builderV3().endpoint(keystoneUrl)
-					.credentials(userId, password)
+			return OSFactory.builderV3().withConfig(clientConfig())
+					.endpoint(keystoneUrl).credentials(userId, password)
 					.scopeToDomain(Identifier.byId(domainId)).authenticate();
 		}
 	}

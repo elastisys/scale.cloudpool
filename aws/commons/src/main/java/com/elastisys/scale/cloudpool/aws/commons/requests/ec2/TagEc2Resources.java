@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.Tag;
@@ -40,14 +41,16 @@ public class TagEc2Resources extends AmazonEc2Request<Void> {
 	private List<Tag> tags = Lists.newArrayList();
 
 	public TagEc2Resources(AWSCredentials awsCredentials, String region,
-			List<String> resourceIds, Tag... tags) {
-		this(awsCredentials, region, resourceIds,
+			ClientConfiguration clientConfig, List<String> resourceIds,
+			Tag... tags) {
+		this(awsCredentials, region, clientConfig, resourceIds,
 				(tags == null ? new ArrayList<Tag>() : Arrays.asList(tags)));
 	}
 
 	public TagEc2Resources(AWSCredentials awsCredentials, String region,
-			List<String> resourceIds, List<Tag> tags) {
-		super(awsCredentials, region);
+			ClientConfiguration clientConfig, List<String> resourceIds,
+			List<Tag> tags) {
+		super(awsCredentials, region, clientConfig);
 		this.resourceIds = resourceIds;
 		this.tags = Lists.newArrayList(tags);
 	}

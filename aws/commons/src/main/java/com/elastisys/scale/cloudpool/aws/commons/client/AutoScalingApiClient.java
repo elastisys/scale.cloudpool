@@ -37,21 +37,8 @@ public class AutoScalingApiClient implements Closeable {
 	private final AmazonAutoScaling api;
 
 	/**
-	 * Constructs a new {@link AutoScalingApiClient} that operates against a given
-	 * AWS region.
-	 *
-	 * @param awsCredentials
-	 *            The AWS credentials used to connect to the AWS account.
-	 * @param region
-	 *            The AWS region that this client operates against.
-	 */
-	public AutoScalingApiClient(AWSCredentials awsCredentials, String region) {
-		this(awsCredentials, region, new ClientConfiguration());
-	}
-
-	/**
-	 * Constructs a new {@link AutoScalingApiClient} that operates against a given
-	 * AWS region.
+	 * Constructs a new {@link AutoScalingApiClient} that operates against a
+	 * given AWS region.
 	 *
 	 * @param awsCredentials
 	 *            The AWS credentials used to connect to the AWS account.

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import com.amazonaws.AmazonClientException;
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.DescribeSpotInstanceRequestsRequest;
 import com.amazonaws.services.ec2.model.DescribeSpotInstanceRequestsResult;
@@ -53,8 +54,8 @@ import com.elastisys.scale.commons.net.retryable.Retryers;
  * @see Retryable
  * @see Retryers
  */
-public class GetSpotInstanceRequests extends
-		AmazonEc2Request<List<SpotInstanceRequest>> {
+public class GetSpotInstanceRequests
+		extends AmazonEc2Request<List<SpotInstanceRequest>> {
 
 	/**
 	 * A list of spot request ids of interest to limit the query to. If
@@ -77,9 +78,12 @@ public class GetSpotInstanceRequests extends
 	 *            The AWS security credentials to the account.
 	 * @param region
 	 *            The AWS region of interest.
+	 * @param clientConfig
+	 *            Client configuration options such as connection timeout, etc.
 	 */
-	public GetSpotInstanceRequests(AWSCredentials awsCredentials, String region) {
-		this(awsCredentials, region, null);
+	public GetSpotInstanceRequests(AWSCredentials awsCredentials, String region,
+			ClientConfiguration clientConfig) {
+		this(awsCredentials, region, clientConfig, null);
 	}
 
 	/**
@@ -91,14 +95,16 @@ public class GetSpotInstanceRequests extends
 	 *            The AWS security credentials to the account.
 	 * @param region
 	 *            The AWS region of interest.
+	 * @param clientConfig
+	 *            Client configuration options such as connection timeout, etc.
 	 * @param filters
 	 *            A list of filter to narrow the query. Only
 	 *            {@link SpotInstanceRequest}s matching the given filters will
 	 *            be returned. May be <code>null</code> (no filters).
 	 */
-	public GetSpotInstanceRequests(AWSCredentials awsCredentials,
-			String region, Collection<Filter> filters) {
-		this(awsCredentials, region, null, filters);
+	public GetSpotInstanceRequests(AWSCredentials awsCredentials, String region,
+			ClientConfiguration clientConfig, Collection<Filter> filters) {
+		this(awsCredentials, region, clientConfig, null, filters);
 	}
 
 	/**
@@ -110,6 +116,8 @@ public class GetSpotInstanceRequests extends
 	 *            The AWS security credentials to the account.
 	 * @param region
 	 *            The AWS region of interest.
+	 * @param clientConfig
+	 *            Client configuration options such as connection timeout, etc.
 	 * @param spotRequestIds
 	 *            The spot request ids of interest. May be <code>null</code>.
 	 * @param filters
@@ -117,10 +125,10 @@ public class GetSpotInstanceRequests extends
 	 *            {@link SpotInstanceRequest}s matching the given filters will
 	 *            be returned. May be <code>null</code> (no filters).
 	 */
-	public GetSpotInstanceRequests(AWSCredentials awsCredentials,
-			String region, Collection<String> spotRequestIds,
+	public GetSpotInstanceRequests(AWSCredentials awsCredentials, String region,
+			ClientConfiguration clientConfig, Collection<String> spotRequestIds,
 			Collection<Filter> filters) {
-		super(awsCredentials, region);
+		super(awsCredentials, region, clientConfig);
 		this.spotRequestIds = spotRequestIds;
 		this.filters = filters;
 	}

@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -22,8 +23,10 @@ import com.elastisys.scale.cloudpool.api.server.CloudPoolServer;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.AwsAsPoolDriver;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AwsAutoScalingClient;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
+import com.elastisys.scale.cloudpool.commons.basepool.StateStorage;
 import com.elastisys.scale.commons.net.host.HostUtils;
 import com.elastisys.scale.commons.rest.client.RestClients;
+import com.elastisys.scale.commons.util.file.FileUtils;
 import com.google.common.io.Resources;
 import com.google.gson.JsonObject;
 
@@ -32,9 +35,13 @@ import com.google.gson.JsonObject;
  */
 public class TestAwsAsCloudPoolRestApi {
 
-	private static final String SERVER_KEYSTORE = Resources.getResource(
-			"security/server/server_keystore.p12").toString();
+	private static final String SERVER_KEYSTORE = Resources
+			.getResource("security/server/server_keystore.p12").toString();
 	private static final String SERVER_KEYSTORE_PASSWORD = "serverpass";
+
+	private static final File STATE_STORAGE_DIR = new File("target/state");
+	private static final StateStorage STATE_STORAGE = StateStorage
+			.builder(STATE_STORAGE_DIR).build();
 
 	/** Web server to use throughout the tests. */
 	private static Server server;
@@ -45,11 +52,13 @@ public class TestAwsAsCloudPoolRestApi {
 
 	@BeforeClass
 	public static void onSetup() throws Exception {
+		FileUtils.deleteRecursively(STATE_STORAGE_DIR);
+
 		List<Integer> freePorts = HostUtils.findFreePorts(1);
 		httpsPort = freePorts.get(0);
 
-		cloudPool = new BaseCloudPool(new AwsAsPoolDriver(
-				new AwsAutoScalingClient()));
+		cloudPool = new BaseCloudPool(STATE_STORAGE,
+				new AwsAsPoolDriver(new AwsAutoScalingClient()));
 
 		CloudPoolOptions options = new CloudPoolOptions();
 		options.httpsPort = httpsPort;

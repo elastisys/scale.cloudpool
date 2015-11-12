@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
@@ -84,7 +85,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 
 	@Override
 	public void configure(BaseCloudPoolConfig configuration)
-			throws CloudPoolDriverException {
+			throws IllegalArgumentException, CloudPoolDriverException {
 		CloudPoolConfig poolConfig = configuration.getCloudPool();
 		checkArgument(poolConfig != null, "missing cloudPool config");
 		try {
@@ -94,11 +95,17 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 			config.validate();
 			this.config.set(config);
 			this.poolName.set(poolConfig.getName());
+			ClientConfiguration clientConfig = new ClientConfiguration()
+					.withConnectionTimeout(config.getConnectionTimeout())
+					.withSocketTimeout(config.getSocketTimeout());
 			this.client.configure(config.getAwsAccessKeyId(),
-					config.getAwsSecretAccessKey(), config.getRegion());
+					config.getAwsSecretAccessKey(), config.getRegion(),
+					clientConfig);
 		} catch (Exception e) {
-			throw new CloudPoolDriverException(format(
-					"failed to apply configuration: %s", e.getMessage()), e);
+			Throwables.propagateIfInstanceOf(e, IllegalArgumentException.class);
+			throw new CloudPoolDriverException(
+					format("failed to apply configuration: %s", e.getMessage()),
+					e);
 		}
 	}
 
@@ -108,15 +115,16 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 
 		try {
 			// filter instances on cloud pool tag
-			Filter filter = new Filter().withName(
-					ScalingFilters.CLOUD_POOL_TAG_FILTER).withValues(
-					getPoolName());
+			Filter filter = new Filter()
+					.withName(ScalingFilters.CLOUD_POOL_TAG_FILTER)
+					.withValues(getPoolName());
 			List<Instance> instances = this.client.getInstances(asList(filter));
 			return Lists.transform(instances, new InstanceToMachine());
 		} catch (Exception e) {
-			throw new CloudPoolDriverException(format(
-					"failed to retrieve machines in cloud pool \"%s\": %s",
-					getPoolName(), e.getMessage()), e);
+			throw new CloudPoolDriverException(
+					format("failed to retrieve machines in cloud pool \"%s\": %s",
+							getPoolName(), e.getMessage()),
+					e);
 		}
 	}
 
@@ -164,8 +172,8 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 	}
 
 	@Override
-	public void attachMachine(String machineId) throws NotFoundException,
-			CloudPoolDriverException {
+	public void attachMachine(String machineId)
+			throws NotFoundException, CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured Ec2PoolDriver");
 
 		// verify that machine exists
@@ -176,15 +184,16 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 			tagInstance(machineId, tag);
 		} catch (Exception e) {
 			Throwables.propagateIfInstanceOf(e, NotFoundException.class);
-			throw new CloudPoolDriverException(String.format(
-					"failed to attach '%s' to cloud pool: %s", machineId,
-					e.getMessage()), e);
+			throw new CloudPoolDriverException(
+					String.format("failed to attach '%s' to cloud pool: %s",
+							machineId, e.getMessage()),
+					e);
 		}
 	}
 
 	@Override
-	public void detachMachine(String machineId) throws NotFoundException,
-			CloudPoolDriverException {
+	public void detachMachine(String machineId)
+			throws NotFoundException, CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured Ec2PoolDriver");
 
 		// verify that machine exists in group
@@ -222,8 +231,8 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 
 	@Override
 	public void setMembershipStatus(String machineId,
-			MembershipStatus membershipStatus) throws NotFoundException,
-			CloudPoolDriverException {
+			MembershipStatus membershipStatus)
+					throws NotFoundException, CloudPoolDriverException {
 		checkState(isConfigured(), "attempt to use unconfigured Ec2PoolDriver");
 
 		// verify that machine exists in group
@@ -270,7 +279,8 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 	 * @return
 	 * @throws NotFoundException
 	 */
-	private Machine getMachineOrFail(String machineId) throws NotFoundException {
+	private Machine getMachineOrFail(String machineId)
+			throws NotFoundException {
 		List<Machine> machines = listMachines();
 		for (Machine machine : machines) {
 			if (machine.getId().equals(machineId)) {

@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.DeleteTagsRequest;
 import com.amazonaws.services.ec2.model.Tag;
@@ -27,14 +28,15 @@ public class UntagEc2Resource extends AmazonEc2Request<Void> {
 	private List<Tag> tags = Lists.newArrayList();
 
 	public UntagEc2Resource(AWSCredentials awsCredentials, String region,
-			String resourceId, Tag... tags) {
-		this(awsCredentials, region, resourceId,
+			ClientConfiguration clientConfig, String resourceId, Tag... tags) {
+		this(awsCredentials, region, clientConfig, resourceId,
 				(tags == null ? new ArrayList<Tag>() : Arrays.asList(tags)));
 	}
 
 	public UntagEc2Resource(AWSCredentials awsCredentials, String region,
-			String resourceId, List<Tag> tags) {
-		super(awsCredentials, region);
+			ClientConfiguration clientConfig, String resourceId,
+			List<Tag> tags) {
+		super(awsCredentials, region, clientConfig);
 		this.resourceId = resourceId;
 		this.tags = Lists.newArrayList(tags);
 	}
@@ -46,8 +48,8 @@ public class UntagEc2Resource extends AmazonEc2Request<Void> {
 					tag.getValue(), this.resourceId);
 		}
 
-		DeleteTagsRequest request = new DeleteTagsRequest().withResources(
-				this.resourceId).withTags(this.tags);
+		DeleteTagsRequest request = new DeleteTagsRequest()
+				.withResources(this.resourceId).withTags(this.tags);
 
 		getClient().getApi().deleteTags(request);
 		return null;

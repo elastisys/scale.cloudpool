@@ -2,7 +2,6 @@ package com.elastisys.scale.cloudpool.commons.basepool.driver;
 
 import java.util.List;
 
-import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.Machine;
@@ -63,10 +62,13 @@ public interface CloudPoolDriver {
 	 *
 	 * @param configuration
 	 *            The full configuration for the {@link BaseCloudPool}.
-	 * @throws CloudPoolException
+	 * @throws IllegalArgumentException
+	 *             If the received configuration was invalid.
+	 * @throws CloudPoolDriverException
+	 *             If the configuration could not be applied.
 	 */
 	public void configure(BaseCloudPoolConfig configuration)
-			throws CloudPoolDriverException;
+			throws IllegalArgumentException, CloudPoolDriverException;
 
 	/**
 	 * Returns a list of the members of the cloud pool.
@@ -140,8 +142,8 @@ public interface CloudPoolDriver {
 	 * @throws CloudPoolDriverException
 	 *             If anything went wrong.
 	 */
-	public void terminateMachine(String machineId) throws NotFoundException,
-	CloudPoolDriverException;
+	public void terminateMachine(String machineId)
+			throws NotFoundException, CloudPoolDriverException;
 
 	/**
 	 * Attaches an already running machine instance to the cloud pool.
@@ -153,8 +155,8 @@ public interface CloudPoolDriver {
 	 * @throws CloudPoolDriverException
 	 *             If the operation could not be completed.
 	 */
-	void attachMachine(String machineId) throws NotFoundException,
-	CloudPoolDriverException;
+	void attachMachine(String machineId)
+			throws NotFoundException, CloudPoolDriverException;
 
 	/**
 	 * Removes a member from the cloud pool without terminating it. The machine
@@ -168,8 +170,8 @@ public interface CloudPoolDriver {
 	 * @throws CloudPoolDriverException
 	 *             If the operation could not be completed.
 	 */
-	void detachMachine(String machineId) throws NotFoundException,
-	CloudPoolDriverException;
+	void detachMachine(String machineId)
+			throws NotFoundException, CloudPoolDriverException;
 
 	/**
 	 * Sets the service state of a given machine pool member. Setting the
@@ -216,8 +218,8 @@ public interface CloudPoolDriver {
 	 *             If the operation could not be completed.
 	 */
 	public void setMembershipStatus(String machineId,
-			MembershipStatus membershipStatus) throws NotFoundException,
-			CloudPoolDriverException;
+			MembershipStatus membershipStatus)
+					throws NotFoundException, CloudPoolDriverException;
 
 	/**
 	 * Returns the logical name of the managed machine pool.
@@ -229,7 +231,7 @@ public interface CloudPoolDriver {
 	/**
 	 * Returns description of static properties about the cloud pool itself and
 	 * the cloud it manages.
-	 * 
+	 *
 	 * @return Description of static properties about the cloud pool itself and
 	 *         the cloud it manages.
 	 */

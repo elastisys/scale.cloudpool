@@ -1,9 +1,11 @@
 package com.elastisys.scale.cloudpool.aws.ec2.driver;
 
+import static com.elastisys.scale.cloudpool.aws.ec2.driver.IsClientConfigMatcher.isClientConfig;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -16,7 +18,6 @@ import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
 
@@ -47,7 +48,11 @@ public class TestEc2PoolDriverConfiguration {
 		assertThat(this.driver.config(), is(expectedConfig));
 
 		// verify that configuration was passed on to cloud client
-		verify(this.mockClient).configure("ABC", "XYZ", "us-west-1");
+		verify(this.mockClient).configure(argThat(is("ABC")),
+				argThat(is("XYZ")), argThat(is("us-west-1")),
+				argThat(isClientConfig(
+						Ec2PoolDriverConfig.DEFAULT_CONNECTION_TIMEOUT,
+						Ec2PoolDriverConfig.DEFAULT_SOCKET_TIMEOUT)));
 	}
 
 	@Test
@@ -63,8 +68,10 @@ public class TestEc2PoolDriverConfiguration {
 		BaseCloudPoolConfig config2 = loadCloudPoolConfig(
 				"config/valid-ec2pool-config2.json");
 		this.driver.configure(config2);
-		assertThat(this.driver.config(),
-				is(new Ec2PoolDriverConfig("DEF", "TUV", "us-east-1")));
+		int connectionTimeout = 7000;
+		int socketTimeout = 5000;
+		assertThat(this.driver.config(), is(new Ec2PoolDriverConfig("DEF",
+				"TUV", "us-east-1", connectionTimeout, socketTimeout)));
 	}
 
 	@Test(expected = IllegalStateException.class)
@@ -88,21 +95,21 @@ public class TestEc2PoolDriverConfiguration {
 		this.driver.terminateMachine("i-1");
 	}
 
-	@Test(expected = CloudPoolDriverException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void configureWithConfigMissingAccessKeyId() throws Exception {
 		BaseCloudPoolConfig config = loadCloudPoolConfig(
 				"config/invalid-ec2pool-config-missing-accesskeyid.json");
 		this.driver.configure(config);
 	}
 
-	@Test(expected = CloudPoolDriverException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void configureWithConfigMissingSecretAccessKey() throws Exception {
 		BaseCloudPoolConfig config = loadCloudPoolConfig(
 				"config/invalid-ec2pool-config-missing-secretaccesskey.json");
 		this.driver.configure(config);
 	}
 
-	@Test(expected = CloudPoolDriverException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void configureWithConfigMissingRegion() throws Exception {
 		BaseCloudPoolConfig config = loadCloudPoolConfig(
 				"config/invalid-ec2pool-config-missing-region.json");

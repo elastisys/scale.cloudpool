@@ -108,6 +108,6 @@ public class CloudPoolConfig {
 
 	@Override
 	public String toString() {
-		return JsonUtils.toPrettyString(JsonUtils.toJson(this, true));
+		return JsonUtils.toPrettyString(JsonUtils.toJson(this));
 	}
 }

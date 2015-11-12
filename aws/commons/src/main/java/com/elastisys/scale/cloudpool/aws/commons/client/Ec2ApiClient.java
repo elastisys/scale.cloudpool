@@ -43,19 +43,6 @@ public class Ec2ApiClient implements Closeable {
 	 *            The AWS credentials used to connect to the AWS account.
 	 * @param region
 	 *            The AWS region that this client operates against.
-	 */
-	public Ec2ApiClient(AWSCredentials awsCredentials, String region) {
-		this(awsCredentials, region, new ClientConfiguration());
-	}
-
-	/**
-	 * Constructs a new {@link Ec2ApiClient} that operates against a given AWS
-	 * region.
-	 *
-	 * @param awsCredentials
-	 *            The AWS credentials used to connect to the AWS account.
-	 * @param region
-	 *            The AWS region that this client operates against.
 	 * @param clientConfiguration
 	 *            Any HTTP client configuration to customize API invocations.
 	 */

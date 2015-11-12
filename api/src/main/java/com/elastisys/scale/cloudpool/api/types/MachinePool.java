@@ -31,7 +31,11 @@ public class MachinePool {
 	 * the snapshot.
 	 */
 	private final List<Machine> machines;
-	/** The time when this snapshot of the resource pool was taken. */
+	/**
+	 * The time at which the pool observation was made. Note that in case the
+	 * cloud pool serves locally cached data, this field may be used by the
+	 * client to determine if the data is fresh enough to be acted upon.
+	 */
 	private final DateTime timestamp;
 
 	/**
@@ -103,7 +107,9 @@ public class MachinePool {
 	}
 
 	/**
-	 * Returns the time when this snapshot of the resource pool was taken.
+	 * Returns the time at which the pool observation was made. Note that in
+	 * case the cloud pool serves locally cached data, this field may be used by
+	 * the client to determine if the data is fresh enough to be acted upon.
 	 *
 	 * @return
 	 */
@@ -148,9 +154,8 @@ public class MachinePool {
 	@Override
 	public String toString() {
 		List<String> shortPool = transform(this.machines, toShortString());
-		return MoreObjects.toStringHelper(this)
-				.add("timestamp", this.timestamp).add("machines", shortPool)
-				.toString();
+		return MoreObjects.toStringHelper(this).add("timestamp", this.timestamp)
+				.add("machines", shortPool).toString();
 	}
 
 	/**
@@ -164,9 +169,9 @@ public class MachinePool {
 	 */
 	public static MachinePool fromJson(String machinePoolAsJson)
 			throws IOException {
-		MachinePool machinePool = JsonUtils
-				.toObject(JsonUtils.parseJsonString(machinePoolAsJson),
-						MachinePool.class);
+		MachinePool machinePool = JsonUtils.toObject(
+				JsonUtils.parseJsonString(machinePoolAsJson),
+				MachinePool.class);
 		checkNotNull(machinePool.timestamp, "machine pool missing timestamp");
 		checkNotNull(machinePool.machines, "machine pool missing instances");
 		for (Machine machine : machinePool.machines) {

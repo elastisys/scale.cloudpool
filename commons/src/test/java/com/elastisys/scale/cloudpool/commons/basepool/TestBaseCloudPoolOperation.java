@@ -20,7 +20,6 @@ import static com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPol
 import static com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy.OLDEST_INSTANCE;
 import static com.elastisys.scale.commons.net.alerter.AlertSeverity.ERROR;
 import static com.elastisys.scale.commons.net.alerter.AlertSeverity.WARN;
-import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -40,11 +39,16 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
@@ -58,25 +62,36 @@ import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.PoolFetchConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleInConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.TimeInterval;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.net.smtp.SmtpClientAuthentication;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
+import com.elastisys.scale.commons.util.file.FileUtils;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
+import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.eventbus.EventBus;
+import com.google.common.io.Files;
 import com.google.gson.JsonObject;
 
 /**
  * Verifies proper operation of the {@link BaseCloudPool}.
  */
 public class TestBaseCloudPoolOperation {
+	private static final Logger LOG = LoggerFactory
+			.getLogger(TestBaseCloudPoolOperation.class);
+
+	private static final File STATE_STORAGE_DIR = new File("target/state");
+	private static final StateStorage STATE_STORAGE = StateStorage
+			.builder(STATE_STORAGE_DIR).build();
 
 	/** Mocked {@link EventBus} to capture events sent by the cloud pool. */
 	private final EventBus eventBusMock = mock(EventBus.class);
@@ -86,9 +101,11 @@ public class TestBaseCloudPoolOperation {
 	private BaseCloudPool cloudPool;
 
 	@Before
-	public void onSetup() {
+	public void onSetup() throws IOException {
+		FileUtils.deleteRecursively(STATE_STORAGE_DIR);
 		FrozenTime.setFixed(UtcTime.parse("2014-04-17T12:00:00.000Z"));
-		this.cloudPool = new BaseCloudPool(this.driverMock, this.eventBusMock);
+		this.cloudPool = new BaseCloudPool(STATE_STORAGE, this.driverMock,
+				this.eventBusMock);
 	}
 
 	/**
@@ -164,6 +181,31 @@ public class TestBaseCloudPoolOperation {
 		// stopping an already stopped pool is a no-op
 		this.cloudPool.stop();
 		assertThat(this.cloudPool.getStatus().isStarted(), is(false));
+	}
+
+	/**
+	 * Any saved machine pool cache should be restored on restart and should be
+	 * relied upon if machine pool cannot be immediately refreshed.
+	 */
+	@Test
+	public void recoverMachinePoolCache() throws IOException {
+		// save a cached machine pool to disk that will be restored when
+		// starting the cloudpool
+		MachinePool cachedPool = new MachinePool(
+				machines(machine("i-1"), machine("i-2")), FrozenTime.now());
+		File cacheFile = STATE_STORAGE.getCachedMachinePoolFile();
+		save(cachedPool, cacheFile);
+
+		// the attempt to refresh the machine pool cache on start-up should fail
+		when(this.driverMock.listMachines())
+				.thenThrow(new RuntimeException("api outage"));
+
+		this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
+		this.cloudPool.start();
+
+		// make sure that the cached machine pool was recovered and is used
+		// (since we could not refresh the cache)
+		assertThat(this.cloudPool.getMachinePool(), is(cachedPool));
 	}
 
 	/**
@@ -391,7 +433,7 @@ public class TestBaseCloudPoolOperation {
 		verify(this.driverMock).startMachines(2, scaleOutConfig());
 
 		// verify that an error event was posted on event bus
-		verify(this.eventBusMock).post(argThat(isAlert(RESIZE.name(), ERROR)));
+		verify(this.eventBusMock).post(argThat(isAlert(RESIZE.name(), WARN)));
 	}
 
 	/**
@@ -444,7 +486,7 @@ public class TestBaseCloudPoolOperation {
 		verify(this.eventBusMock).post(argThat(isStartAlert("i-5")));
 
 		// verify that an error event was posted on event bus
-		verify(this.eventBusMock).post(argThat(isAlert(RESIZE.name(), ERROR)));
+		verify(this.eventBusMock).post(argThat(isAlert(RESIZE.name(), WARN)));
 	}
 
 	/**
@@ -731,13 +773,18 @@ public class TestBaseCloudPoolOperation {
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void createWithNullScalingGroup() {
-		new BaseCloudPool(null);
+	public void createWithNullStateStorage() {
+		new BaseCloudPool(null, this.driverMock);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void createWithNullCloudDriver() {
+		new BaseCloudPool(STATE_STORAGE, null);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void createWithNullEventBus() {
-		new BaseCloudPool(this.driverMock, null);
+		new BaseCloudPool(STATE_STORAGE, this.driverMock, null);
 	}
 
 	/**
@@ -856,7 +903,7 @@ public class TestBaseCloudPoolOperation {
 		this.cloudPool.start();
 
 		// desiredSize should be undetermined
-		assertThat(this.cloudPool.desiredSize(), is(nullValue()));
+		assertThat(desiredSize(this.cloudPool), is(nullValue()));
 
 		// make sure desiredSize is determined when pool update is run
 		reset(this.driverMock);
@@ -865,30 +912,31 @@ public class TestBaseCloudPoolOperation {
 		this.cloudPool.updateMachinePool();
 
 		// verify that desiredSize was determined
-		assertThat(this.cloudPool.desiredSize(), is(0));
+		assertThat(desiredSize(this.cloudPool), is(0));
 	}
 
 	/**
-	 * Run a pool update iteration when {@code desiredSize} hasn't yet been
-	 * determined (or set) and the attempt to determine it fails. Make sure this
-	 * doesn't cause the iteration to fail.
+	 * It should not be possible to complete a resize iteration when the cloud
+	 * pool cannot be reached.
 	 */
 	@Test
-	public void doPoolUpdateWhenDesiredSizeIsUnsetAndItCantBeDetermined()
-			throws Exception {
+	public void doPoolUpdateWhenCloudPoolIsUnreachable() throws Exception {
 		// determining initial pool size on startup should fail
 		when(this.driverMock.listMachines()).thenThrow(
 				new CloudPoolDriverException("cloud provider API outage"));
-		this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
+		JsonObject config = poolConfig(OLDEST_INSTANCE, 0);
+		this.cloudPool.configure(config);
 		this.cloudPool.start();
 		// desiredSize should be undetermined
-		assertThat(this.cloudPool.desiredSize(), is(nullValue()));
+		assertThat(desiredSize(this.cloudPool), is(nullValue()));
 
 		// run pool update
-		this.cloudPool.updateMachinePool();
-
-		// verify that desiredSize is still undetermined
-		assertThat(this.cloudPool.desiredSize(), is(nullValue()));
+		try {
+			this.cloudPool.updateMachinePool();
+			fail("should fail");
+		} catch (CloudPoolException e) {
+			// expected
+		}
 	}
 
 	/**
@@ -964,13 +1012,99 @@ public class TestBaseCloudPoolOperation {
 		verify(this.eventBusMock).post(argThat(isStartAlert("i-3")));
 	}
 
+	@Test
+	public void getPoolSizeOnEmptyPool() {
+		// initial pool size, and desiredSize, is 0
+		when(this.driverMock.listMachines()).thenReturn(machines());
+		this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
+		this.cloudPool.start();
+		int desired = this.cloudPool.getPoolSize().getDesiredSize();
+		assertThat(this.cloudPool.getPoolSize(),
+				is(new PoolSizeSummary(UtcTime.now(), desired, 0, 0)));
+	}
+
 	/**
-	 * Exercises the {@link CloudPool#getPoolSize()}, given different different
-	 * constellations of machine pools returned from the wrapped
-	 * {@link CloudPoolDriver}.
+	 * All active machines are considered part of the pool.
 	 */
 	@Test
-	public void getPoolSize() {
+	public void getPoolSizeWithActiveMachines() {
+		DateTime now = UtcTime.now();
+		Machine running1 = machine("i-1", RUNNING,
+				MembershipStatus.defaultStatus(), now.minus(1));
+		Machine running2 = machine("i-2", RUNNING,
+				MembershipStatus.defaultStatus(), now.minus(3));
+		Machine pending1 = machine("i-3", PENDING,
+				MembershipStatus.defaultStatus(), now.minus(3));
+		Machine pending2 = machine("i-4", PENDING,
+				MembershipStatus.defaultStatus(), now.minus(3));
+
+		// cloud pool with active instances
+
+		when(this.driverMock.listMachines())
+				.thenReturn(machines(running1, running2, pending1, pending2));
+		this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
+		this.cloudPool.start();
+		int desired = this.cloudPool.getPoolSize().getDesiredSize();
+		assertThat(this.cloudPool.getPoolSize(),
+				is(new PoolSizeSummary(UtcTime.now(), desired, 4, 4)));
+	}
+
+	/**
+	 * Terminal machine states are to be excluded from the active pool size.
+	 */
+	@Test
+	public void getPoolSizeWithActiveAndTerminalMachines() {
+		DateTime now = UtcTime.now();
+		Machine running1 = machine("i-1", RUNNING,
+				MembershipStatus.defaultStatus(), now.minus(1));
+		Machine running2 = machine("i-2", RUNNING,
+				MembershipStatus.defaultStatus(), now.minus(3));
+		Machine pending1 = machine("i-3", PENDING,
+				MembershipStatus.defaultStatus(), now.minus(3));
+		Machine pending2 = machine("i-4", PENDING,
+				MembershipStatus.defaultStatus(), now.minus(3));
+		Machine terminating = machine("i-8", TERMINATING,
+				MembershipStatus.defaultStatus(), now.minus(3));
+		Machine terminated = machine("i-9", TERMINATED,
+				MembershipStatus.defaultStatus(), now.minus(3));
+
+		// cloud pool with instances in active and terminal states
+		when(this.driverMock.listMachines()).thenReturn(machines(running1,
+				running2, pending1, pending2, terminating, terminated));
+		this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
+		this.cloudPool.start();
+		int desired = this.cloudPool.getPoolSize().getDesiredSize();
+		assertThat(this.cloudPool.getPoolSize(),
+				is(new PoolSizeSummary(UtcTime.now(), desired, 4, 4)));
+	}
+
+	/**
+	 * Machines with a {@link MembershipStatus} that is not active should not be
+	 * regarded part of the active machine pool.
+	 */
+	@Test
+	public void getPoolSizeWithOnlyInactiveMachines() {
+		DateTime now = UtcTime.now();
+		Machine outOfService1 = machine("i-6", RUNNING,
+				MembershipStatus.awaitingService(), now.minus(3));
+		Machine outOfService2 = machine("i-7", RUNNING,
+				MembershipStatus.awaitingService(), now.minus(3));
+
+		// cloud pool with only inactive instances
+		when(this.driverMock.listMachines())
+				.thenReturn(machines(outOfService1, outOfService2));
+		this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
+		this.cloudPool.start();
+		int desired = this.cloudPool.getPoolSize().getDesiredSize();
+		assertThat(this.cloudPool.getPoolSize(),
+				is(new PoolSizeSummary(UtcTime.now(), desired, 2, 0)));
+	}
+
+	/**
+	 * Get pool size with machine pool members in a mix of states.
+	 */
+	@Test
+	public void getPoolSizeWithActiveTerminalAndInactiveMachines() {
 		DateTime now = UtcTime.now();
 		Machine running1 = machine("i-1", RUNNING,
 				MembershipStatus.defaultStatus(), now.minus(1));
@@ -989,42 +1123,15 @@ public class TestBaseCloudPoolOperation {
 		Machine terminated = machine("i-9", TERMINATED,
 				MembershipStatus.defaultStatus(), now.minus(3));
 
-		// initial pool size, and desiredSize, is 0
-		when(this.driverMock.listMachines()).thenReturn(machines());
+		// cloud pool with mix active, terminal and out-of-service instances
+		when(this.driverMock.listMachines())
+				.thenReturn(machines(running1, running2, pending1, pending2,
+						terminating, terminated, outOfService1, outOfService2));
 		this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
 		this.cloudPool.start();
 		int desired = this.cloudPool.getPoolSize().getDesiredSize();
 		assertThat(this.cloudPool.getPoolSize(),
-				is(new PoolSizeSummary(desired, 0, 0)));
-
-		// cloud pool with active instances
-		reset(this.driverMock);
-		when(this.driverMock.listMachines())
-				.thenReturn(machines(running1, running2, pending1, pending2));
-		assertThat(this.cloudPool.getPoolSize(),
-				is(new PoolSizeSummary(desired, 4, 4)));
-
-		// cloud pool with instances in active and terminal states
-		reset(this.driverMock);
-		when(this.driverMock.listMachines()).thenReturn(machines(running1,
-				running2, pending1, pending2, terminating, terminated));
-		assertThat(this.cloudPool.getPoolSize(),
-				is(new PoolSizeSummary(desired, 4, 4)));
-
-		// cloud pool with only inactive instances
-		reset(this.driverMock);
-		when(this.driverMock.listMachines())
-				.thenReturn(machines(outOfService1, outOfService2));
-		assertThat(this.cloudPool.getPoolSize(),
-				is(new PoolSizeSummary(desired, 2, 0)));
-
-		// cloud pool with mix active, terminal and out-of-service instances
-		reset(this.driverMock);
-		when(this.driverMock.listMachines())
-				.thenReturn(machines(running1, running2, pending1, pending2,
-						terminating, terminated, outOfService1, outOfService2));
-		assertThat(this.cloudPool.getPoolSize(),
-				is(new PoolSizeSummary(desired, 6, 4)));
+				is(new PoolSizeSummary(UtcTime.now(), desired, 6, 4)));
 	}
 
 	/**
@@ -1044,7 +1151,7 @@ public class TestBaseCloudPoolOperation {
 		this.cloudPool.start();
 		assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(1));
 		assertThat(this.cloudPool.getPoolSize(),
-				is(new PoolSizeSummary(1, 1, 1)));
+				is(new PoolSizeSummary(UtcTime.now(), 1, 1, 1)));
 
 		// prepare cloud driver to be asked to terminate i-1
 		doNothing().when(this.driverMock).terminateMachine("i-1");
@@ -1077,7 +1184,7 @@ public class TestBaseCloudPoolOperation {
 		this.cloudPool.start();
 		assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(1));
 		assertThat(this.cloudPool.getPoolSize(),
-				is(new PoolSizeSummary(1, 1, 1)));
+				is(new PoolSizeSummary(UtcTime.now(), 1, 1, 1)));
 
 		// prepare cloud driver to be asked to terminate i-1
 		doNothing().when(this.driverMock).terminateMachine("i-1");
@@ -1252,7 +1359,7 @@ public class TestBaseCloudPoolOperation {
 		this.cloudPool.start();
 		assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(1));
 		assertThat(this.cloudPool.getPoolSize(),
-				is(new PoolSizeSummary(1, 1, 1)));
+				is(new PoolSizeSummary(UtcTime.now(), 1, 1, 1)));
 
 		// prepare cloud driver to be asked to detach i-1
 		doNothing().when(this.driverMock).detachMachine("i-1");
@@ -1285,7 +1392,7 @@ public class TestBaseCloudPoolOperation {
 		this.cloudPool.start();
 		assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(1));
 		assertThat(this.cloudPool.getPoolSize(),
-				is(new PoolSizeSummary(1, 1, 1)));
+				is(new PoolSizeSummary(UtcTime.now(), 1, 1, 1)));
 
 		// prepare cloud driver to be asked to detach i-1
 		doNothing().when(this.driverMock).detachMachine("i-1");
@@ -1310,7 +1417,6 @@ public class TestBaseCloudPoolOperation {
 	public void sendTerminationAlertOnFailureToFetchMachinePool()
 			throws CloudPoolException {
 		// set up initial pool
-		DateTime now = UtcTime.now();
 		Machine running1 = machine("i-1", RUNNING);
 		when(this.driverMock.listMachines()).thenReturn(machines(running1));
 		this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
@@ -1322,8 +1428,7 @@ public class TestBaseCloudPoolOperation {
 
 		// terminate and verify that alert gets sent despite failing to retrieve
 		// pool members
-		this.cloudPool.terminationAlert(
-				asList(machine("i-1", RUNNING, now.minus(1))));
+		this.cloudPool.terminateMachine("i-1", true);
 		verify(this.eventBusMock).post(argThat(isTerminationAlert("i-1")));
 	}
 
@@ -1363,6 +1468,51 @@ public class TestBaseCloudPoolOperation {
 	}
 
 	/**
+	 *
+	 * It should not be possible to call {@code attachMachine} if the cloud pool
+	 * cannot be reached (or its desiredSize cannot be determined).
+	 */
+	@Test(expected = CloudPoolException.class)
+	public void callAttachMachineBeforePoolReachable() {
+		setUpUnreachablePool();
+
+		this.cloudPool.attachMachine("i-1");
+	}
+
+	/**
+	 * It should not be possible to call {@code detachMachine} if the cloud pool
+	 * cannot be reached (or its desiredSize cannot be determined).
+	 */
+	@Test(expected = CloudPoolException.class)
+	public void callDetachMachineBeforePoolReachable() {
+		setUpUnreachablePool();
+
+		this.cloudPool.detachMachine("i-1", true);
+	}
+
+	/**
+	 * It should not be possible to call {@code terminateMachine} if the cloud
+	 * pool cannot be reached (or its desiredSize cannot be determined).
+	 */
+	@Test(expected = CloudPoolException.class)
+	public void callTerminateMachineBeforePoolReachable() {
+		setUpUnreachablePool();
+
+		this.cloudPool.terminateMachine("i-1", true);
+	}
+
+	/**
+	 * Set up a {@link BaseCloudPool} whose {@link CloudPoolDriver} cannot reach
+	 * its cloud API.
+	 */
+	private void setUpUnreachablePool() {
+		doThrow(new RuntimeException("api outage")).when(this.driverMock)
+				.listMachines();
+		this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
+		this.cloudPool.start();
+	}
+
+	/**
 	 * Creates a {@link BaseCloudPoolConfig} with a given scale-down victim
 	 * selection strategy and instance hour margin.
 	 *
@@ -1378,8 +1528,13 @@ public class TestBaseCloudPoolOperation {
 		ScaleOutConfig scaleUpConfig = scaleOutConfig();
 		ScaleInConfig scaleDownConfig = new ScaleInConfig(victimSelectionPolicy,
 				instanceHourMargin);
+		PoolFetchConfig poolFetchConfig = new PoolFetchConfig(
+				new RetriesConfig(3, new TimeInterval(0L, TimeUnit.SECONDS)),
+				new TimeInterval(20L, TimeUnit.SECONDS),
+				new TimeInterval(5L, TimeUnit.MINUTES));
 		BaseCloudPoolConfig poolConfig = new BaseCloudPoolConfig(
-				scalingGroupConfig, scaleUpConfig, scaleDownConfig, null, 120);
+				scalingGroupConfig, scaleUpConfig, scaleDownConfig, null,
+				poolFetchConfig, null);
 
 		return JsonUtils.toJson(poolConfig).getAsJsonObject();
 	}
@@ -1402,8 +1557,25 @@ public class TestBaseCloudPoolOperation {
 		return scaleUpConfig;
 	}
 
-	private SmtpClientAuthentication smtpAuth() {
-		return new SmtpClientAuthentication("userName", "password");
+	private void save(MachinePool pool, File destination) throws IOException {
+		Files.createParentDirs(destination);
+		Files.write(JsonUtils.toPrettyString(JsonUtils.toJson(pool)),
+				destination, Charsets.UTF_8);
 	}
 
+	/**
+	 * Returns the current desired size of a {@link BaseCloudPool} or
+	 * <code>null</code> if it could not be determined.
+	 *
+	 * @param cloudPool
+	 * @return
+	 */
+	private Integer desiredSize(BaseCloudPool cloudPool) {
+		try {
+			return cloudPool.getPoolSize().getDesiredSize();
+		} catch (CloudPoolException e) {
+			LOG.warn("no desired size could be retrieved: {}", e.getMessage());
+			return null;
+		}
+	}
 }

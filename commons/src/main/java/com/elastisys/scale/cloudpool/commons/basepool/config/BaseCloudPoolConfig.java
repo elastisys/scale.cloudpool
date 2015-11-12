@@ -1,11 +1,14 @@
 package com.elastisys.scale.cloudpool.commons.basepool.config;
 
 import static com.google.common.base.Objects.equal;
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 
+import java.util.concurrent.TimeUnit;
+
+import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
+import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.commons.json.JsonUtils;
@@ -19,8 +22,24 @@ import com.google.common.base.Throwables;
  * Represents a configuration for a {@link BaseCloudPool}.
  */
 public class BaseCloudPoolConfig {
-	/** Default value for {@link #poolUpdatePeriod}. */
-	public static final int DEFAULT_POOL_UPDATE_PERIOD = 60;
+
+	/** Default number of maximum pool fetch retries. */
+	private static final int DEFAULT_MAX_RETRIES = 3;
+	/**
+	 * Initial delay (in seconds) to use after first failed pool fetch attempt.
+	 */
+	private static final long DEFAULT_INITIAL_EXP_BACKOFF_DELAY = 3;
+	/** Default {@link PoolFetchConfig}. */
+	public static final PoolFetchConfig DEFAULT_POOL_FETCH_CONFIG = new PoolFetchConfig(
+			new RetriesConfig(DEFAULT_MAX_RETRIES,
+					new TimeInterval(DEFAULT_INITIAL_EXP_BACKOFF_DELAY,
+							TimeUnit.SECONDS)),
+			new TimeInterval(30L, TimeUnit.SECONDS),
+			new TimeInterval(5L, TimeUnit.MINUTES));
+
+	/** Default pool update interval. */
+	public static final PoolUpdateConfig DEFAULT_POOL_UPDATE_CONFIG = new PoolUpdateConfig(
+			new TimeInterval(60L, TimeUnit.SECONDS));
 
 	/** Configuration for the {@link CloudPoolDriver}. */
 	private final CloudPoolConfig cloudPool;
@@ -38,12 +57,16 @@ public class BaseCloudPoolConfig {
 	private final AlertsConfig alerts;
 
 	/**
-	 * The time interval (in seconds) between periodical pool size updates. A
-	 * pool size update may involve terminating termination-due instances and
-	 * placing new spot requests to replace terminated spot requests. May be
-	 * <code>null</code>. Default: 60.
+	 * Controls the {@link CloudPool}'s behavior with respect to how often to
+	 * attempt fetching of {@link MachinePool} and for how long to mask cloud
+	 * API errors.
 	 */
-	private Integer poolUpdatePeriod;
+	private final PoolFetchConfig poolFetch;
+
+	/**
+	 * The time interval (in seconds) between periodical pool size updates.
+	 */
+	private final PoolUpdateConfig poolUpdate;
 
 	/**
 	 * @param cloudPoolConfig
@@ -55,26 +78,32 @@ public class BaseCloudPoolConfig {
 	 * @param alertSettings
 	 *            Configuration that describes how to send email alerts. May be
 	 *            <code>null</code>.
-	 * @param poolUpdatePeriod
+	 * @param poolFetchConfig
+	 *            Controls the {@link CloudPool}'s behavior with respect to how
+	 *            often to attempt fetching of {@link MachinePool} and for how
+	 *            long to mask cloud API errors. May be <code>null</code>.
+	 *            Default: {@code retries}: 3 retries with 3 second initial
+	 *            exponential back-off delay, {@code refreshInterval}: 30
+	 *            seconds, {@code reachabilityTimeout}: 5 minutes.
+	 * @param poolUpdatePeriodConfig
 	 *            The time interval (in seconds) between periodical pool size
-	 *            updates. A pool size update may involve terminating
-	 *            termination-due instances and placing new spot requests to
-	 *            replace terminated spot requests. May be <code>null</code>.
-	 *            Default: 60.
+	 *            updates. May be <code>null</code>. Default: 60 seconds.
 	 */
 	public BaseCloudPoolConfig(CloudPoolConfig cloudPoolConfig,
 			ScaleOutConfig scaleOutConfig, ScaleInConfig scaleInConfig,
-			AlertsConfig alertSettings, Integer poolUpdatePeriod) {
+			AlertsConfig alertSettings, PoolFetchConfig poolFetchConfig,
+			PoolUpdateConfig poolUpdatePeriodConfig) {
 		this.cloudPool = cloudPoolConfig;
 		this.scaleOutConfig = scaleOutConfig;
 		this.scaleInConfig = scaleInConfig;
 		this.alerts = alertSettings;
-		this.poolUpdatePeriod = poolUpdatePeriod;
+		this.poolFetch = poolFetchConfig;
+		this.poolUpdate = poolUpdatePeriodConfig;
 	}
 
 	/**
 	 * Configuration for the {@link CloudPoolDriver}.
-	 * 
+	 *
 	 * @return
 	 */
 	public CloudPoolConfig getCloudPool() {
@@ -110,16 +139,25 @@ public class BaseCloudPoolConfig {
 	}
 
 	/**
-	 * The time interval (in seconds) between periodical pool size updates. A
-	 * pool size update may, for example, involve terminating termination-due
-	 * instances and placing new spot requests to replace terminated spot
-	 * requests. Default: 60.
+	 * Controls the {@link CloudPool}'s behavior with respect to how often to
+	 * attempt fetching of {@link MachinePool} and for how long to mask cloud
+	 * API errors.
 	 *
 	 * @return
 	 */
-	public int getPoolUpdatePeriod() {
-		return Optional.fromNullable(this.poolUpdatePeriod)
-				.or(DEFAULT_POOL_UPDATE_PERIOD);
+	public PoolFetchConfig getPoolFetch() {
+		return Optional.fromNullable(this.poolFetch)
+				.or(DEFAULT_POOL_FETCH_CONFIG);
+	}
+
+	/**
+	 * The time interval (in seconds) between periodical pool size updates.
+	 *
+	 * @return
+	 */
+	public PoolUpdateConfig getPoolUpdate() {
+		return Optional.fromNullable(this.poolUpdate)
+				.or(DEFAULT_POOL_UPDATE_CONFIG);
 	}
 
 	/**
@@ -132,8 +170,6 @@ public class BaseCloudPoolConfig {
 			checkNotNull(this.cloudPool, "missing cloudPool config");
 			checkNotNull(this.scaleOutConfig, "missing scaleOutConfig");
 			checkNotNull(this.scaleInConfig, "missing scaleInConfig");
-			checkArgument(getPoolUpdatePeriod() > 0,
-					"poolUpdatePeriod must be non-negative");
 
 			this.cloudPool.validate();
 			this.scaleOutConfig.validate();
@@ -141,6 +177,8 @@ public class BaseCloudPoolConfig {
 			if (this.alerts != null) {
 				this.alerts.validate();
 			}
+			getPoolFetch().validate();
+			getPoolUpdate().validate();
 		} catch (Exception e) {
 			// no need to wrap further if already a config exception
 			Throwables.propagateIfInstanceOf(e, IllegalArgumentException.class);
@@ -152,7 +190,8 @@ public class BaseCloudPoolConfig {
 	@Override
 	public int hashCode() {
 		return Objects.hashCode(this.cloudPool, this.scaleOutConfig,
-				this.scaleInConfig, this.alerts, this.poolUpdatePeriod);
+				this.scaleInConfig, this.alerts, getPoolFetch(),
+				getPoolUpdate());
 	}
 
 	@Override
@@ -163,14 +202,15 @@ public class BaseCloudPoolConfig {
 					&& equal(this.scaleOutConfig, that.scaleOutConfig)
 					&& equal(this.scaleInConfig, that.scaleInConfig)
 					&& equal(this.alerts, that.alerts)
-					&& equal(this.poolUpdatePeriod, that.poolUpdatePeriod);
+					&& equal(this.getPoolFetch(), that.getPoolFetch())
+					&& equal(this.getPoolUpdate(), that.getPoolUpdate());
 		}
 		return false;
 	}
 
 	@Override
 	public String toString() {
-		return JsonUtils.toPrettyString(JsonUtils.toJson(this, true));
+		return JsonUtils.toPrettyString(JsonUtils.toJson(this));
 	}
 
 	/**

@@ -2,7 +2,6 @@ package com.elastisys.scale.cloudpool.aws.spot.driver;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -14,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceState;
@@ -87,7 +87,7 @@ public class FakeSpotClient implements SpotClient {
 
 	@Override
 	public void configure(String awsAccessKeyId, String awsSecretAccessKey,
-			String region) {
+			String region, ClientConfiguration clientConfiguration) {
 		LOG.debug(getClass().getSimpleName() + " configured");
 	}
 
@@ -108,12 +108,8 @@ public class FakeSpotClient implements SpotClient {
 			}
 		}
 		// return sorted on identifier to ease verifications in tests
-		Collections.sort(instances, new Comparator<Instance>() {
-			@Override
-			public int compare(Instance o1, Instance o2) {
-				return o1.getInstanceId().compareTo(o2.getInstanceId());
-			}
-		});
+		Collections.sort(instances,
+				(o1, o2) -> o1.getInstanceId().compareTo(o2.getInstanceId()));
 		return instances;
 	}
 
@@ -243,13 +239,8 @@ public class FakeSpotClient implements SpotClient {
 			}
 		}
 		// return sorted on identifier to ease verifications in tests
-		Collections.sort(requests, new Comparator<SpotInstanceRequest>() {
-			@Override
-			public int compare(SpotInstanceRequest o1, SpotInstanceRequest o2) {
-				return o1.getSpotInstanceRequestId()
-						.compareTo(o2.getSpotInstanceRequestId());
-			}
-		});
+		Collections.sort(requests, (o1, o2) -> o1.getSpotInstanceRequestId()
+				.compareTo(o2.getSpotInstanceRequestId()));
 		return requests;
 	}
 

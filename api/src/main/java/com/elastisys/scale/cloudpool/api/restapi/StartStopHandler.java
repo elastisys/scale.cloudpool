@@ -50,18 +50,18 @@ public class StartStopHandler {
 	 * If the cloud pool has not been configured the method should fail. If the
 	 * cloud pool is already started this is a no-op.
 	 *
-	 * @return <ul>
-	 *         <li>On success: HTTP response code 200.</li> <li>On error: HTTP
-	 *         response 400 (Bad Request) with an {@link ErrorType} message on
-	 *         an attempt to start an unconfigured {@link CloudPool}. On other
-	 *         errors: HTTP response code 500 with an {@link ErrorType} message.
-	 *         </li>
+	 * @return
+	 * 		<ul>
+	 *         <li>On success: HTTP response code 200.</li>
+	 *         <li>On error: HTTP response 400 (Bad Request) with an
+	 *         {@link ErrorType} message on an attempt to start an unconfigured
+	 *         {@link CloudPool}. On other errors: HTTP response code 500 with
+	 *         an {@link ErrorType} message.</li>
 	 *         </ul>
 	 */
 	@POST
 	@Path("/start")
 	public Response start() {
-		LOG.info("POST /start");
 		try {
 			this.cloudPool.start();
 			return Response.ok().build();
@@ -85,15 +85,16 @@ public class StartStopHandler {
 	 * <p/>
 	 * If the cloud pool is already in a stopped state this is a no-op.
 	 *
-	 * @return <ul>
-	 *         <li>On success: HTTP response code 200.</li> <li>On error: HTTP
-	 *         response code 500 with an {@link ErrorType} message. </li>
+	 * @return
+	 * 		<ul>
+	 *         <li>On success: HTTP response code 200.</li>
+	 *         <li>On error: HTTP response code 500 with an {@link ErrorType}
+	 *         message.</li>
 	 *         </ul>
 	 */
 	@POST
 	@Path("/stop")
 	public Response stop() {
-		LOG.info("POST /stop");
 		try {
 			this.cloudPool.stop();
 			return Response.ok().build();
@@ -108,7 +109,8 @@ public class StartStopHandler {
 	/**
 	 * Retrieves the execution status for the cloud pool.
 	 *
-	 * @return <ul>
+	 * @return
+	 * 		<ul>
 	 *         <li>On success: HTTP response code 200 with a
 	 *         {@link CloudPoolStatus} message.</li>
 	 *         <li>On error: HTTP response code 500 with an {@link ErrorType}
@@ -118,7 +120,6 @@ public class StartStopHandler {
 	@GET
 	@Path("/status")
 	public Response getStatus() {
-		LOG.info("GET /status");
 		try {
 			CloudPoolStatus status = this.cloudPool.getStatus();
 			return Response.ok().entity(status).build();

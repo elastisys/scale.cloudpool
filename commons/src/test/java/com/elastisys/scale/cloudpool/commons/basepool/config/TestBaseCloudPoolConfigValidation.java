@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.commons.basepool.config;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
@@ -28,20 +29,33 @@ public class TestBaseCloudPoolConfigValidation {
 	@Test
 	public void minimalConfig() throws CloudPoolException {
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
-				scaleInConfig(), null, null).validate();
+				scaleInConfig(), null, null, null).validate();
 	}
 
 	@Test
 	public void withAlertConfig() throws CloudPoolException {
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
-				scaleInConfig(), alertConfig(), null).validate();
+				scaleInConfig(), alertConfig(), null, null).validate();
+	}
+
+	@Test
+	public void withPoolUpdate() throws CloudPoolException {
+		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
+				scaleInConfig(), alertConfig(), null, poolUpdate()).validate();
+	}
+
+	@Test
+	public void withPoolFetch() throws CloudPoolException {
+		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
+				scaleInConfig(), alertConfig(), poolFetch(), poolUpdate())
+						.validate();
 	}
 
 	// illegal config: missing /cloudPool
 	@Test(expected = IllegalArgumentException.class)
 	public void missingCloudPool() throws CloudPoolException {
 		new BaseCloudPoolConfig(null, scaleOutConfig(), scaleInConfig(),
-				alertConfig(), null).validate();
+				alertConfig(), null, null).validate();
 	}
 
 	// illegal config: missing /cloudPool/name
@@ -50,7 +64,7 @@ public class TestBaseCloudPoolConfigValidation {
 		CloudPoolConfig cloudPoolConfig = cloudPoolConfig();
 		setPrivateField(cloudPoolConfig, "name", null);
 		new BaseCloudPoolConfig(cloudPoolConfig, scaleOutConfig(),
-				scaleInConfig(), null, null).validate();
+				scaleInConfig(), null, null, null).validate();
 	}
 
 	// illegal config: missing /cloudPool/driverConfig
@@ -59,14 +73,14 @@ public class TestBaseCloudPoolConfigValidation {
 		CloudPoolConfig cloudPoolConfig = cloudPoolConfig();
 		setPrivateField(cloudPoolConfig, "driverConfig", null);
 		new BaseCloudPoolConfig(cloudPoolConfig, scaleOutConfig(),
-				scaleInConfig(), null, null).validate();
+				scaleInConfig(), null, null, null).validate();
 	}
 
 	// illegal config: missing /scaleOutConfig
 	@Test(expected = IllegalArgumentException.class)
 	public void missingScaleOutConfig() throws CloudPoolException {
 		new BaseCloudPoolConfig(cloudPoolConfig(), null, scaleInConfig(),
-				alertConfig(), null).validate();
+				alertConfig(), null, null).validate();
 	}
 
 	// illegal config: missing /scaleOutConfig/size
@@ -75,7 +89,7 @@ public class TestBaseCloudPoolConfigValidation {
 		ScaleOutConfig scaleOutConfig = scaleOutConfig();
 		setPrivateField(scaleOutConfig, "size", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig,
-				scaleInConfig(), alertConfig(), null).validate();
+				scaleInConfig(), alertConfig(), null, null).validate();
 	}
 
 	// illegal config: missing /scaleOutConfig/image
@@ -84,7 +98,7 @@ public class TestBaseCloudPoolConfigValidation {
 		ScaleOutConfig scaleOutConfig = scaleOutConfig();
 		setPrivateField(scaleOutConfig, "image", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig,
-				scaleInConfig(), alertConfig(), null).validate();
+				scaleInConfig(), alertConfig(), null, null).validate();
 	}
 
 	// it is okay for config to miss /scaleOutConfig/keyPair
@@ -93,7 +107,7 @@ public class TestBaseCloudPoolConfigValidation {
 		ScaleOutConfig scaleOutConfig = scaleOutConfig();
 		setPrivateField(scaleOutConfig, "keyPair", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig,
-				scaleInConfig(), alertConfig(), null).validate();
+				scaleInConfig(), alertConfig(), null, null).validate();
 	}
 
 	// it is okay for config to miss /scaleOutConfig/securityGroups
@@ -103,7 +117,7 @@ public class TestBaseCloudPoolConfigValidation {
 		ScaleOutConfig scaleOutConfig = scaleOutConfig();
 		setPrivateField(scaleOutConfig, "securityGroups", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig,
-				scaleInConfig(), alertConfig(), null).validate();
+				scaleInConfig(), alertConfig(), null, null).validate();
 	}
 
 	// it is okay for config to miss /scaleOutConfig/encodedUserData
@@ -113,7 +127,7 @@ public class TestBaseCloudPoolConfigValidation {
 		ScaleOutConfig scaleOutConfig = scaleOutConfig();
 		setPrivateField(scaleOutConfig, "encodedUserData", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig,
-				scaleInConfig(), alertConfig(), null).validate();
+				scaleInConfig(), alertConfig(), null, null).validate();
 	}
 
 	// illegal config: missing /alerts/smtp[0]/subject
@@ -122,7 +136,7 @@ public class TestBaseCloudPoolConfigValidation {
 		AlertsConfig alerts = alertConfig();
 		setPrivateField(alerts.getSmtpAlerters().get(0), "subject", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
-				scaleInConfig(), alerts, null).validate();
+				scaleInConfig(), alerts, null, null).validate();
 	}
 
 	// illegal config: missing /alerts/smtp[0]/recipients
@@ -131,7 +145,7 @@ public class TestBaseCloudPoolConfigValidation {
 		AlertsConfig alerts = alertConfig();
 		setPrivateField(alerts.getSmtpAlerters().get(0), "recipients", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
-				scaleInConfig(), alerts, null).validate();
+				scaleInConfig(), alerts, null, null).validate();
 	}
 
 	// illegal config: missing /alerts/smtp[0]/sender
@@ -140,7 +154,7 @@ public class TestBaseCloudPoolConfigValidation {
 		AlertsConfig alerts = alertConfig();
 		setPrivateField(alerts.getSmtpAlerters().get(0), "sender", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
-				scaleInConfig(), alerts, null).validate();
+				scaleInConfig(), alerts, null, null).validate();
 	}
 
 	// illegal config: missing /alerts/smtp[0]/smtpClientConfig
@@ -150,7 +164,7 @@ public class TestBaseCloudPoolConfigValidation {
 		setPrivateField(alerts.getSmtpAlerters().get(0), "smtpClientConfig",
 				null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
-				scaleInConfig(), alerts, null).validate();
+				scaleInConfig(), alerts, null, null).validate();
 	}
 
 	// illegal config: missing /alerts/smtp[0]/smtpClientConfig/smtpHost
@@ -160,7 +174,7 @@ public class TestBaseCloudPoolConfigValidation {
 		setPrivateField(alerts.getSmtpAlerters().get(0).getSmtpClientConfig(),
 				"smtpHost", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
-				scaleInConfig(), alerts, null).validate();
+				scaleInConfig(), alerts, null, null).validate();
 	}
 
 	// illegal config: missing
@@ -172,7 +186,7 @@ public class TestBaseCloudPoolConfigValidation {
 				.get(0).getSmtpClientConfig().getAuthentication();
 		setPrivateField(authentication, "username", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
-				scaleInConfig(), alerts, null).validate();
+				scaleInConfig(), alerts, null, null).validate();
 	}
 
 	// illegal config: missing
@@ -184,7 +198,7 @@ public class TestBaseCloudPoolConfigValidation {
 				.get(0).getSmtpClientConfig().getAuthentication();
 		setPrivateField(authentication, "password", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
-				scaleInConfig(), alerts, null).validate();
+				scaleInConfig(), alerts, null, null).validate();
 	}
 
 	// illegal config: missing /alerts/http[0]/destinationUrls
@@ -194,7 +208,7 @@ public class TestBaseCloudPoolConfigValidation {
 		HttpAlerterConfig httpAlerter = alerts.getHttpAlerters().get(0);
 		setPrivateField(httpAlerter, "destinationUrls", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
-				scaleInConfig(), alerts, null).validate();
+				scaleInConfig(), alerts, null, null).validate();
 	}
 
 	// illegal config: missing /alerts/http[0]/auth/basicCredentials/username
@@ -205,7 +219,7 @@ public class TestBaseCloudPoolConfigValidation {
 		setPrivateField(httpAlerter.getAuth().getBasicCredentials().get(),
 				"username", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
-				scaleInConfig(), alerts, null).validate();
+				scaleInConfig(), alerts, null, null).validate();
 	}
 
 	// illegal config: missing /alerts/http[0]/auth/basicCredentials/password
@@ -216,7 +230,43 @@ public class TestBaseCloudPoolConfigValidation {
 		setPrivateField(httpAlerter.getAuth().getBasicCredentials().get(),
 				"password", null);
 		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
-				scaleInConfig(), alerts, null).validate();
+				scaleInConfig(), alerts, null, null).validate();
+	}
+
+	// illegal config: missing /poolFetch/retries
+	@Test(expected = IllegalArgumentException.class)
+	public void missingPoolFetchRetries() {
+		PoolFetchConfig poolFetch = poolFetch();
+		setPrivateField(poolFetch, "retries", null);
+		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
+				scaleInConfig(), alertConfig(), poolFetch, null).validate();
+	}
+
+	// illegal config: missing /poolFetch/refreshInterval
+	@Test(expected = IllegalArgumentException.class)
+	public void missingPoolFetchRefreshInterval() {
+		PoolFetchConfig poolFetch = poolFetch();
+		setPrivateField(poolFetch, "refreshInterval", null);
+		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
+				scaleInConfig(), alertConfig(), poolFetch, null).validate();
+	}
+
+	// illegal config: missing /poolFetch/reachabilityTimeout
+	@Test(expected = IllegalArgumentException.class)
+	public void missingPoolFetchReachabilityTimeout() {
+		PoolFetchConfig poolFetch = poolFetch();
+		setPrivateField(poolFetch, "reachabilityTimeout", null);
+		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
+				scaleInConfig(), alertConfig(), poolFetch, null).validate();
+	}
+
+	// illegal config: missing /poolUpdate/updateInterval
+	@Test(expected = IllegalArgumentException.class)
+	public void missingPoolUpdateInterval() {
+		PoolUpdateConfig poolUpdate = poolUpdate();
+		setPrivateField(poolUpdate, "updateInterval", null);
+		new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(),
+				scaleInConfig(), alertConfig(), null, poolUpdate).validate();
 	}
 
 	private AlertsConfig alertConfig() {
@@ -253,7 +303,6 @@ public class TestBaseCloudPoolConfigValidation {
 	}
 
 	private ScaleOutConfig scaleOutConfig() {
-
 		List<String> bootScript = Arrays.asList("#!/bin/bash",
 				"apt-get update -qy && apt-get isntall apache2 -qy");
 		String encodedUserData = Base64Utils.toBase64(bootScript);
@@ -264,6 +313,20 @@ public class TestBaseCloudPoolConfigValidation {
 	private ScaleInConfig scaleInConfig() {
 		return new ScaleInConfig(VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR,
 				300);
+	}
+
+	private PoolFetchConfig poolFetch() {
+		RetriesConfig retriesConfig = new RetriesConfig(3,
+				new TimeInterval(2L, TimeUnit.SECONDS));
+		TimeInterval refreshInterval = new TimeInterval(20L, TimeUnit.SECONDS);
+		TimeInterval reachabilityTimeout = new TimeInterval(2L,
+				TimeUnit.MINUTES);
+		return new PoolFetchConfig(retriesConfig, refreshInterval,
+				reachabilityTimeout);
+	}
+
+	private PoolUpdateConfig poolUpdate() {
+		return new PoolUpdateConfig(new TimeInterval(1L, TimeUnit.MINUTES));
 	}
 
 	private JsonObject cloudCredentialsConfig() {

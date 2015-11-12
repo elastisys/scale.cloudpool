@@ -1,11 +1,11 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.ec2;
 
-import static com.elastisys.scale.cloudpool.aws.commons.predicates.InstancePredicates.allInAnyOfStates;
-
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Placement;
@@ -16,6 +16,7 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 
 /**
@@ -65,10 +66,10 @@ public class CreateInstances extends AmazonEc2Request<List<Instance>> {
 	private final List<Tag> tags;
 
 	public CreateInstances(AWSCredentials awsCredentials, String region,
-			String availabilityZone, List<String> securityGroups,
-			String keyPair, String instanceType, String imageId,
-			String encodedUserData, int count, List<Tag> tags) {
-		super(awsCredentials, region);
+			ClientConfiguration clientConfig, String availabilityZone,
+			List<String> securityGroups, String keyPair, String instanceType,
+			String imageId, String encodedUserData, int count, List<Tag> tags) {
+		super(awsCredentials, region, clientConfig);
 		this.availabilityZone = availabilityZone;
 		this.securityGroups = securityGroups;
 		this.keyPair = keyPair;
@@ -111,7 +112,7 @@ public class CreateInstances extends AmazonEc2Request<List<Instance>> {
 	 */
 	private void tagRequests(List<String> instanceIds) {
 		Callable<Void> requester = new TagEc2Resources(getAwsCredentials(),
-				getRegion(), instanceIds, this.tags);
+				getRegion(), getClientConfig(), instanceIds, this.tags);
 		String tagTaskName = String.format("tag{%s}", instanceIds);
 		Retryable<Void> retryable = Retryers.exponentialBackoffRetryer(
 				tagTaskName, requester, INITIAL_BACKOFF_DELAY,
@@ -126,21 +127,51 @@ public class CreateInstances extends AmazonEc2Request<List<Instance>> {
 		}
 	}
 
-	private List<Instance> awaitInstances(List<String> instanceIds) {
-		String name = String.format("await-active-state{%s}", instanceIds);
-		Callable<List<Instance>> requester = new GetInstances(
-				getAwsCredentials(), getRegion(), instanceIds);
+	/**
+	 * Waits for all placed spot requests to become visible in the API.
+	 *
+	 * @param createdInstanceIds
+	 * @return
+	 */
+	private List<Instance> awaitInstances(List<String> createdInstanceIds) {
+		String name = String.format("await-instances{%s}", createdInstanceIds);
 
+		// wait for created instances to be seen in API when listing *all*
+		// instances (due to eventual consistency, EC2 will return cached data,
+		// which means that the created instances may not be visible
+		// immediately)
+		Callable<List<Instance>> requester = new GetInstances(
+				getAwsCredentials(), getRegion(), getClientConfig(), null);
 		Retryable<List<Instance>> retryer = Retryers.exponentialBackoffRetryer(
 				name, requester, INITIAL_BACKOFF_DELAY, TimeUnit.MILLISECONDS,
-				MAX_RETRIES, allInAnyOfStates("pending", "running"));
+				MAX_RETRIES, contains(createdInstanceIds));
 
 		try {
-			return retryer.call();
+			// only return those instances that we actually created
+			List<Instance> allInstances = retryer.call();
+			return allInstances.stream()
+					.filter(i -> createdInstanceIds.contains(i.getInstanceId()))
+					.collect(Collectors.toList());
 		} catch (Exception e) {
 			throw new RuntimeException(String.format(
 					"gave up waiting for instances to become active %s: %s",
-					instanceIds, e.getMessage()), e);
+					createdInstanceIds, e.getMessage()), e);
 		}
+	}
+
+	/**
+	 * A predicate that returns <code>true</code> for any collection of input
+	 * {@link Instance}s that contain an expected collection of identifiers.
+	 *
+	 * @param expectedInstanceIds
+	 * @return
+	 */
+	private static Predicate<List<Instance>> contains(
+			final List<String> expectedInstanceIds) {
+		return input -> {
+			List<String> inputIds = Lists.transform(input,
+					AwsEc2Functions.toInstanceId());
+			return inputIds.containsAll(expectedInstanceIds);
+		};
 	}
 }

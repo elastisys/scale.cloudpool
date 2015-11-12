@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling;
 
 import java.util.concurrent.Callable;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.autoscaling.model.SetDesiredCapacityRequest;
 
@@ -22,8 +23,8 @@ import com.amazonaws.services.autoscaling.model.SetDesiredCapacityRequest;
  * of its billing hour. To pick a particular instance for termination, use
  * {@link TerminateAutoScalingGroupInstance}.
  */
-public class SetDesiredAutoScalingGroupSize extends
-		AmazonAutoScalingRequest<Void> {
+public class SetDesiredAutoScalingGroupSize
+		extends AmazonAutoScalingRequest<Void> {
 
 	/** The name of the Auto Scaling Group whose size is to be changed. */
 	private final String autoScalingGroup;
@@ -31,8 +32,9 @@ public class SetDesiredAutoScalingGroupSize extends
 	private final int desiredCapacity;
 
 	public SetDesiredAutoScalingGroupSize(AWSCredentials awsCredentials,
-			String region, String autoScalingGroup, int desiredCapacity) {
-		super(awsCredentials, region);
+			String region, ClientConfiguration clientConfig,
+			String autoScalingGroup, int desiredCapacity) {
+		super(awsCredentials, region, clientConfig);
 		this.autoScalingGroup = autoScalingGroup;
 		this.desiredCapacity = desiredCapacity;
 	}

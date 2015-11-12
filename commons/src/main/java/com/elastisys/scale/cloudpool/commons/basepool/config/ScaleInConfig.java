@@ -32,7 +32,7 @@ public class ScaleInConfig {
 
 	/**
 	 * Creates a new {@link ScaleInConfig}.
-	 * 
+	 *
 	 * @param victimSelectionPolicy
 	 *            Policy for selecting which server to terminate.
 	 * @param instanceHourMargin
@@ -105,6 +105,6 @@ public class ScaleInConfig {
 
 	@Override
 	public String toString() {
-		return JsonUtils.toPrettyString(JsonUtils.toJson(this, true));
+		return JsonUtils.toPrettyString(JsonUtils.toJson(this));
 	}
 }

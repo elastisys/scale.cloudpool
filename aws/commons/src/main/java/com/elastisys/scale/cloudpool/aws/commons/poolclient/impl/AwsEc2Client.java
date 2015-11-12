@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.amazonaws.AmazonClientException;
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.model.Filter;
@@ -33,26 +34,34 @@ public class AwsEc2Client implements Ec2Client {
 
 	private static Logger LOG = LoggerFactory.getLogger(AwsEc2Client.class);
 
+	/** The access key id part of the AWS credentials. */
 	private final AtomicReference<String> awsAccessKeyId;
+	/** The secret access key part of the AWS credentials. */
 	private final AtomicReference<String> awsSecretAccessKey;
+	/** The AWS region to operate against. */
 	private final AtomicReference<String> region;
+	/** Client configuration options such as connection timeout, etc. */
+	private final AtomicReference<ClientConfiguration> clientConfig;
 
 	public AwsEc2Client() {
 		this.awsAccessKeyId = Atomics.newReference();
 		this.awsSecretAccessKey = Atomics.newReference();
 		this.region = Atomics.newReference();
+		this.clientConfig = Atomics.newReference();
 	}
 
 	@Override
 	public void configure(String awsAccessKeyId, String awsSecretAccessKey,
-			String region) {
+			String region, ClientConfiguration clientConfig) {
 		checkArgument(awsAccessKeyId != null, "no awsAccessKeyId given");
 		checkArgument(awsSecretAccessKey != null,
 				"no awsSecretAccessKey given");
 		checkArgument(region != null, "no region given");
+		checkArgument(clientConfig != null, "no clientConfig given");
 		this.awsAccessKeyId.set(awsAccessKeyId);
 		this.awsSecretAccessKey.set(awsSecretAccessKey);
 		this.region.set(region);
+		this.clientConfig.set(clientConfig);
 	}
 
 	@Override
@@ -61,8 +70,8 @@ public class AwsEc2Client implements Ec2Client {
 		checkArgument(isConfigured(),
 				"can't use client before it's configured");
 
-		List<Instance> instances = new GetInstances(awsCredentials(), region())
-				.withFilters(filters).call();
+		List<Instance> instances = new GetInstances(awsCredentials(), region(),
+				clientConfig()).withFilters(filters).call();
 		return instances;
 	}
 
@@ -72,7 +81,8 @@ public class AwsEc2Client implements Ec2Client {
 		checkArgument(isConfigured(),
 				"can't use client before it's configured");
 
-		return new GetInstance(awsCredentials(), region(), instanceId).call();
+		return new GetInstance(awsCredentials(), region(), clientConfig(),
+				instanceId).call();
 	}
 
 	@Override
@@ -85,7 +95,7 @@ public class AwsEc2Client implements Ec2Client {
 		String availabilityZone = null;
 
 		List<Instance> startedInstances = new CreateInstances(awsCredentials(),
-				region(), availabilityZone,
+				region(), clientConfig(), availabilityZone,
 				provisioningDetails.getSecurityGroups(),
 				provisioningDetails.getKeyPair(), provisioningDetails.getSize(),
 				provisioningDetails.getImage(),
@@ -100,7 +110,7 @@ public class AwsEc2Client implements Ec2Client {
 		checkArgument(isConfigured(),
 				"can't use client before it's configured");
 
-		new TagEc2Resources(awsCredentials(), region(),
+		new TagEc2Resources(awsCredentials(), region(), clientConfig(),
 				Arrays.asList(resourceId), tags).call();
 	}
 
@@ -110,8 +120,8 @@ public class AwsEc2Client implements Ec2Client {
 		checkArgument(isConfigured(),
 				"can't use client before it's configured");
 
-		new UntagEc2Resource(awsCredentials(), region(), resourceId, tags)
-				.call();
+		new UntagEc2Resource(awsCredentials(), region(), clientConfig(),
+				resourceId, tags).call();
 	}
 
 	@Override
@@ -120,7 +130,8 @@ public class AwsEc2Client implements Ec2Client {
 		checkArgument(isConfigured(),
 				"can't use client before it's configured");
 
-		new TerminateInstances(awsCredentials(), region(), instanceIds).call();
+		new TerminateInstances(awsCredentials(), region(), clientConfig(),
+				instanceIds).call();
 	}
 
 	private boolean isConfigured() {
@@ -145,5 +156,14 @@ public class AwsEc2Client implements Ec2Client {
 	 */
 	protected String region() {
 		return this.region.get();
+	}
+
+	/**
+	 * Client configuration options such as connection timeout, etc.
+	 *
+	 * @return
+	 */
+	protected ClientConfiguration clientConfig() {
+		return this.clientConfig.get();
 	}
 }

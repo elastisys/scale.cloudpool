@@ -11,12 +11,18 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.commons.basepool.config.AlertsConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.TimeInterval;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.commons.json.JsonUtils;
@@ -27,7 +33,9 @@ import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerterConfig;
 import com.elastisys.scale.commons.net.smtp.SmtpClientAuthentication;
 import com.elastisys.scale.commons.net.ssl.BasicCredentials;
 import com.elastisys.scale.commons.net.ssl.CertificateCredentials;
+import com.elastisys.scale.commons.util.file.FileUtils;
 import com.google.common.base.Optional;
+import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonObject;
 
 /**
@@ -36,13 +44,22 @@ import com.google.gson.JsonObject;
  */
 public class TestBaseCloudPoolConfiguration {
 
+	private static final File STATE_STORAGE_DIR = new File("target/state");
+	private static final StateStorage STATE_STORAGE = StateStorage
+			.builder(STATE_STORAGE_DIR).build();
+
+	/** Mocked {@link EventBus} to capture events sent by the cloud pool. */
+	private final EventBus eventBusMock = mock(EventBus.class);
+
 	private final CloudPoolDriver driverMock = mock(CloudPoolDriver.class);
 	/** Object under test. */
 	private BaseCloudPool cloudPool;
 
 	@Before
-	public void onSetup() {
-		this.cloudPool = new BaseCloudPool(this.driverMock);
+	public void onSetup() throws IOException {
+		FileUtils.deleteRecursively(STATE_STORAGE_DIR);
+		this.cloudPool = new BaseCloudPool(STATE_STORAGE, this.driverMock,
+				this.eventBusMock);
 	}
 
 	@Test
@@ -60,6 +77,14 @@ public class TestBaseCloudPoolConfiguration {
 				BaseCloudPoolConfig.class);
 		// ensure that the Login config is passed through to the ScalingGroup
 		verify(this.driverMock).configure(actualConfig);
+
+		// check defaults
+		BaseCloudPoolConfig conf = this.cloudPool.config();
+		assertThat(conf.getAlerts(), is(nullValue()));
+		assertThat(conf.getPoolFetch(),
+				is(BaseCloudPoolConfig.DEFAULT_POOL_FETCH_CONFIG));
+		assertThat(conf.getPoolUpdate(),
+				is(BaseCloudPoolConfig.DEFAULT_POOL_UPDATE_CONFIG));
 	}
 
 	/**
@@ -174,14 +199,17 @@ public class TestBaseCloudPoolConfiguration {
 		AlertsConfig alertSettings = config.getAlerts();
 		assertThat(alertSettings.getSmtpAlerters().size(), is(0));
 		assertThat(alertSettings.getHttpAlerters().size(), is(1));
+		assertThat(alertSettings.getDuplicateSuppression(),
+				is(new TimeInterval(15L, TimeUnit.MINUTES)));
 		// verify filled in values
 		HttpAlerterConfig httpAlerter1 = alertSettings.getHttpAlerters().get(0);
 		assertThat(httpAlerter1.getDestinationUrls(),
 				is(asList("https://some.host:443/")));
 		assertThat(httpAlerter1.getSeverityFilter().getFilterExpression(),
 				is("INFO|WARN|ERROR|FATAL"));
-		assertThat(httpAlerter1.getAuth(), is(new HttpAuthConfig(
-				new BasicCredentials("user", "secret"), null)));
+		assertThat(httpAlerter1.getAuth(),
+				is(new HttpAuthConfig(new BasicCredentials("user", "secret"),
+						null)));
 		// defaults
 		assertThat(httpAlerter1.getConnectTimeout(),
 				is(HttpAlerterConfig.DEFAULT_CONNECTION_TIMEOUT));
@@ -206,8 +234,9 @@ public class TestBaseCloudPoolConfiguration {
 				is(asList("https://some.host1:443/")));
 		assertThat(httpAlerter1.getSeverityFilter().getFilterExpression(),
 				is("ERROR|FATAL"));
-		assertThat(httpAlerter1.getAuth(), is(new HttpAuthConfig(
-				new BasicCredentials("user1", "secret1"), null)));
+		assertThat(httpAlerter1.getAuth(),
+				is(new HttpAuthConfig(new BasicCredentials("user1", "secret1"),
+						null)));
 
 		HttpAlerterConfig httpAlerter2 = alertSettings.getHttpAlerters().get(1);
 		assertThat(httpAlerter2.getDestinationUrls(),
@@ -216,8 +245,8 @@ public class TestBaseCloudPoolConfiguration {
 				is("INFO|WARN"));
 		CertificateCredentials certificateCredentials = new CertificateCredentials(
 				"src/test/resources/security/client_keystore.p12", "secret");
-		assertThat(httpAlerter2.getAuth(), is(new HttpAuthConfig(null,
-				certificateCredentials)));
+		assertThat(httpAlerter2.getAuth(),
+				is(new HttpAuthConfig(null, certificateCredentials)));
 
 	}
 
@@ -245,22 +274,99 @@ public class TestBaseCloudPoolConfiguration {
 				is(asList("https://some.host:443/")));
 		assertThat(httpAlerter.getSeverityFilter().getFilterExpression(),
 				is("INFO|WARN|ERROR|FATAL"));
-		assertThat(httpAlerter.getAuth(), is(new HttpAuthConfig(
-				new BasicCredentials("user", "secret"), null)));
+		assertThat(httpAlerter.getAuth(),
+				is(new HttpAuthConfig(new BasicCredentials("user", "secret"),
+						null)));
+	}
 
+	@Test
+	public void testConfigureWithPoolFetch() {
+		String configFile = "config/valid-cloudpool-config-with-pool-fetch.json";
+		JsonObject validConfig = JsonUtils.parseJsonResource(configFile)
+				.getAsJsonObject();
+		this.cloudPool.configure(validConfig);
+
+		BaseCloudPoolConfig config = this.cloudPool.config();
+		assertThat(config.getPoolFetch().getRetries(), is(
+				new RetriesConfig(3, new TimeInterval(0L, TimeUnit.SECONDS))));
+		assertThat(config.getPoolFetch().getRefreshInterval(),
+				is(new TimeInterval(10L, TimeUnit.SECONDS)));
+		assertThat(config.getPoolFetch().getReachabilityTimeout(),
+				is(new TimeInterval(5L, TimeUnit.MINUTES)));
+	}
+
+	@Test
+	public void testConfigureWithPoolUpdate() {
+		String configFile = "config/valid-cloudpool-config-with-pool-update.json";
+		JsonObject validConfig = JsonUtils.parseJsonResource(configFile)
+				.getAsJsonObject();
+		this.cloudPool.configure(validConfig);
+
+		BaseCloudPoolConfig config = this.cloudPool.config();
+		assertThat(config.getPoolUpdate().getUpdateInterval(),
+				is(new TimeInterval(2L, TimeUnit.MINUTES)));
+	}
+
+	/**
+	 * Configuring a stopped {@link BaseCloudPool} should leave it in that
+	 * state.
+	 */
+	@Test
+	public void testConfigureStopped() {
+		assertThat(this.cloudPool.isStarted(), is(false));
+
+		// configure
+		JsonObject config = JsonUtils
+				.parseJsonResource("config/valid-cloudpool-config-minimal.json")
+				.getAsJsonObject();
+		this.cloudPool.configure(config);
+		assertEquals(config, this.cloudPool.getConfiguration().get());
+
+		// should still be stopped
+		assertThat(this.cloudPool.isStarted(), is(false));
+	}
+
+	/**
+	 * Configuring a stared {@link BaseCloudPool} should leave it in that state.
+	 */
+	@Test
+	public void testConfigureStarted() {
+		// configure
+		JsonObject config = JsonUtils
+				.parseJsonResource("config/valid-cloudpool-config-minimal.json")
+				.getAsJsonObject();
+		this.cloudPool.configure(config);
+		this.cloudPool.start();
+
+		assertThat(this.cloudPool.isStarted(), is(true));
+		assertEquals(config, this.cloudPool.getConfiguration().get());
+
+		// re-configure
+		JsonObject newConfig = JsonUtils
+				.parseJsonResource(
+						"config/valid-cloudpool-config-with-alerts.json")
+				.getAsJsonObject();
+		this.cloudPool.configure(newConfig);
+		assertEquals(newConfig, this.cloudPool.getConfiguration().get());
+
+		// should still be started
+		assertThat(this.cloudPool.isStarted(), is(true));
+		assertEquals(newConfig, this.cloudPool.getConfiguration().get());
 	}
 
 	@Test
 	public void testReConfigure() throws CloudPoolException {
 		// configure
-		JsonObject oldConfig = JsonUtils.parseJsonResource(
-				"config/valid-cloudpool-config-minimal.json").getAsJsonObject();
+		JsonObject oldConfig = JsonUtils
+				.parseJsonResource("config/valid-cloudpool-config-minimal.json")
+				.getAsJsonObject();
 		this.cloudPool.configure(oldConfig);
 		assertEquals(oldConfig, this.cloudPool.getConfiguration().get());
 
 		// re-configure
-		JsonObject newConfig = JsonUtils.parseJsonResource(
-				"config/valid-cloudpool-config-with-alerts.json")
+		JsonObject newConfig = JsonUtils
+				.parseJsonResource(
+						"config/valid-cloudpool-config-with-alerts.json")
 				.getAsJsonObject();
 		this.cloudPool.configure(newConfig);
 		assertEquals(newConfig, this.cloudPool.getConfiguration().get());
@@ -288,7 +394,7 @@ public class TestBaseCloudPoolConfiguration {
 		when(this.driverMock.listMachines()).thenThrow(
 				new CloudPoolDriverException("temporary cloud API outage"));
 
-		String configFile = "config/valid-cloudpool-config-minimal.json";
+		String configFile = "config/valid-cloudpool-config-with-pool-fetch.json";
 		JsonObject validConfig = JsonUtils.parseJsonResource(configFile)
 				.getAsJsonObject();
 		this.cloudPool.configure(validConfig);
@@ -305,8 +411,9 @@ public class TestBaseCloudPoolConfiguration {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testConfigureWithIllegalConfig() throws CloudPoolException {
-		JsonObject illegalConfig = JsonUtils.parseJsonResource(
-				"config/invalid-cloudpool-config-missing-cloudpool.json")
+		JsonObject illegalConfig = JsonUtils
+				.parseJsonResource(
+						"config/invalid-cloudpool-config-missing-cloudpool.json")
 				.getAsJsonObject();
 		this.cloudPool.configure(illegalConfig);
 	}

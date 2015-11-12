@@ -18,6 +18,8 @@ import org.junit.Test;
 
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.time.UtcTime;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 
 /**
@@ -113,6 +115,25 @@ public class TestMachine {
 		assertFalse(withMetadata.equals(withIps));
 		assertFalse(withMetadata.equals(noLaunchTime));
 		assertFalse(withMetadata.equals(withServiceState));
+	}
+
+	/**
+	 * A {@link Machine} with <code>null</code> metadata and one with
+	 * {@link JsonNull} metadata should be considered equal. When deserializing
+	 * a <code>null</code> field for a {@link JsonElement}, it will be assigned
+	 * a {@link JsonNull} value, which for all practical purposes should be
+	 * considered equal to <code>null</code>.
+	 */
+	@Test
+	public void testWithNullMetadata() {
+		Machine nullMetadata = Machine.builder().id("i-1")
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").metadata(null).build();
+		Machine jsonNullMetadata = Machine.builder().id("i-1")
+				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+				.machineSize("m1.small").metadata(JsonNull.INSTANCE).build();
+		assertThat(nullMetadata, is(jsonNullMetadata));
+		assertThat(jsonNullMetadata, is(nullMetadata));
 	}
 
 	/**
@@ -244,12 +265,8 @@ public class TestMachine {
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
 				.machineSize("m1.small").launchTime(pm).build();
 
-		Comparator<Machine> earliestFirst = new Comparator<Machine>() {
-			@Override
-			public int compare(Machine m1, Machine m2) {
-				return m1.getLaunchTime().compareTo(m2.getLaunchTime());
-			}
-		};
+		Comparator<Machine> earliestFirst = (m1, m2) -> m1.getLaunchTime()
+				.compareTo(m2.getLaunchTime());
 
 		// sort with empty list
 		List<Machine> emptyList = Collections.emptyList();

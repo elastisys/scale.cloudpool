@@ -40,8 +40,8 @@ public class TestConfigHandlerDispatch {
 	private CloudPool cloudPoolMock = mock(CloudPool.class);
 
 	/** Storage dir for configurations. */
-	private static final String storageDir = Paths.get("target", "cloudpool",
-			"storage").toString();
+	private static final String storageDir = Paths
+			.get("target", "cloudpool", "storage").toString();
 
 	@Before
 	public void onSetup() {
@@ -57,8 +57,8 @@ public class TestConfigHandlerDispatch {
 		// set up mock response
 		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}")
 				.getAsJsonObject();
-		when(this.cloudPoolMock.getConfiguration()).thenReturn(
-				Optional.of(config));
+		when(this.cloudPoolMock.getConfiguration())
+				.thenReturn(Optional.of(config));
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.getConfig();
@@ -72,10 +72,11 @@ public class TestConfigHandlerDispatch {
 	 */
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testGetConfigurationDispatchOnCloudPoolError() throws Exception {
+	public void testGetConfigurationDispatchOnCloudPoolError()
+			throws Exception {
 		// set up mock response
-		when(this.cloudPoolMock.getConfiguration()).thenThrow(
-				CloudPoolException.class);
+		when(this.cloudPoolMock.getConfiguration())
+				.thenThrow(CloudPoolException.class);
 
 		// call rest endpoint and verify proper dispatching to mock
 		Response response = this.restEndpoint.getConfig();
@@ -103,15 +104,37 @@ public class TestConfigHandlerDispatch {
 
 	/**
 	 * Verify proper handling of {@code psotConfig} calls when a cloud provider
-	 * error is thrown from the backing {@link CloudPool}.
+	 * error is thrown from the backing {@link CloudPool}. Should render a
+	 * {@code 502} response.
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	public void testPostConfigOnCloudPoolError() throws Exception {
+	public void testPostConfigOnCloudError() throws Exception {
 		// set up mock response: should throw error
-		doThrow(CloudPoolException.class).when(this.cloudPoolMock).configure(
-				any(JsonObject.class));
+		doThrow(new CloudPoolException("api error")).when(this.cloudPoolMock)
+				.configure(any(JsonObject.class));
+
+		// call rest endpoint and verify proper dispatching to mock
+		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}")
+				.getAsJsonObject();
+		Response response = this.restEndpoint.setAndStoreConfig(config);
+		assertEquals(response.getStatus(), Status.BAD_GATEWAY.getStatusCode());
+		assertThat(response.getEntity(), instanceOf(ErrorType.class));
+	}
+
+	/**
+	 * Verify proper handling of {@code psotConfig} calls when an internal error
+	 * is thrown from the backing {@link CloudPool}. Should render a {@code 500}
+	 * response.
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testPostConfigOnInternalError() throws Exception {
+		// set up mock response: should throw error
+		doThrow(new RuntimeException("buggy code")).when(this.cloudPoolMock)
+				.configure(any(JsonObject.class));
 
 		// call rest endpoint and verify proper dispatching to mock
 		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}")
@@ -124,7 +147,8 @@ public class TestConfigHandlerDispatch {
 
 	/**
 	 * Verify proper handling of {@code postConfig} calls when an error is
-	 * thrown from the backing {@link CloudPool}.
+	 * thrown from the backing {@link CloudPool}.Should render a {@code 400}
+	 * response.
 	 */
 	@Test
 	public void testPostConfigOnIllegalInputError() throws Exception {
@@ -133,8 +157,9 @@ public class TestConfigHandlerDispatch {
 				.configure(any(JsonObject.class));
 
 		// call rest endpoint and verify proper dispatching to mock
-		JsonObject config = JsonUtils.parseJsonString(
-				"{\"key\": \"illegal-value\"}").getAsJsonObject();
+		JsonObject config = JsonUtils
+				.parseJsonString("{\"key\": \"illegal-value\"}")
+				.getAsJsonObject();
 		Response response = this.restEndpoint.setAndStoreConfig(config);
 		assertEquals(response.getStatus(), Status.BAD_REQUEST.getStatusCode());
 		assertThat(response.getEntity(), instanceOf(ErrorType.class));

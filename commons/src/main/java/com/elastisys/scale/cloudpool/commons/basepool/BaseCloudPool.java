@@ -1,20 +1,10 @@
 package com.elastisys.scale.cloudpool.commons.basepool;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static java.lang.Math.max;
-import static java.lang.String.format;
 
 import java.net.InetAddress;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -28,41 +18,28 @@ import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.NotStartedException;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
-import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
-import com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertTopics;
-import com.elastisys.scale.cloudpool.commons.basepool.config.AlertsConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertHandler;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleInConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
-import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
-import com.elastisys.scale.cloudpool.commons.resizeplanner.ResizePlan;
-import com.elastisys.scale.cloudpool.commons.resizeplanner.ResizePlanner;
-import com.elastisys.scale.cloudpool.commons.termqueue.ScheduledTermination;
-import com.elastisys.scale.cloudpool.commons.termqueue.TerminationQueue;
+import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.impl.CachingPoolFetcher;
+import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.impl.RetryingPoolFetcher;
+import com.elastisys.scale.cloudpool.commons.basepool.poolupdater.PoolUpdater;
+import com.elastisys.scale.cloudpool.commons.basepool.poolupdater.impl.StandardPoolUpdater;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.alerter.Alert;
-import com.elastisys.scale.commons.net.alerter.AlertSeverity;
 import com.elastisys.scale.commons.net.alerter.Alerter;
-import com.elastisys.scale.commons.net.alerter.http.HttpAlerter;
-import com.elastisys.scale.commons.net.alerter.http.HttpAlerterConfig;
-import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerter;
-import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerterConfig;
 import com.elastisys.scale.commons.net.host.HostUtils;
-import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.Atomics;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -118,6 +95,7 @@ import com.google.gson.JsonObject;
  *     "instanceHourMargin": 0
  *   },
  *   "alerts": {
+ *     "duplicateSuppression": { "time": 5, "unit": "minutes" },
  *     "smtp": [
  *       {
  *         "subject": "[elastisys:scale] cloud pool alert for MyScalingPool",
@@ -141,7 +119,17 @@ import com.google.gson.JsonObject;
  *       }
  *     ]
  *   },
- *   "poolUpdatePeriod": 60
+ *   "poolFetch": {
+ *     "retries": {
+ *       "maxRetries": 3,
+ *       "initialBackoffDelay": {"time": 3, "unit": "seconds"}
+ *     },
+ *     "refreshInterval": {"time": 30, "unit": "seconds"},
+ *     "reachabilityTimeout": {"time": 5, "unit": "minutes"}
+ *   },
+ *   "poolUpdate": {
+ *     "updateInterval": {"time": 15, "unit": "seconds"}
+ *   }
  * }
  * </pre>
  *
@@ -164,16 +152,15 @@ import com.google.gson.JsonObject;
  *
  * <h3>Identifying pool members:</h2>
  *
- * When {@link #getMachinePool} is called, the pool members are identified via a
- * call to {@link CloudPoolDriver#listMachines()}.
+ * Pool members are identified via a call to
+ * {@link CloudPoolDriver#listMachines()}.
  *
  * <h3>Handling resize requests:</h3>
  *
  * When {@link #setDesiredSize(int)} is called, the {@link BaseCloudPool} notes
  * the new desired size but does not immediately apply the necessary changes to
  * the machine pool. Instead, pool updates are carried out in a periodical
- * manner (with a period specified by the {@code poolUpdatePeriod} configuration
- * key).
+ * manner (with a period specified by the {@code poolUpdate} configuration key).
  * <p/>
  * When a pool update is triggered, the actions taken depend on if the pool
  * needs to grow or shrink.
@@ -206,90 +193,74 @@ public class BaseCloudPool implements CloudPool {
 	/** {@link Logger} instance. */
 	static final Logger LOG = LoggerFactory.getLogger(BaseCloudPool.class);
 
-	/** Maximum concurrency in the {@link #executorService}. */
-	private static final int MAX_CONCURRENCY = 10;
-
+	/** Declares where the runtime state is stored. */
+	private final StateStorage stateStorage;
 	/** A cloud-specific management driver for the cloud pool. */
 	private CloudPoolDriver cloudDriver = null;
-
-	/** The currently set configuration. */
-	private final AtomicReference<BaseCloudPoolConfig> config;
-	/** {@link ExecutorService} handling execution of "background jobs". */
-	private final ScheduledExecutorService executorService;
-	/** <code>true</code> if pool has been started. */
-	private final AtomicBoolean started;
-
-	/** The desired size of the machine pool. */
-	private final AtomicReference<Integer> desiredSize;
 
 	/**
 	 * {@link EventBus} used to post {@link Alert} events that are to be
 	 * forwarded by configured {@link Alerter}s (if any).
 	 */
 	private final EventBus eventBus;
-	/**
-	 * Holds the list of configured {@link Alerter}s (if any). Each
-	 * {@link Alerter} is registered with the {@link EventBus} to forward posted
-	 * {@link Alert}s.
-	 */
-	private final AtomicReference<List<Alerter>> alerters;
-	/**
-	 * Pool update task that periodically runs the {@link #updateMachinePool()}
-	 * method to (1) effectuate pending instance terminations in the /
-	 * termination queue and (2) replace terminated instances.
-	 */
-	private ScheduledFuture<?> poolUpdateTask;
-	/** Lock to protect the machine pool from concurrent modifications. */
-	private final Object updateLock = new Object();
+
+	/** The currently set configuration. */
+	private final AtomicReference<BaseCloudPoolConfig> config;
+	/** <code>true</code> if pool has been started. */
+	private final AtomicBoolean started;
 
 	/**
-	 * The queue of already termination-marked instances (these will be used to
-	 * filter out instances already scheduled for termination from the candidate
-	 * set).
+	 * Dispatches {@link Alert}s sent on the {@link EventBus} to configured
+	 * {@link Alerter}s.
 	 */
-	private final TerminationQueue terminationQueue;
+	private final AlertHandler alertHandler;
+
+	/** Retrieves {@link MachinePool} members. */
+	private CachingPoolFetcher poolFetcher;
+	/** Manages the machine pool to keep it at its desired size. */
+	private PoolUpdater poolUpdater;
 
 	/**
 	 * Constructs a new {@link BaseCloudPool} managing a given
 	 * {@link CloudPoolDriver}.
 	 *
+	 * @param stateStorage
+	 *            Declares where the runtime state is stored.
 	 * @param cloudDriver
 	 *            A cloud-specific management driver for the cloud pool.
 	 */
-	public BaseCloudPool(CloudPoolDriver cloudDriver) {
-		this(cloudDriver, new EventBus());
+	public BaseCloudPool(StateStorage stateStorage,
+			CloudPoolDriver cloudDriver) {
+		this(stateStorage, cloudDriver, new EventBus());
 	}
 
 	/**
 	 * Constructs a new {@link BaseCloudPool} managing a given
-	 * {@link CloudPoolDriver} and with an {@link EventBus} provided by the
+	 * {@link CloudPoolDriver} and using an {@link EventBus} provided by the
 	 * caller.
 	 *
+	 * @param stateStorage
+	 *            Declares where the runtime state is stored.
 	 * @param cloudDriver
 	 *            A cloud-specific management driver for the cloud pool.
 	 * @param eventBus
 	 *            The {@link EventBus} used to send {@link Alert}s and event
 	 *            messages between components of the cloud pool.
 	 */
-	public BaseCloudPool(CloudPoolDriver cloudDriver, EventBus eventBus) {
-		checkArgument(cloudDriver != null, "cloudDriver is null");
-		checkArgument(eventBus != null, "eventBus is null");
+	public BaseCloudPool(StateStorage stateStorage, CloudPoolDriver cloudDriver,
+			EventBus eventBus) {
+		checkArgument(stateStorage != null, "no stateStorage given");
+		checkArgument(cloudDriver != null, "no cloudDriver given");
+		checkArgument(eventBus != null, "no eventBus given");
 
+		this.stateStorage = stateStorage;
 		this.cloudDriver = cloudDriver;
 		this.eventBus = eventBus;
 
-		ThreadFactory threadFactory = new ThreadFactoryBuilder().setDaemon(true)
-				.setNameFormat("cloudpool-%d").build();
-		this.executorService = Executors.newScheduledThreadPool(MAX_CONCURRENCY,
-				threadFactory);
+		this.alertHandler = new AlertHandler(eventBus);
 
 		this.config = Atomics.newReference();
 		this.started = new AtomicBoolean(false);
-
-		this.alerters = Atomics.newReference();
-
-		this.terminationQueue = new TerminationQueue();
-		this.desiredSize = Atomics.newReference();
 	}
 
 	@Override
@@ -297,13 +268,21 @@ public class BaseCloudPool implements CloudPool {
 			throws IllegalArgumentException, CloudPoolException {
 		BaseCloudPoolConfig configuration = validate(jsonConfig);
 
-		synchronized (this.updateLock) {
+		synchronized (this) {
+			boolean wasStarted = isStarted();
+			if (wasStarted) {
+				stop();
+			}
+
 			this.config.set(configuration);
 			// re-configure driver
 			this.cloudDriver.configure(configuration);
+			// alerters may have changed
+			this.alertHandler.unregisterAlerters();
+			this.alertHandler.registerAlerters(config().getAlerts(),
+					standardAlertMetadata());
 
-			if (isStarted()) {
-				stop();
+			if (wasStarted) {
 				start();
 			}
 		}
@@ -344,16 +323,16 @@ public class BaseCloudPool implements CloudPool {
 		LOG.info("starting {} driving a {}", getClass().getSimpleName(),
 				this.cloudDriver.getClass().getSimpleName());
 
-		// start pool update task that periodically runs updateMachinepool()
-		int poolUpdatePeriod = config().getPoolUpdatePeriod();
-		this.poolUpdateTask = this.executorService.scheduleWithFixedDelay(
-				new PoolUpdateTask(), poolUpdatePeriod, poolUpdatePeriod,
-				TimeUnit.SECONDS);
+		RetryingPoolFetcher retryingFetcher = new RetryingPoolFetcher(
+				this.cloudDriver, config().getPoolFetch().getRetries());
+		// note: we wait for first attempt to get the pool to complete
+		this.poolFetcher = new CachingPoolFetcher(this.stateStorage,
+				retryingFetcher, config().getPoolFetch(), this.eventBus);
+		this.poolFetcher.awaitFirstFetch();
+		this.poolUpdater = new StandardPoolUpdater(this.cloudDriver,
+				this.poolFetcher, this.eventBus, config());
 
-		setUpAlerters(config());
 		this.started.set(true);
-
-		determineDesiredSizeIfUnset();
 		LOG.info(getClass().getSimpleName() + " started.");
 	}
 
@@ -362,9 +341,8 @@ public class BaseCloudPool implements CloudPool {
 		if (isStarted()) {
 			LOG.debug("stopping {} ...", getClass().getSimpleName());
 			// cancel tasks (allow any running tasks to finish)
-			this.poolUpdateTask.cancel(false);
-			this.poolUpdateTask = null;
-			takeDownAlerters();
+			this.poolFetcher.close();
+			this.poolUpdater.close();
 			this.started.set(false);
 		}
 		LOG.info(getClass().getSimpleName() + " stopped.");
@@ -389,52 +367,6 @@ public class BaseCloudPool implements CloudPool {
 		}
 	}
 
-	/**
-	 * In case no {@link #desiredSize} has been set yet, this method determines
-	 * the (initial) desired size for the {@link CloudPoolDriver} as the current
-	 * size of the {@link CloudPoolDriver}. On failure to determine the pool
-	 * size (for example, due to a temporary cloud provider API outage), an
-	 * alert is sent out (if alerting has been set up).
-	 */
-	private void determineDesiredSizeIfUnset() {
-		if (this.desiredSize.get() != null) {
-			return;
-		}
-
-		try {
-			LOG.debug("determining initial desired pool size");
-			setDesiredSizeIfUnset(getMachinePool());
-		} catch (CloudPoolException e) {
-			String message = format(
-					"failed to determine initial size of pool: %s\n%s",
-					e.getMessage(), Throwables.getStackTraceAsString(e));
-			this.eventBus.post(new Alert(AlertTopics.POOL_FETCH.name(),
-					AlertSeverity.ERROR, UtcTime.now(), message));
-			LOG.error(message);
-		}
-	}
-
-	/**
-	 * Initializes the {@link #desiredSize} (if one hasn't already been set)
-	 * from a given {@link MachinePool} .
-	 * <p/>
-	 * If {@link #desiredSize} is already set, this method returns immediately.
-	 *
-	 * @param pool
-	 */
-	private void setDesiredSizeIfUnset(MachinePool pool) {
-		if (this.desiredSize.get() != null) {
-			return;
-		}
-		// exclude inactive instances since they aren't actually part
-		// of the desiredSize (they are to be replaced)
-		int effectiveSize = pool.getActiveMachines().size();
-		int allocated = pool.getAllocatedMachines().size();
-		this.desiredSize.set(effectiveSize);
-		LOG.info("initial desiredSize is {} (allocated: {}, effective: {})",
-				this.desiredSize, allocated, effectiveSize);
-	}
-
 	boolean isStarted() {
 		return this.started.get();
 	}
@@ -443,11 +375,7 @@ public class BaseCloudPool implements CloudPool {
 	public MachinePool getMachinePool() throws CloudPoolException {
 		ensureStarted();
 
-		List<Machine> machines = listMachines();
-		MachinePool pool = new MachinePool(machines, UtcTime.now());
-		// if we haven't yet determined the desired size, we do so now
-		setDesiredSizeIfUnset(pool);
-		return pool;
+		return this.poolFetcher.get();
 	}
 
 	/**
@@ -461,49 +389,23 @@ public class BaseCloudPool implements CloudPool {
 		}
 	}
 
-	/**
-	 * Returns the desired size or <code>null</code> if none has been
-	 * set/determined.
-	 *
-	 * @return
-	 */
-	Integer desiredSize() {
-		return this.desiredSize.get();
-	}
-
 	@Override
 	public PoolSizeSummary getPoolSize() throws CloudPoolException {
 		ensureStarted();
 
-		MachinePool pool = getMachinePool();
-		return new PoolSizeSummary(this.desiredSize.get(),
+		MachinePool pool = this.poolFetcher.get();
+		return new PoolSizeSummary(pool.getTimestamp(),
+				this.poolUpdater.getDesiredSize(),
 				pool.getAllocatedMachines().size(),
 				pool.getActiveMachines().size());
-	}
-
-	/**
-	 * Lists the {@link Machine}s in the {@link CloudPoolDriver}. Raises a
-	 * {@link CloudPoolException} on failure and sends alert (if configured).
-	 *
-	 * @return
-	 *
-	 * @throws CloudPoolException
-	 */
-	private List<Machine> listMachines() {
-		return this.cloudDriver.listMachines();
 	}
 
 	@Override
 	public void setDesiredSize(int desiredSize)
 			throws IllegalArgumentException, CloudPoolException {
 		ensureStarted();
-		checkArgument(desiredSize >= 0, "negative desired pool size");
 
-		// prevent concurrent pool modifications
-		synchronized (this.updateLock) {
-			LOG.info("set desiredSize to {}", desiredSize);
-			this.desiredSize.set(desiredSize);
-		}
+		this.poolUpdater.setDesiredSize(desiredSize);
 	}
 
 	@Override
@@ -511,19 +413,7 @@ public class BaseCloudPool implements CloudPool {
 			throws IllegalArgumentException, CloudPoolException {
 		ensureStarted();
 
-		// prevent concurrent pool modifications
-		synchronized (this.updateLock) {
-			LOG.debug("terminating {}", machineId);
-			this.cloudDriver.terminateMachine(machineId);
-			if (decrementDesiredSize) {
-				// note: decrement unless desiredSize has been set to 0 (without
-				// having been effectuated yet)
-				int newSize = max(this.desiredSize.get() - 1, 0);
-				LOG.debug("decrementing desiredSize to {}", newSize);
-				setDesiredSize(newSize);
-			}
-		}
-		terminationAlert(machineId);
+		this.poolUpdater.terminateMachine(machineId, decrementDesiredSize);
 	}
 
 	@Override
@@ -531,14 +421,7 @@ public class BaseCloudPool implements CloudPool {
 			throws IllegalArgumentException, CloudPoolException {
 		ensureStarted();
 
-		// prevent concurrent pool modifications
-		synchronized (this.updateLock) {
-			LOG.debug("attaching instance {} to pool", machineId);
-			this.cloudDriver.attachMachine(machineId);
-			// implicitly increases pool size
-			setDesiredSize(this.desiredSize.get() + 1);
-		}
-		attachAlert(machineId);
+		this.poolUpdater.attachMachine(machineId);
 	}
 
 	@Override
@@ -546,19 +429,7 @@ public class BaseCloudPool implements CloudPool {
 			throws IllegalArgumentException, CloudPoolException {
 		ensureStarted();
 
-		// prevent concurrent pool modifications
-		synchronized (this.updateLock) {
-			LOG.debug("detaching {} from pool", machineId);
-			this.cloudDriver.detachMachine(machineId);
-			if (decrementDesiredSize) {
-				// note: decrement unless desiredSize has been set to 0 (without
-				// having been effectuated yet)
-				int newSize = max(this.desiredSize.get() - 1, 0);
-				LOG.debug("decrementing desiredSize to {}", newSize);
-				setDesiredSize(newSize);
-			}
-		}
-		detachAlert(machineId);
+		this.poolUpdater.detachMachine(machineId, decrementDesiredSize);
 	}
 
 	@Override
@@ -566,10 +437,7 @@ public class BaseCloudPool implements CloudPool {
 			throws IllegalArgumentException {
 		ensureStarted();
 
-		LOG.debug("service state {} assigned to {}", serviceState.name(),
-				machineId);
-		this.cloudDriver.setServiceState(machineId, serviceState);
-		serviceStateAlert(machineId, serviceState);
+		this.poolUpdater.setServiceState(machineId, serviceState);
 	}
 
 	@Override
@@ -578,10 +446,7 @@ public class BaseCloudPool implements CloudPool {
 					throws NotFoundException, CloudPoolException {
 		ensureStarted();
 
-		LOG.debug("membership status {} assigned to {}", membershipStatus,
-				machineId);
-		this.cloudDriver.setMembershipStatus(machineId, membershipStatus);
-		membershipStatusAlert(machineId, membershipStatus);
+		this.poolUpdater.setMembershipStatus(machineId, membershipStatus);
 	}
 
 	@Override
@@ -590,44 +455,8 @@ public class BaseCloudPool implements CloudPool {
 	}
 
 	/**
-	 * Sets up {@link Alerter}s, in case the configuration contains an
-	 * {@link AlertsConfig}.
-	 *
-	 * @param configuration
-	 */
-	private void setUpAlerters(BaseCloudPoolConfig configuration) {
-		AlertsConfig alertsConfig = configuration.getAlerts();
-		if (alertsConfig == null) {
-			LOG.debug("no alerts configuration, no alerters set up");
-			return;
-		}
-
-		List<Alerter> newAlerters = Lists.newArrayList();
-		Map<String, JsonElement> standardAlertMetadataTags = standardAlertMetadata();
-		// add SMTP alerters
-		List<SmtpAlerterConfig> smtpAlerters = alertsConfig.getSmtpAlerters();
-		LOG.debug("adding {} SMTP alerter(s)", smtpAlerters.size());
-		for (SmtpAlerterConfig smtpAlerterConfig : smtpAlerters) {
-			newAlerters.add(new SmtpAlerter(smtpAlerterConfig,
-					standardAlertMetadataTags));
-		}
-		// add HTTP alerters
-		List<HttpAlerterConfig> httpAlerters = alertsConfig.getHttpAlerters();
-		LOG.debug("adding {} HTTP alerter(s)", httpAlerters.size());
-		for (HttpAlerterConfig httpAlerterConfig : httpAlerters) {
-			newAlerters.add(new HttpAlerter(httpAlerterConfig,
-					standardAlertMetadataTags));
-		}
-		// register every alerter with event bus
-		for (Alerter alerter : newAlerters) {
-			this.eventBus.register(alerter);
-		}
-		this.alerters.set(newAlerters);
-	}
-
-	/**
-	 * Standard {@link Alert} tags to include in all {@link Alert} mails sent by
-	 * the configured {@link Alerter}s.
+	 * Standard tags that are to be included in all sent out {@link Alert}s (in
+	 * addition to those already set on the {@link Alert} itself).
 	 *
 	 * @return
 	 */
@@ -644,314 +473,12 @@ public class BaseCloudPool implements CloudPool {
 		return standardTags;
 	}
 
-	/**
-	 * Unregisters all configured {@link Alerter}s from the {@link EventBus}.
-	 */
-	private void takeDownAlerters() {
-		if (this.alerters.get() != null) {
-			List<Alerter> alerterList = this.alerters.get();
-			for (Alerter alerter : alerterList) {
-				this.eventBus.unregister(alerter);
-			}
-		}
-	}
-
 	BaseCloudPoolConfig config() {
 		return this.config.get();
 	}
 
-	private String poolName() {
-		return config().getCloudPool().getName();
-	}
-
-	private ScaleOutConfig scaleOutConfig() {
-		return config().getScaleOutConfig();
-	}
-
-	private ScaleInConfig scaleInConfig() {
-		return config().getScaleInConfig();
-	}
-
-	/**
-	 * Updates the size of the machine pool to match the currently set desired
-	 * size. This may involve terminating termination-due machines and placing
-	 * new server requests to replace terminated servers.
-	 * <p/>
-	 * Waits for the {@link #updateLock} to avoid concurrent pool updates.
-	 *
-	 * @throws CloudPoolException
-	 */
-	void updateMachinePool() throws CloudPoolException {
-		// check if we need to determine desired size (it may not have been
-		// possible on startup, e.g., due to cloud API being ureachable)
-		determineDesiredSizeIfUnset();
-		if (this.desiredSize.get() == null) {
-			LOG.warn("cannot update pool: haven't been able to "
-					+ "determine initial desired size");
-			return;
-		}
-
-		// prevent multiple threads from concurrently updating pool
-		synchronized (this.updateLock) {
-			int targetSize = this.desiredSize.get();
-			try {
-				doPoolUpdate(targetSize);
-			} catch (Throwable e) {
-				String message = format(
-						"failed to adjust pool "
-								+ "\"%s\" to desired size %d: %s\n%s",
-						poolName(), targetSize, e.getMessage(),
-						Throwables.getStackTraceAsString(e));
-				this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
-						AlertSeverity.ERROR, UtcTime.now(), message));
-				throw new CloudPoolException(message, e);
-			}
-		}
-	}
-
-	private void doPoolUpdate(int newSize) throws CloudPoolException {
-		LOG.info("updating pool size to desired size {}", newSize);
-
-		MachinePool pool = getMachinePool();
-		LOG.debug("current pool members: {}",
-				Lists.transform(pool.getMachines(), Machine.toShortString()));
-		this.terminationQueue.filter(pool.getActiveMachines());
-		ResizePlanner resizePlanner = new ResizePlanner(pool,
-				this.terminationQueue,
-				scaleInConfig().getVictimSelectionPolicy(),
-				scaleInConfig().getInstanceHourMargin());
-		int netSize = resizePlanner.getNetSize();
-
-		ResizePlan resizePlan = resizePlanner.calculateResizePlan(newSize);
-		if (resizePlan.hasScaleOutActions()) {
-			scaleOut(resizePlan);
-		}
-		if (resizePlan.hasScaleInActions()) {
-			List<ScheduledTermination> terminations = resizePlan
-					.getToTerminate();
-			LOG.info("scheduling {} machine(s) for termination",
-					terminations.size());
-			for (ScheduledTermination termination : terminations) {
-				this.terminationQueue.add(termination);
-				LOG.debug("scheduling machine {} for termination at {}",
-						termination.getInstance().getId(),
-						termination.getTerminationTime());
-			}
-			LOG.debug("termination queue: {}", this.terminationQueue);
-		}
-		if (resizePlan.noChanges()) {
-			LOG.info("pool is already properly sized ({})", netSize);
-		}
-		// effectuate scheduled terminations that are (over)due
-		terminateOverdueMachines();
-	}
-
-	private List<Machine> scaleOut(ResizePlan resizePlan)
-			throws StartMachinesException {
-		LOG.info(
-				"sparing {} machine(s) from termination, "
-						+ "placing {} new request(s)",
-				resizePlan.getToSpare(), resizePlan.getToRequest());
-		this.terminationQueue.spare(resizePlan.getToSpare());
-
-		try {
-			List<Machine> startedMachines = this.cloudDriver
-					.startMachines(resizePlan.getToRequest(), scaleOutConfig());
-			startAlert(startedMachines);
-			return startedMachines;
-		} catch (StartMachinesException e) {
-			// may have failed part-way through. notify of machines that were
-			// started before error occurred.
-			startAlert(e.getStartedMachines());
-			throw e;
-		}
-	}
-
-	private List<Machine> terminateOverdueMachines() {
-		LOG.debug("checking termination queue for overdue machines: {}",
-				this.terminationQueue);
-		List<ScheduledTermination> overdueInstances = this.terminationQueue
-				.popOverdueInstances();
-		if (overdueInstances.isEmpty()) {
-			return Collections.emptyList();
-		}
-
-		List<Machine> terminated = Lists.newArrayList();
-		LOG.info("Terminating {} overdue machine(s): {}",
-				overdueInstances.size(), overdueInstances);
-		for (ScheduledTermination overdueInstance : overdueInstances) {
-			String victimId = overdueInstance.getInstance().getId();
-			try {
-				this.cloudDriver.terminateMachine(victimId);
-				terminated.add(overdueInstance.getInstance());
-			} catch (Exception e) {
-				// only warn, since a failure to terminate an instance is not
-				// necessarily an error condition, as the machine, e.g., may
-				// have been terminated by external means since we last checked
-				// the pool members
-				String message = format(
-						"failed to terminate instance '%s': %s\n%s", victimId,
-						e.getMessage(), Throwables.getStackTraceAsString(e));
-				LOG.warn(message);
-				this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
-						AlertSeverity.WARN, UtcTime.now(), message));
-			}
-		}
-		if (!terminated.isEmpty()) {
-			terminationAlert(terminated);
-		}
-
-		return terminated;
-	}
-
-	/**
-	 * Post an {@link Alert} that new machines have been started in the pool.
-	 *
-	 * @param startedMachines
-	 *            The new machine instances that have been started.
-	 */
-	void startAlert(List<Machine> startedMachines) {
-		if (startedMachines.isEmpty()) {
-			return;
-		}
-
-		String message = String.format(
-				"%d machine(s) were requested from cloud pool %s",
-				startedMachines.size(), poolName());
-		LOG.info(message);
-		Map<String, JsonElement> tags = Maps.newHashMap();
-		List<String> startedMachineIds = Lists.transform(startedMachines,
-				Machine.toId());
-		tags.put("requestedMachines", JsonUtils.toJson(startedMachineIds));
-		tags.put("poolMembers", poolMembersTag());
-		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
-				AlertSeverity.INFO, UtcTime.now(), message, tags));
-	}
-
-	/**
-	 * Post an {@link Alert} that the members have been terminated from the
-	 * pool.
-	 *
-	 * @param terminatedMachines
-	 *            The machine instances that were terminated.
-	 */
-	void terminationAlert(List<Machine> terminatedMachines) {
-		String message = String.format(
-				"%d machine(s) were terminated in cloud pool %s",
-				terminatedMachines.size(), poolName());
-		LOG.info(message);
-		Map<String, JsonElement> tags = Maps.newHashMap();
-		List<String> terminatedMachineIds = Lists.transform(terminatedMachines,
-				Machine.toId());
-		tags.put("terminatedMachines", JsonUtils.toJson(terminatedMachineIds));
-		tags.put("poolMembers", poolMembersTag());
-		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
-				AlertSeverity.INFO, UtcTime.now(), message, tags));
-	}
-
-	/**
-	 * Post an {@link Alert} that a machine was terminated from the pool.
-	 *
-	 * @param machineId
-	 */
-	void terminationAlert(String machineId) {
-		Map<String, JsonElement> tags = Maps.newHashMap();
-		List<String> machineIdList = Lists.newArrayList(machineId);
-		tags.put("terminatedMachines", JsonUtils.toJson(machineIdList));
-		tags.put("poolMembers", poolMembersTag());
-		String message = String.format("Terminated machine %s.", machineId);
-		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
-				AlertSeverity.INFO, UtcTime.now(), message, tags));
-	}
-
-	/**
-	 * Post an {@link Alert} that a machine was attached to the pool.
-	 *
-	 * @param machineId
-	 */
-	void attachAlert(String machineId) {
-		Map<String, JsonElement> tags = ImmutableMap.of("attachedMachines",
-				JsonUtils.toJson(Arrays.asList(machineId)));
-		String message = String.format("Attached machine %s to pool.",
-				machineId);
-		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
-				AlertSeverity.INFO, UtcTime.now(), message, tags));
-	}
-
-	/**
-	 * Post an {@link Alert} that a machine was detached from the pool.
-	 *
-	 * @param machineId
-	 */
-	void detachAlert(String machineId) {
-		Map<String, JsonElement> tags = ImmutableMap.of("detachedMachines",
-				JsonUtils.toJson(Arrays.asList(machineId)));
-		String message = String.format("Detached machine %s from pool.",
-				machineId);
-		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
-				AlertSeverity.INFO, UtcTime.now(), message, tags));
-	}
-
-	/**
-	 * Post an {@link Alert} that a pool member had its {@link ServiceState}
-	 * set.
-	 *
-	 * @param machineId
-	 * @param state
-	 */
-	void serviceStateAlert(String machineId, ServiceState state) {
-		Map<String, JsonElement> tags = ImmutableMap.of();
-		String message = String.format(
-				"Service state set to %s for machine %s.", state.name(),
-				machineId);
-		this.eventBus.post(new Alert(AlertTopics.SERVICE_STATE.name(),
-				AlertSeverity.DEBUG, UtcTime.now(), message, tags));
-	}
-
-	/**
-	 * Post an {@link Alert} that a pool member had its {@link MembershipStatus}
-	 * set.
-	 *
-	 * @param machineId
-	 * @param membershipStatus
-	 */
-	void membershipStatusAlert(String machineId,
-			MembershipStatus membershipStatus) {
-		Map<String, JsonElement> tags = ImmutableMap.of();
-		String message = String.format(
-				"Membership status set to %s for machine %s.", membershipStatus,
-				machineId);
-		this.eventBus.post(new Alert(AlertTopics.MEMBERSHIP_STATUS.name(),
-				AlertSeverity.DEBUG, UtcTime.now(), message, tags));
-	}
-
-	private JsonElement poolMembersTag() {
-		try {
-			List<Machine> poolMembers = listMachines();
-			// exclude metadata field (noisy)
-			List<Machine> shortFormatMembers = Lists.transform(poolMembers,
-					Machine.toShortFormat());
-			return JsonUtils.toJson(shortFormatMembers);
-		} catch (Exception e) {
-			LOG.warn("failed to retrieve pool members: {}", e.getMessage());
-			return JsonUtils.toJson(
-					String.format("N/A (call failed: %s)", e.getMessage()));
-		}
-	}
-
-	/**
-	 * Task that, when executed, runs {@link BaseCloudPool#updateMachinePool()}.
-	 */
-	public class PoolUpdateTask implements Runnable {
-		@Override
-		public void run() {
-			try {
-				updateMachinePool();
-			} catch (CloudPoolException e) {
-				LOG.error(format("machine pool update task failed: %s",
-						e.getMessage()), e);
-			}
-		}
+	void updateMachinePool() {
+		this.poolUpdater.resize(config());
 	}
 
 }

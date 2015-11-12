@@ -5,6 +5,7 @@ import static com.elastisys.scale.cloudpool.aws.commons.predicates.InstancePredi
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.autoscaling.model.TerminateInstanceInAutoScalingGroupRequest;
 import com.amazonaws.services.ec2.model.Instance;
@@ -22,15 +23,16 @@ import com.elastisys.scale.commons.net.retryable.Retryers;
  * Due to the eventual consistency semantics of the Amazon API, operations may
  * need time to propagate through the system and results may not be immediate.
  */
-public class TerminateAutoScalingGroupInstance extends
-		AmazonAutoScalingRequest<Void> {
+public class TerminateAutoScalingGroupInstance
+		extends AmazonAutoScalingRequest<Void> {
 
 	/** The machine instance identifier to be terminated. */
 	private final String instanceId;
 
 	public TerminateAutoScalingGroupInstance(AWSCredentials awsCredentials,
-			String region, String instanceId) {
-		super(awsCredentials, region);
+			String region, ClientConfiguration clientConfig,
+			String instanceId) {
+		super(awsCredentials, region, clientConfig);
 		this.instanceId = instanceId;
 	}
 
@@ -48,9 +50,10 @@ public class TerminateAutoScalingGroupInstance extends
 	private void awaitTermination(String instanceId) {
 		String name = String.format("await-terminal-state{%s}", instanceId);
 		try (Ec2ApiClient ec2Client = new Ec2ApiClient(getAwsCredentials(),
-				getRegion())) {
+				getRegion(), getClientConfig())) {
 			Callable<Instance> stateRequester = new GetInstance(
-					getAwsCredentials(), getRegion(), instanceId);
+					getAwsCredentials(), getRegion(), getClientConfig(),
+					instanceId);
 
 			int initialDelay = 1;
 			int maxRetries = 8;

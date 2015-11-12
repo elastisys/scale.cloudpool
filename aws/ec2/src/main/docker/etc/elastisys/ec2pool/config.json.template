@@ -4,7 +4,9 @@
         "driverConfig": {
             "awsAccessKeyId": "${AWS_ACCESS_KEY_ID}",
             "awsSecretAccessKey": "${AWS_SECRET_ACCESS_KEY}",
-            "region": "${AWS_REGION}"
+            "region": "${AWS_REGION}",
+            "connectionTimeout": 10000,
+            "socketTimeout": 10000
         }
     },
     "scaleOutConfig": {
@@ -19,6 +21,7 @@
         "instanceHourMargin": 300
     },
     "alerts": {
+        "duplicateSuppression": { "time": 5, "unit": "minutes" },    
         "smtp": [
             {
                 "subject": "[elastisys:scale] cloud pool alert for ${CLOUD_POOL_NAME}",    
@@ -46,5 +49,15 @@
             }    
         ]
     },
-    "poolUpdatePeriod": 60            
+    "poolFetch": {
+        "retries": { 
+            "maxRetries": 3, 
+            "initialBackoffDelay": {"time": 3, "unit": "seconds"}
+        },
+        "refreshInterval": {"time": 30, "unit": "seconds"},
+        "reachabilityTimeout": {"time": 5, "unit": "minutes"}
+    },
+    "poolUpdate": {
+        "updateInterval": {"time": 60, "unit": "seconds"}
+    }
 }  

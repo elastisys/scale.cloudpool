@@ -5,6 +5,7 @@ import static java.lang.String.format;
 
 import java.util.concurrent.Callable;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
@@ -34,11 +35,13 @@ public class GetInstance extends AmazonEc2Request<Instance> {
 	 *
 	 * @param awsCredentials
 	 * @param region
+	 * @param clientConfig
+	 *            Client configuration options such as connection timeout, etc.
 	 * @param instanceId
 	 */
 	public GetInstance(AWSCredentials awsCredentials, String region,
-			String instanceId) {
-		super(awsCredentials, region);
+			ClientConfiguration clientConfig, String instanceId) {
+		super(awsCredentials, region, clientConfig);
 		this.instanceId = instanceId;
 	}
 
@@ -49,9 +52,9 @@ public class GetInstance extends AmazonEc2Request<Instance> {
 		DescribeInstancesResult result = getClient().getApi()
 				.describeInstances(request);
 		if (result.getReservations().isEmpty()) {
-			throw new NotFoundException(format(
-					"DescribeInstances: no such instance exists: '%s'",
-					this.instanceId));
+			throw new NotFoundException(
+					format("DescribeInstances: no such instance exists: '%s'",
+							this.instanceId));
 		}
 		Reservation reservation = getOnlyElement(result.getReservations());
 		Instance instance = getOnlyElement(reservation.getInstances());

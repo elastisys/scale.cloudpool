@@ -23,6 +23,8 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 
 /**
@@ -122,7 +124,7 @@ public class Machine {
 	 * Additional cloud provider-specific meta data about the {@link Machine}.
 	 * This field is optional (may be <code>null</code>).
 	 */
-	private final JsonObject metadata;
+	private final JsonElement metadata;
 
 	/**
 	 * Constructs a new {@link Machine}.
@@ -169,7 +171,7 @@ public class Machine {
 			MembershipStatus membershipStatus, ServiceState serviceState,
 			String cloudProvider, String machineSize, DateTime requestTime,
 			DateTime launchTime, List<String> publicIps,
-			List<String> privateIps, JsonObject metadata) {
+			List<String> privateIps, JsonElement metadata) {
 		checkNotNull(id, "missing id");
 		checkNotNull(machineState, "missing machineState");
 		checkNotNull(membershipStatus, "missing membershipStatus");
@@ -317,7 +319,7 @@ public class Machine {
 	 *
 	 * @return
 	 */
-	public JsonObject getMetadata() {
+	public JsonElement getMetadata() {
 		return this.metadata;
 	}
 
@@ -333,23 +335,11 @@ public class Machine {
 	public boolean equals(Object obj) {
 		if (obj instanceof Machine) {
 			Machine that = (Machine) obj;
-			final boolean launchtimesEqual;
-			if ((this.launchTime != null) && (that.launchTime != null)) {
-				launchtimesEqual = this.launchTime.isEqual(that.launchTime);
-			} else if ((this.launchTime == null) && (that.launchTime == null)) {
-				launchtimesEqual = true;
-			} else {
-				launchtimesEqual = false;
-			}
-			final boolean requesttimesEqual;
-			if ((this.requestTime != null) && (that.requestTime != null)) {
-				requesttimesEqual = this.requestTime.isEqual(that.requestTime);
-			} else if ((this.requestTime == null)
-					&& (that.requestTime == null)) {
-				requesttimesEqual = true;
-			} else {
-				requesttimesEqual = false;
-			}
+			boolean launchtimesEqual = timestampsEqual(this.launchTime,
+					that.launchTime);
+			boolean requesttimesEqual = timestampsEqual(this.requestTime,
+					that.requestTime);
+			boolean metadataEqual = metadataEqual(this.metadata, that.metadata);
 			return Objects.equal(this.id, that.id)
 					&& Objects.equal(this.machineState, that.machineState)
 					&& Objects.equal(this.membershipStatus,
@@ -360,9 +350,50 @@ public class Machine {
 					&& launchtimesEqual && requesttimesEqual
 					&& Objects.equal(this.publicIps, that.publicIps)
 					&& Objects.equal(this.privateIps, that.privateIps)
-					&& Objects.equal(this.metadata, that.metadata);
+					&& metadataEqual;
 		}
 		return false;
+	}
+
+	/**
+	 * Compares two metadata fields for equality.
+	 * <p/>
+	 * A <code>null</code> metadata is considered equal to a {@link JsonNull}
+	 * metadata field (when deserializing a <code>null</code> field for a
+	 * {@link JsonElement}, it will be assigned a {@link JsonNull} value, which
+	 * for all practical purposes should be considered equal to
+	 * <code>null</code>).
+	 *
+	 * @param m1
+	 * @param m2
+	 * @return
+	 */
+	private boolean metadataEqual(JsonElement m1, JsonElement m2) {
+		if (m1 != null && m2 != null) {
+			return Objects.equal(m1, m2);
+		} else if (m1 == null && m2 != null) {
+			return m2 == JsonNull.INSTANCE;
+		} else if (m1 != null && m2 == null) {
+			return m1 == JsonNull.INSTANCE;
+		} else /* if (m1 == null && m2 == null) */ {
+			return true;
+		}
+	}
+
+	/**
+	 * Compares two time stamps equality based on their time counted as
+	 * milliseconds from epoch.
+	 *
+	 * @return
+	 */
+	private boolean timestampsEqual(DateTime t1, DateTime t2) {
+		if (t1 != null && t2 != null) {
+			return t1.isEqual(t2);
+		} else if (t1 == null && t2 == null) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	@Override
@@ -841,7 +872,7 @@ public class Machine {
 		private DateTime requestTime = null;
 		private final List<String> publicIps = Lists.newArrayList();
 		private final List<String> privateIps = Lists.newArrayList();
-		private JsonObject metadata = null;
+		private JsonElement metadata = null;
 
 		private Builder() {
 		}
@@ -1036,7 +1067,7 @@ public class Machine {
 		 *            Meta data. May be <code>null</code>.
 		 * @return
 		 */
-		public Builder metadata(JsonObject metadata) {
+		public Builder metadata(JsonElement metadata) {
 			this.metadata = metadata;
 			return this;
 		}

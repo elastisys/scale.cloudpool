@@ -6,6 +6,7 @@ import static java.lang.String.format;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.autoscaling.model.DescribeLaunchConfigurationsRequest;
 import com.amazonaws.services.autoscaling.model.DescribeLaunchConfigurationsResult;
@@ -26,11 +27,13 @@ public class GetLaunchConfiguration
 	 *
 	 * @param awsCredentials
 	 * @param region
+	 * @param clientConfig
+	 *            Client configuration options such as connection timeout, etc.
 	 * @param launchConfigurationName
 	 */
 	public GetLaunchConfiguration(AWSCredentials awsCredentials, String region,
-			String launchConfigurationName) {
-		super(awsCredentials, region);
+			ClientConfiguration clientConfig, String launchConfigurationName) {
+		super(awsCredentials, region, clientConfig);
 		this.launchConfigurationName = launchConfigurationName;
 	}
 

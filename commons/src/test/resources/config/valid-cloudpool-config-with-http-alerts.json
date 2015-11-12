@@ -21,6 +21,7 @@
       "instanceHourMargin": 0
     },
     "alerts": {
+        "duplicateSuppression": { "time": 15, "unit": "minutes" },
         "http": [
           {       
             "destinationUrls": ["https://some.host:443/"],
@@ -30,6 +31,5 @@
             }
           }
         ]        
-    },     
-    "poolUpdatePeriod": 60            
+    }         
 }  

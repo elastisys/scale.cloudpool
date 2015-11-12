@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.elastisys.scale.cloudpool.aws.commons.client.AutoScalingApiClient;
 import com.elastisys.scale.cloudpool.aws.commons.requests.AmazonRequest;
@@ -23,10 +24,14 @@ public abstract class AmazonAutoScalingRequest<R> extends AmazonRequest<R> {
 	 *            AWS security credentials for the account to be used.
 	 * @param region
 	 *            The AWS region that the request will be sent to.
+	 * @param clientConfig
+	 *            Client configuration options such as connection timeout, etc.
 	 */
-	public AmazonAutoScalingRequest(AWSCredentials awsCredentials, String region) {
-		super(awsCredentials, region);
-		this.client = new AutoScalingApiClient(getAwsCredentials(), getRegion());
+	public AmazonAutoScalingRequest(AWSCredentials awsCredentials,
+			String region, ClientConfiguration clientConfig) {
+		super(awsCredentials, region, clientConfig);
+		this.client = new AutoScalingApiClient(getAwsCredentials(), getRegion(),
+				clientConfig);
 	}
 
 	/**

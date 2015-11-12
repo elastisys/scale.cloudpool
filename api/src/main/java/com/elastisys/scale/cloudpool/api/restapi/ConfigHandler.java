@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
+import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.rest.types.ErrorType;
 import com.google.common.base.Charsets;
@@ -132,7 +133,8 @@ public class ConfigHandler {
 	/**
 	 * Retrieves the configuration currently set for the {@link CloudPool}.
 	 *
-	 * @return <ul>
+	 * @return
+	 * 		<ul>
 	 *         <li>On success: HTTP response code 200 with a JSON-formatted
 	 *         configuration.</li>
 	 *         <li>On error: HTTP response 404 (Not Found) if no configuration
@@ -142,7 +144,6 @@ public class ConfigHandler {
 	 */
 	@GET
 	public Response getConfig() {
-		LOG.info("GET /config");
 		try {
 			Optional<JsonObject> configuration = this.cloudPool
 					.getConfiguration();
@@ -153,11 +154,7 @@ public class ConfigHandler {
 			}
 			return Response.ok(configuration.get()).build();
 		} catch (Exception e) {
-			String message = "failure to process config get request: "
-					+ e.getMessage();
-			LOG.error(message, e);
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(new ErrorType(message, e)).build();
+			return internalErrorResponse("internal error on GET /config", e);
 		}
 	}
 
@@ -166,10 +163,10 @@ public class ConfigHandler {
 	 *
 	 * @param configuration
 	 *            The (JSON) configuration document to set.
-	 * @return <ul>
+	 * @return
+	 * 		<ul>
 	 *         <li>On success: HTTP response code 200 without content.</li>
-	 *         <li>
-	 *         On error:
+	 *         <li>On error:
 	 *         <ul>
 	 *         <li>on illegal input: HTTP response code 400 with an
 	 *         {@link ErrorType} message</li>
@@ -180,7 +177,6 @@ public class ConfigHandler {
 	 */
 	@POST
 	public Response setAndStoreConfig(JsonObject configuration) {
-		LOG.info("POST /config");
 		try {
 			this.cloudPool.configure(configuration);
 			storeConfig(configuration);
@@ -190,12 +186,10 @@ public class ConfigHandler {
 			LOG.error(message, e);
 			return Response.status(Status.BAD_REQUEST)
 					.entity(new ErrorType(message, e)).build();
+		} catch (CloudPoolException e) {
+			return cloudErrorResponse("failure to process POST /config", e);
 		} catch (Exception e) {
-			String message = "failure to process config set request: "
-					+ e.getMessage();
-			LOG.error(message, e);
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(new ErrorType(message, e)).build();
+			return internalErrorResponse("internal error on POST /config", e);
 		}
 	}
 
@@ -223,4 +217,34 @@ public class ConfigHandler {
 		return Paths.get(this.storageDir, this.configFileName);
 	}
 
+	/**
+	 * Produces a {@code 502} response for {@link CloudPoolException} raised by
+	 * the {@link CloudPool}.
+	 *
+	 * @param message
+	 * @param error
+	 * @return
+	 */
+	private Response cloudErrorResponse(String message,
+			CloudPoolException error) {
+		String errorMsg = String.format("%s: %s", message, error.getMessage());
+		LOG.error(errorMsg, error);
+		return Response.status(Status.BAD_GATEWAY)
+				.entity(new ErrorType(errorMsg, error)).build();
+	}
+
+	/**
+	 * Produces a {@code 500} response for internal error {@link Exception}s
+	 * raised by the {@link CloudPool}.
+	 *
+	 * @param message
+	 * @param error
+	 * @return
+	 */
+	private Response internalErrorResponse(String message, Exception error) {
+		String errorMsg = String.format("%s: %s", message, error.getMessage());
+		LOG.error(errorMsg, error);
+		return Response.status(Status.INTERNAL_SERVER_ERROR)
+				.entity(new ErrorType(errorMsg, error)).build();
+	}
 }

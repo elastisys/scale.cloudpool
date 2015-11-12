@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
+import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.restapi.types.DetachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetDesiredSizeRequest;
@@ -30,8 +31,8 @@ import com.elastisys.scale.commons.rest.types.ErrorType;
 import com.google.gson.JsonObject;
 
 /**
- * Implements the cloud pool REST API, which is fully covered in the <a
- * href="http://cloudpoolrestapi.readthedocs.org/en/latest/">elastisys:scale
+ * Implements the cloud pool REST API, which is fully covered in the
+ * <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/">elastisys:scale
  * cloud pool REST API documentation</a>.
  */
 @Path("/")
@@ -52,25 +53,22 @@ public class CloudPoolHandler {
 	/**
 	 * Retrieves the current machine pool members.
 	 *
-	 * @return A response message as per the <a
-	 *         href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >cloud
-	 *         pool REST API</a>.
+	 * @return A response message as per the
+	 *         <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >
+	 *         cloud pool REST API</a>.
 	 */
 	@GET
 	@Path("/pool")
 	public Response getPool() {
-		LOG.info("GET /pool");
 		requireStartedCloudPool();
 
 		try {
 			MachinePool machinePool = this.cloudPool.getMachinePool();
 			return Response.ok(toJson(machinePool)).build();
+		} catch (CloudPoolException e) {
+			return cloudErrorResponse("failure to process GET /pool", e);
 		} catch (Exception e) {
-			String message = "failure to process pool GET /pool: "
-					+ e.getMessage();
-			LOG.error(message, e);
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(new ErrorType(message, e)).build();
+			return internalErrorResponse("internal error on GET /pool", e);
 		}
 	}
 
@@ -81,14 +79,13 @@ public class CloudPoolHandler {
 	 *
 	 * @param request
 	 *            The desired number of machine in the pool.
-	 * @return A response message as per the <a
-	 *         href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >cloud
-	 *         pool REST API</a>.
+	 * @return A response message as per the
+	 *         <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >
+	 *         cloud pool REST API</a>.
 	 */
 	@POST
 	@Path("/pool/size")
 	public Response setDesiredSize(SetDesiredSizeRequest request) {
-		LOG.info("POST /pool/size");
 		requireStartedCloudPool();
 
 		try {
@@ -98,12 +95,11 @@ public class CloudPoolHandler {
 			String message = "illegal input: " + e.getMessage();
 			return Response.status(Status.BAD_REQUEST)
 					.entity(new ErrorType(message, e)).build();
+		} catch (CloudPoolException e) {
+			return cloudErrorResponse("failure to process POST /pool/size", e);
 		} catch (Exception e) {
-			String message = "failure to process POST /pool/size: "
-					+ e.getMessage();
-			LOG.error(message, e);
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(new ErrorType(message, e)).build();
+			return internalErrorResponse("internal error on POST /pool/size",
+					e);
 		}
 	}
 
@@ -111,25 +107,22 @@ public class CloudPoolHandler {
 	 * Returns the current size of the machine pool -- both in terms of the
 	 * desired size and the actual size (as these may differ at any time).
 	 *
-	 * @return A response message as per the <a
-	 *         href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >cloud
-	 *         pool REST API</a>.
+	 * @return A response message as per the
+	 *         <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >
+	 *         cloud pool REST API</a>.
 	 */
 	@GET
 	@Path("/pool/size")
 	public Response getPoolSize() {
-		LOG.info("GET /pool/size");
 		requireStartedCloudPool();
 
 		try {
 			PoolSizeSummary poolSize = this.cloudPool.getPoolSize();
 			return Response.ok(toJson(poolSize)).build();
+		} catch (CloudPoolException e) {
+			return cloudErrorResponse("failure to process GET /pool/size", e);
 		} catch (Exception e) {
-			String message = "failure to process GET /pool/size: "
-					+ e.getMessage();
-			LOG.error(message, e);
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(new ErrorType(message, e)).build();
+			return internalErrorResponse("internal error on GET /pool/size", e);
 		}
 	}
 
@@ -137,25 +130,21 @@ public class CloudPoolHandler {
 	 * Returns metadata about the cloud pool and the cloud infrastructure it
 	 * manages.
 	 *
-	 * @return A response message as per the <a
-	 *         href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >cloud
-	 *         pool REST API</a>.
+	 * @return A response message as per the
+	 *         <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >
+	 *         cloud pool REST API</a>.
 	 */
 	@GET
 	@Path("/pool/metadata")
 	public Response getMetadata() {
-		LOG.info("GET /pool/metadata");
 		requireStartedCloudPool();
 
 		try {
 			CloudPoolMetadata metadata = this.cloudPool.getMetadata();
 			return Response.ok(toJson(metadata)).build();
 		} catch (Exception e) {
-			String message = "failure to process GET /pool/metadata: "
-					+ e.getMessage();
-			LOG.error(message, e);
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(new ErrorType(message, e)).build();
+			return internalErrorResponse("internal error on GET /pool/metadata",
+					e);
 		}
 	}
 
@@ -167,15 +156,14 @@ public class CloudPoolHandler {
 	 *            The identifier of the machine to terminate.
 	 * @param request
 	 *            A {@link TerminateMachineRequest}.
-	 * @return A response message as per the <a
-	 *         href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >cloud
-	 *         pool REST API</a>.
+	 * @return A response message as per the
+	 *         <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >
+	 *         cloud pool REST API</a>.
 	 */
 	@POST
 	@Path("/pool/{machine}/terminate")
 	public Response terminateMachine(@PathParam("machine") String machineId,
 			TerminateMachineRequest request) {
-		LOG.info("POST /pool/{}/terminate", machineId);
 		requireStartedCloudPool();
 
 		try {
@@ -186,13 +174,14 @@ public class CloudPoolHandler {
 			String message = "unrecognized machine: " + e.getMessage();
 			return Response.status(Status.NOT_FOUND)
 					.entity(new ErrorType(message, e)).build();
+		} catch (CloudPoolException e) {
+			return cloudErrorResponse(
+					String.format("failure to process POST /pool/%s/terminate",
+							machineId),
+					e);
 		} catch (Exception e) {
-			String message = String.format(
-					"failure to process POST /pool/%s/terminate: %s",
-					machineId, e.getMessage());
-			LOG.error(message, e);
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(new ErrorType(message, e)).build();
+			return internalErrorResponse(String.format(
+					"internal error on POST /pool/%s/terminate", machineId), e);
 		}
 	}
 
@@ -206,15 +195,14 @@ public class CloudPoolHandler {
 	 *            The identifier of the machine to detach from the pool.
 	 * @param request
 	 *            A {@link DetachMachineRequest}.
-	 * @return A response message as per the <a
-	 *         href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >cloud
-	 *         pool REST API</a>.
+	 * @return A response message as per the
+	 *         <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >
+	 *         cloud pool REST API</a>.
 	 */
 	@POST
 	@Path("/pool/{machine}/detach")
 	public Response detachMachine(@PathParam("machine") String machineId,
 			DetachMachineRequest request) {
-		LOG.info("POST /pool/{}/detach", machineId);
 		requireStartedCloudPool();
 
 		try {
@@ -225,13 +213,12 @@ public class CloudPoolHandler {
 			String message = "unrecognized machine: " + e.getMessage();
 			return Response.status(Status.NOT_FOUND)
 					.entity(new ErrorType(message, e)).build();
+		} catch (CloudPoolException e) {
+			return cloudErrorResponse(String.format(
+					"failure to process POST /pool/%s/detach", machineId), e);
 		} catch (Exception e) {
-			String message = String.format(
-					"failure to process POST /pool/%s/detach: %s", machineId,
-					e.getMessage());
-			LOG.error(message, e);
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(new ErrorType(message, e)).build();
+			return internalErrorResponse(String.format(
+					"internal error on POST /pool/%s/detach", machineId), e);
 		}
 	}
 
@@ -242,14 +229,13 @@ public class CloudPoolHandler {
 	 *
 	 * @param machineId
 	 *            The identifier of the machine to attach to the pool.
-	 * @return A response message as per the <a
-	 *         href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >cloud
-	 *         pool REST API</a>.
+	 * @return A response message as per the
+	 *         <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >
+	 *         cloud pool REST API</a>.
 	 */
 	@POST
 	@Path("/pool/{machine}/attach")
 	public Response attachMachine(@PathParam("machine") String machineId) {
-		LOG.info("POST /pool/{}/attach", machineId);
 		requireStartedCloudPool();
 
 		try {
@@ -259,13 +245,12 @@ public class CloudPoolHandler {
 			String message = "unrecognized machine: " + e.getMessage();
 			return Response.status(Status.NOT_FOUND)
 					.entity(new ErrorType(message, e)).build();
+		} catch (CloudPoolException e) {
+			return cloudErrorResponse(String.format(
+					"failure to process POST /pool/%s/attach", machineId), e);
 		} catch (Exception e) {
-			String message = String.format(
-					"failure to process POST /pool/%s/attach: %s", machineId,
-					e.getMessage());
-			LOG.error(message, e);
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(new ErrorType(message, e)).build();
+			return internalErrorResponse(String.format(
+					"internal error on POST /pool/%s/attach", machineId), e);
 		}
 	}
 
@@ -280,32 +265,32 @@ public class CloudPoolHandler {
 	 *            The machine whose service state is to be set.
 	 * @param request
 	 *            A {@link SetServiceStateRequest}.
-	 * @return A response message as per the <a
-	 *         href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >cloud
-	 *         pool REST API</a>.
+	 * @return A response message as per the
+	 *         <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >
+	 *         cloud pool REST API</a>.
 	 */
 	@POST
 	@Path("/pool/{machine}/serviceState")
 	public Response setServiceState(@PathParam("machine") String machineId,
 			SetServiceStateRequest request) {
-		LOG.info("POST /pool/{}/serviceState", machineId);
 		requireStartedCloudPool();
 
 		try {
-			this.cloudPool
-					.setServiceState(machineId, request.getServiceState());
+			this.cloudPool.setServiceState(machineId,
+					request.getServiceState());
 			return Response.ok().build();
 		} catch (NotFoundException e) {
 			String message = "unrecognized machine: " + e.getMessage();
 			return Response.status(Status.NOT_FOUND)
 					.entity(new ErrorType(message, e)).build();
+		} catch (CloudPoolException e) {
+			return cloudErrorResponse(String.format(
+					"failure to process POST /pool/%s/serviceState", machineId),
+					e);
 		} catch (Exception e) {
-			String message = String.format(
-					"failure to process POST /pool/%s/serviceState: %s",
-					machineId, e.getMessage());
-			LOG.error(message, e);
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(new ErrorType(message, e)).build();
+			return internalErrorResponse(String.format(
+					"internal error on POST /pool/%s/serviceState", machineId),
+					e);
 		}
 	}
 
@@ -313,7 +298,6 @@ public class CloudPoolHandler {
 	@Path("/pool/{machine}/membershipStatus")
 	public Response setMembershipStatus(@PathParam("machine") String machineId,
 			SetMembershipStatusRequest request) {
-		LOG.info("POST /pool/{}/membershipStatus", machineId);
 		requireStartedCloudPool();
 
 		try {
@@ -324,13 +308,14 @@ public class CloudPoolHandler {
 			String message = "unrecognized machine: " + e.getMessage();
 			return Response.status(Status.NOT_FOUND)
 					.entity(new ErrorType(message, e)).build();
+		} catch (CloudPoolException e) {
+			return cloudErrorResponse(String.format(
+					"failure to process POST /pool/%s/setMembershipStatus",
+					machineId), e);
 		} catch (Exception e) {
-			String message = String.format(
-					"failure to process POST /pool/%s/membershipStatus: %s",
-					machineId, e.getMessage());
-			LOG.error(message, e);
-			return Response.status(Status.INTERNAL_SERVER_ERROR)
-					.entity(new ErrorType(message, e)).build();
+			return internalErrorResponse(String.format(
+					"internal error on POST /pool/%s/membershipStatus",
+					machineId), e);
 		}
 	}
 
@@ -356,8 +341,41 @@ public class CloudPoolHandler {
 			String errorMessage = "attempt to invoke cloudpool before being started";
 			LOG.warn(errorMessage);
 			ErrorType error = new ErrorType(errorMessage);
-			throw new InternalServerErrorException(Response
-					.status(Status.INTERNAL_SERVER_ERROR).entity(error).build());
+			throw new InternalServerErrorException(
+					Response.status(Status.INTERNAL_SERVER_ERROR).entity(error)
+							.build());
 		}
 	}
+
+	/**
+	 * Produces a {@code 502} response for {@link CloudPoolException} raised by
+	 * the {@link CloudPool}.
+	 *
+	 * @param message
+	 * @param error
+	 * @return
+	 */
+	private Response cloudErrorResponse(String message,
+			CloudPoolException error) {
+		String errorMsg = String.format("%s: %s", message, error.getMessage());
+		LOG.error(errorMsg, error);
+		return Response.status(Status.BAD_GATEWAY)
+				.entity(new ErrorType(errorMsg, error)).build();
+	}
+
+	/**
+	 * Produces a {@code 500} response for internal error {@link Exception}s
+	 * raised by the {@link CloudPool}.
+	 *
+	 * @param message
+	 * @param error
+	 * @return
+	 */
+	private Response internalErrorResponse(String message, Exception error) {
+		String errorMsg = String.format("%s: %s", message, error.getMessage());
+		LOG.error(errorMsg, error);
+		return Response.status(Status.INTERNAL_SERVER_ERROR)
+				.entity(new ErrorType(errorMsg, error)).build();
+	}
+
 }

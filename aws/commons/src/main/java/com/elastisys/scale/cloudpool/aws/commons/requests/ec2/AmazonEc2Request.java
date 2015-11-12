@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.ec2;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.elastisys.scale.cloudpool.aws.commons.client.Ec2ApiClient;
 import com.elastisys.scale.cloudpool.aws.commons.requests.AmazonRequest;
@@ -22,10 +23,13 @@ public abstract class AmazonEc2Request<R> extends AmazonRequest<R> {
 	 *            AWS security credentials for the account to be used.
 	 * @param region
 	 *            The AWS region that the request will be sent to.
+	 * @param clientConfig
+	 *            Client configuration options such as connection timeout, etc.
 	 */
-	public AmazonEc2Request(AWSCredentials awsCredentials, String region) {
-		super(awsCredentials, region);
-		this.client = new Ec2ApiClient(awsCredentials, region);
+	public AmazonEc2Request(AWSCredentials awsCredentials,
+			String region, ClientConfiguration clientConfig) {
+		super(awsCredentials, region, clientConfig);
+		this.client = new Ec2ApiClient(awsCredentials, region, clientConfig);
 	}
 
 	/**

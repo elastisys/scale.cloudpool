@@ -16,7 +16,6 @@ import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AutoScalingClient;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
 
@@ -65,8 +64,8 @@ public class TestAwsAsDriverConfiguration {
 		BaseCloudPoolConfig config2 = loadCloudPoolConfig(
 				"config/valid-awsasdriver-config2.json");
 		this.driver.configure(config2);
-		assertThat(this.driver.config(),
-				is(new AwsAsPoolDriverConfig("DEF", "TUV", "us-east-1")));
+		assertThat(this.driver.config(), is(new AwsAsPoolDriverConfig("DEF",
+				"TUV", "us-east-1", 5000, 7000)));
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -95,21 +94,21 @@ public class TestAwsAsDriverConfiguration {
 		this.driver.terminateMachine("i-1");
 	}
 
-	@Test(expected = CloudPoolDriverException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void configureWithConfigMissingAccessKeyId() throws Exception {
 		BaseCloudPoolConfig config = loadCloudPoolConfig(
 				"config/invalid-awsasdriver-config-missing-accesskeyid.json");
 		this.driver.configure(config);
 	}
 
-	@Test(expected = CloudPoolDriverException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void configureWithConfigMissingSecretAccessKey() throws Exception {
 		BaseCloudPoolConfig config = loadCloudPoolConfig(
 				"config/invalid-awsasdriver-config-missing-secretaccesskey.json");
 		this.driver.configure(config);
 	}
 
-	@Test(expected = CloudPoolDriverException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void configureWithConfigMissingRegion() throws Exception {
 		BaseCloudPoolConfig config = loadCloudPoolConfig(
 				"config/invalid-awsasdriver-config-missing-region.json");

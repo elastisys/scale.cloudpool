@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import com.amazonaws.AmazonClientException;
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.CancelSpotInstanceRequestsRequest;
 import com.amazonaws.services.ec2.model.CancelSpotInstanceRequestsResult;
@@ -24,8 +25,8 @@ import com.google.common.collect.ImmutableList;
  * "http://docs.aws.amazon.com/AWSEC2/latest/APIReference/query-api-troubleshooting.html#eventual-consistency"
  * >eventual consistency semantics</a> of the Amazon API.
  */
-public class CancelSpotInstanceRequests extends
-		AmazonEc2Request<CancelSpotInstanceRequestsResult> {
+public class CancelSpotInstanceRequests
+		extends AmazonEc2Request<CancelSpotInstanceRequestsResult> {
 	/** Initial exponential back-off delay in ms. */
 	private static final int INITIAL_BACKOFF_DELAY = 1000;
 	/** Maximum number of retries of operations. */
@@ -35,13 +36,15 @@ public class CancelSpotInstanceRequests extends
 	private final List<String> spotRequestIds;
 
 	public CancelSpotInstanceRequests(AWSCredentials awsCredentials,
-			String region, List<String> spotInstanceRequestIds) {
-		super(awsCredentials, region);
+			String region, ClientConfiguration clientConfig,
+			List<String> spotInstanceRequestIds) {
+		super(awsCredentials, region, clientConfig);
 		this.spotRequestIds = ImmutableList.copyOf(spotInstanceRequestIds);
 	}
 
 	@Override
-	public CancelSpotInstanceRequestsResult call() throws AmazonClientException {
+	public CancelSpotInstanceRequestsResult call()
+			throws AmazonClientException {
 		CancelSpotInstanceRequestsRequest request = new CancelSpotInstanceRequestsRequest()
 				.withSpotInstanceRequestIds(this.spotRequestIds);
 		CancelSpotInstanceRequestsResult result = getClient().getApi()
@@ -59,7 +62,8 @@ public class CancelSpotInstanceRequests extends
 	private void awaitCancellation(List<String> spotRequestIds) {
 		String name = String.format("await-cancelled{%s}", spotRequestIds);
 		GetSpotInstanceRequests requester = new GetSpotInstanceRequests(
-				getAwsCredentials(), getRegion(), spotRequestIds, null);
+				getAwsCredentials(), getRegion(), getClientConfig(),
+				spotRequestIds, null);
 		Retryable<List<SpotInstanceRequest>> retryer = Retryers
 				.exponentialBackoffRetryer(name, requester,
 						INITIAL_BACKOFF_DELAY, TimeUnit.MILLISECONDS,
@@ -70,8 +74,8 @@ public class CancelSpotInstanceRequests extends
 		} catch (Exception e) {
 			throw new RuntimeException(String.format(
 					"gave up waiting for spot instance requests "
-							+ "to be cancelled %s: %s", spotRequestIds,
-					e.getMessage()), e);
+							+ "to be cancelled %s: %s",
+					spotRequestIds, e.getMessage()), e);
 		}
 	}
 }

@@ -5,6 +5,7 @@ import static java.lang.String.format;
 import java.util.List;
 
 import com.amazonaws.AmazonServiceException;
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.ec2.model.Instance;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstances;
 
@@ -16,8 +17,8 @@ public class ListInstancesMain extends AbstractClient {
 	public static void main(String[] args) throws Exception {
 		try {
 			logger.info(format("Listing all instances in region %s", region));
-			List<Instance> instances = new GetInstances(AWS_CREDENTIALS, region)
-					.call();
+			List<Instance> instances = new GetInstances(AWS_CREDENTIALS, region,
+					new ClientConfiguration()).call();
 			for (Instance instance : instances) {
 				logger.debug("  instance " + instance);
 			}

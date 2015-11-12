@@ -2,8 +2,11 @@ package com.elastisys.scale.cloudpool.api.types;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.joda.time.DateTime;
+
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Objects;
 
 /**
@@ -11,6 +14,13 @@ import com.google.common.base.Objects;
  * returns information about the pool size -- both desired and actual size.
  */
 public class PoolSizeSummary {
+
+	/**
+	 * The time at which the pool size observation was made. Note that in case
+	 * the cloud pool serves locally cached data, this field may be used by the
+	 * client to determine if the data is fresh enough to be acted upon.
+	 */
+	private final DateTime timestamp;
 
 	/** The desired size of the machine pool. */
 	private final int desiredSize;
@@ -27,6 +37,12 @@ public class PoolSizeSummary {
 	private final int active;
 
 	public PoolSizeSummary(int desiredSize, int allocated, int active) {
+		this(UtcTime.now(), desiredSize, allocated, active);
+	}
+
+	public PoolSizeSummary(DateTime timestamp, int desiredSize, int allocated,
+			int active) {
+		checkArgument(timestamp != null, "no timestamp given");
 		checkArgument(desiredSize >= 0, "desiredSize must be >= 0");
 		checkArgument(allocated >= 0, "allocated must be >= 0");
 		checkArgument(active >= 0, "active must be >= 0");
@@ -34,9 +50,21 @@ public class PoolSizeSummary {
 		checkArgument(allocated >= active,
 				"active cannot be greater than allocated");
 
+		this.timestamp = timestamp;
 		this.desiredSize = desiredSize;
 		this.allocated = allocated;
 		this.active = active;
+	}
+
+	/**
+	 * Returns the time at which the pool size observation was made. Note that
+	 * in case the cloud pool serves locally cached data, this field may be used
+	 * by the client to determine if the data is fresh enough to be acted upon.
+	 *
+	 * @return
+	 */
+	public DateTime getTimestamp() {
+		return this.timestamp;
 	}
 
 	/**
@@ -71,14 +99,16 @@ public class PoolSizeSummary {
 
 	@Override
 	public int hashCode() {
-		return Objects.hashCode(this.desiredSize, this.allocated, this.active);
+		return Objects.hashCode(this.timestamp, this.desiredSize,
+				this.allocated, this.active);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof PoolSizeSummary) {
 			PoolSizeSummary that = (PoolSizeSummary) obj;
-			return Objects.equal(this.desiredSize, that.desiredSize)
+			return Objects.equal(this.timestamp, that.timestamp)
+					&& Objects.equal(this.desiredSize, that.desiredSize)
 					&& Objects.equal(this.allocated, that.allocated)
 					&& Objects.equal(this.active, that.active);
 		}

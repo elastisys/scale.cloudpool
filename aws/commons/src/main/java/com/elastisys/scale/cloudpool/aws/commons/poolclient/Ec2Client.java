@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.aws.commons.poolclient;
 import java.util.List;
 
 import com.amazonaws.AmazonClientException;
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
@@ -29,9 +30,11 @@ public interface Ec2Client {
 	 *            The secret access key of the AWS account.
 	 * @param region
 	 *            The targeted region.
+	 * @param clientConfig
+	 *            Client configuration options such as connection timeout, etc.
 	 */
 	void configure(String awsAccessKeyId, String awsSecretAccessKey,
-			String region);
+			String region, ClientConfiguration clientConfig);
 
 	/**
 	 * Retrieves all instances that match the given filters.
@@ -56,8 +59,8 @@ public interface Ec2Client {
 	 * @throws AmazonClientException
 	 *             if the request failed
 	 */
-	Instance getInstanceMetadata(String instanceId) throws NotFoundException,
-			AmazonClientException;
+	Instance getInstanceMetadata(String instanceId)
+			throws NotFoundException, AmazonClientException;
 
 	/**
 	 * Requests a number of new EC2 {@link Instance}s to be launched and
@@ -115,6 +118,6 @@ public interface Ec2Client {
 	 * @throws AmazonClientException
 	 *             if the request failed
 	 */
-	void terminateInstances(List<String> instanceIds) throws NotFoundException,
-			AmazonClientException;
+	void terminateInstances(List<String> instanceIds)
+			throws NotFoundException, AmazonClientException;
 }

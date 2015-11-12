@@ -18,6 +18,7 @@ import com.elastisys.scale.cloudpool.api.restapi.CloudPoolHandler;
 import com.elastisys.scale.cloudpool.api.restapi.ConfigHandler;
 import com.elastisys.scale.cloudpool.api.restapi.StartStopHandler;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.rest.filters.RequestLogFilter;
 import com.elastisys.scale.commons.rest.responsehandlers.ExitHandler;
 import com.elastisys.scale.commons.rest.server.JaxRsApplication;
 import com.elastisys.scale.commons.server.ServletDefinition;
@@ -32,8 +33,8 @@ import com.google.gson.JsonObject;
  * Factory methods for creating a HTTPS server that publishes a REST API for a
  * {@link CloudPool} instance.
  * <p/>
- * The REST API is fully covered in the <a
- * href="http://cloudpoolrestapi.readthedocs.org/en/latest/">elastisys:scale
+ * The REST API is fully covered in the
+ * <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/">elastisys:scale
  * cloud pool REST API documentation</a>.
  */
 public class CloudPoolServer {
@@ -97,7 +98,8 @@ public class CloudPoolServer {
 		Server server = createServer(cloudPool, arguments);
 
 		// start server and wait
-		LOG.info("Starting Jetty server with HTTPS port " + arguments.httpsPort);
+		LOG.info(
+				"Starting Jetty server with HTTPS port " + arguments.httpsPort);
 		try {
 			server.start();
 		} catch (Exception e) {
@@ -149,8 +151,8 @@ public class CloudPoolServer {
 			}
 		} else {
 			// restore cloudpool config from storage directory (if available)
-			Optional<JsonObject> config = restoreConfig(configHandler
-					.getCloudPoolConfigPath());
+			Optional<JsonObject> config = restoreConfig(
+					configHandler.getCloudPoolConfigPath());
 			if (config.isPresent()) {
 				cloudPool.configure(config.get());
 				if (!options.stopped) {
@@ -165,10 +167,11 @@ public class CloudPoolServer {
 			// optionally deploy exit handler
 			application.addHandler(new ExitHandler());
 		}
+		ResourceConfig appConfig = ResourceConfig.forApplication(application);
+		appConfig.register(new RequestLogFilter());
 
 		// build server
-		ServletContainer restApiServlet = new ServletContainer(
-				ResourceConfig.forApplication(application));
+		ServletContainer restApiServlet = new ServletContainer(appConfig);
 		ServletDefinition servlet = new ServletDefinition.Builder()
 				.servlet(restApiServlet)
 				.requireBasicAuth(options.requireBasicAuth)
@@ -202,8 +205,9 @@ public class CloudPoolServer {
 		LOG.info("restoring cloudpool config from {}",
 				cloudPoolConfig.getAbsolutePath());
 		if (!cloudPoolConfig.isFile()) {
-			LOG.info("no cloud pool configuration found at {}. "
-					+ "starting without config ...",
+			LOG.info(
+					"no cloud pool configuration found at {}. "
+							+ "starting without config ...",
 					cloudPoolConfig.getAbsolutePath());
 			return Optional.absent();
 		}

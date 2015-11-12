@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.ec2.lab;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Executors;
@@ -12,6 +13,7 @@ import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.impl.AwsEc2Client;
 import com.elastisys.scale.cloudpool.aws.ec2.driver.Ec2PoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
+import com.elastisys.scale.cloudpool.commons.basepool.StateStorage;
 import com.elastisys.scale.cloudpool.commons.util.cli.CloudPoolCommandLineDriver;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.gson.JsonObject;
@@ -29,7 +31,9 @@ public class RunPool extends AbstractClient {
 			.newScheduledThreadPool(10);
 
 	public static void main(String[] args) throws Exception {
-		CloudPool pool = new BaseCloudPool(
+		StateStorage stateStorage = StateStorage
+				.builder(new File("target/state")).build();
+		CloudPool pool = new BaseCloudPool(stateStorage,
 				new Ec2PoolDriver(new AwsEc2Client()));
 
 		JsonObject config = JsonUtils.parseJsonFile(configFile.toFile())

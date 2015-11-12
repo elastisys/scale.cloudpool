@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
 import com.amazonaws.services.ec2.model.Filter;
@@ -24,8 +25,8 @@ import com.google.common.collect.Lists;
  *
  * @see AutoScalingInstance
  */
-public class GetAutoScalingGroupInstances extends
-		AmazonAutoScalingRequest<List<Instance>> {
+public class GetAutoScalingGroupInstances
+		extends AmazonAutoScalingRequest<List<Instance>> {
 
 	/** The name of the {@link AutoScalingGroup} of interest. */
 	private final String groupName;
@@ -35,18 +36,21 @@ public class GetAutoScalingGroupInstances extends
 	 *
 	 * @param awsCredentials
 	 * @param region
+	 * @param clientConfig
+	 *            Client configuration options such as connection timeout, etc.
 	 * @param groupName
 	 */
 	public GetAutoScalingGroupInstances(AWSCredentials awsCredentials,
-			String region, String groupName) {
-		super(awsCredentials, region);
+			String region, ClientConfiguration clientConfig, String groupName) {
+		super(awsCredentials, region, clientConfig);
 		this.groupName = groupName;
 	}
 
 	@Override
 	public List<Instance> call() {
 		AutoScalingGroup autoScalingGroup = new GetAutoScalingGroup(
-				getAwsCredentials(), getRegion(), this.groupName).call();
+				getAwsCredentials(), getRegion(), getClientConfig(),
+				this.groupName).call();
 
 		try {
 			return listGroupInstances(autoScalingGroup);
@@ -72,7 +76,8 @@ public class GetAutoScalingGroupInstances extends
 
 		List<Filter> filters = Collections.emptyList();
 		Callable<List<Instance>> requester = new GetInstances(
-				getAwsCredentials(), getRegion(), instanceIds, filters);
+				getAwsCredentials(), getRegion(), getClientConfig(),
+				instanceIds, filters);
 
 		int initialDelay = 1;
 		int maxAttempts = 10; // max 2 ^ 9 - 1 seconds = 511 seconds

@@ -37,6 +37,5 @@
             }
           }          
         ]        
-    },     
-    "poolUpdatePeriod": 60            
+    }            
 }  

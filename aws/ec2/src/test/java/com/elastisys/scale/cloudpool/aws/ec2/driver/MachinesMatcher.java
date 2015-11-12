@@ -5,7 +5,7 @@ import java.util.List;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
-import org.junit.internal.matchers.TypeSafeMatcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +33,8 @@ public class MachinesMatcher extends TypeSafeMatcher<List<Machine>> {
 
 	@Override
 	public void describeTo(Description description) {
-		description.appendText("a list of machines with ids "
-				+ this.expectedMachineIds);
+		description.appendText(
+				"a list of machines with ids " + this.expectedMachineIds);
 	}
 
 	@Override

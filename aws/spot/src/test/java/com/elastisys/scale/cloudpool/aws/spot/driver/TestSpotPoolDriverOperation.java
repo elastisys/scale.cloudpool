@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -42,8 +43,12 @@ import com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.PoolFetchConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.PoolUpdateConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleInConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.TimeInterval;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
@@ -100,13 +105,21 @@ public class TestSpotPoolDriverOperation {
 				"sudo apt-get update -qy", "sudo apt-get install -qy apache2");
 		ScaleOutConfig scaleOutConfig = new ScaleOutConfig("m1.small",
 				"ami-123", "instancekey", asList("webserver"), encodedUserData);
-		int poolUpdatePeriod = 30;
 		SpotPoolDriverConfig driverConfig = new SpotPoolDriverConfig("ABC",
 				"XYZ", "us-east-1", 0.0070, 30L, 30L);
+
+		TimeInterval refreshInterval = new TimeInterval(30L, TimeUnit.SECONDS);
+		TimeInterval reachabilityTimeout = new TimeInterval(5L,
+				TimeUnit.MINUTES);
+		PoolFetchConfig poolFetch = new PoolFetchConfig(
+				new RetriesConfig(3, new TimeInterval(2L, TimeUnit.SECONDS)),
+				refreshInterval, reachabilityTimeout);
+		PoolUpdateConfig poolUpdate = new PoolUpdateConfig(
+				new TimeInterval(30L, TimeUnit.SECONDS));
 		return new BaseCloudPoolConfig(
 				new CloudPoolConfig(POOL_NAME,
 						JsonUtils.toJson(driverConfig).getAsJsonObject()),
-				scaleOutConfig, scaleInConfig, null, poolUpdatePeriod);
+				scaleOutConfig, scaleInConfig, null, poolFetch, poolUpdate);
 	}
 
 	/**

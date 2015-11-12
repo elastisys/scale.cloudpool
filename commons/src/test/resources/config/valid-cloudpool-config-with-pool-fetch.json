@@ -13,12 +13,19 @@
       "size": "m1.small", 
       "image": "Ubuntu Server 12.04",
       "keyPair": "openstack_p11",
-      "securityGroups": ["web"],
-      "encodedUserData": "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg=="
+      "securityGroups": ["web"],         
+      "encodedUserData": "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg=="      
     },
     "scaleInConfig": {
       "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
       "instanceHourMargin": 0
     },
-    "poolUpdatePeriod": 180
+    "poolFetch": {
+      "retries": { 
+         "maxRetries": 3, 
+         "initialBackoffDelay": {"time": 0, "unit": "seconds"}
+      },
+      "refreshInterval": {"time": 10, "unit": "seconds"},
+      "reachabilityTimeout": {"time": 5, "unit": "minutes"}
+    }
 }  

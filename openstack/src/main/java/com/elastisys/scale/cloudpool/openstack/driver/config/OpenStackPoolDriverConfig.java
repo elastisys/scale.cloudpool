@@ -13,11 +13,22 @@ import com.google.common.base.Optional;
  * to authenticate and what OpenStack region to operate against.
  * <p/>
  * The {@link OpenStackPoolDriver} can be configured to use either use version 2
- * or version 3 of the <a
- * href="http://docs.openstack.org/developer/keystone/http-api.html#history"
+ * or version 3 of the
+ * <a href="http://docs.openstack.org/developer/keystone/http-api.html#history"
  * >identity HTTP API</a>.
  */
 public class OpenStackPoolDriverConfig {
+
+	/**
+	 * The default timeout in milliseconds until a connection is established.
+	 */
+	public static final int DEFAULT_CONNECTION_TIMEOUT = 10000;
+	/**
+	 * The default socket timeout ({@code SO_TIMEOUT}) in milliseconds, which is
+	 * the timeout for waiting for data or, put differently, a maximum period
+	 * inactivity between two consecutive data packets).
+	 */
+	public static final int DEFAULT_SOCKET_TIMEOUT = 10000;
 
 	/**
 	 * Declares how to authenticate with the OpenStack identity service
@@ -38,6 +49,18 @@ public class OpenStackPoolDriverConfig {
 	private final Boolean assignFloatingIp;
 
 	/**
+	 * The timeout in milliseconds until a connection is established.
+	 */
+	private final Integer connectionTimeout;
+
+	/**
+	 * The socket timeout ({@code SO_TIMEOUT}) in milliseconds, which is the
+	 * timeout for waiting for data or, put differently, a maximum period
+	 * inactivity between two consecutive data packets.
+	 */
+	private final Integer socketTimeout;
+
+	/**
 	 * Creates a new {@link OpenStackPoolDriverConfig}.
 	 *
 	 * @param auth
@@ -53,9 +76,41 @@ public class OpenStackPoolDriverConfig {
 	 */
 	public OpenStackPoolDriverConfig(AuthConfig auth, String region,
 			Boolean assignFloatingIp) {
+		this(auth, region, assignFloatingIp, null, null);
+	}
+
+	/**
+	 * Creates a new {@link OpenStackPoolDriverConfig}.
+	 *
+	 * @param auth
+	 *            Declares how to authenticate with the OpenStack identity
+	 *            service (Keystone).
+	 * @param region
+	 *            The particular OpenStack region (out of the ones available in
+	 *            Keystone's service catalog) to connect to. For example,
+	 *            {@code RegionOne}.
+	 * @param assignFloatingIp
+	 *            Set to <code>true</code> if a floating IP address should be
+	 *            allocated to launched servers. Default: <code>true</code>.
+	 * @param connectionTimeout
+	 *            The timeout in milliseconds until a connection is established.
+	 *            May be <code>null</code>. Default:
+	 *            {@value #DEFAULT_CONNECTION_TIMEOUT} ms.
+	 * @param socketTimeout
+	 *            The socket timeout ({@code SO_TIMEOUT}) in milliseconds, which
+	 *            is the timeout for waiting for data or, put differently, a
+	 *            maximum period inactivity between two consecutive data
+	 *            packets. May be <code>null</code>. Default:
+	 *            {@value #DEFAULT_SOCKET_TIMEOUT} ms.
+	 */
+	public OpenStackPoolDriverConfig(AuthConfig auth, String region,
+			Boolean assignFloatingIp, Integer connectionTimeout,
+			Integer socketTimeout) {
 		this.auth = auth;
 		this.region = region;
 		this.assignFloatingIp = assignFloatingIp;
+		this.connectionTimeout = connectionTimeout;
+		this.socketTimeout = socketTimeout;
 		validate();
 	}
 
@@ -91,6 +146,28 @@ public class OpenStackPoolDriverConfig {
 	}
 
 	/**
+	 * The timeout in milliseconds until a connection is established.
+	 *
+	 * @return
+	 */
+	public Integer getConnectionTimeout() {
+		return Optional.fromNullable(this.connectionTimeout)
+				.or(DEFAULT_CONNECTION_TIMEOUT);
+	}
+
+	/**
+	 * The socket timeout ({@code SO_TIMEOUT}) in milliseconds, which is the
+	 * timeout for waiting for data or, put differently, a maximum period
+	 * inactivity between two consecutive data packets.
+	 *
+	 * @return
+	 */
+	public Integer getSocketTimeout() {
+		return Optional.fromNullable(this.socketTimeout)
+				.or(DEFAULT_SOCKET_TIMEOUT);
+	}
+
+	/**
 	 * Performs basic validation of this configuration. Throws an
 	 * {@link IllegalArgumentException} on failure to validate the
 	 * configuration.
@@ -101,12 +178,16 @@ public class OpenStackPoolDriverConfig {
 		checkArgument(this.auth != null, "no auth method specified");
 		checkArgument(this.region != null, "missing region");
 		this.auth.validate();
+		checkArgument(getConnectionTimeout() > 0,
+				"connectionTimeout must be positive");
+		checkArgument(getSocketTimeout() > 0, "socketTimeout must be positive");
 	}
 
 	@Override
 	public int hashCode() {
 		return Objects.hashCode(this.auth, this.region,
-				this.isAssignFloatingIp());
+				this.isAssignFloatingIp(), getConnectionTimeout(),
+				getSocketTimeout());
 	}
 
 	@Override
@@ -116,7 +197,10 @@ public class OpenStackPoolDriverConfig {
 			return equal(this.auth, that.auth)
 					&& equal(this.region, that.region)
 					&& equal(this.isAssignFloatingIp(),
-							that.isAssignFloatingIp());
+							that.isAssignFloatingIp())
+					&& equal(this.getConnectionTimeout(),
+							that.getConnectionTimeout())
+					&& equal(this.getSocketTimeout(), that.getSocketTimeout());
 		}
 		return false;
 	}

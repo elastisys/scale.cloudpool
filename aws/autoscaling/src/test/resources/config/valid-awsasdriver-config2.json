@@ -4,7 +4,9 @@
       "driverConfig": {
         "awsAccessKeyId": "DEF",
         "awsSecretAccessKey": "TUV",
-        "region": "us-east-1"
+        "region": "us-east-1",
+        "connectionTimeout": 5000,
+        "socketTimeout": 7000        
       }
     },
     "scaleOutConfig": {

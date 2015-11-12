@@ -5,6 +5,7 @@ import static java.lang.String.format;
 import java.util.Arrays;
 import java.util.List;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CreateInstances;
@@ -40,8 +41,8 @@ public class CreateInstanceMain extends AbstractClient {
 						region, availabilityZone));
 
 		CreateInstances request = new CreateInstances(AWS_CREDENTIALS, region,
-				availabilityZone, securityGroups, keyPair, instanceType,
-				imageId, bootScript, 1,
+				new ClientConfiguration(), availabilityZone, securityGroups,
+				keyPair, instanceType, imageId, bootScript, 1,
 				Arrays.asList(new Tag("Name", "myinstance")));
 		List<Instance> instances = request.call();
 		Instance instance = Iterables.getOnlyElement(instances);

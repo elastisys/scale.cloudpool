@@ -57,8 +57,8 @@ public class TestEc2PoolDriverOperation {
 	private static final String POOL_NAME = "MyScalingPool";
 
 	private static final Filter POOL_MEMBER_QUERY_FILTER = new Filter()
-			.withName(ScalingFilters.CLOUD_POOL_TAG_FILTER).withValues(
-					POOL_NAME);
+			.withName(ScalingFilters.CLOUD_POOL_TAG_FILTER)
+			.withValues(POOL_NAME);
 
 	private Ec2Client mockClient = mock(Ec2Client.class);
 	/** Object under test. */
@@ -94,9 +94,12 @@ public class TestEc2PoolDriverOperation {
 		List<Machine> machines = this.driver.listMachines();
 		assertThat(machines, is(machines("i-1", "i-2", "i-3")));
 		// verify that cloud-specific metadata is included for each machine
-		assertTrue(machines.get(0).getMetadata().has("instanceId"));
-		assertTrue(machines.get(1).getMetadata().has("instanceId"));
-		assertTrue(machines.get(2).getMetadata().has("instanceId"));
+		assertTrue(machines.get(0).getMetadata().getAsJsonObject()
+				.has("instanceId"));
+		assertTrue(machines.get(1).getMetadata().getAsJsonObject()
+				.has("instanceId"));
+		assertTrue(machines.get(2).getMetadata().getAsJsonObject()
+				.has("instanceId"));
 	}
 
 	/**
@@ -107,8 +110,8 @@ public class TestEc2PoolDriverOperation {
 	public void listMachinesOnError() throws CloudPoolDriverException {
 		// set up Amazon API call to fail
 		List<Filter> queryFilters = Arrays.asList(POOL_MEMBER_QUERY_FILTER);
-		when(this.mockClient.getInstances(queryFilters)).thenThrow(
-				new AmazonServiceException("API unreachable"));
+		when(this.mockClient.getInstances(queryFilters))
+				.thenThrow(new AmazonServiceException("API unreachable"));
 		this.driver.listMachines();
 	}
 
@@ -169,9 +172,9 @@ public class TestEc2PoolDriverOperation {
 		// set up mock to throw an error whenever asked to launch an instance
 		setUpMockedScalingGroup(POOL_NAME,
 				ec2Instances(memberInstance("i-1", "running")));
-		doThrow(new AmazonClientException("API unreachable")).when(
-				this.mockClient).launchInstances(scaleUpConfig, 1,
-				Arrays.asList(new Tag(CLOUD_POOL_TAG, POOL_NAME)));
+		doThrow(new AmazonClientException("API unreachable"))
+				.when(this.mockClient).launchInstances(scaleUpConfig, 1,
+						Arrays.asList(new Tag(CLOUD_POOL_TAG, POOL_NAME)));
 
 		// should raise an exception
 		try {
@@ -190,9 +193,9 @@ public class TestEc2PoolDriverOperation {
 	public void terminate() throws Exception {
 		BaseCloudPoolConfig config = config(POOL_NAME);
 
-		this.driver = new Ec2PoolDriver(new FakeEc2Client(ec2Instances(
-				memberInstance("i-1", "running"),
-				memberInstance("i-2", "pending"))));
+		this.driver = new Ec2PoolDriver(
+				new FakeEc2Client(ec2Instances(memberInstance("i-1", "running"),
+						memberInstance("i-2", "pending"))));
 		this.driver.configure(config);
 		this.driver.terminateMachine("i-1");
 		assertThat(this.driver.listMachines(), is(machines("i-2")));
@@ -209,8 +212,8 @@ public class TestEc2PoolDriverOperation {
 		// set up mock to throw an error whenever terminateInstance is called
 		setUpMockedScalingGroup(POOL_NAME,
 				ec2Instances(memberInstance("i-1", "running")));
-		doThrow(new AmazonClientException("API unreachable")).when(
-				this.mockClient).terminateInstances(asList("i-1"));
+		doThrow(new AmazonClientException("API unreachable"))
+				.when(this.mockClient).terminateInstances(asList("i-1"));
 
 		this.driver.terminateMachine("i-1");
 	}
@@ -266,8 +269,8 @@ public class TestEc2PoolDriverOperation {
 		setUpMockedScalingGroup(POOL_NAME,
 				ec2Instances(memberInstance("i-1", "running")));
 
-		List<Tag> poolTag = Arrays.asList(new Tag().withKey(CLOUD_POOL_TAG)
-				.withValue(POOL_NAME));
+		List<Tag> poolTag = Arrays
+				.asList(new Tag().withKey(CLOUD_POOL_TAG).withValue(POOL_NAME));
 		doThrow(new RuntimeException("API unreachable")).when(this.mockClient)
 				.untagResource("i-1", poolTag);
 
@@ -315,8 +318,8 @@ public class TestEc2PoolDriverOperation {
 	public void attachOnError() throws Exception {
 		setUpMockedScalingGroup(POOL_NAME,
 				ec2Instances(nonMemberInstance("i-1", "running")));
-		List<Tag> poolTag = Arrays.asList(new Tag().withKey(CLOUD_POOL_TAG)
-				.withValue(POOL_NAME));
+		List<Tag> poolTag = Arrays
+				.asList(new Tag().withKey(CLOUD_POOL_TAG).withValue(POOL_NAME));
 		doThrow(new RuntimeException("API unreachable")).when(this.mockClient)
 				.tagResource("i-1", poolTag);
 
@@ -396,8 +399,8 @@ public class TestEc2PoolDriverOperation {
 				is(statusAsJson));
 
 		MembershipStatus otherStatus = MembershipStatus.blessed();
-		String otherStatusAsJson = JsonUtils.toString(JsonUtils
-				.toJson(otherStatus));
+		String otherStatusAsJson = JsonUtils
+				.toString(JsonUtils.toJson(otherStatus));
 		this.driver.setMembershipStatus("i-1", otherStatus);
 		assertThat(membershipStatusTag(fakeClient.getInstanceMetadata("i-1")),
 				is(otherStatusAsJson));
@@ -426,8 +429,9 @@ public class TestEc2PoolDriverOperation {
 
 		MembershipStatus status = MembershipStatus.awaitingService();
 		String statusAsJson = JsonUtils.toString(JsonUtils.toJson(status));
-		List<Tag> tag = asList(new Tag().withKey(
-				ScalingTags.MEMBERSHIP_STATUS_TAG).withValue(statusAsJson));
+		List<Tag> tag = asList(
+				new Tag().withKey(ScalingTags.MEMBERSHIP_STATUS_TAG)
+						.withValue(statusAsJson));
 		doThrow(new RuntimeException("API unreachable")).when(this.mockClient)
 				.tagResource("i-1", tag);
 
@@ -438,8 +442,8 @@ public class TestEc2PoolDriverOperation {
 			List<Instance> poolMembers) {
 		// set up response to queries for pool member instances
 		List<Filter> poolQueryFilters = asList(POOL_MEMBER_QUERY_FILTER);
-		when(this.mockClient.getInstances(poolQueryFilters)).thenReturn(
-				poolMembers);
+		when(this.mockClient.getInstances(poolQueryFilters))
+				.thenReturn(poolMembers);
 
 		// set up response to queries for pool member meta data
 		for (Instance instance : poolMembers) {
@@ -497,8 +501,8 @@ public class TestEc2PoolDriverOperation {
 	}
 
 	private static Instance memberInstance(String id, String state) {
-		List<Tag> tags = Arrays.asList(new Tag().withKey(
-				ScalingTags.CLOUD_POOL_TAG).withValue(POOL_NAME));
+		List<Tag> tags = Arrays.asList(new Tag()
+				.withKey(ScalingTags.CLOUD_POOL_TAG).withValue(POOL_NAME));
 		return TestUtils.ec2Instance(id, state, tags);
 	}
 

@@ -33,7 +33,9 @@ The `openstackpool` is configured with a JSON document such as the following:
           }
         },
         "region": "RegionOne",
-        "assignFloatingIp": true
+        "assignFloatingIp": true,
+        "connectionTimeout": 10000,
+        "socketTimeout": 10000
       }
     },
     "scaleOutConfig": {
@@ -48,6 +50,7 @@ The `openstackpool` is configured with a JSON document such as the following:
       "instanceHourMargin": 300
     },   
     "alerts": {
+      "duplicateSuppression": { "time": 5, "unit": "minutes" },
       "smtp": [
         {
           "subject": "[elastisys:scale] cloud pool alert for MyScalingPool",
@@ -78,7 +81,18 @@ The `openstackpool` is configured with a JSON document such as the following:
         }        
       ]
     },    
-    "poolUpdatePeriod": 120
+    "poolFetch": {
+      "retries": { 
+         "maxRetries": 3, 
+         "initialBackoffDelay": {"time": 3, "unit": "seconds"}
+      },
+      "refreshInterval": {"time": 30, "unit": "seconds"},
+      "reachabilityTimeout": {"time": 5, "unit": "minutes"}
+    },    
+    "poolUpdate": {
+      "updateInterval": {"time": 1, "unit": "minutes"}
+    }
+
   }
 }
 ```
@@ -100,6 +114,10 @@ The configuration keys have the following meaning:
         service catalog) to connect to. For example, ``RegionOne``.
       - ``assignFloatingIp``: Set to true if a floating IP address should be allocated 
         to launched servers. Default: ``true``.
+      - ``connectionTimeout``: The timeout in milliseconds until a connection is established.
+      - ``socketTimeout``: The socket timeout (``SO_TIMEOUT``) in milliseconds, which is the
+	    timeout for waiting for data or, put differently, a maximum period inactivity between 
+	    two consecutive data packets.
   - ``scaleOutConfig``: Describes how to provision additional servers (on scale-up).
     - ``size``: The name of the server type to launch. For example, ``m1.medium``.
     - ``image``: The name of the machine image used to boot new servers.
@@ -121,6 +139,9 @@ The configuration keys have the following meaning:
       from being billed for an additional hour. A value of zero is used to 
       specify immediate termination when a scale-down is ordered.
   - ``alerts``: Configuration that describes how to send alerts via email or HTTP(S) webhooks.
+    - ``duplicateSuppression`` (optional): Duration of time to suppress
+      duplicate alerts from being re-sent. Two alerts are considered equal if
+      they share topic, message and metadata tags.
     - ``smtp``: a list of email alert senders
       - ``subject``: The subject line to use in sent mails (Subject).
       - ``recipients``: The receiver list (a list of recipient email addresses).
@@ -150,10 +171,24 @@ The configuration keys have the following meaning:
           authentication.
         - ``certificateCredentials``: ``keystorePath`` and ``keystorePassword``
           for client certificate-based authentication.
-  - ``poolUpdatePeriod`` (optional): The time interval (in seconds) between 
-    periodical pool size updates. A pool size update may involve terminating 
-    termination-due servers and placing new server requests to replace 
-    terminated servers. Default: 60.
+  - ``poolFetch`` (optional): Controls how often to refresh the cloud 
+    pool member list and for how long to mask cloud API errors.
+    Default: ``retries``: 3 retries with 3 second initial exponential back-off delay,
+    ``refreshInterval``: 30 seconds, ``reachabilityTimeout``: 5 minutes.
+    - ``retries``: Retry handling when fetching pool members from the cloud API fails.
+      - ``maxRetries``: Maximum number of retries to make on each attempt to fetch pool 
+        members.
+      - ``initialBackoffDelay``: Initial delay to use in exponential back-off on retries. 
+        May be zero, which results in no delay between retries.        
+    - ``refreshInterval``: How often to refresh the cloud pool's view of the machine 
+      pool members.
+    - ``reachabilityTimeout``: How long to respond with cached machine pool observations
+      before responding with a cloud reachability error. In other words, for how long should
+      failures to fetch the machine pool be masked.              
+  - ``poolUpdate`` (optional): Controls the behavior with respect to how often to 
+    attempt to update the size of the machine pool to match the desired size.
+    - ``updateInterval``: The time interval between  periodical pool size updates. 
+      Default: 60 seconds.
 
 
 ## Supported Authentication Schemes

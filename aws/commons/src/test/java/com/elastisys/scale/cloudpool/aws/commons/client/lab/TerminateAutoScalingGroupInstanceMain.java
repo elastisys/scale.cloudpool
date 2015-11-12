@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.commons.client.lab;
 
+import com.amazonaws.ClientConfiguration;
 import com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling.TerminateAutoScalingGroupInstance;
 
 /**
@@ -21,7 +22,7 @@ public class TerminateAutoScalingGroupInstanceMain extends AbstractClient {
 		logger.info("Terminating instance {} from its Auto Scaling Group",
 				instanceId);
 		new TerminateAutoScalingGroupInstance(AWS_CREDENTIALS, region,
-				instanceId).call();
+				new ClientConfiguration(), instanceId).call();
 	}
 
 }

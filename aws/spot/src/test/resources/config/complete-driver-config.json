@@ -7,7 +7,9 @@
         "region": "us-west-1",
         "bidPrice": 0.0070,
         "bidReplacementPeriod": 35,
-        "danglingInstanceCleanupPeriod": 45
+        "danglingInstanceCleanupPeriod": 45,
+        "connectionTimeout": 7000,
+        "socketTimeout": 5000
       }
     },
     "scaleOutConfig": {

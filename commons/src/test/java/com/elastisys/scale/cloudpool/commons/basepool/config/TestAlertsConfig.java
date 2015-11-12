@@ -7,6 +7,7 @@ import static org.junit.Assert.assertThat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
@@ -33,16 +34,38 @@ public class TestAlertsConfig {
 		HttpAlerterConfig httpAlerter1 = new HttpAlerterConfig(
 				Arrays.asList("http://host1/"), "INFO|WARN", null);
 		HttpAlerterConfig httpAlerter2 = new HttpAlerterConfig(
-				Arrays.asList("https://host2/"), "ERROR", new HttpAuthConfig(
-						new BasicCredentials("user", "pass"), null));
+				Arrays.asList("https://host2/"), "ERROR",
+				new HttpAuthConfig(new BasicCredentials("user", "pass"), null));
 
-		AlertsConfig config = new AlertsConfig(asList(emailAlerter1,
-				emailAlerter2), asList(httpAlerter1, httpAlerter2));
+		TimeInterval duplicateSuppression = new TimeInterval(10L,
+				TimeUnit.MINUTES);
+		AlertsConfig config = new AlertsConfig(
+				asList(emailAlerter1, emailAlerter2),
+				asList(httpAlerter1, httpAlerter2), duplicateSuppression);
 		config.validate();
 		assertThat(config.getSmtpAlerters(),
 				is(asList(emailAlerter1, emailAlerter2)));
 		assertThat(config.getHttpAlerters(),
 				is(asList(httpAlerter1, httpAlerter2)));
+		assertThat(config.getDuplicateSuppression(), is(duplicateSuppression));
+	}
+
+	/**
+	 * A default value is used if no duplicate suppression is specified.
+	 */
+	@Test
+	public void withoutDuplicateSuppress() {
+		SmtpAlerterConfig emailAlerter1 = smtpAlerterConfig(
+				"user1@elastisys.com", "ERROR");
+		HttpAlerterConfig httpAlerter1 = new HttpAlerterConfig(
+				Arrays.asList("http://host1/"), "INFO|WARN", null);
+
+		AlertsConfig config = new AlertsConfig(asList(emailAlerter1),
+				asList(httpAlerter1), null);
+		config.validate();
+		assertThat(config.getDuplicateSuppression(),
+				is(AlertsConfig.DEFAULT_DUPLICATE_SUPPRESSION));
+
 	}
 
 	/**

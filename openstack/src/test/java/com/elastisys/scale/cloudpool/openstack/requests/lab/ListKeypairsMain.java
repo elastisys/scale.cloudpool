@@ -21,8 +21,11 @@ public class ListKeypairsMain {
 		OpenStackPoolDriverConfig driverConfig = DriverConfigLoader
 				.loadDefault();
 
-		OSClient client = new OSClientFactory().createAuthenticatedClient(
-				driverConfig.getAuth()).useRegion(driverConfig.getRegion());
+		OSClient client = new OSClientFactory(
+				driverConfig.getConnectionTimeout(),
+				driverConfig.getSocketTimeout())
+						.createAuthenticatedClient(driverConfig.getAuth())
+						.useRegion(driverConfig.getRegion());
 		KeypairService keyApi = client.compute().keypairs();
 
 		listKeys(keyApi);

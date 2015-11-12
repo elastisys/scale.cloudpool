@@ -3,7 +3,9 @@ package com.elastisys.scale.cloudpool.aws.commons.requests.ec2;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.LaunchSpecification;
 import com.amazonaws.services.ec2.model.RequestSpotInstancesRequest;
@@ -67,10 +69,11 @@ public class PlaceSpotInstanceRequests
 	private final List<Tag> tags;
 
 	public PlaceSpotInstanceRequests(AWSCredentials awsCredentials,
-			String region, double bidPrice, String availabilityZone,
-			List<String> securityGroups, String keyPair, String instanceType,
-			String imageId, String encodedUserData, int count, List<Tag> tags) {
-		super(awsCredentials, region);
+			String region, ClientConfiguration clientConfig, double bidPrice,
+			String availabilityZone, List<String> securityGroups,
+			String keyPair, String instanceType, String imageId,
+			String encodedUserData, int count, List<Tag> tags) {
+		super(awsCredentials, region, clientConfig);
 		this.bidPrice = String.valueOf(bidPrice);
 		this.availabilityZone = availabilityZone;
 		this.securityGroups = securityGroups;
@@ -118,7 +121,7 @@ public class PlaceSpotInstanceRequests
 	 */
 	private void tagRequests(List<String> spotRequestIds) {
 		Callable<Void> requester = new TagEc2Resources(getAwsCredentials(),
-				getRegion(), spotRequestIds, this.tags);
+				getRegion(), getClientConfig(), spotRequestIds, this.tags);
 		String tagTaskName = String.format("tag{%s}", spotRequestIds);
 		Retryable<Void> retryable = Retryers.exponentialBackoffRetryer(
 				tagTaskName, requester, INITIAL_BACKOFF_DELAY,
@@ -135,34 +138,44 @@ public class PlaceSpotInstanceRequests
 	/**
 	 * Waits for all placed spot requests to become visible in the API.
 	 *
-	 * @param spotRequestIds
+	 * @param placedSpotRequestIds
 	 * @return
 	 */
 	private List<SpotInstanceRequest> awaitSpotRequests(
-			List<String> spotRequestIds) {
+			List<String> placedSpotRequestIds) {
 
-		String name = String.format("await-spot-requests{%s}", spotRequestIds);
+		// wait for placed spot requests to be seen in API when listing *all*
+		// spot requests (due to eventual consistency, EC2 will return cached
+		// data, which means that the placed requests may not be visible
+		// immediately)
+		String name = String.format("await-spot-requests{%s}",
+				placedSpotRequestIds);
 		Callable<List<SpotInstanceRequest>> requester = new GetSpotInstanceRequests(
-				getAwsCredentials(), getRegion(), spotRequestIds, null);
-
+				getAwsCredentials(), getRegion(), getClientConfig(), null,
+				null);
 		Retryable<List<SpotInstanceRequest>> retryer = Retryers
 				.exponentialBackoffRetryer(name, requester,
 						INITIAL_BACKOFF_DELAY, TimeUnit.MILLISECONDS,
-						MAX_RETRIES, contains(spotRequestIds));
+						MAX_RETRIES, contains(placedSpotRequestIds));
 
 		try {
-			return retryer.call();
+			// only return those spot requests that we actually placed
+			List<SpotInstanceRequest> allInstances = retryer.call();
+			return allInstances.stream()
+					.filter(request -> placedSpotRequestIds
+							.contains(request.getSpotInstanceRequestId()))
+					.collect(Collectors.toList());
 		} catch (Exception e) {
 			throw new RuntimeException(String.format(
 					"gave up waiting for spot instance "
 							+ "requests to appear %s: %s",
-					spotRequestIds, e.getMessage()), e);
+					placedSpotRequestIds, e.getMessage()), e);
 		}
 	}
 
 	/**
 	 * A predicate that returns <code>true</code> for any collection of input
-	 * {@link SpotInstanceRequest}s that contain an exepcted collection of spot
+	 * {@link SpotInstanceRequest}s that contain an expected collection of spot
 	 * request identifiers.
 	 *
 	 * @param expectedSpotRequestIds

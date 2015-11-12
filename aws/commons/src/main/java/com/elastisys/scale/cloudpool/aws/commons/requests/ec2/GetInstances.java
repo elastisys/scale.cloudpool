@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.aws.commons.requests.ec2;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
@@ -48,7 +49,7 @@ public class GetInstances extends AmazonEc2Request<List<Instance>> {
 	private List<String> instanceIds;
 	/**
 	 * An (optional) list of filter to narrow the query. Only instances matching
-	 * the given filters will be returned.
+	 * the given filters will be returned. May be <code>null</code>.
 	 */
 	private List<Filter> filters;
 
@@ -60,9 +61,12 @@ public class GetInstances extends AmazonEc2Request<List<Instance>> {
 	 *            The AWS security credentials to the account.
 	 * @param region
 	 *            The AWS region of interest.
+	 * @param clientConfig
+	 *            Client configuration options such as connection timeout, etc.
 	 */
-	public GetInstances(AWSCredentials awsCredentials, String region) {
-		super(awsCredentials, region);
+	public GetInstances(AWSCredentials awsCredentials, String region,
+			ClientConfiguration clientConfig) {
+		super(awsCredentials, region, clientConfig);
 		this.instanceIds = null;
 		this.filters = null;
 	}
@@ -75,14 +79,16 @@ public class GetInstances extends AmazonEc2Request<List<Instance>> {
 	 *            The AWS security credentials to the account.
 	 * @param region
 	 *            The AWS region of interest.
+	 * @param clientConfig
+	 *            Client configuration options such as connection timeout, etc.
 	 * @param instanceIds
 	 *            A list of instance ids of interest to limit the query to. If
 	 *            <code>null</code> or empty list, meta data will be fetched for
 	 *            all instances.
 	 */
 	public GetInstances(AWSCredentials awsCredentials, String region,
-			List<String> instanceIds) {
-		super(awsCredentials, region);
+			ClientConfiguration clientConfig, List<String> instanceIds) {
+		super(awsCredentials, region, clientConfig);
 		this.instanceIds = instanceIds;
 		this.filters = null;
 	}
@@ -96,17 +102,20 @@ public class GetInstances extends AmazonEc2Request<List<Instance>> {
 	 *            The AWS security credentials to the account.
 	 * @param region
 	 *            The AWS region of interest.
+	 * @param clientConfig
+	 *            Client configuration options such as connection timeout, etc.
 	 * @param instanceIds
 	 *            A list of instance ids of interest to limit the query to. If
 	 *            <code>null</code> or empty list, meta data will be fetched for
 	 *            all instances.
 	 * @param filters
 	 *            A list of filter to narrow the query. Only instances matching
-	 *            the given filters will be returned.
+	 *            the given filters will be returned. May be <code>null</code>.
 	 */
 	public GetInstances(AWSCredentials awsCredentials, String region,
-			List<String> instanceIds, List<Filter> filters) {
-		super(awsCredentials, region);
+			ClientConfiguration clientConfig, List<String> instanceIds,
+			List<Filter> filters) {
+		super(awsCredentials, region, clientConfig);
 		this.instanceIds = instanceIds;
 		this.filters = filters;
 	}

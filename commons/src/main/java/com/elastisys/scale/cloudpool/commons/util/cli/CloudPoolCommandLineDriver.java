@@ -47,6 +47,8 @@ public class CloudPoolCommandLineDriver {
 				//
 				"config                                          -- get config",
 				"setconfig <path>                                -- set config",
+				"stop                                            -- stop",
+				"start                                           -- start",
 				"size                                            -- get pool size",
 				"setsize <num>                                   -- set desired size",
 				"pool [verbose?]                                 -- get pool members",
@@ -97,8 +99,8 @@ public class CloudPoolCommandLineDriver {
 	private void runCommand(String command, List<String> args) {
 		switch (command) {
 		case "config": {
-			System.out.println(toPrettyString(this.cloudPool.getConfiguration()
-					.get()));
+			System.out.println(
+					toPrettyString(this.cloudPool.getConfiguration().get()));
 			break;
 		}
 		case "setconfig": {
@@ -107,8 +109,16 @@ public class CloudPoolCommandLineDriver {
 			File configFile = new File(args.get(0));
 			checkArgument(configFile.isFile(),
 					"error: given path is not a file");
-			this.cloudPool.configure(JsonUtils.parseJsonFile(configFile)
-					.getAsJsonObject());
+			this.cloudPool.configure(
+					JsonUtils.parseJsonFile(configFile).getAsJsonObject());
+			break;
+		}
+		case "stop": {
+			this.cloudPool.stop();
+			break;
+		}
+		case "start": {
+			this.cloudPool.start();
 			break;
 		}
 		case "size": {
@@ -135,7 +145,8 @@ public class CloudPoolCommandLineDriver {
 			break;
 		}
 		case "attach": {
-			checkArgument(args.size() > 0, "error: attach requires an argument");
+			checkArgument(args.size() > 0,
+					"error: attach requires an argument");
 			this.cloudPool.attachMachine(args.get(0));
 			break;
 		}
@@ -151,10 +162,9 @@ public class CloudPoolCommandLineDriver {
 			checkArgument(args.size() > 2,
 					"error: setmemberstatus requires three arguments: "
 							+ "<instance-id> <active?> <evictable?>");
-			this.cloudPool.setMembershipStatus(
-					args.get(0),
-					new MembershipStatus(Boolean.valueOf(args.get(1)), Boolean
-							.valueOf(args.get(2))));
+			this.cloudPool.setMembershipStatus(args.get(0),
+					new MembershipStatus(Boolean.valueOf(args.get(1)),
+							Boolean.valueOf(args.get(2))));
 			break;
 		}
 		case "setstate": {
@@ -179,8 +189,8 @@ public class CloudPoolCommandLineDriver {
 			break;
 		}
 		default: {
-			System.err.println(String.format(
-					"error: unrecognized command '%s'", command));
+			System.err.println(
+					String.format("error: unrecognized command '%s'", command));
 		}
 		}
 	}

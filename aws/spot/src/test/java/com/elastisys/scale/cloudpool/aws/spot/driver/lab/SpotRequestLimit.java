@@ -4,16 +4,17 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-import jersey.repackaged.com.google.common.collect.Lists;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.impl.AwsSpotClient;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
+
+import jersey.repackaged.com.google.common.collect.Lists;
 
 /**
  * A client that places spot requests in a given zone until no more requests are
@@ -32,7 +33,8 @@ public class SpotRequestLimit extends BaseClient {
 
 	public static void main(String[] args) {
 		AwsSpotClient client = new AwsSpotClient();
-		client.configure(awsAccessKeyId, awsSecretAccessKey, region);
+		client.configure(awsAccessKeyId, awsSecretAccessKey, region,
+				new ClientConfiguration());
 
 		LOG.info("Testing spot request limit in region {}", region);
 		BaseCloudPoolConfig config = JsonUtils.toObject(
@@ -42,16 +44,16 @@ public class SpotRequestLimit extends BaseClient {
 		List<SpotInstanceRequest> placedRequests = Lists.newArrayList();
 		int MAX = 200;
 		try {
-			placedRequests.addAll(client.placeSpotRequests(0.001,
-					config.getScaleOutConfig(), MAX,
-					Arrays.asList(new Tag("key", "value"))));
+			placedRequests.addAll(
+					client.placeSpotRequests(0.001, config.getScaleOutConfig(),
+							MAX, Arrays.asList(new Tag("key", "value"))));
 		} catch (Exception e) {
 			LOG.error("failed: {}", e.getMessage(), e);
 		} finally {
 			LOG.info("cancelling all placed requests ...");
 			for (SpotInstanceRequest request : placedRequests) {
-				client.cancelSpotRequests(Arrays.asList(request
-						.getSpotInstanceRequestId()));
+				client.cancelSpotRequests(
+						Arrays.asList(request.getSpotInstanceRequestId()));
 			}
 			LOG.info("cancelled all requests.");
 		}

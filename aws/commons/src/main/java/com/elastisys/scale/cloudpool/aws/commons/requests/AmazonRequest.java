@@ -5,6 +5,7 @@ import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 
 /**
@@ -20,6 +21,8 @@ public abstract class AmazonRequest<R> implements Callable<R> {
 	private final AWSCredentials awsCredentials;
 	/** The AWS region that the request will be sent to. */
 	private final String region;
+	/** Client configuration options such as connection timeout, etc. */
+	private final ClientConfiguration clientConfig;
 
 	/**
 	 * Constructs a new {@link AmazonRequest} instance.
@@ -28,9 +31,13 @@ public abstract class AmazonRequest<R> implements Callable<R> {
 	 *            AWS security credentials for the account to be used.
 	 * @param region
 	 *            The AWS region that the request will be sent to.
+	 * @param clientConfig
+	 *            Client configuration options such as connection timeout, etc.
 	 */
-	public AmazonRequest(AWSCredentials awsCredentials, String region) {
+	public AmazonRequest(AWSCredentials awsCredentials, String region,
+			ClientConfiguration clientConfig) {
 		this.awsCredentials = awsCredentials;
+		this.clientConfig = clientConfig;
 		this.region = region;
 	}
 
@@ -40,5 +47,9 @@ public abstract class AmazonRequest<R> implements Callable<R> {
 
 	public String getRegion() {
 		return this.region;
+	}
+
+	public ClientConfiguration getClientConfig() {
+		return this.clientConfig;
 	}
 }

@@ -14,12 +14,13 @@ public class BasePoolTestUtils {
 
 	public static Machine machine(String id) {
 		return Machine.builder().id(id).machineState(MachineState.RUNNING)
+				.machineSize("m1.small").cloudProvider("AWS-EC2")
 				.launchTime(UtcTime.now()).build();
 	}
 
 	public static Machine machine(String id, MachineState machineState) {
 		return Machine.builder().id(id).machineState(machineState)
-				.cloudProvider("AWS-EC2").machineSize("m1.small")
+				.machineSize("m1.small").cloudProvider("AWS-EC2")
 				.launchTime(UtcTime.now()).build();
 	}
 

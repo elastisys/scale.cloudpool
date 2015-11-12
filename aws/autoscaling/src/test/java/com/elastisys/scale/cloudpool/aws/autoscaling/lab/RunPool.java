@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.autoscaling.lab;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Executors;
@@ -12,6 +13,7 @@ import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.AwsAsPoolDriver;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AwsAutoScalingClient;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
+import com.elastisys.scale.cloudpool.commons.basepool.StateStorage;
 import com.elastisys.scale.cloudpool.commons.util.cli.CloudPoolCommandLineDriver;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.gson.JsonObject;
@@ -36,8 +38,10 @@ public class RunPool {
 			.newScheduledThreadPool(10);
 
 	public static void main(String[] args) throws Exception {
-		CloudPool pool = new BaseCloudPool(new AwsAsPoolDriver(
-				new AwsAutoScalingClient()));
+		StateStorage stateStorage = StateStorage
+				.builder(new File("target/state")).build();
+		CloudPool pool = new BaseCloudPool(stateStorage,
+				new AwsAsPoolDriver(new AwsAutoScalingClient()));
 
 		JsonObject config = JsonUtils.parseJsonFile(configFile.toFile())
 				.getAsJsonObject();

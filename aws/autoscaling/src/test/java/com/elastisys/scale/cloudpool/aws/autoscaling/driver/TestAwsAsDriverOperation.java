@@ -54,9 +54,6 @@ import com.google.common.collect.Lists;
 
 /**
  * Verifies the operational behavior of the {@link AwsAsPoolDriver}.
- *
- *
- *
  */
 public class TestAwsAsDriverOperation {
 	static Logger LOG = LoggerFactory.getLogger(TestAwsAsDriverOperation.class);
@@ -115,9 +112,12 @@ public class TestAwsAsDriverOperation {
 		assertThat(machines, is(MachinesMatcher.machines("i-1", "i-2", "i-3")));
 		// verify that listMachines returns cloud-specific metadata about each
 		// machine
-		assertTrue(machines.get(0).getMetadata().has("instanceId"));
-		assertTrue(machines.get(1).getMetadata().has("instanceId"));
-		assertTrue(machines.get(2).getMetadata().has("instanceId"));
+		assertTrue(machines.get(0).getMetadata().getAsJsonObject()
+				.has("instanceId"));
+		assertTrue(machines.get(1).getMetadata().getAsJsonObject()
+				.has("instanceId"));
+		assertTrue(machines.get(2).getMetadata().getAsJsonObject()
+				.has("instanceId"));
 	}
 
 	/**

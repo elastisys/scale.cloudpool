@@ -7,8 +7,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-import jersey.repackaged.com.google.common.collect.ImmutableList;
-
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceStateChange;
@@ -16,6 +15,8 @@ import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
+
+import jersey.repackaged.com.google.common.collect.ImmutableList;
 
 /**
  * A {@link Callable} task that, when executed, terminates a collection of EC2
@@ -25,8 +26,8 @@ import com.elastisys.scale.commons.net.retryable.Retryers;
  * "http://docs.aws.amazon.com/AWSEC2/latest/APIReference/query-api-troubleshooting.html#eventual-consistency"
  * >eventual consistency semantics</a> of the Amazon API.
  */
-public class TerminateInstances extends
-		AmazonEc2Request<List<InstanceStateChange>> {
+public class TerminateInstances
+		extends AmazonEc2Request<List<InstanceStateChange>> {
 
 	/** Initial exponential back-off delay in ms. */
 	private static final int INITIAL_BACKOFF_DELAY = 1000;
@@ -37,13 +38,14 @@ public class TerminateInstances extends
 	private final List<String> instanceIds;
 
 	public TerminateInstances(AWSCredentials awsCredentials, String region,
-			String... instanceIds) {
-		this(awsCredentials, region, ImmutableList.copyOf(instanceIds));
+			ClientConfiguration clientConfig, String... instanceIds) {
+		this(awsCredentials, region, clientConfig,
+				ImmutableList.copyOf(instanceIds));
 	}
 
 	public TerminateInstances(AWSCredentials awsCredentials, String region,
-			Collection<String> instanceIds) {
-		super(awsCredentials, region);
+			ClientConfiguration clientConfig, Collection<String> instanceIds) {
+		super(awsCredentials, region, clientConfig);
 		this.instanceIds = ImmutableList.copyOf(instanceIds);
 	}
 
@@ -65,7 +67,8 @@ public class TerminateInstances extends
 		String name = String.format("await-terminal-state{%s}", instanceIds);
 
 		Callable<List<Instance>> stateRequester = new GetInstances(
-				getAwsCredentials(), getRegion(), instanceIds);
+				getAwsCredentials(), getRegion(), getClientConfig(),
+				instanceIds);
 		Retryable<List<Instance>> retryer = Retryers.exponentialBackoffRetryer(
 				name, stateRequester, INITIAL_BACKOFF_DELAY,
 				TimeUnit.MILLISECONDS, MAX_RETRIES,

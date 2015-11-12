@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceState;
@@ -29,7 +30,7 @@ public class FakeEc2Client implements Ec2Client {
 
 	@Override
 	public void configure(String awsAccessKeyId, String awsSecretAccessKey,
-			String region) {
+			String region, ClientConfiguration clientConfig) {
 	}
 
 	@Override
@@ -46,8 +47,8 @@ public class FakeEc2Client implements Ec2Client {
 				return instance;
 			}
 		}
-		throw new NotFoundException(String.format(
-				"no instance with id %s exists", instanceId));
+		throw new NotFoundException(
+				String.format("no instance with id %s exists", instanceId));
 	}
 
 	@Override
