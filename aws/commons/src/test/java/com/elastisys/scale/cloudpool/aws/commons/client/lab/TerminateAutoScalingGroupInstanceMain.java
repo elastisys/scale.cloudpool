@@ -1,6 +1,5 @@
 package com.elastisys.scale.cloudpool.aws.commons.client.lab;
 
-import com.amazonaws.auth.PropertiesCredentials;
 import com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling.TerminateAutoScalingGroupInstance;
 
 /**
@@ -21,8 +20,8 @@ public class TerminateAutoScalingGroupInstanceMain extends AbstractClient {
 	public static void main(String[] args) throws Exception {
 		logger.info("Terminating instance {} from its Auto Scaling Group",
 				instanceId);
-		new TerminateAutoScalingGroupInstance(new PropertiesCredentials(
-				credentialsFile), region, instanceId).call();
+		new TerminateAutoScalingGroupInstance(AWS_CREDENTIALS, region,
+				instanceId).call();
 	}
 
 }

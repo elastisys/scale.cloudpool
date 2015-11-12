@@ -5,12 +5,11 @@ import static java.lang.String.format;
 import java.util.Arrays;
 import java.util.List;
 
-import jersey.repackaged.com.google.common.collect.Iterables;
-
-import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CreateInstances;
+
+import jersey.repackaged.com.google.common.collect.Iterables;
 
 public class CreateInstanceMain extends AbstractClient {
 
@@ -36,16 +35,14 @@ public class CreateInstanceMain extends AbstractClient {
 			+ "sudo apt-get install -y --force-yes apache2";
 
 	public static void main(String[] args) throws Exception {
-		logger.info(format(
-				"Starting instance in region %s, availability zone %s", region,
-				availabilityZone));
+		logger.info(
+				format("Starting instance in region %s, availability zone %s",
+						region, availabilityZone));
 
-		PropertiesCredentials awsCredentials = new PropertiesCredentials(
-				credentialsFile);
-		CreateInstances request = new CreateInstances(awsCredentials, region,
+		CreateInstances request = new CreateInstances(AWS_CREDENTIALS, region,
 				availabilityZone, securityGroups, keyPair, instanceType,
-				imageId, bootScript, 1, Arrays.asList(new Tag("Name",
-						"myinstance")));
+				imageId, bootScript, 1,
+				Arrays.asList(new Tag("Name", "myinstance")));
 		List<Instance> instances = request.call();
 		Instance instance = Iterables.getOnlyElement(instances);
 		logger.info("Launched instance : " + instance.getInstanceId() + ": "

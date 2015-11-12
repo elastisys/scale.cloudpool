@@ -4,7 +4,6 @@ import static java.lang.String.format;
 
 import java.util.List;
 
-import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.services.ec2.model.InstanceStateChange;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TerminateInstances;
 
@@ -19,8 +18,7 @@ public class TerminateInstanceMain extends AbstractClient {
 		logger.info(format("Terminating instance %s in region %s", instanceId,
 				region));
 		List<InstanceStateChange> stateChanges = new TerminateInstances(
-				new PropertiesCredentials(credentialsFile), region, instanceId)
-				.call();
+				AWS_CREDENTIALS, region, instanceId).call();
 		logger.info("Terminating instances: {}", stateChanges);
 	}
 
