@@ -23,7 +23,7 @@ security_dir="/etc/elastisys/security"
 httpsport=443
 
 # Java system properties
-JAVA_OPTS="-Xmx64m -Djava.net.preferIPv4Stack=true -Djava.util.logging.config.file=${julconfig} -Dlogback.configurationFile=${logconfig}"
+JAVA_OPTS="-Xmx128m -XX:+HeapDumpOnOutOfMemoryError -Djava.net.preferIPv4Stack=true -Djava.util.logging.config.file=${julconfig} -Dlogback.configurationFile=${logconfig}"
 JAVA_OPTS="${JAVA_OPTS} -DLOG_DIR=${LOG_DIR}"
 
 SECURITY_OPTS="--ssl-keystore ${security_dir}/server_keystore.p12 --ssl-keystore-password serverpassword"
