@@ -11,13 +11,14 @@ import org.openstack4j.api.compute.ServerService;
 import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
 
 /**
  * An request that, when executed, updates the metadata tags of a {@link Server}
  * instance.
  */
-public class UpdateServerMetadataRequest extends AbstractOpenstackRequest<Void> {
+public class UpdateServerMetadataRequest
+		extends AbstractOpenstackRequest<Void> {
 
 	/** The id of the server whose metadata is to be updated. */
 	private final String serverId;
@@ -30,18 +31,17 @@ public class UpdateServerMetadataRequest extends AbstractOpenstackRequest<Void> 
 	/**
 	 * Constructs a {@link UpdateServerMetadataRequest}.
 	 *
-	 * @param accessConfig
-	 *            Account login credentials for a particular OpenStack Nova
-	 *            endpoint.
+	 * @param clientFactory
+	 *            OpenStack API client factory.
 	 * @param serverId
 	 *            The server whose metadata is to be updated.
 	 * @param metadata
 	 *            Meta data tags to be copied to the server. Any meta data keys
 	 *            that already exist on the node will be overwritten.
 	 */
-	public UpdateServerMetadataRequest(OpenStackPoolDriverConfig accessConfig,
+	public UpdateServerMetadataRequest(OSClientFactory clientFactory,
 			String serverId, Map<String, String> metadata) {
-		super(accessConfig);
+		super(clientFactory);
 
 		checkNotNull(serverId, "server id cannot be null");
 		checkNotNull(metadata, "metadata map cannot be null");
@@ -55,8 +55,8 @@ public class UpdateServerMetadataRequest extends AbstractOpenstackRequest<Void> 
 		ServerService serverApi = api.compute().servers();
 		Server server = serverApi.get(this.serverId);
 		if (server == null) {
-			throw new NotFoundException(format(
-					"failed to update meta data on server '%s': "
+			throw new NotFoundException(
+					format("failed to update meta data on server '%s': "
 							+ "server not found", this.serverId));
 		}
 		// set tags

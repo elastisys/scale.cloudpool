@@ -6,6 +6,7 @@ import org.openstack4j.model.compute.Image;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
 import com.elastisys.scale.cloudpool.openstack.requests.ListImagesRequest;
 
 public class ListImagesMain {
@@ -13,7 +14,7 @@ public class ListImagesMain {
 
 	public static void main(String[] args) {
 		List<Image> images = new ListImagesRequest(
-				DriverConfigLoader.loadDefault()).call();
+				new OSClientFactory(DriverConfigLoader.loadDefault())).call();
 		LOG.info("{} server image(s) found", images.size());
 		for (Image image : images) {
 			LOG.info("image: {}", image);

@@ -5,7 +5,7 @@ import java.util.List;
 import org.openstack4j.api.OSClient;
 import org.openstack4j.model.compute.Image;
 
-import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
 import com.google.common.collect.Lists;
 
 /**
@@ -17,18 +17,18 @@ public class ListImagesRequest extends AbstractOpenstackRequest<List<Image>> {
 	/**
 	 * Constructs a new {@link ListImagesRequest} task.
 	 *
-	 * @param account
-	 *            Account login credentials for a particular OpenStack endpoint.
+	 * @param clientFactory
+	 *            OpenStack API client factory.
 	 *
 	 */
-	public ListImagesRequest(OpenStackPoolDriverConfig account) {
-		super(account);
+	public ListImagesRequest(OSClientFactory clientFactory) {
+		super(clientFactory);
 	}
 
 	@Override
 	public List<Image> doRequest(OSClient api) {
-		List<Image> images = Lists.newArrayList(api.compute().images()
-				.list(true));
+		List<Image> images = Lists
+				.newArrayList(api.compute().images().list(true));
 		return images;
 	}
 }

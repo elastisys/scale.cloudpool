@@ -6,15 +6,26 @@ import org.openstack4j.api.OSClient;
 import org.openstack4j.core.transport.Config;
 import org.openstack4j.model.common.Identifier;
 import org.openstack4j.openstack.OSFactory;
+import org.openstack4j.openstack.internal.OSClientSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.openstack.driver.config.AuthConfig;
 import com.elastisys.scale.cloudpool.openstack.driver.config.AuthV2Credentials;
 import com.elastisys.scale.cloudpool.openstack.driver.config.AuthV3Credentials;
+import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
 
 /**
  * A factory for creating authenticated {@link OSClient} objects ready for use.
  */
 public class OSClientFactory {
+	private static final Logger LOG = LoggerFactory
+			.getLogger(OSClientFactory.class);
+	/**
+	 * API access configuration that describes how to authenticate with and
+	 * communicate over the OpenStack API.
+	 */
+	private final OpenStackPoolDriverConfig apiAccessConfig;
 
 	/**
 	 * The {@link OSClientCreator} used to instantiate {@link OSClient}s for
@@ -23,66 +34,137 @@ public class OSClientFactory {
 	private final OSClientCreator creator;
 
 	/**
-	 * Creates an {@link OSClientFactory} with a {@link StandardOSClientCreator}
-	 * creating clients with the given connection timeouts.
-	 *
-	 * @param connectionTimeout
-	 *            The timeout in milliseconds until a connection is established.
-	 * @param socketTimeout
-	 *            The socket timeout ({@code SO_TIMEOUT}) in milliseconds, which
-	 *            is the timeout for waiting for data or, put differently, a
-	 *            maximum period inactivity between two consecutive data
-	 *            packets).
-	 *
+	 * An authenticated client that, after initialization, will serve as a
+	 * template for creating additional per-thread {@link OSClient}s that re-use
+	 * the same authentication token. As explained
+	 * <a href="http://www.openstack4j.com/learn/threads/">here</a>, client
+	 * sessions are thread-scoped but an authentication token from an
+	 * authenticated client can be re-used by {@link OSClient}s bound to other
+	 * threads.
 	 */
-	public OSClientFactory(int connectionTimeout, int socketTimeout) {
-		this(new StandardOSClientCreator(connectionTimeout, socketTimeout));
+	private OSClient authenticatedClient = null;
+
+	/** Mutex to protect critical sections. */
+	private Object lock = new Object();
+
+	/**
+	 * Creates an {@link OSClientFactory} with a {@link StandardOSClientCreator}
+	 * creating clients according to the given configuration.
+	 *
+	 * @param apiAccessConfig
+	 *            API access configuration that describes how to authenticate
+	 *            with and communicate over the OpenStack API.
+	 */
+	public OSClientFactory(OpenStackPoolDriverConfig apiAccessConfig) {
+		this(apiAccessConfig,
+				new StandardOSClientCreator(
+						apiAccessConfig.getConnectionTimeout(),
+						apiAccessConfig.getSocketTimeout()));
 	}
 
 	/**
 	 * Creates an {@link OSClientFactory} with a custom {@link OSClientCreator}.
+	 *
+	 * @param apiAccessConfig
+	 *            API access configuration that describes how to authenticate
+	 *            with and communicate over the OpenStack API.
+	 *
 	 */
-	public OSClientFactory(OSClientCreator creator) {
+	public OSClientFactory(OpenStackPoolDriverConfig apiAccessConfig,
+			OSClientCreator creator) {
+		checkArgument(apiAccessConfig != null, "no apiAccessConfig given");
+		checkArgument(creator != null, "no creator given");
+		apiAccessConfig.validate();
+
+		this.apiAccessConfig = apiAccessConfig;
 		this.creator = creator;
 	}
 
 	/**
-	 * Creates an {@link OSClient} that has been authenticated against a
-	 * Keystone identity service using the authentication scheme specified in an
-	 * {@link AuthConfig}.
+	 * Returns an OpenStack API client, authenticated and configured according
+	 * to the {@link OpenStackPoolDriverConfig} provided at construction-time.
+	 * <p/>
+	 * <b>Note</b>: the returned {@link OSClient} is bound to the calling thread
+	 * (since Openstack4j uses thread-scoped sessions) and should therefore
+	 * never be used by a different thread. If another thread needs to make use
+	 * of an {@link OSClient}, pass the {@link OSClientFactory} to that thread
+	 * and make a new call to {@link #authenticatedClient()}.
 	 *
-	 * @param authConfig
-	 *            Specified how to authenticate.
 	 * @return An authenticated {@link OSClient} ready for use.
 	 */
-	public OSClient createAuthenticatedClient(AuthConfig authConfig) {
-		checkArgument(authConfig.getKeystoneUrl() != null,
+	public OSClient authenticatedClient() {
+		// check if we need to do the first-time initialization of the seed
+		// client
+		synchronized (this.lock) {
+			if (this.authenticatedClient == null) {
+				this.authenticatedClient = acquireAuthenticatedClient();
+				this.authenticatedClient
+						.useRegion(this.apiAccessConfig.getRegion());
+			}
+		}
+
+		// check if a client session is already bound to this thread and, if so,
+		// return that client.
+		if (OSClientSession.getCurrent() != null) {
+			return OSClientSession.getCurrent();
+		} else {
+			// if no client session is already bound to this thread, a copy
+			// that reuses the same auth token as the template client is bound
+			// to serve the current thread.
+			OSClient threadClient = OSFactory
+					.clientFromAccess(this.authenticatedClient.getAccess());
+			return threadClient.useRegion(this.apiAccessConfig.getRegion());
+		}
+	}
+
+	/**
+	 * Creates a new {@link OSClient} by authenticating against a Keystone
+	 * identity service using the authentication scheme specified in the
+	 * {@link OpenStackPoolDriverConfig} supplied at construction-time.
+	 *
+	 * @return An authenticated {@link OSClient} ready for use.
+	 */
+	OSClient acquireAuthenticatedClient() {
+		AuthConfig auth = this.apiAccessConfig.getAuth();
+		checkArgument(auth.getKeystoneUrl() != null,
 				"cannot authenticate without a keystone endpoint URL");
-		checkArgument(authConfig.isV2Auth() ^ authConfig.isV3Auth(),
+		checkArgument(auth.isV2Auth() ^ auth.isV3Auth(),
 				"*either* version 2 or version 3 style "
 						+ "authentication needs to be specified");
-		if (authConfig.isV2Auth()) {
-			AuthV2Credentials v2Creds = authConfig.getV2Credentials();
-			return this.creator.fromV2Auth(authConfig.getKeystoneUrl(),
+
+		LOG.debug("acquiring an authenticated openstack client ...");
+
+		if (auth.isV2Auth()) {
+			AuthV2Credentials v2Creds = auth.getV2Credentials();
+			return this.creator.fromV2Auth(auth.getKeystoneUrl(),
 					v2Creds.getTenantName(), v2Creds.getUserName(),
 					v2Creds.getPassword());
 		} else {
-			AuthV3Credentials v3Creds = authConfig.getV3Credentials();
+			AuthV3Credentials v3Creds = auth.getV3Credentials();
 			checkArgument(v3Creds.isDomainScoped() ^ v3Creds.isProjectScoped(),
 					"version 3 type credentials msut be either domain- or project-scoped");
 			if (v3Creds.isDomainScoped()) {
 				return this.creator.fromDomainScopedV3Auth(
-						authConfig.getKeystoneUrl(),
-						v3Creds.getScope().getDomainId(), v3Creds.getUserId(),
-						v3Creds.getPassword());
+						auth.getKeystoneUrl(), v3Creds.getScope().getDomainId(),
+						v3Creds.getUserId(), v3Creds.getPassword());
 			} else {
 				// project scoped v3 auth
 				return this.creator.fromProjectScopedV3Auth(
-						authConfig.getKeystoneUrl(),
+						auth.getKeystoneUrl(),
 						v3Creds.getScope().getProjectId(), v3Creds.getUserId(),
 						v3Creds.getPassword());
 			}
 		}
+	}
+
+	/**
+	 * Returns the API access configuration that describes how to authenticate
+	 * with and communicate over the OpenStack API.
+	 *
+	 * @return
+	 */
+	public OpenStackPoolDriverConfig getApiAccessConfig() {
+		return this.apiAccessConfig;
 	}
 
 	/**

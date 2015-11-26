@@ -25,18 +25,22 @@ import com.google.common.util.concurrent.Atomics;
  */
 public class StandardOpenstackClient implements OpenstackClient {
 
-	/** Configuration with connection details for the OpenStack API. */
-	private final AtomicReference<OpenStackPoolDriverConfig> config;
+	/**
+	 * {@link OSClientFactory} configured to use the latest set
+	 * {@link OpenStackPoolDriverConfig}.
+	 */
+	private final AtomicReference<OSClientFactory> clientFactory;
 
 	public StandardOpenstackClient() {
-		this.config = Atomics.newReference();
+		this.clientFactory = Atomics.newReference();
 	}
 
 	@Override
 	public void configure(OpenStackPoolDriverConfig configuration) {
 		checkArgument(configuration != null, "null configuration");
 
-		this.config.set(configuration);
+		this.clientFactory.set(new OSClientFactory(configuration));
+
 	}
 
 	@Override
@@ -44,7 +48,7 @@ public class StandardOpenstackClient implements OpenstackClient {
 		checkArgument(isConfigured(),
 				"can't use client before it's configured");
 
-		return new ListServersWithTagRequest(config(), tag, tagValue).call();
+		return new ListServersWithTagRequest(clientFactory(), tag, tagValue).call();
 	}
 
 	@Override
@@ -52,7 +56,7 @@ public class StandardOpenstackClient implements OpenstackClient {
 		checkArgument(isConfigured(),
 				"can't use client before it's configured");
 
-		return new GetServerRequest(config(), serverId).call();
+		return new GetServerRequest(clientFactory(), serverId).call();
 	}
 
 	@Override
@@ -61,7 +65,7 @@ public class StandardOpenstackClient implements OpenstackClient {
 		checkArgument(isConfigured(),
 				"can't use client before it's configured");
 
-		CreateServerRequest request = new CreateServerRequest(config(),
+		CreateServerRequest request = new CreateServerRequest(clientFactory(),
 				serverName, provisioningDetails.getSize(),
 				provisioningDetails.getImage(),
 				provisioningDetails.getKeyPair(),
@@ -73,14 +77,14 @@ public class StandardOpenstackClient implements OpenstackClient {
 	@Override
 	public String assignFloatingIp(String serverId) throws NotFoundException {
 		Server server = getServer(serverId);
-		return new AssignFloatingIpRequest(config(), server).call();
+		return new AssignFloatingIpRequest(clientFactory(), server).call();
 	}
 
 	@Override
 	public void terminateServer(String serverId) throws NotFoundException {
 		checkArgument(isConfigured(),
 				"can't use client before it's configured");
-		new DeleteServerRequest(config(), serverId).call();
+		new DeleteServerRequest(clientFactory(), serverId).call();
 	}
 
 	@Override
@@ -88,7 +92,7 @@ public class StandardOpenstackClient implements OpenstackClient {
 		checkArgument(isConfigured(),
 				"can't use client before it's configured");
 
-		new UpdateServerMetadataRequest(config(), serverId, tags).call();
+		new UpdateServerMetadataRequest(clientFactory(), serverId, tags).call();
 	}
 
 	@Override
@@ -96,15 +100,20 @@ public class StandardOpenstackClient implements OpenstackClient {
 		checkArgument(isConfigured(),
 				"can't use client before it's configured");
 
-		new DeleteServerMetadataRequest(config(), serverId, tagKeys).call();
+		new DeleteServerMetadataRequest(clientFactory(), serverId, tagKeys)
+				.call();
 	}
 
 	private boolean isConfigured() {
 		return config() != null;
 	}
 
+	public OSClientFactory clientFactory() {
+		return this.clientFactory.get();
+	}
+
 	private OpenStackPoolDriverConfig config() {
-		return this.config.get();
+		return this.clientFactory.get().getApiAccessConfig();
 	}
 
 }

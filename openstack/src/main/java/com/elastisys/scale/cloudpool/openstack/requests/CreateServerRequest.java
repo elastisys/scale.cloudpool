@@ -17,7 +17,7 @@ import org.openstack4j.model.compute.builder.ServerCreateBuilder;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
-import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
 
 /**
  * An request that, when executed, creates a new server instance.
@@ -52,8 +52,8 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 	/**
 	 * Creates a new {@link CreateServerRequest}.
 	 *
-	 * @param accessConfig
-	 *            Connection details for a particular OpenStack account.
+	 * @param clientFactory
+	 *            OpenStack API client factory.
 	 * @param serverName
 	 *            The name to assign to the new server.
 	 * @param flavorName
@@ -73,11 +73,11 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 	 *            Any meta data tags to assign to the new server. May be
 	 *            <code>null</code>.
 	 */
-	public CreateServerRequest(OpenStackPoolDriverConfig accessConfig,
-			String serverName, String flavorName, String imageName,
-			String keyPair, List<String> securityGroups, String encodedUserData,
+	public CreateServerRequest(OSClientFactory clientFactory, String serverName,
+			String flavorName, String imageName, String keyPair,
+			List<String> securityGroups, String encodedUserData,
 			Map<String, String> metadata) {
-		super(accessConfig);
+		super(clientFactory);
 
 		checkNotNull(serverName, "server name cannot be null");
 		checkNotNull(flavorName, "flavor name cannot be null");
@@ -130,7 +130,7 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 			throws IllegalArgumentException, CloudPoolDriverException {
 		List<Flavor> flavors;
 		try {
-			flavors = new ListSizesRequest(getAccessConfig()).call();
+			flavors = new ListSizesRequest(getClientFactory()).call();
 		} catch (Exception e) {
 			throw new CloudPoolDriverException(String.format(
 					"failed to fetch the list of available flavors: %s",
@@ -144,7 +144,7 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 		throw new IllegalArgumentException(String.format(
 				"failed to create server: no flavor with "
 						+ "name \"%s\" exists in region \"%s\"",
-				this.flavorName, getAccessConfig().getRegion()));
+				this.flavorName, getApiAccessConfig().getRegion()));
 	}
 
 	/**
@@ -162,7 +162,7 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 
 		List<Image> images;
 		try {
-			images = new ListImagesRequest(getAccessConfig()).call();
+			images = new ListImagesRequest(getClientFactory()).call();
 		} catch (Exception e) {
 			throw new CloudPoolDriverException(String.format(
 					"failed to fetch the list of available images: %s",
@@ -176,7 +176,7 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 		throw new IllegalArgumentException(String.format(
 				"failed to create server: no image with "
 						+ "name \"%s\" exists in region \"%s\"",
-				this.imageName, getAccessConfig().getRegion()));
+				this.imageName, getApiAccessConfig().getRegion()));
 	}
 
 }

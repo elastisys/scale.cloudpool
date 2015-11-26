@@ -21,11 +21,8 @@ public class DeleteKeypairMain {
 		OpenStackPoolDriverConfig driverConfig = DriverConfigLoader
 				.loadDefault();
 
-		OSClient client = new OSClientFactory(
-				driverConfig.getConnectionTimeout(),
-				driverConfig.getSocketTimeout())
-						.createAuthenticatedClient(driverConfig.getAuth())
-						.useRegion(driverConfig.getRegion());
+		OSClient client = new OSClientFactory(driverConfig)
+				.authenticatedClient();
 		KeypairService keyApi = client.compute().keypairs();
 
 		ActionResponse response = keyApi.delete(keyPairName);

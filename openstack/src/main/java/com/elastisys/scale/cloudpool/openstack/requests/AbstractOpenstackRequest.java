@@ -23,43 +23,44 @@ public abstract class AbstractOpenstackRequest<R> implements Callable<R> {
 
 	static Logger LOG = LoggerFactory.getLogger(AbstractOpenstackRequest.class);
 
-	/** OpenStack API access configuration. */
-	private final OpenStackPoolDriverConfig accessConfig;
+	/** OpenStack API client factory. */
+	private final OSClientFactory clientFactory;
 
 	/**
-	 * Constructs a new {@link AbstractOpenstackRequest} with an access
-	 * configuration object that describes how to connect with the OpenStack
-	 * API.
+	 * Constructs a new {@link AbstractOpenstackRequest} with a given
+	 * {@link OSClientFactory}.
 	 *
-	 * @param accessConfig
-	 *            OpenStack API access configuration.
-	 *
+	 * @param clientFactory
+	 *            OpenStack API client factory
 	 */
-	public AbstractOpenstackRequest(OpenStackPoolDriverConfig accessConfig) {
-		checkArgument(accessConfig != null, "accessCsonfig cannot be null");
-		this.accessConfig = accessConfig;
-	}
-
-	/**
-	 * Returns the configuration details for accessing the targeted OpenStack
-	 * account.
-	 *
-	 * @return
-	 */
-	public OpenStackPoolDriverConfig getAccessConfig() {
-		return this.accessConfig;
+	public AbstractOpenstackRequest(OSClientFactory clientFactory) {
+		checkArgument(clientFactory != null, "clientFactory cannot be null");
+		this.clientFactory = clientFactory;
 	}
 
 	@Override
 	public R call() throws RuntimeException {
-		OSClientFactory clientFactory = new OSClientFactory(
-				this.accessConfig.getConnectionTimeout(),
-				this.accessConfig.getSocketTimeout());
-		OSClient api = clientFactory
-				.createAuthenticatedClient(this.accessConfig.getAuth());
-		api.useRegion(this.accessConfig.getRegion());
-
+		OSClient api = this.clientFactory.authenticatedClient();
 		return doRequest(api);
+	}
+
+	/**
+	 * Returns the OpenStack API client factory.
+	 * 
+	 * @return
+	 */
+	public OSClientFactory getClientFactory() {
+		return this.clientFactory;
+	}
+
+	/**
+	 * Returns the API access configuration that describes how to authenticate
+	 * with and communicate over the OpenStack API.
+	 *
+	 * @return
+	 */
+	public OpenStackPoolDriverConfig getApiAccessConfig() {
+		return this.clientFactory.getApiAccessConfig();
 	}
 
 	/**

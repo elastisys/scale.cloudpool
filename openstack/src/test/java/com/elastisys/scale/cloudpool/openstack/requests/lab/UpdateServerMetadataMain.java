@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.openstack.requests.lab;
 
 import java.util.Map;
 
+import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
 import com.elastisys.scale.cloudpool.openstack.requests.UpdateServerMetadataRequest;
 import com.google.common.collect.ImmutableMap;
 
@@ -12,7 +13,8 @@ public class UpdateServerMetadataMain {
 
 	public static void main(String[] args) {
 		Map<String, String> metadata = ImmutableMap.of("key1", "value1");
-		new UpdateServerMetadataRequest(DriverConfigLoader.loadDefault(),
-				serverId, metadata).call();
+		new UpdateServerMetadataRequest(
+				new OSClientFactory(DriverConfigLoader.loadDefault()), serverId,
+				metadata).call();
 	}
 }

@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
-import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
 import com.elastisys.scale.cloudpool.openstack.tasks.ServerIpAddressRequester;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
@@ -31,9 +31,16 @@ public class AssignFloatingIpRequest extends AbstractOpenstackRequest<String> {
 
 	private final Server server;
 
-	public AssignFloatingIpRequest(OpenStackPoolDriverConfig accessConfig,
+	/**
+	 * Creates a new {@link AssignFloatingIpRequest}.
+	 * 
+	 * @param clientFactory
+	 *            OpenStack API client factory.
+	 * @param server
+	 */
+	public AssignFloatingIpRequest(OSClientFactory clientFactory,
 			Server server) {
-		super(accessConfig);
+		super(clientFactory);
 		this.server = server;
 	}
 
@@ -116,11 +123,6 @@ public class AssignFloatingIpRequest extends AbstractOpenstackRequest<String> {
 	 * @return
 	 */
 	private Predicate<Addresses> ipAddressAssigned() {
-		return new Predicate<Addresses>() {
-			@Override
-			public boolean apply(Addresses addresses) {
-				return !addresses.getAddresses().isEmpty();
-			}
-		};
+		return addresses -> !addresses.getAddresses().isEmpty();
 	}
 }

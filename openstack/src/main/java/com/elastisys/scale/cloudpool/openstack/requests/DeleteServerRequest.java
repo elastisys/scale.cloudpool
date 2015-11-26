@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
-import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
 import com.google.common.base.Predicates;
@@ -39,15 +39,15 @@ public class DeleteServerRequest extends AbstractOpenstackRequest<Void> {
 	private final String victimId;
 
 	/**
-	 * @param account
-	 *            Account login credentials for a particular OpenStack Nova
-	 *            endpoint.
+	 * Creates a new {@link DeleteServerRequest}.
+	 *
+	 * @param clientFactory
+	 *            OpenStack API client factory.
 	 * @param victimId
 	 *            The identifier (UUID) of the server instance to delete.
 	 */
-	public DeleteServerRequest(OpenStackPoolDriverConfig account,
-			String victimId) {
-		super(account);
+	public DeleteServerRequest(OSClientFactory clientFactory, String victimId) {
+		super(clientFactory);
 		this.victimId = victimId;
 	}
 
@@ -59,8 +59,8 @@ public class DeleteServerRequest extends AbstractOpenstackRequest<Void> {
 		if (victimServer == null) {
 			throw new NotFoundException(format(
 					"a victim server with id '%s' could not be found "
-							+ "in region %s", this.victimId, getAccessConfig()
-							.getRegion()));
+							+ "in region %s",
+					this.victimId, getApiAccessConfig().getRegion()));
 		}
 
 		releaseFloatingIps(api, victimServer);
@@ -84,7 +84,7 @@ public class DeleteServerRequest extends AbstractOpenstackRequest<Void> {
 		String taskName = String.format("termination-waiter{%s}", serverId);
 
 		ServerExistsRequest serverExistsRequester = new ServerExistsRequest(
-				getAccessConfig(), serverId);
+				getClientFactory(), serverId);
 		int fixedDelay = 5;
 		int maxRetries = 12;
 		Retryable<Boolean> awaitTermination = Retryers.fixedDelayRetryer(
@@ -107,7 +107,8 @@ public class DeleteServerRequest extends AbstractOpenstackRequest<Void> {
 		LOG.debug("releasing floating IP addresses associated with {}",
 				server.getName());
 		ComputeFloatingIPService floatingIpApi = api.compute().floatingIps();
-		Map<String, FloatingIP> tenantFloatingIps = tenantFloatingIps(floatingIpApi);
+		Map<String, FloatingIP> tenantFloatingIps = tenantFloatingIps(
+				floatingIpApi);
 		Collection<String> serverIps = serverIps(server);
 		for (String serverIp : serverIps) {
 			if (tenantFloatingIps.containsKey(serverIp)) {

@@ -10,13 +10,14 @@ import org.openstack4j.api.compute.ServerService;
 import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
 
 /**
  * An Openstack request that, when executed, deletes selected tags from a
  * {@link Server}'s metadata.
  */
-public class DeleteServerMetadataRequest extends AbstractOpenstackRequest<Void> {
+public class DeleteServerMetadataRequest
+		extends AbstractOpenstackRequest<Void> {
 
 	/** The id of the server whose metadata is to be updated. */
 	private final String serverId;
@@ -28,17 +29,16 @@ public class DeleteServerMetadataRequest extends AbstractOpenstackRequest<Void> 
 	/**
 	 * Constructs a {@link DeleteServerMetadataRequest}.
 	 *
-	 * @param accessConfig
-	 *            Account login credentials for a particular OpenStack Nova
-	 *            endpoint.
+	 * @param clientFactory
+	 *            OpenStack API client factory.
 	 * @param serverId
 	 *            The server whose metadata is to be updated.
 	 * @param metadataKeysToDelete
 	 *            Meta data tags to be removed from the server.
 	 */
-	public DeleteServerMetadataRequest(OpenStackPoolDriverConfig accessConfig,
+	public DeleteServerMetadataRequest(OSClientFactory clientFactory,
 			String serverId, List<String> metadataKeysToDelete) {
-		super(accessConfig);
+		super(clientFactory);
 
 		checkNotNull(serverId, "server id cannot be null");
 		checkNotNull(metadataKeysToDelete, "metadata keys cannot be null");
@@ -52,8 +52,8 @@ public class DeleteServerMetadataRequest extends AbstractOpenstackRequest<Void> 
 		ServerService serverApi = api.compute().servers();
 		Server server = serverApi.get(this.serverId);
 		if (server == null) {
-			throw new NotFoundException(format(
-					"failed to update meta data on server '%s': "
+			throw new NotFoundException(
+					format("failed to update meta data on server '%s': "
 							+ "server not found", this.serverId));
 		}
 		// delete tags

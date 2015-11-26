@@ -7,7 +7,7 @@ import org.openstack4j.model.compute.Flavor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -20,12 +20,11 @@ public class ListSizesRequest extends AbstractOpenstackRequest<List<Flavor>> {
 	/**
 	 * Constructs a new {@link ListSizesRequest} task.
 	 *
-	 * @param account
-	 *            Account login credentials for a particular OpenStack endpoint.
-	 *
+	 * @param clientFactory
+	 *            OpenStack API client factory.
 	 */
-	public ListSizesRequest(OpenStackPoolDriverConfig account) {
-		super(account);
+	public ListSizesRequest(OSClientFactory clientFactory) {
+		super(clientFactory);
 	}
 
 	@Override

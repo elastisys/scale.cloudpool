@@ -3,7 +3,7 @@ package com.elastisys.scale.cloudpool.openstack.requests;
 import org.openstack4j.api.OSClient;
 import org.openstack4j.model.compute.Server;
 
-import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
 
 /**
  * A request that, when called, determines if a particular {@link Server}
@@ -13,9 +13,16 @@ public class ServerExistsRequest extends AbstractOpenstackRequest<Boolean> {
 	/** The identifier of the server whose existence is to be checked. */
 	private String serverId;
 
-	public ServerExistsRequest(OpenStackPoolDriverConfig accessConfig,
-			String serverId) {
-		super(accessConfig);
+	/**
+	 * Creates a new {@link ServerExistsRequest}.
+	 *
+	 * @param clientFactory
+	 *            OpenStack API client factory.
+	 * @param serverId
+	 *            The server whose existence is to be queried.
+	 */
+	public ServerExistsRequest(OSClientFactory clientFactory, String serverId) {
+		super(clientFactory);
 		this.serverId = serverId;
 	}
 
