@@ -7,6 +7,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
+import com.elastisys.scale.commons.json.types.TimeInterval;
+
 /**
  * Exercises {@link PoolFetchConfig}.
  */

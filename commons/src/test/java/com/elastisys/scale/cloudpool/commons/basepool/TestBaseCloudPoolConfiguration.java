@@ -19,15 +19,15 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
-import com.elastisys.scale.cloudpool.commons.basepool.config.AlertsConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.TimeInterval;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.http.HttpAlerterConfig;
 import com.elastisys.scale.commons.net.alerter.http.HttpAuthConfig;
+import com.elastisys.scale.commons.net.alerter.multiplexing.AlertersConfig;
 import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerter;
 import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerterConfig;
 import com.elastisys.scale.commons.net.smtp.SmtpClientAuthentication;
@@ -98,7 +98,7 @@ public class TestBaseCloudPoolConfiguration {
 		this.cloudPool.configure(validConfig);
 
 		BaseCloudPoolConfig config = this.cloudPool.config();
-		AlertsConfig alertSettings = config.getAlerts();
+		AlertersConfig alertSettings = config.getAlerts();
 		assertThat(alertSettings.getSmtpAlerters().size(), is(1));
 		assertThat(alertSettings.getHttpAlerters().size(), is(0));
 		// verify filled in values
@@ -127,7 +127,7 @@ public class TestBaseCloudPoolConfiguration {
 		this.cloudPool.configure(validConfig);
 
 		BaseCloudPoolConfig config = this.cloudPool.config();
-		AlertsConfig alertSettings = config.getAlerts();
+		AlertersConfig alertSettings = config.getAlerts();
 		assertThat(alertSettings.getSmtpAlerters().size(), is(2));
 		assertThat(alertSettings.getHttpAlerters().size(), is(0));
 		// verify filled in values
@@ -171,7 +171,7 @@ public class TestBaseCloudPoolConfiguration {
 		this.cloudPool.configure(validConfig);
 
 		BaseCloudPoolConfig config = this.cloudPool.config();
-		AlertsConfig alertSettings = config.getAlerts();
+		AlertersConfig alertSettings = config.getAlerts();
 		assertThat(alertSettings.getSmtpAlerters().size(), is(1));
 		assertThat(alertSettings.getHttpAlerters().size(), is(0));
 		// verify filled in values
@@ -196,7 +196,7 @@ public class TestBaseCloudPoolConfiguration {
 		this.cloudPool.configure(validConfig);
 
 		BaseCloudPoolConfig config = this.cloudPool.config();
-		AlertsConfig alertSettings = config.getAlerts();
+		AlertersConfig alertSettings = config.getAlerts();
 		assertThat(alertSettings.getSmtpAlerters().size(), is(0));
 		assertThat(alertSettings.getHttpAlerters().size(), is(1));
 		assertThat(alertSettings.getDuplicateSuppression(),
@@ -225,7 +225,7 @@ public class TestBaseCloudPoolConfiguration {
 		this.cloudPool.configure(validConfig);
 
 		BaseCloudPoolConfig config = this.cloudPool.config();
-		AlertsConfig alertSettings = config.getAlerts();
+		AlertersConfig alertSettings = config.getAlerts();
 		assertThat(alertSettings.getSmtpAlerters().size(), is(0));
 		assertThat(alertSettings.getHttpAlerters().size(), is(2));
 		// verify filled in values
@@ -258,7 +258,7 @@ public class TestBaseCloudPoolConfiguration {
 		this.cloudPool.configure(validConfig);
 
 		BaseCloudPoolConfig config = this.cloudPool.config();
-		AlertsConfig alertSettings = config.getAlerts();
+		AlertersConfig alertSettings = config.getAlerts();
 		assertThat(alertSettings.getSmtpAlerters().size(), is(1));
 		assertThat(alertSettings.getHttpAlerters().size(), is(1));
 		// verify filled in values

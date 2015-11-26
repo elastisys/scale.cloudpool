@@ -12,8 +12,10 @@ import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.http.HttpAlerterConfig;
 import com.elastisys.scale.commons.net.alerter.http.HttpAuthConfig;
+import com.elastisys.scale.commons.net.alerter.multiplexing.AlertersConfig;
 import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerterConfig;
 import com.elastisys.scale.commons.net.smtp.SmtpClientAuthentication;
 import com.elastisys.scale.commons.net.smtp.SmtpClientConfig;
@@ -125,8 +127,8 @@ public class TestBaseCloudPoolConfig {
 				500);
 	}
 
-	private AlertsConfig alertSettings() {
-		return new AlertsConfig(Arrays.asList(smtpAlerter()),
+	private AlertersConfig alertSettings() {
+		return new AlertersConfig(Arrays.asList(smtpAlerter()),
 				Arrays.asList(httpAlerter()));
 	}
 

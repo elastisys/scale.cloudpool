@@ -22,7 +22,7 @@ import org.junit.Test;
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.rest.types.ErrorType;
+import com.elastisys.scale.commons.json.types.ErrorType;
 import com.google.common.base.Optional;
 import com.google.gson.JsonObject;
 

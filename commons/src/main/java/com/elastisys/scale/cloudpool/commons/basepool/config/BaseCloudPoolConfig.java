@@ -12,6 +12,9 @@ import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.json.types.TimeInterval;
+import com.elastisys.scale.commons.net.alerter.Alert;
+import com.elastisys.scale.commons.net.alerter.multiplexing.AlertersConfig;
 import com.elastisys.scale.commons.net.smtp.SmtpClientAuthentication;
 import com.elastisys.scale.commons.net.smtp.SmtpClientConfig;
 import com.google.common.base.Objects;
@@ -51,10 +54,10 @@ public class BaseCloudPoolConfig {
 	private final ScaleInConfig scaleInConfig;
 
 	/**
-	 * Configuration that describes how to send email alerts. May be
+	 * Configuration that describes how to send {@link Alert}s. May be
 	 * <code>null</code>.
 	 */
-	private final AlertsConfig alerts;
+	private final AlertersConfig alerts;
 
 	/**
 	 * Controls the {@link CloudPool}'s behavior with respect to how often to
@@ -76,7 +79,7 @@ public class BaseCloudPoolConfig {
 	 * @param scaleInConfig
 	 *            Configuration that describes how to shrink the cloud pool.
 	 * @param alertSettings
-	 *            Configuration that describes how to send email alerts. May be
+	 *            Configuration that describes how to send alerts. May be
 	 *            <code>null</code>.
 	 * @param poolFetchConfig
 	 *            Controls the {@link CloudPool}'s behavior with respect to how
@@ -91,7 +94,7 @@ public class BaseCloudPoolConfig {
 	 */
 	public BaseCloudPoolConfig(CloudPoolConfig cloudPoolConfig,
 			ScaleOutConfig scaleOutConfig, ScaleInConfig scaleInConfig,
-			AlertsConfig alertSettings, PoolFetchConfig poolFetchConfig,
+			AlertersConfig alertSettings, PoolFetchConfig poolFetchConfig,
 			PoolUpdateConfig poolUpdatePeriodConfig) {
 		this.cloudPool = cloudPoolConfig;
 		this.scaleOutConfig = scaleOutConfig;
@@ -134,7 +137,7 @@ public class BaseCloudPoolConfig {
 	 *
 	 * @return
 	 */
-	public AlertsConfig getAlerts() {
+	public AlertersConfig getAlerts() {
 		return this.alerts;
 	}
 

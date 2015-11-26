@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.google.common.base.Objects;
 
 /**

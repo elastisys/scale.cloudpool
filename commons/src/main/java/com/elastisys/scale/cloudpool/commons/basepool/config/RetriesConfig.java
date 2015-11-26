@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.commons.basepool.config;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.google.common.base.Objects;
 
 /**

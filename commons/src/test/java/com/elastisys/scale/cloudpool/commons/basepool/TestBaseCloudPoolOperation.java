@@ -66,12 +66,12 @@ import com.elastisys.scale.cloudpool.commons.basepool.config.PoolFetchConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleInConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.TimeInterval;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.elastisys.scale.commons.util.file.FileUtils;
 import com.elastisys.scale.commons.util.time.FrozenTime;
@@ -106,6 +106,7 @@ public class TestBaseCloudPoolOperation {
 		FrozenTime.setFixed(UtcTime.parse("2014-04-17T12:00:00.000Z"));
 		this.cloudPool = new BaseCloudPool(STATE_STORAGE, this.driverMock,
 				this.eventBusMock);
+		reset(this.eventBusMock);
 	}
 
 	/**

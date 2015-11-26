@@ -23,7 +23,6 @@ import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
-import com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertHandler;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.impl.CachingPoolFetcher;
@@ -33,6 +32,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.poolupdater.impl.StandardP
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.net.alerter.Alerter;
+import com.elastisys.scale.commons.net.alerter.multiplexing.MultiplexingAlerter;
 import com.elastisys.scale.commons.net.host.HostUtils;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
@@ -213,7 +213,7 @@ public class BaseCloudPool implements CloudPool {
 	 * Dispatches {@link Alert}s sent on the {@link EventBus} to configured
 	 * {@link Alerter}s.
 	 */
-	private final AlertHandler alertHandler;
+	private final MultiplexingAlerter alerter;
 
 	/** Retrieves {@link MachinePool} members. */
 	private CachingPoolFetcher poolFetcher;
@@ -257,7 +257,7 @@ public class BaseCloudPool implements CloudPool {
 		this.cloudDriver = cloudDriver;
 		this.eventBus = eventBus;
 
-		this.alertHandler = new AlertHandler(eventBus);
+		this.alerter = new MultiplexingAlerter(eventBus);
 
 		this.config = Atomics.newReference();
 		this.started = new AtomicBoolean(false);
@@ -278,8 +278,8 @@ public class BaseCloudPool implements CloudPool {
 			// re-configure driver
 			this.cloudDriver.configure(configuration);
 			// alerters may have changed
-			this.alertHandler.unregisterAlerters();
-			this.alertHandler.registerAlerters(config().getAlerts(),
+			this.alerter.unregisterAlerters();
+			this.alerter.registerAlerters(config().getAlerts(),
 					standardAlertMetadata());
 
 			if (wasStarted) {

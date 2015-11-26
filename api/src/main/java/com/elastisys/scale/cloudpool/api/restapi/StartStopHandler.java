@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.NotConfiguredException;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
-import com.elastisys.scale.commons.rest.types.ErrorType;
+import com.elastisys.scale.commons.json.types.ErrorType;
 
 /**
  * A REST response handler that handles requests to start {@code POST /start},

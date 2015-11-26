@@ -27,7 +27,7 @@ import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.rest.types.ErrorType;
+import com.elastisys.scale.commons.json.types.ErrorType;
 import com.google.gson.JsonObject;
 
 /**

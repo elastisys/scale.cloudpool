@@ -8,7 +8,6 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.InstanceType;
 import com.amazonaws.services.ec2.model.Tag;
-import com.elastisys.scale.cloudpool.commons.basepool.config.AlertsConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.PoolFetchConfig;
@@ -16,10 +15,11 @@ import com.elastisys.scale.cloudpool.commons.basepool.config.PoolUpdateConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleInConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.TimeInterval;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.http.HttpAlerterConfig;
+import com.elastisys.scale.commons.net.alerter.multiplexing.AlertersConfig;
 import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerterConfig;
 import com.elastisys.scale.commons.net.smtp.SmtpClientConfig;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
@@ -45,7 +45,7 @@ public class TestUtils {
 				"INFO|WARN|ERROR|FATAL",
 				new SmtpClientConfig("smtp.host.com", 25, null, false));
 		List<HttpAlerterConfig> httpAlerters = Arrays.asList();
-		AlertsConfig alertSettings = new AlertsConfig(
+		AlertersConfig alertSettings = new AlertersConfig(
 				Arrays.asList(smtpAlerter), httpAlerters);
 
 		TimeInterval refreshInterval = new TimeInterval(30L, TimeUnit.SECONDS);
