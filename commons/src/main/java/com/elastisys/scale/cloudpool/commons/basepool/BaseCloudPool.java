@@ -257,7 +257,8 @@ public class BaseCloudPool implements CloudPool {
 		this.cloudDriver = cloudDriver;
 		this.eventBus = eventBus;
 
-		this.alerter = new MultiplexingAlerter(eventBus);
+		this.alerter = new MultiplexingAlerter();
+		this.eventBus.register(this.alerter);
 
 		this.config = Atomics.newReference();
 		this.started = new AtomicBoolean(false);
