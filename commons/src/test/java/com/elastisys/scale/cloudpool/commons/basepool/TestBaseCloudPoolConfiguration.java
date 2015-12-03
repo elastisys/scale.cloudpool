@@ -244,7 +244,8 @@ public class TestBaseCloudPoolConfiguration {
 		assertThat(httpAlerter2.getSeverityFilter().getFilterExpression(),
 				is("INFO|WARN"));
 		CertificateCredentials certificateCredentials = new CertificateCredentials(
-				"src/test/resources/security/client_keystore.p12", "secret");
+				"src/test/resources/security/client_keystore.p12", "secret",
+				"secret");
 		assertThat(httpAlerter2.getAuth(),
 				is(new HttpAuthConfig(null, certificateCredentials)));
 

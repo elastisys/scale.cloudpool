@@ -33,7 +33,7 @@
             "destinationUrls": ["https://some.host2:443/"],
             "severityFilter": "INFO|WARN", 
             "auth": {
-              "certificateCredentials": { "keystorePath": "src/test/resources/security/client_keystore.p12", "keystorePassword": "secret" }
+              "certificateCredentials": { "keystorePath": "src/test/resources/security/client_keystore.p12", "keystorePassword": "secret", "keyPassword": "secret"  }
             }
           }          
         ]        
