@@ -709,7 +709,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
 		LOG.error("{}", message, error);
 		this.eventBus
 				.post(new Alert(AlertTopics.SPOT_REQUEST_CANCELLATION.name(),
-						AlertSeverity.WARN, UtcTime.now(), message));
+						AlertSeverity.WARN, UtcTime.now(), message, null));
 	}
 
 	/**
@@ -729,9 +729,9 @@ public class SpotPoolDriver implements CloudPoolDriver {
 				cancelledRequests.size());
 		Map<String, JsonElement> metadata = ImmutableMap.of("cancelledRequests",
 				JsonUtils.toJson(cancelledRequests));
-		this.eventBus
-				.post(new Alert(AlertTopics.SPOT_REQUEST_CANCELLATION.name(),
-						AlertSeverity.INFO, UtcTime.now(), message, metadata));
+		this.eventBus.post(new Alert(
+				AlertTopics.SPOT_REQUEST_CANCELLATION.name(),
+				AlertSeverity.INFO, UtcTime.now(), message, null, metadata));
 	}
 
 	/**

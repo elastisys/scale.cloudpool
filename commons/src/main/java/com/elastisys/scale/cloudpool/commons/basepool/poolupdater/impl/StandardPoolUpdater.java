@@ -435,7 +435,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 		tags.put("requestedMachines", JsonUtils.toJson(startedMachineIds));
 		tags.put("poolMembers", poolMembersTag());
 		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
-				AlertSeverity.INFO, UtcTime.now(), message, tags));
+				AlertSeverity.INFO, UtcTime.now(), message, null, tags));
 	}
 
 	/**
@@ -473,7 +473,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 		tags.put("poolMembers", poolMembersTag());
 		String message = String.format("Terminated machine %s.", machineId);
 		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
-				AlertSeverity.INFO, UtcTime.now(), message, tags));
+				AlertSeverity.INFO, UtcTime.now(), message, null, tags));
 	}
 
 	/**
@@ -494,7 +494,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 		tags.put("terminatedMachines", JsonUtils.toJson(terminatedMachineIds));
 		tags.put("poolMembers", poolMembersTag());
 		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
-				AlertSeverity.INFO, UtcTime.now(), message, tags));
+				AlertSeverity.INFO, UtcTime.now(), message, null, tags));
 	}
 
 	/**
@@ -508,7 +508,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 		String message = String.format("Attached machine %s to pool.",
 				machineId);
 		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
-				AlertSeverity.INFO, UtcTime.now(), message, tags));
+				AlertSeverity.INFO, UtcTime.now(), message, null, tags));
 	}
 
 	/**
@@ -522,7 +522,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 		String message = String.format("Detached machine %s from pool.",
 				machineId);
 		this.eventBus.post(new Alert(AlertTopics.RESIZE.name(),
-				AlertSeverity.INFO, UtcTime.now(), message, tags));
+				AlertSeverity.INFO, UtcTime.now(), message, null, tags));
 	}
 
 	/**
@@ -538,7 +538,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 				"Service state set to %s for machine %s.", state.name(),
 				machineId);
 		this.eventBus.post(new Alert(AlertTopics.SERVICE_STATE.name(),
-				AlertSeverity.DEBUG, UtcTime.now(), message, tags));
+				AlertSeverity.DEBUG, UtcTime.now(), message, null, tags));
 	}
 
 	/**
@@ -555,7 +555,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 				"Membership status set to %s for machine %s.", membershipStatus,
 				machineId);
 		this.eventBus.post(new Alert(AlertTopics.MEMBERSHIP_STATUS.name(),
-				AlertSeverity.DEBUG, UtcTime.now(), message, tags));
+				AlertSeverity.DEBUG, UtcTime.now(), message, null, tags));
 	}
 
 	private JsonElement poolMembersTag() {
