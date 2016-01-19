@@ -210,16 +210,6 @@ Without being a member of that user group, you won't be able to use docker witho
 See the [docker documentation](https://docs.docker.com/installation/ubuntulinux/#giving-non-root-access) 
 for more details.
 
-A few environment variables can be passed to the Docker container (`-e`)
-to control its behavior:
-
-- `JVM_OPTS`: JVM settings such as heap size. Default: `-Xmx128m`.
-- `LOG_DIR`: destination folder for log files.
-  Default: `/var/log/elastisys/ec2pool`.
-- `STORAGE_DIR`: destination folder for runtime state.
-  Default: `/var/lib/elastisys/ec2pool`.
-
-
 
 ### Building the docker image
 A `Dockerfile` is included under `src/main/docker` and can be used to generate 
@@ -246,6 +236,58 @@ Once the docker image is built for the cloud pool, it can be run with:
     docker run -d -p 8443:443 elastisys/ec2pool:<version>
 
 This will publish the container's HTTPS port on host port 8443.
+
+
+A few environment variables can be passed to the Docker container (`-e`)
+to control its behavior:
+
+Debug-related:
+
+  - `LOG_CONFIG`: [logback](http://logback.qos.ch/manual/configuration.html)
+    logging configuration file (`logback.xml`).
+    Default: `/etc/elastisys/ec2pool/logback.xml`.
+  - `JUL_CONFIG`: `java.util.logging` `logging.properties` configuration.
+    Default: `/etc/elastisys/ec2pool/logging.properties`.
+  - `LOG_DIR`: destination folder for log files (when using default
+    `${LOG_CONFIG}` setup).
+    Default: `/var/log/elastisys/ec2pool`.
+  - `STORAGE_DIR`: destination folder for runtime state.
+    Default: `/var/lib/elastisys/ec2pool`.
+
+Security-related:
+
+  - `HTTPS_PORT`: The HTTPS port on which the server's REST API can be reached.
+    Default: `443`.
+  - `SSL_KEYSTORE`: The key store that holds the server's SSL certificate. 
+     You may wan to combine this with mounting a volume that holds the key
+     store. Default: `/etc/elastisys/security/server_keystore.p12`.   
+  - `SSL_KEYSTORE_PASSWORD`: The password used to protect the key store.
+     Default: `serverpassword`.
+  - `REQUIRE_BASIC_AUTH`: If `true`, require clients to provide
+    username/password credentials according to the HTTP BASIC authentication
+    scheme. Default: `false`.   
+  - `BASIC_AUTH_ROLE`: The role that an authenticated user must be assigned to
+     be granted access to the server (only relevant if `${REQUIRE_BASIC_AUTH}`
+     is `true`).
+     Default: `USER`.
+  - `BASIC_AUTH_REALM_FILE`: A credentials store with users, passwords, and
+    roles according to the format prescribed by the [Jetty HashLoginService](http://www.eclipse.org/jetty/documentation/9.2.6.v20141205/configuring-security-authentication.html#configuring-login-service) (only relevant if `${REQUIRE_BASIC_AUTH}` is `true`).
+    Default: `/etc/elastisys/security/security-realm.properties`.
+  - `REQUIRE_CERT_AUTH`: Require SSL clients to authenticate with a certificate,
+    which must be included in the server's trust store.
+    Default: `false`.
+  - `CERT_AUTH_TRUSTSTORE`. The location of a SSL trust store (JKS format),
+    containing trusted client certificates (only relevant if
+    `${REQUIRE_CERT_AUTH}` is `true`).
+    Default: `/etc/elastisys/security/server_truststore.jks`
+  - `CERT_AUTH_TRUSTSTORE_PASSWORD`: The password that protects the SSL trust
+    store (only relevant if `${REQUIRE_CERT_AUTH}` is `true`).
+    Default: `trustpassword`.
+
+JVM-related:
+
+  - `JVM_OPTS`: JVM settings such as heap size. Default: `-Xmx128m`.
+
 
 
 
