@@ -210,6 +210,15 @@ Without being a member of that user group, you won't be able to use docker witho
 See the [docker documentation](https://docs.docker.com/installation/ubuntulinux/#giving-non-root-access) 
 for more details.
 
+A few environment variables can be passed to the Docker container (`-e`)
+to control its behavior:
+
+- `JVM_OPTS`: JVM settings such as heap size. Default: `-Xmx128m`.
+- `LOG_DIR`: destination folder for log files.
+  Default: `/var/log/elastisys/ec2pool`.
+- `STORAGE_DIR`: destination folder for runtime state.
+  Default: `/var/lib/elastisys/ec2pool`.
+
 
 
 ### Building the docker image

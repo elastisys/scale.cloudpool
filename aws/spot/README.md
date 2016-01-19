@@ -247,6 +247,15 @@ Once the docker image is built for the cloud pool, it can be run with:
 
 This will publish the container's HTTPS port on host port 8443.
 
+A few environment variables can be passed to the Docker container (`-e`)
+to control its behavior:
+
+- `JVM_OPTS`: JVM settings such as heap size. Default: `-Xmx128m`.
+- `LOG_DIR`: destination folder for log files.
+  Default: `/var/log/elastisys/spotpool`.
+- `STORAGE_DIR`: destination folder for runtime state.
+  Default: `/var/lib/elastisys/spotpool`.
+
 
 
 ### Debugging a running container

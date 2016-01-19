@@ -7,14 +7,9 @@ JAVA_HOME="$(readlink -f /usr/bin/java | sed "s:/jre/bin/java::")"
 java="${JAVA_HOME}/bin/java"
 
 # where log output files are written
-if [ "${LOG_DIR}" = "" ]; then
-    LOG_DIR="/var/log/elastisys/openstackpool"
-fi
-
+LOG_DIR=${LOG_DIR:-/var/log/elastisys/openstackpool}
 # where runtime state is kept
-if [ "${STORAGE_DIR}" = "" ]; then
-    STORAGE_DIR="/var/lib/elastisys/openstackpool"
-fi
+STORAGE_DIR=${STORAGE_DIR:-/var/lib/elastisys/openstackpool}
 
 logconfig="/etc/elastisys/openstackpool/logback.xml"
 julconfig="/etc/elastisys/openstackpool/logging.properties"
@@ -22,7 +17,8 @@ security_dir="/etc/elastisys/security"
 httpsport=443
 
 # Java system properties
-JAVA_OPTS="-Xmx128m -XX:+HeapDumpOnOutOfMemoryError -Djava.net.preferIPv4Stack=true -Djava.util.logging.config.file=${julconfig} -Dlogback.configurationFile=${logconfig}"
+JVM_OPTS=${JVM_OPTS:--Xmx128m}
+JAVA_OPTS="-XX:+HeapDumpOnOutOfMemoryError -Djava.net.preferIPv4Stack=true -Djava.util.logging.config.file=${julconfig} -Dlogback.configurationFile=${logconfig}"
 JAVA_OPTS="${JAVA_OPTS} -DLOG_DIR=${LOG_DIR}"
 
 SECURITY_OPTS="--ssl-keystore ${security_dir}/server_keystore.p12 --ssl-keystore-password serverpassword"
@@ -35,4 +31,4 @@ SERVER_OPTS="--storage-dir ${STORAGE_DIR} --https-port ${httpsport} ${SECURITY_O
 # to allow use of ports below 1024, use: authbind --deep <prog> [args ...]
 # note: assumes that /etc/authbind/byport/<port> files with proper owner/mode
 # have been set up
-authbind --deep ${java} ${JAVA_OPTS} -jar openstackpool.jar ${SERVER_OPTS}
+authbind --deep ${java} ${JVM_OPTS} ${JAVA_OPTS} -jar openstackpool.jar ${SERVER_OPTS}
