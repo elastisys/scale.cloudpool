@@ -9,6 +9,7 @@ import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.amazonaws.services.ec2.model.InstanceType;
 import com.amazonaws.services.ec2.model.LaunchSpecification;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
+import com.amazonaws.services.ec2.model.SpotPlacement;
 import com.amazonaws.services.ec2.model.Tag;
 
 public class SpotTestUtil {
@@ -25,7 +26,8 @@ public class SpotTestUtil {
 			String instanceId, Tag... tags) {
 		return new SpotInstanceRequest().withSpotInstanceRequestId(id)
 				.withLaunchSpecification(new LaunchSpecification()
-						.withInstanceType(InstanceType.M1Medium))
+						.withInstanceType(InstanceType.M1Medium)
+						.withPlacement(new SpotPlacement("us-east-1b")))
 				.withState(state).withInstanceId(instanceId).withTags(tags);
 	}
 

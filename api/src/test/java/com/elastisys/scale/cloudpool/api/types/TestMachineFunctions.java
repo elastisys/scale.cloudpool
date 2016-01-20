@@ -38,16 +38,17 @@ public class TestMachineFunctions {
 		DateTime now = UtcTime.now();
 		Machine m1 = Machine.builder().id("id")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").requestTime(now).launchTime(now)
-				.build();
+				.region("us-east-1").machineSize("m1.small").requestTime(now)
+				.launchTime(now).build();
 		Machine m2 = Machine.builder().id("id")
 				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").requestTime(now).launchTime(now)
-				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5")).build();
+				.region("us-east-1").machineSize("m1.small").requestTime(now)
+				.launchTime(now).publicIps(ips("1.2.3.4"))
+				.privateIps(ips("1.2.3.5")).build();
 		Machine m3 = Machine.builder().id("id")
 				.machineState(MachineState.PENDING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").requestTime(now).launchTime(now)
-				.build();
+				.region("us-east-1").machineSize("m1.small").requestTime(now)
+				.launchTime(now).build();
 
 		assertThat(Machine.toState().apply(m1), is(MachineState.REQUESTED));
 		assertThat(Machine.toState().apply(m2), is(MachineState.RUNNING));
@@ -62,16 +63,17 @@ public class TestMachineFunctions {
 		DateTime now = UtcTime.now();
 		Machine m1 = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").requestTime(now).launchTime(now)
-				.build();
+				.region("us-east-1").machineSize("m1.small").requestTime(now)
+				.launchTime(now).build();
 		Machine m2 = Machine.builder().id("i-2")
 				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").requestTime(now).launchTime(now)
-				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5")).build();
+				.region("us-east-1").machineSize("m1.small").requestTime(now)
+				.launchTime(now).publicIps(ips("1.2.3.4"))
+				.privateIps(ips("1.2.3.5")).build();
 		Machine m3 = Machine.builder().id("i-3")
 				.machineState(MachineState.PENDING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").requestTime(now).launchTime(now)
-				.build();
+				.region("us-east-1").machineSize("m1.small").requestTime(now)
+				.launchTime(now).build();
 
 		assertThat(Machine.toId().apply(m1), is("i-1"));
 		assertThat(Machine.toId().apply(m2), is("i-2"));
@@ -228,9 +230,9 @@ public class TestMachineFunctions {
 				.getAsJsonObject();
 		Machine m1 = Machine.builder().id("i-1")
 				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").requestTime(now).launchTime(now)
-				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5"))
-				.metadata(metadata).build();
+				.region("us-east-1").machineSize("m1.small").requestTime(now)
+				.launchTime(now).publicIps(ips("1.2.3.4"))
+				.privateIps(ips("1.2.3.5")).metadata(metadata).build();
 
 		assertFalse(Machine.toShortString().apply(m1).contains("metadata"));
 	}
@@ -242,9 +244,9 @@ public class TestMachineFunctions {
 				.getAsJsonObject();
 		Machine m1 = Machine.builder().id("i-2")
 				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").requestTime(now).launchTime(now)
-				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5"))
-				.metadata(metadata).build();
+				.region("us-east-1").machineSize("m1.small").requestTime(now)
+				.launchTime(now).publicIps(ips("1.2.3.4"))
+				.privateIps(ips("1.2.3.5")).metadata(metadata).build();
 
 		Machine m1Stripped = Machine.toShortFormat().apply(m1);
 		// all fields should be equal except metadata which should be null

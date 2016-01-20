@@ -1,7 +1,7 @@
 {
   "timestamp": "2014-01-13T12:00:00.000Z",
   "machines": [
-    {"id": "m1", "machineState": "RUNNING", "cloudProvider": "AWS-EC2", "machineSize": "m1.small", "membershipStatus": {"active": true, "evictable": false}, "serviceState": "IN_SERVICE", "launchTime": "2014-01-13T11:00:00.000Z", "requestTime": "2014-01-13T11:00:00.000Z", "publicIps": ["1.2.3.4"], "privateIps": [], "metadata": {"k1": "v1"}},
-    {"id": "m2", "machineState": "REQUESTED", "cloudProvider": "AWS-EC2", "machineSize": "m1.small", "membershipStatus": {"active": true, "evictable": true}, "serviceState": "UNKNOWN", "publicIps": [], "privateIps": []}
+    {"id": "m1", "machineState": "RUNNING", "cloudProvider": "AWS-EC2", "region": "us-east-1", "machineSize": "m1.small", "membershipStatus": {"active": true, "evictable": false}, "serviceState": "IN_SERVICE", "launchTime": "2014-01-13T11:00:00.000Z", "requestTime": "2014-01-13T11:00:00.000Z", "publicIps": ["1.2.3.4"], "privateIps": [], "metadata": {"k1": "v1"}},
+    {"id": "m2", "machineState": "REQUESTED", "cloudProvider": "AWS-EC2", "region": "us-east-1", "machineSize": "m1.small", "membershipStatus": {"active": true, "evictable": true}, "serviceState": "UNKNOWN", "publicIps": [], "privateIps": []}
   ]
 }

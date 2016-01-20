@@ -374,7 +374,8 @@ public class TestCachingPoolFetcher {
 		for (String id : machineIds) {
 			machines.add(Machine.builder().id(id).machineSize("m1.medium")
 					.machineState(MachineState.RUNNING)
-					.cloudProvider(PoolIdentifiers.AWS_EC2).build());
+					.cloudProvider(PoolIdentifiers.AWS_EC2).region("us-east-1")
+					.build());
 		}
 		return machines;
 	}

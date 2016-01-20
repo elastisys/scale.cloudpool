@@ -49,6 +49,7 @@ public class TestInstancePairedSpotRequestToMachine {
 		assertThat(machine.getId(), is("sir-1"));
 		assertThat(machine.getMachineState(), is(MachineState.REQUESTED));
 		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+		assertThat(machine.getRegion(), is("us-east-1"));
 		assertThat(machine.getMachineSize(), is("m1.medium"));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
@@ -70,6 +71,7 @@ public class TestInstancePairedSpotRequestToMachine {
 		assertThat(machine.getId(), is("sir-1"));
 		assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
 		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+		assertThat(machine.getRegion(), is("us-east-1"));
 		assertThat(machine.getMachineSize(), is("m1.medium"));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
@@ -92,6 +94,7 @@ public class TestInstancePairedSpotRequestToMachine {
 		assertThat(machine.getId(), is("sir-1"));
 		assertThat(machine.getMachineState(), is(MachineState.REJECTED));
 		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+		assertThat(machine.getRegion(), is("us-east-1"));
 		assertThat(machine.getMachineSize(), is("m1.medium"));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
@@ -113,6 +116,7 @@ public class TestInstancePairedSpotRequestToMachine {
 		assertThat(machine.getId(), is("sir-1"));
 		assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
 		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+		assertThat(machine.getRegion(), is("us-east-1"));
 		assertThat(machine.getMachineSize(), is("m1.medium"));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
@@ -140,6 +144,7 @@ public class TestInstancePairedSpotRequestToMachine {
 		assertThat(machine.getId(), is("sir-1"));
 		assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
 		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+		assertThat(machine.getRegion(), is("us-east-1"));
 		assertThat(machine.getMachineSize(), is("m1.medium"));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));

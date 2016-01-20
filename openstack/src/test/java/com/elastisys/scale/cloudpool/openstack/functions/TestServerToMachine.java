@@ -42,10 +42,11 @@ public class TestServerToMachine {
 				novaAddress("130.239.48.193", "floating"));
 		Server server = server(Status.ACTIVE, now, addresses, "1C-1G");
 
-		Machine machine = new ServerToMachine("RackSpace").apply(server);
+		Machine machine = new ServerToMachine("RackSpace", "LON").apply(server);
 		assertThat(machine.getId(), is(server.getId()));
 		assertThat(machine.getMachineState(), is(MachineState.RUNNING));
 		assertThat(machine.getCloudProvider(), is("RackSpace"));
+		assertThat(machine.getRegion(), is("LON"));
 		assertThat(machine.getMachineSize(), is("1C-1G"));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
@@ -64,9 +65,11 @@ public class TestServerToMachine {
 		addresses.add("private", novaAddress("10.11.12.2", "fixed"));
 		Server server = server(Status.ACTIVE, now, addresses, "1C-1G");
 
-		Machine machine = new ServerToMachine("CityCloud").apply(server);
+		Machine machine = new ServerToMachine("CityCloud", "Kna1")
+				.apply(server);
 		assertThat(machine.getId(), is(server.getId()));
 		assertThat(machine.getMachineState(), is(MachineState.RUNNING));
+		assertThat(machine.getRegion(), is("Kna1"));
 		assertThat(machine.getCloudProvider(), is("CityCloud"));
 		assertThat(machine.getMachineSize(), is("1C-1G"));
 		assertThat(machine.getMembershipStatus(),
@@ -91,7 +94,8 @@ public class TestServerToMachine {
 		Server server = serverWithMetadata(Status.ACTIVE, now, addresses,
 				"1C-1G", tags);
 
-		Machine machine = new ServerToMachine("OpenStack").apply(server);
+		Machine machine = new ServerToMachine("OpenStack", "RegionOne")
+				.apply(server);
 		assertThat(machine.getServiceState(), is(ServiceState.OUT_OF_SERVICE));
 	}
 
@@ -109,7 +113,8 @@ public class TestServerToMachine {
 		Server server = serverWithMetadata(Status.ACTIVE, now, addresses,
 				"1C-1G", tags);
 
-		Machine machine = new ServerToMachine("OpenStack").apply(server);
+		Machine machine = new ServerToMachine("OpenStack", "RegionOne")
+				.apply(server);
 		assertThat(machine.getMembershipStatus(), is(status));
 	}
 

@@ -74,7 +74,7 @@ public class TestMachinePredicates {
 					final DateTime timestamp = UtcTime.now();
 					Machine machine = Machine.builder().id("id")
 							.machineState(machineState).cloudProvider("AWS-EC2")
-							.machineSize("m1.small")
+							.region("us-east-1").machineSize("m1.small")
 							.membershipStatus(membershipStatus)
 							.serviceState(serviceState).requestTime(timestamp)
 							.launchTime(timestamp).publicIps(ips("1.2.3.4"))
@@ -122,7 +122,7 @@ public class TestMachinePredicates {
 					final DateTime timestamp = UtcTime.now();
 					Machine machine = Machine.builder().id("id")
 							.machineState(machineState).cloudProvider("AWS-EC2")
-							.machineSize("m1.small")
+							.region("us-east-1").machineSize("m1.small")
 							.membershipStatus(membershipStatus)
 							.serviceState(serviceState).requestTime(timestamp)
 							.launchTime(timestamp).publicIps(ips("1.2.3.4"))
@@ -168,7 +168,7 @@ public class TestMachinePredicates {
 					final DateTime timestamp = UtcTime.now();
 					Machine machine = Machine.builder().id("id")
 							.machineState(machineState).cloudProvider("AWS-EC2")
-							.machineSize("m1.small")
+							.region("us-east-1").machineSize("m1.small")
 							.membershipStatus(membershipStatus)
 							.serviceState(serviceState).requestTime(timestamp)
 							.launchTime(timestamp).publicIps(ips("1.2.3.4"))
@@ -202,21 +202,21 @@ public class TestMachinePredicates {
 		// not evictable
 		Machine m2 = Machine.builder().id("id")
 				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small")
+				.region("us-east-1").machineSize("m1.small")
 				.membershipStatus(MembershipStatus.blessed())
 				.requestTime(UtcTime.now()).launchTime(UtcTime.now())
 				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5")).build();
 		// evictable
 		Machine m3 = Machine.builder().id("id")
 				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small")
+				.region("us-east-1").machineSize("m1.small")
 				.membershipStatus(MembershipStatus.disposable())
 				.requestTime(UtcTime.now()).launchTime(UtcTime.now())
 				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5")).build();
 		// not evictable
 		Machine m4 = Machine.builder().id("id")
 				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small")
+				.region("us-east-1").machineSize("m1.small")
 				.membershipStatus(MembershipStatus.awaitingService())
 				.requestTime(UtcTime.now()).launchTime(UtcTime.now())
 				.publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5")).build();

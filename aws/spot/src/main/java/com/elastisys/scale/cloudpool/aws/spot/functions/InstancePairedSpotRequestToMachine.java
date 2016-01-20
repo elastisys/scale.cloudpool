@@ -6,6 +6,8 @@ import static org.joda.time.DateTimeZone.UTC;
 import java.util.List;
 
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
@@ -29,6 +31,9 @@ import com.google.gson.JsonObject;
  */
 public class InstancePairedSpotRequestToMachine
 		implements Function<InstancePairedSpotRequest, Machine> {
+
+	private static final Logger LOG = LoggerFactory
+			.getLogger(InstancePairedSpotRequestToMachine.class);
 
 	/**
 	 * Converts an {@link InstancePairedSpotRequest} to a {@link Machine}.
@@ -85,16 +90,43 @@ public class InstancePairedSpotRequestToMachine
 		if (serviceStateTag.isPresent()) {
 			serviceState = ServiceState.valueOf(serviceStateTag.get());
 		}
+		String region = extractRegion(spotInstanceRequest);
 
 		JsonObject metadata = JsonUtils.toJson(spotInstanceRequest)
 				.getAsJsonObject();
 		return Machine.builder().id(id).machineState(machineState)
-				.cloudProvider(PoolIdentifiers.AWS_SPOT)
+				.cloudProvider(PoolIdentifiers.AWS_SPOT).region(region)
 				.machineSize(request.getLaunchSpecification().getInstanceType())
 				.membershipStatus(membershipStatus).serviceState(serviceState)
 				.requestTime(requestTime).launchTime(launchTime)
 				.publicIps(publicIps).privateIps(privateIps).metadata(metadata)
 				.build();
+	}
+
+	/**
+	 * Extracts the region of the spot request from the availability zone
+	 * specified in the spot request's launch configuration.
+	 *
+	 * @param spotInstanceRequest
+	 * @return
+	 */
+	private String extractRegion(
+			InstancePairedSpotRequest spotInstanceRequest) {
+		SpotInstanceRequest request = spotInstanceRequest.getRequest();
+		if (request.getLaunchSpecification() == null
+				|| request.getLaunchSpecification().getPlacement() == null
+				|| request.getLaunchSpecification().getPlacement()
+						.getAvailabilityZone() == null) {
+			LOG.warn("failed to extract region from spot request {}",
+					request.getSpotInstanceRequestId());
+			return "unknown";
+		}
+		// availability zone is region + letter, for example 'us-east-1a'
+		String availabilityZone = request.getLaunchSpecification()
+				.getPlacement().getAvailabilityZone();
+		String region = availabilityZone.substring(0,
+				availabilityZone.length() - 1);
+		return region;
 	}
 
 	/**

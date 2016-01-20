@@ -6,6 +6,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
@@ -38,39 +39,53 @@ public class TestMachine {
 		// with null launch time
 		Machine noLaunchTime = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").build();
+				.region("us-east-1").machineSize("m1.small").build();
 		Machine noLaunchTimeClone = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").build();
+				.region("us-east-1").machineSize("m1.small").build();
+		// same but with different values for meta data fields
+		Machine otherCloudProvider = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).cloudProvider("RackSpace")
+				.region("us-east-1").machineSize("m1.small").build();
+		Machine otherRegion = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.region("us-west-1").machineSize("m1.small").build();
+		Machine otherMachineSize = Machine.builder().id("i-1")
+				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
+				.region("us-east-1").machineSize("m3.medium").build();
 
 		// with set requestTime, null launch time
 		Machine unlaunchedRequested = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").requestTime(now).build();
+				.region("us-east-1").machineSize("m1.small").requestTime(now)
+				.build();
 		Machine unlaunchedRequestedClone = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").requestTime(now).build();
+				.region("us-east-1").machineSize("m1.small").requestTime(now)
+				.build();
 
 		// with service state
 		Machine withServiceState = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").serviceState(ServiceState.BOOTING)
-				.requestTime(now).build();
+				.region("us-east-1").machineSize("m1.small")
+				.serviceState(ServiceState.BOOTING).requestTime(now).build();
 		Machine withServiceStateClone = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").serviceState(ServiceState.BOOTING)
-				.requestTime(now).build();
+				.region("us-east-1").machineSize("m1.small")
+				.serviceState(ServiceState.BOOTING).requestTime(now).build();
 
 		// with service state
 		Machine withIps = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").serviceState(ServiceState.BOOTING)
-				.requestTime(now).launchTime(now).publicIps(ips("1.2.3.4"))
+				.region("us-east-1").machineSize("m1.small")
+				.serviceState(ServiceState.BOOTING).requestTime(now)
+				.launchTime(now).publicIps(ips("1.2.3.4"))
 				.privateIps(ips("1.2.3.5")).build();
 		Machine withIpsClone = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").serviceState(ServiceState.BOOTING)
-				.requestTime(now).launchTime(now).publicIps(ips("1.2.3.4"))
+				.region("us-east-1").machineSize("m1.small")
+				.serviceState(ServiceState.BOOTING).requestTime(now)
+				.launchTime(now).publicIps(ips("1.2.3.4"))
 				.privateIps(ips("1.2.3.5")).build();
 
 		// with meta data and membership status
@@ -79,7 +94,7 @@ public class TestMachine {
 				.getAsJsonObject();
 		Machine withMetadata = Machine.builder().id("i-1")
 				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small")
+				.region("us-east-1").machineSize("m1.small")
 				.membershipStatus(new MembershipStatus(true, false))
 				.requestTime(UtcTime.parse("2014-01-10T08:00:00Z"))
 				.launchTime(UtcTime.parse("2014-01-10T08:00:00Z"))
@@ -87,7 +102,7 @@ public class TestMachine {
 				.metadata(metadata).build();
 		Machine withMetadataClone = Machine.builder().id("i-1")
 				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small")
+				.region("us-east-1").machineSize("m1.small")
 				.membershipStatus(new MembershipStatus(true, false))
 				.requestTime(UtcTime.parse("2014-01-10T08:00:00Z"))
 				.launchTime(UtcTime.parse("2014-01-10T08:00:00Z"))
@@ -99,6 +114,9 @@ public class TestMachine {
 		assertEquals(withIps, withIpsClone);
 		assertEquals(withServiceState, withServiceStateClone);
 		assertEquals(withMetadata, withMetadataClone);
+		assertNotEquals(noLaunchTime, otherCloudProvider);
+		assertNotEquals(noLaunchTime, otherRegion);
+		assertNotEquals(noLaunchTime, otherMachineSize);
 
 		assertFalse(noLaunchTime.equals(withIps));
 		assertFalse(noLaunchTime.equals(withServiceState));
@@ -128,10 +146,12 @@ public class TestMachine {
 	public void testWithNullMetadata() {
 		Machine nullMetadata = Machine.builder().id("i-1")
 				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").metadata(null).build();
+				.region("us-east-1").machineSize("m1.small").metadata(null)
+				.build();
 		Machine jsonNullMetadata = Machine.builder().id("i-1")
 				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").metadata(JsonNull.INSTANCE).build();
+				.region("us-east-1").machineSize("m1.small")
+				.metadata(JsonNull.INSTANCE).build();
 		assertThat(nullMetadata, is(jsonNullMetadata));
 		assertThat(jsonNullMetadata, is(nullMetadata));
 	}
@@ -147,39 +167,43 @@ public class TestMachine {
 		// with null launch time
 		Machine noLaunchTime = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").build();
+				.region("us-east-1").machineSize("m1.small").build();
 		Machine noLaunchTimeClone = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").build();
+				.region("us-east-1").machineSize("m1.small").build();
 
 		// with set requestTime, null launch time
 		Machine unlaunchedRequested = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").requestTime(now).build();
+				.region("us-east-1").machineSize("m1.small").requestTime(now)
+				.build();
 		Machine unlaunchedRequestedClone = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").requestTime(now).build();
+				.region("us-east-1").machineSize("m1.small").requestTime(now)
+				.build();
 
 		// with service state
 		Machine withServiceState = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").serviceState(ServiceState.BOOTING)
-				.requestTime(now).build();
+				.region("us-east-1").machineSize("m1.small")
+				.serviceState(ServiceState.BOOTING).requestTime(now).build();
 		Machine withServiceStateClone = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").serviceState(ServiceState.BOOTING)
-				.requestTime(now).build();
+				.region("us-east-1").machineSize("m1.small")
+				.serviceState(ServiceState.BOOTING).requestTime(now).build();
 
 		// with service state
 		Machine withIps = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").serviceState(ServiceState.BOOTING)
-				.requestTime(now).launchTime(now).publicIps(ips("1.2.3.4"))
+				.region("us-east-1").machineSize("m1.small")
+				.serviceState(ServiceState.BOOTING).requestTime(now)
+				.launchTime(now).publicIps(ips("1.2.3.4"))
 				.privateIps(ips("1.2.3.5")).build();
 		Machine withIpsClone = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").serviceState(ServiceState.BOOTING)
-				.requestTime(now).launchTime(now).publicIps(ips("1.2.3.4"))
+				.region("us-east-1").machineSize("m1.small")
+				.serviceState(ServiceState.BOOTING).requestTime(now)
+				.launchTime(now).publicIps(ips("1.2.3.4"))
 				.privateIps(ips("1.2.3.5")).build();
 
 		// with meta data and membership status
@@ -188,7 +212,7 @@ public class TestMachine {
 				.getAsJsonObject();
 		Machine withMetadata = Machine.builder().id("i-1")
 				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small")
+				.region("us-east-1").machineSize("m1.small")
 				.membershipStatus(new MembershipStatus(true, false))
 				.requestTime(UtcTime.parse("2014-01-10T08:00:00Z"))
 				.launchTime(UtcTime.parse("2014-01-10T08:00:00Z"))
@@ -196,7 +220,7 @@ public class TestMachine {
 				.metadata(metadata).build();
 		Machine withMetadataClone = Machine.builder().id("i-1")
 				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small")
+				.region("us-east-1").machineSize("m1.small")
 				.membershipStatus(new MembershipStatus(true, false))
 				.requestTime(UtcTime.parse("2014-01-10T08:00:00Z"))
 				.launchTime(UtcTime.parse("2014-01-10T08:00:00Z"))
@@ -231,14 +255,14 @@ public class TestMachine {
 	public void createWithoutIpAddresses() {
 		Machine noIpAddresses = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").build();
+				.region("us-east-1").machineSize("m1.small").build();
 		assertThat(noIpAddresses.getPrivateIps(), is(ips()));
 		assertThat(noIpAddresses.getPublicIps(), is(ips()));
 
 		noIpAddresses = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").publicIps(ips()).privateIps(ips())
-				.build();
+				.region("us-east-1").machineSize("m1.small").publicIps(ips())
+				.privateIps(ips()).build();
 		assertThat(noIpAddresses.getPrivateIps(), is(ips()));
 		assertThat(noIpAddresses.getPublicIps(), is(ips()));
 	}
@@ -257,13 +281,16 @@ public class TestMachine {
 
 		Machine first = Machine.builder().id("i-1")
 				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").launchTime(am).build();
+				.region("us-east-1").machineSize("m1.small").launchTime(am)
+				.build();
 		Machine second = Machine.builder().id("i-2")
 				.machineState(MachineState.PENDING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").launchTime(noon).build();
+				.region("us-east-1").machineSize("m1.small").launchTime(noon)
+				.build();
 		Machine third = Machine.builder().id("i-3")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").launchTime(pm).build();
+				.region("us-east-1").machineSize("m1.small").launchTime(pm)
+				.build();
 
 		Comparator<Machine> earliestFirst = (m1, m2) -> m1.getLaunchTime()
 				.compareTo(m2.getLaunchTime());
@@ -293,7 +320,7 @@ public class TestMachine {
 				.getAsJsonObject();
 		Machine original = Machine.builder().id("i-1")
 				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small")
+				.region("us-east-1").machineSize("m1.small")
 				.membershipStatus(new MembershipStatus(true, false))
 				.requestTime(UtcTime.parse("2014-01-10T08:00:00Z"))
 				.launchTime(UtcTime.parse("2014-01-10T08:00:00Z"))

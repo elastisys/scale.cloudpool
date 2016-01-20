@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
@@ -25,6 +27,8 @@ import com.google.gson.JsonObject;
  * to its corresponding {@link Machine} representation.
  */
 public class InstanceToMachine implements Function<Instance, Machine> {
+	private static final Logger LOG = LoggerFactory
+			.getLogger(InstanceToMachine.class);
 
 	/**
 	 * Converts a {@link Instance} to its {@link Machine} representation.
@@ -89,14 +93,38 @@ public class InstanceToMachine implements Function<Instance, Machine> {
 		if (instance.getSpotInstanceRequestId() != null) {
 			cloudProvider = PoolIdentifiers.AWS_SPOT;
 		}
+		String region = extractRegion(instance);
 
 		JsonObject metadata = JsonUtils.toJson(instance).getAsJsonObject();
 		return Machine.builder().id(id).machineState(machineState)
-				.cloudProvider(cloudProvider)
+				.cloudProvider(cloudProvider).region(region)
 				.machineSize(instance.getInstanceType())
 				.membershipStatus(membershipStatus).serviceState(serviceState)
 				.launchTime(launchtime).publicIps(publicIps)
 				.privateIps(privateIps).metadata(metadata).build();
+	}
+
+	/**
+	 * Returns the region (for example, {@code eu-west-1}) that the
+	 * {@link Instance} was launched in by looking at the availability zone.
+	 *
+	 * @param instance
+	 * @return
+	 */
+	private String extractRegion(Instance instance) {
+		if (instance.getPlacement() == null
+				|| instance.getPlacement().getAvailabilityZone() == null) {
+			LOG.warn(
+					"failed to extract region for {}: "
+							+ "no placement/availability zone information available",
+					instance.getInstanceId());
+			return "unknown";
+		}
+		// availability zone is region + letter, for instance 'eu-west-1a'
+		String availabilityZone = instance.getPlacement().getAvailabilityZone();
+		String region = availabilityZone.substring(0,
+				availabilityZone.length() - 1);
+		return region;
 	}
 
 	/**

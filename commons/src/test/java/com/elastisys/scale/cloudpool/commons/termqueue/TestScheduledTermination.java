@@ -4,15 +4,12 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 
-import java.util.List;
-
 import org.joda.time.DateTime;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.collect.Lists;
 
 /**
  * Verifies the behavior of the {@link ScheduledTermination} class.
@@ -87,10 +84,8 @@ public class TestScheduledTermination {
 	}
 
 	private Machine instance(String withId) {
-		List<String> publicIps = Lists.newArrayList();
-		List<String> privateIps = Lists.newArrayList();
 		return Machine.builder().id(withId).machineState(MachineState.RUNNING)
-				.cloudProvider("AWS-EC2").machineSize("m1.small")
-				.launchTime(UtcTime.now()).build();
+				.cloudProvider("AWS-EC2").region("us-east-1")
+				.machineSize("m1.small").launchTime(UtcTime.now()).build();
 	}
 }

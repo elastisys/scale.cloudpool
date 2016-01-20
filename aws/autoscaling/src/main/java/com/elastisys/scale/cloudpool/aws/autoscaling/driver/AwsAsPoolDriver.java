@@ -215,7 +215,8 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 		String instanceType = launchConfig.getInstanceType();
 		return Machine.builder().id(pseudoId)
 				.machineState(MachineState.REQUESTED)
-				.cloudProvider(cloudProvider).machineSize(instanceType).build();
+				.cloudProvider(cloudProvider).region(config().getRegion())
+				.machineSize(instanceType).build();
 	}
 
 	@Override

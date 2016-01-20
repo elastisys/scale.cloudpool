@@ -308,7 +308,8 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
 	 * @return
 	 */
 	private ServerToMachine serverToMachine() {
-		return new ServerToMachine(getMetadata().poolIdentifier());
+		return new ServerToMachine(getMetadata().poolIdentifier(),
+				config().getRegion());
 	}
 
 	boolean isConfigured() {

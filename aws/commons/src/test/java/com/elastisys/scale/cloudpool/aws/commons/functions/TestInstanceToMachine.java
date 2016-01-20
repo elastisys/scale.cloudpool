@@ -16,6 +16,7 @@ import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.amazonaws.services.ec2.model.InstanceType;
 import com.amazonaws.services.ec2.model.Monitoring;
 import com.amazonaws.services.ec2.model.MonitoringState;
+import com.amazonaws.services.ec2.model.Placement;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
@@ -50,13 +51,15 @@ public class TestInstanceToMachine {
 				.withLaunchTime(launchTime.toDate())
 				.withMonitoring(
 						new Monitoring().withState(MonitoringState.Disabled))
-				.withHypervisor(HypervisorType.Xen);
+				.withHypervisor(HypervisorType.Xen)
+				.withPlacement(new Placement("us-east-1c"));
 
 		Machine machine = convert(instance);
 		assertThat(machine.getId(), is(instance.getInstanceId()));
 		assertThat(machine.getLaunchTime(), is(launchTime));
 		assertThat(machine.getMachineState(), is(MachineState.RUNNING));
 		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_EC2));
+		assertThat(machine.getRegion(), is("us-east-1"));
 		assertThat(machine.getMachineSize(), is("m1.small"));
 		assertThat(machine.getMembershipStatus(),
 				is(MembershipStatus.defaultStatus()));
@@ -82,11 +85,13 @@ public class TestInstanceToMachine {
 				.withLaunchTime(launchTime.toDate())
 				.withMonitoring(
 						new Monitoring().withState(MonitoringState.Disabled))
-				.withHypervisor(HypervisorType.Xen);
+				.withHypervisor(HypervisorType.Xen)
+				.withPlacement(new Placement("us-east-1a"));
 
 		Machine machine = convert(instance);
 		assertThat(machine.getId(), is(instance.getInstanceId()));
 		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_EC2));
+		assertThat(machine.getRegion(), is("us-east-1"));
 		assertThat(machine.getMachineSize(), is("m1.small"));
 		assertThat(machine.getLaunchTime(), is(launchTime));
 		assertThat(machine.getMachineState(), is(MachineState.RUNNING));
@@ -111,11 +116,13 @@ public class TestInstanceToMachine {
 				.withLaunchTime(launchTime.toDate())
 				.withMonitoring(
 						new Monitoring().withState(MonitoringState.Disabled))
-				.withHypervisor(HypervisorType.Xen);
+				.withHypervisor(HypervisorType.Xen)
+				.withPlacement(new Placement("us-east-1b"));
 
 		Machine machine = convert(instance);
 		assertThat(machine.getId(), is(instance.getInstanceId()));
 		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_EC2));
+		assertThat(machine.getRegion(), is("us-east-1"));
 		assertThat(machine.getMachineSize(), is("m1.medium"));
 		assertThat(machine.getLaunchTime(), is(launchTime));
 		assertThat(machine.getMachineState(), is(MachineState.RUNNING));
@@ -137,6 +144,7 @@ public class TestInstanceToMachine {
 				.withInstanceType(InstanceType.M1Medium)
 				.withState(
 						new InstanceState().withName(InstanceStateName.Running))
+				.withPlacement(new Placement("us-east-1b"))
 				.withTags(serviceStateTag);
 
 		Machine machine = convert(instance);
@@ -154,6 +162,7 @@ public class TestInstanceToMachine {
 				.withInstanceType(InstanceType.M1Medium)
 				.withState(
 						new InstanceState().withName(InstanceStateName.Running))
+				.withPlacement(new Placement("us-east-1b"))
 				.withTags(membershipStatusTag);
 
 		Machine machine = convert(instance);
@@ -170,8 +179,9 @@ public class TestInstanceToMachine {
 		// convert on-demand instance: cloud provider should be AWS_EC2
 		Instance onDemandInstance = new Instance().withInstanceId("i-1")
 				.withInstanceType(InstanceType.M1Medium)
-				.withState(new InstanceState()
-						.withName(InstanceStateName.Running));
+				.withState(
+						new InstanceState().withName(InstanceStateName.Running))
+				.withPlacement(new Placement("us-east-1b"));
 		Machine onDemandMachine = convert(onDemandInstance);
 		assertThat(onDemandMachine.getCloudProvider(),
 				is(PoolIdentifiers.AWS_EC2));
@@ -181,7 +191,8 @@ public class TestInstanceToMachine {
 				.withInstanceType(InstanceType.M1Medium)
 				.withState(
 						new InstanceState().withName(InstanceStateName.Running))
-				.withSpotInstanceRequestId("sir-123");
+				.withSpotInstanceRequestId("sir-123")
+				.withPlacement(new Placement("us-east-1b"));
 		Machine spotMachine = convert(spotInstance);
 		assertThat(spotMachine.getCloudProvider(),
 				is(PoolIdentifiers.AWS_SPOT));

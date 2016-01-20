@@ -80,7 +80,7 @@ public class TestCloudPoolHandlerDispatch {
 				.getAsJsonObject();
 		Machine machine = Machine.builder().id("i-1")
 				.machineState(MachineState.PENDING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small")
+				.region("us-east-1").machineSize("m1.small")
 				.membershipStatus(MembershipStatus.defaultStatus())
 				.serviceState(ServiceState.BOOTING)
 				.launchTime(UtcTime.parse("2014-01-13T11:00:00.000Z"))

@@ -78,8 +78,9 @@ public class ResizePlanTestUtils {
 			MembershipStatus membershipStatus) {
 		return Machine.builder().id("instance-" + idIndex)
 				.machineState(machineState).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").membershipStatus(membershipStatus)
-				.requestTime(requestTime).launchTime(launchTime).build();
+				.region("us-east-1").machineSize("m1.small")
+				.membershipStatus(membershipStatus).requestTime(requestTime)
+				.launchTime(launchTime).build();
 	}
 
 	/**
@@ -150,7 +151,8 @@ public class ResizePlanTestUtils {
 			DateTime terminationTime) {
 		Machine machine = Machine.builder().id(instanceId)
 				.machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").launchTime(UtcTime.now()).build();
+				.region("us-east-1").machineSize("m1.small")
+				.launchTime(UtcTime.now()).build();
 		return new ScheduledTermination(machine, terminationTime);
 	}
 

@@ -102,7 +102,7 @@ public class Machine {
 	private final List<String> privateIps;
 
 	/**
-	 * The name of the cloud provider that this machine origins from, for
+	 * The name of the cloud provider that this machine originates from, for
 	 * example {@code AWS-EC2}. It might not be immediately apparent why this
 	 * field is required since the cloud pool itself states which cloud provider
 	 * it supports, but it is useful to distinguish where different machines
@@ -114,6 +114,11 @@ public class Machine {
 	 */
 	private final String cloudProvider;
 
+	/**
+	 * The name of the cloud region/zone/data center where this machine is
+	 * located. For example, {@code us-east-1}.
+	 */
+	private final String region;
 	/**
 	 * The size (or type) of the {@link Machine}. For example, {@code m1.medium}
 	 * for an Amazon EC2 {@link CloudPool}.
@@ -140,7 +145,10 @@ public class Machine {
 	 *            {@link Machine}.
 	 * @param cloudProvider
 	 *            The name of the cloud provider that this {@link Machine}
-	 *            origins from. For example, {@code AWS-EC2}.
+	 *            originates from. For example, {@code AWS-EC2}.
+	 * @param region
+	 *            The name of the cloud region/zone/data center where this
+	 *            machine is located. For example, {@code us-east-1}.
 	 * @param machineSize
 	 *            The size (or type) of the {@link Machine}. For example,
 	 *            {@code m1.medium} for an Amazon EC2 {@link CloudPool}.
@@ -148,7 +156,7 @@ public class Machine {
 	 *            The request time of the {@link Machine}, if this time is
 	 *            known. If the time when the machine was initially and
 	 *            successfully requested is not known, this attribute shall be
-	 *            null.
+	 *            <code>null</code>.
 	 * @param launchTime
 	 *            The launch time of the {@link Machine} if it has been
 	 *            launched. This attribute may be <code>null</code>, depending
@@ -169,14 +177,15 @@ public class Machine {
 	 */
 	protected Machine(String id, MachineState machineState,
 			MembershipStatus membershipStatus, ServiceState serviceState,
-			String cloudProvider, String machineSize, DateTime requestTime,
-			DateTime launchTime, List<String> publicIps,
+			String cloudProvider, String region, String machineSize,
+			DateTime requestTime, DateTime launchTime, List<String> publicIps,
 			List<String> privateIps, JsonElement metadata) {
 		checkNotNull(id, "missing id");
 		checkNotNull(machineState, "missing machineState");
 		checkNotNull(membershipStatus, "missing membershipStatus");
 		checkNotNull(serviceState, "missing serviceState");
 		checkNotNull(cloudProvider, "missing cloudProvider");
+		checkNotNull(region, "missing region");
 		checkNotNull(machineSize, "missing machineSize");
 
 		this.id = id;
@@ -184,6 +193,7 @@ public class Machine {
 		this.membershipStatus = membershipStatus;
 		this.serviceState = serviceState;
 		this.cloudProvider = cloudProvider;
+		this.region = region;
 		this.machineSize = machineSize;
 		this.requestTime = requestTime;
 		this.launchTime = launchTime;
@@ -240,7 +250,7 @@ public class Machine {
 	}
 
 	/**
-	 * Returns The name of the cloud provider that this machine origins from,
+	 * Returns The name of the cloud provider that this machine originates from,
 	 * for example {@code AWS-EC2}. It might not be immediately apparent why
 	 * this field is required since the cloud pool itself states which cloud
 	 * provider it supports, but it is useful to distinguish where different
@@ -254,6 +264,16 @@ public class Machine {
 	 */
 	public String getCloudProvider() {
 		return this.cloudProvider;
+	}
+
+	/**
+	 * Returns the name of the cloud region/zone/data center where this machine
+	 * is located. For example, {@code us-east-1}.
+	 *
+	 * @return
+	 */
+	public String getRegion() {
+		return this.region;
 	}
 
 	/**
@@ -284,8 +304,8 @@ public class Machine {
 	 * correct value, e.g., if it was started with a pool of VMs already
 	 * allocated and there is no way to find out when they were requested.
 	 *
-	 * @return A {@link DateTime} object with the request time, if any. null
-	 *         otherwise.
+	 * @return A {@link DateTime} object with the request time if set. Otherwise
+	 *         <code>null</code>.
 	 */
 	public DateTime getRequestTime() {
 		return this.requestTime;
@@ -327,8 +347,9 @@ public class Machine {
 	public int hashCode() {
 		return Objects.hashCode(this.id, this.machineState,
 				this.membershipStatus, this.serviceState, this.cloudProvider,
-				this.machineSize, this.launchTime, this.requestTime,
-				this.publicIps, this.privateIps, this.metadata);
+				this.region, this.machineSize, this.launchTime,
+				this.requestTime, this.publicIps, this.privateIps,
+				this.metadata);
 	}
 
 	@Override
@@ -346,6 +367,7 @@ public class Machine {
 							that.membershipStatus)
 					&& Objects.equal(this.serviceState, that.serviceState)
 					&& Objects.equal(this.cloudProvider, that.cloudProvider)
+					&& Objects.equal(this.region, that.region)
 					&& Objects.equal(this.machineSize, that.machineSize)
 					&& launchtimesEqual && requesttimesEqual
 					&& Objects.equal(this.publicIps, that.publicIps)
@@ -403,7 +425,7 @@ public class Machine {
 				.add("membershipStatus", this.membershipStatus)
 				.add("serviceState", this.serviceState)
 				.add("cloudProvider", this.cloudProvider)
-				.add("machineSize", this.machineSize)
+				.add("region", this.region).add("machineSize", this.machineSize)
 				.add("requestTime", this.requestTime)
 				.add("launchTime", this.launchTime)
 				.add("publicIps", this.publicIps)
@@ -422,9 +444,9 @@ public class Machine {
 	 */
 	public Machine withMetadata(JsonObject metadata) {
 		return new Machine(this.id, this.machineState, this.membershipStatus,
-				this.serviceState, this.cloudProvider, this.machineSize,
-				this.requestTime, this.launchTime, this.publicIps,
-				this.privateIps, metadata);
+				this.serviceState, this.cloudProvider, this.region,
+				this.machineSize, this.requestTime, this.launchTime,
+				this.publicIps, this.privateIps, metadata);
 	}
 
 	/**
@@ -843,7 +865,9 @@ public class Machine {
 					.add("requestTime", machine.getRequestTime())
 					.add("launchTime", machine.getLaunchTime())
 					.add("publicIps", machine.getPublicIps())
-					.add("privateIps", machine.getPrivateIps()).toString();
+					.add("privateIps", machine.getPrivateIps())
+					.add("cloudProvider", machine.getCloudProvider())
+					.add("region", machine.getRegion()).toString();
 		}
 	}
 
@@ -867,6 +891,7 @@ public class Machine {
 		private MembershipStatus membershipStatus = MembershipStatus
 				.defaultStatus();
 		private String cloudProvider;
+		private String region;
 		private String machineSize;
 		private DateTime launchTime = null;
 		private DateTime requestTime = null;
@@ -889,6 +914,7 @@ public class Machine {
 					"machine: no machineState given");
 			checkArgument(this.cloudProvider != null,
 					"machine: no cloudProvider given");
+			checkArgument(this.region != null, "machine: no region given");
 			checkArgument(this.machineSize != null,
 					"machine: no machineSize given");
 
@@ -900,9 +926,9 @@ public class Machine {
 
 			return new Machine(this.id, this.machineState,
 					this.membershipStatus, this.serviceState,
-					this.cloudProvider, this.machineSize, this.requestTime,
-					this.launchTime, this.publicIps, this.privateIps,
-					this.metadata);
+					this.cloudProvider, this.region, this.machineSize,
+					this.requestTime, this.launchTime, this.publicIps,
+					this.privateIps, this.metadata);
 		}
 
 		/**
@@ -932,6 +958,46 @@ public class Machine {
 		}
 
 		/**
+		 * The name of the cloud provider that this {@link Machine} originates
+		 * from. Required attribute. For example, {@code AWS-EC2}.
+		 *
+		 * @param cloudProvider
+		 * @return
+		 */
+		public Builder cloudProvider(String cloudProvider) {
+			checkArgument(cloudProvider != null,
+					"cloudProvider cannot be null");
+			this.cloudProvider = cloudProvider;
+			return this;
+		}
+
+		/**
+		 * The name of the cloud region/zone/data center where this machine is
+		 * located. Required attribute. For example, {@code us-east-1}.
+		 *
+		 * @param region
+		 * @return
+		 */
+		public Builder region(String region) {
+			checkArgument(region != null, "region cannot be null");
+			this.region = region;
+			return this;
+		}
+
+		/**
+		 * The size (or type) of the {@link Machine}. Required attribute. For
+		 * example, {@code m1.medium} for an Amazon EC2 {@link CloudPool}.
+		 *
+		 * @param machineSize
+		 * @return
+		 */
+		public Builder machineSize(String machineSize) {
+			checkArgument(machineSize != null, "machineSize cannot be null");
+			this.machineSize = machineSize;
+			return this;
+		}
+
+		/**
 		 * Sets the {@link ServiceState} for the {@link Machine} being built.
 		 * Default: {@link ServiceState#UNKNOWN}.
 		 *
@@ -955,33 +1021,6 @@ public class Machine {
 			checkArgument(membershipStatus != null,
 					"membershipStatus cannot be null");
 			this.membershipStatus = membershipStatus;
-			return this;
-		}
-
-		/**
-		 * The name of the cloud provider that this {@link Machine} origins
-		 * from. Required attribute. For example, {@code AWS-EC2}.
-		 *
-		 * @param cloudProvider
-		 * @return
-		 */
-		public Builder cloudProvider(String cloudProvider) {
-			checkArgument(cloudProvider != null,
-					"cloudProvider cannot be null");
-			this.cloudProvider = cloudProvider;
-			return this;
-		}
-
-		/**
-		 * The size (or type) of the {@link Machine}. Required attribute. For
-		 * example, {@code m1.medium} for an Amazon EC2 {@link CloudPool}.
-		 *
-		 * @param machineSize
-		 * @return
-		 */
-		public Builder machineSize(String machineSize) {
-			checkArgument(machineSize != null, "machineSize cannot be null");
-			this.machineSize = machineSize;
 			return this;
 		}
 

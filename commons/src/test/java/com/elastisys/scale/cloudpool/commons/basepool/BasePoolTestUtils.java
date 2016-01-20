@@ -15,34 +15,34 @@ public class BasePoolTestUtils {
 	public static Machine machine(String id) {
 		return Machine.builder().id(id).machineState(MachineState.RUNNING)
 				.machineSize("m1.small").cloudProvider("AWS-EC2")
-				.launchTime(UtcTime.now()).build();
+				.region("us-east-1").launchTime(UtcTime.now()).build();
 	}
 
 	public static Machine machine(String id, MachineState machineState) {
 		return Machine.builder().id(id).machineState(machineState)
 				.machineSize("m1.small").cloudProvider("AWS-EC2")
-				.launchTime(UtcTime.now()).build();
+				.region("us-east-1").launchTime(UtcTime.now()).build();
 	}
 
 	public static Machine machine(String id, MachineState machineState,
 			DateTime launchTime) {
 		return Machine.builder().id(id).machineState(machineState)
-				.cloudProvider("AWS-EC2").machineSize("m1.small")
-				.launchTime(launchTime).build();
+				.cloudProvider("AWS-EC2").region("us-east-1")
+				.machineSize("m1.small").launchTime(launchTime).build();
 	}
 
 	public static Machine machine(String id, MachineState machineState,
 			MembershipStatus membershipStatus, DateTime launchTime) {
 		return Machine.builder().id(id).machineState(machineState)
-				.cloudProvider("AWS-EC2").machineSize("m1.small")
-				.membershipStatus(membershipStatus).launchTime(launchTime)
-				.build();
+				.cloudProvider("AWS-EC2").region("us-east-1")
+				.machineSize("m1.small").membershipStatus(membershipStatus)
+				.launchTime(launchTime).build();
 	}
 
 	public static Machine machine(String id, String publicIp) {
 		return Machine.builder().id(id).machineState(MachineState.RUNNING)
-				.cloudProvider("AWS-EC2").machineSize("m1.small")
-				.publicIp(publicIp).build();
+				.cloudProvider("AWS-EC2").region("us-east-1")
+				.machineSize("m1.small").publicIp(publicIp).build();
 	}
 
 	public static List<Machine> machines(Machine... machines) {

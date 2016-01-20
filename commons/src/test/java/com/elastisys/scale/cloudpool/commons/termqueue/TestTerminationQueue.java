@@ -222,8 +222,8 @@ public class TestTerminationQueue {
 
 	private Machine instance(String withId) {
 		return Machine.builder().id(withId).machineState(MachineState.RUNNING)
-				.cloudProvider("AWS-EC2").machineSize("m1.small")
-				.launchTime(UtcTime.now()).build();
+				.cloudProvider("AWS-EC2").region("us-east-1")
+				.machineSize("m1.small").launchTime(UtcTime.now()).build();
 	}
 
 }

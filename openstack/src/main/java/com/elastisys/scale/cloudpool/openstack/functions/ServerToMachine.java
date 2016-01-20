@@ -35,14 +35,23 @@ public class ServerToMachine implements Function<Server, Machine> {
 	private final String cloudProvider;
 
 	/**
+	 * The region being connected to. For example, {@code Kna1} or {@code LON}.
+	 */
+	private final String region;
+
+	/**
 	 * Constructs a {@link ServerToMachine} conversion {@link Function}.
 	 *
 	 * @param cloudProvider
 	 *            The name of the cloud provider (for example, "OpenStack",
 	 *            "RackSpace", "CityCloud").
+	 * @param The
+	 *            region being connected to. For example, {@code Kna1} or
+	 *            {@code LON}.
 	 */
-	public ServerToMachine(String cloudProvider) {
+	public ServerToMachine(String cloudProvider, String region) {
 		this.cloudProvider = cloudProvider;
+		this.region = region;
 	}
 
 	/**
@@ -106,7 +115,7 @@ public class ServerToMachine implements Function<Server, Machine> {
 		}
 		JsonObject metadata = JsonUtils.toJson(server).getAsJsonObject();
 		return Machine.builder().id(server.getId()).machineState(machineState)
-				.cloudProvider(this.cloudProvider)
+				.cloudProvider(this.cloudProvider).region(this.region)
 				.machineSize(server.getFlavor().getName())
 				.membershipStatus(membershipStatus).serviceState(serviceState)
 				.requestTime(creationTime).launchTime(launchedAtTime)

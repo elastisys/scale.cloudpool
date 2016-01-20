@@ -157,7 +157,8 @@ public class TestTerminationScheduler extends AbstractScaledownTest {
 		DateTime launchTime = null;
 		Machine machine = Machine.builder().id("i-1")
 				.machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-				.machineSize("m1.small").launchTime(null).build();
+				.region("us-east-1").machineSize("m1.small").launchTime(null)
+				.build();
 		new TerminationScheduler(60).scheduleEviction(machine);
 	}
 }
