@@ -14,7 +14,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +47,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.EventBus;
-import com.google.common.util.concurrent.Atomics;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonElement;
 
@@ -71,8 +69,13 @@ public class StandardPoolUpdater implements PoolUpdater {
 
 	private final BaseCloudPoolConfig config;
 
-	/** The desired size of the machine pool. */
-	private final AtomicReference<Integer> desiredSize;
+	/**
+	 * The desired size of the machine pool. Will be <code>null</code> until
+	 * set/determined.
+	 */
+	private Integer desiredSize;
+	/** Lock to prevent concurrent modification of {@link #desiredSize}. */
+	private final Object desiredSizeLock = new Object();
 
 	/**
 	 * The queue of already termination-marked instances (these will be used to
@@ -81,7 +84,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 	 */
 	private final TerminationQueue terminationQueue;
 	/** Lock to protect the machine pool from concurrent modifications. */
-	private final Object updateLock;
+	private final Object poolUpdateLock = new Object();
 
 	/** {@link ExecutorService} handling execution of cache updates. */
 	private final ScheduledExecutorService executorService;
@@ -95,8 +98,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 		this.config = config;
 
 		this.terminationQueue = new TerminationQueue();
-		this.desiredSize = Atomics.newReference();
-		this.updateLock = new Object();
+		this.desiredSize = null;
 
 		// start periodical cache update task
 		ThreadFactory threadFactory = new ThreadFactoryBuilder().setDaemon(true)
@@ -131,16 +133,16 @@ public class StandardPoolUpdater implements PoolUpdater {
 		checkArgument(desiredSize >= 0, "negative desired pool size");
 
 		// prevent concurrent pool modifications
-		synchronized (this.updateLock) {
+		synchronized (this.desiredSizeLock) {
 			LOG.info("set desiredSize to {}", desiredSize);
-			this.desiredSize.set(desiredSize);
+			this.desiredSize = desiredSize;
 		}
 	}
 
 	@Override
 	public int getDesiredSize() throws CloudPoolException {
 		ensureDesiredSizeSet();
-		return this.desiredSize.get();
+		return this.desiredSize;
 	}
 
 	@Override
@@ -165,15 +167,17 @@ public class StandardPoolUpdater implements PoolUpdater {
 		ensureDesiredSizeSet();
 
 		// prevent concurrent pool modifications
-		synchronized (this.updateLock) {
+		synchronized (this.poolUpdateLock) {
 			LOG.debug("terminating {}", machineId);
 			this.cloudDriver.terminateMachine(machineId);
 			if (decrementDesiredSize) {
-				// note: decrement unless desiredSize has been set to 0 (without
-				// having been effectuated yet)
-				int newSize = max(this.desiredSize.get() - 1, 0);
-				LOG.debug("decrementing desiredSize to {}", newSize);
-				setDesiredSize(newSize);
+				synchronized (this.desiredSizeLock) {
+					// note: decrement unless desiredSize has been set to 0
+					// (without having been effectuated yet)
+					int newSize = max(this.desiredSize - 1, 0);
+					LOG.debug("decrementing desiredSize to {}", newSize);
+					setDesiredSize(newSize);
+				}
 			}
 		}
 		terminationAlert(machineId);
@@ -205,11 +209,13 @@ public class StandardPoolUpdater implements PoolUpdater {
 		ensureDesiredSizeSet();
 
 		// prevent concurrent pool modifications
-		synchronized (this.updateLock) {
+		synchronized (this.poolUpdateLock) {
 			LOG.debug("attaching instance {} to pool", machineId);
 			this.cloudDriver.attachMachine(machineId);
-			// implicitly increases pool size
-			setDesiredSize(this.desiredSize.get() + 1);
+			synchronized (this.desiredSizeLock) {
+				// implicitly increases pool size
+				setDesiredSize(this.desiredSize + 1);
+			}
 		}
 		attachAlert(machineId);
 	}
@@ -221,15 +227,17 @@ public class StandardPoolUpdater implements PoolUpdater {
 		ensureDesiredSizeSet();
 
 		// prevent concurrent pool modifications
-		synchronized (this.updateLock) {
+		synchronized (this.poolUpdateLock) {
 			LOG.debug("detaching {} from pool", machineId);
 			this.cloudDriver.detachMachine(machineId);
 			if (decrementDesiredSize) {
-				// note: decrement unless desiredSize has been set to 0 (without
-				// having been effectuated yet)
-				int newSize = max(this.desiredSize.get() - 1, 0);
-				LOG.debug("decrementing desiredSize to {}", newSize);
-				setDesiredSize(newSize);
+				synchronized (this.desiredSizeLock) {
+					// note: decrement unless desiredSize has been set to 0
+					// (without having been effectuated yet)
+					int newSize = max(this.desiredSize - 1, 0);
+					LOG.debug("decrementing desiredSize to {}", newSize);
+					setDesiredSize(newSize);
+				}
 			}
 		}
 		detachAlert(machineId);
@@ -262,7 +270,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 	 *             If the desired size could not be determined.
 	 */
 	private void ensureDesiredSizeSet() throws CloudPoolException {
-		if (this.desiredSize.get() != null) {
+		if (this.desiredSize != null) {
 			return;
 		}
 
@@ -283,7 +291,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 	 * size. This may involve terminating termination-due machines and placing
 	 * new server requests to replace terminated servers.
 	 * <p/>
-	 * Waits for the {@link #updateLock} to avoid concurrent pool updates.
+	 * Waits for the {@link #poolUpdateLock} to avoid concurrent pool updates.
 	 *
 	 * @param config
 	 *            Configuration that governs how to perform scaling actions.
@@ -300,10 +308,10 @@ public class StandardPoolUpdater implements PoolUpdater {
 		// check if we need to determine desired size (it may not have been
 		// possible on startup, e.g., due to cloud API being unreachable)
 		setDesiredSizeIfUnset(pool);
+		int targetSize = getDesiredSize();
 
 		// prevent multiple threads from concurrently updating pool
-		synchronized (this.updateLock) {
-			int targetSize = this.desiredSize.get();
+		synchronized (this.poolUpdateLock) {
 			doPoolUpdate(pool, config, targetSize);
 		}
 	}
@@ -447,7 +455,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 	 *            An up-to-date {@link MachinePool} observation.
 	 */
 	private void setDesiredSizeIfUnset(MachinePool pool) {
-		if (this.desiredSize.get() != null) {
+		if (this.desiredSize != null) {
 			return;
 		}
 
@@ -456,9 +464,9 @@ public class StandardPoolUpdater implements PoolUpdater {
 		// of the desiredSize (they are to be replaced)
 		int effectiveSize = pool.getActiveMachines().size();
 		int allocated = pool.getAllocatedMachines().size();
-		this.desiredSize.set(effectiveSize);
+		setDesiredSize(effectiveSize);
 		LOG.info("initial desiredSize set to {} (allocated: {}, effective: {})",
-				this.desiredSize, allocated, effectiveSize);
+				effectiveSize, allocated, effectiveSize);
 	}
 
 	/**
