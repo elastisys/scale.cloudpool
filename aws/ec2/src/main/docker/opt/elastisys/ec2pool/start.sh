@@ -51,7 +51,4 @@ JAVA_OPTS="${JAVA_OPTS} -XX:+UnlockDiagnosticVMOptions -XX:+LogVMOutput -XX:LogF
 JAVA_OPTS="${JAVA_OPTS} -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${LOG_DIR} "
 JAVA_OPTS="${JAVA_OPTS} -DLOG_DIR=${LOG_DIR}"
 
-# to allow use of ports below 1024, use: authbind --deep <prog> [args ...]
-# note: assumes that /etc/authbind/byport/<port> files with proper owner/mode
-# have been set up
-authbind --deep ${java} ${JVM_OPTS} ${JAVA_OPTS} -jar ec2pool.jar ${SERVER_OPTS}
+${java} ${JVM_OPTS} ${JAVA_OPTS} -jar /opt/elastisys/ec2pool/ec2pool.jar ${SERVER_OPTS}
