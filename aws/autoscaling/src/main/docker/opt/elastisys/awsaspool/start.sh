@@ -44,7 +44,11 @@ SERVER_OPTS="--storage-dir ${STORAGE_DIR} --https-port ${HTTPS_PORT} ${SECURITY_
 
 # Java system properties
 JVM_OPTS=${JVM_OPTS:--Xmx128m}
-JAVA_OPTS="-XX:+HeapDumpOnOutOfMemoryError -Djava.net.preferIPv4Stack=true -Djava.util.logging.config.file=${JUL_CONFIG} -Dlogback.configurationFile=${LOG_CONFIG}"
+JAVA_OPTS="-Djava.net.preferIPv4Stack=true -Djava.util.logging.config.file=${JUL_CONFIG} -Dlogback.configurationFile=${LOG_CONFIG}"
+# On SIGQUIT: make sure a thread dump written to ${LOG_DIR}/jvm.log
+JAVA_OPTS="${JAVA_OPTS} -XX:+UnlockDiagnosticVMOptions -XX:+LogVMOutput -XX:LogFile=${LOG_DIR}/jvm.log -XX:-PrintConcurrentLocks"
+# On OutOfMemory errors write a java_pid<pid>.hprof file to ${LOG_DIR}
+JAVA_OPTS="${JAVA_OPTS} -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${LOG_DIR} "
 JAVA_OPTS="${JAVA_OPTS} -DLOG_DIR=${LOG_DIR}"
 
 # to allow use of ports below 1024, use: authbind --deep <prog> [args ...]
