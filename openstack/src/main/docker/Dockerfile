@@ -3,7 +3,7 @@ MAINTAINER Elastisys <techteam@elastisys.com>
 
 # install openstackpool server
 COPY ${project.build.finalName}.jar /opt/elastisys/openstackpool/openstackpool.jar
-COPY opt/elastisys/openstackpool/start.sh /opt/elastisys/openstackpool/start.sh
+COPY start.sh /opt/elastisys/openstackpool/start.sh
 
 # create configuration directory
 COPY etc/elastisys/ /etc/elastisys/

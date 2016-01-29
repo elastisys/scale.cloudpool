@@ -3,7 +3,7 @@ MAINTAINER Elastisys <techteam@elastisys.com>
    
 # install awsaspool server
 COPY ${project.build.finalName}.jar /opt/elastisys/awsaspool/awsaspool.jar
-COPY opt/elastisys/awsaspool/start.sh /opt/elastisys/awsaspool/start.sh
+COPY start.sh /opt/elastisys/awsaspool/start.sh
 
 # create configuration directory
 COPY etc/elastisys/ /etc/elastisys/

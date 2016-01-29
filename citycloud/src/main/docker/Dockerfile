@@ -3,7 +3,7 @@ MAINTAINER Elastisys <techteam@elastisys.com>
 
 # install citycloudpool server
 COPY ${project.build.finalName}.jar /opt/elastisys/citycloudpool/citycloudpool.jar
-COPY opt/elastisys/citycloudpool/start.sh /opt/elastisys/citycloudpool/start.sh
+COPY start.sh /opt/elastisys/citycloudpool/start.sh
 
 # create configuration directory
 COPY etc/elastisys/ /etc/elastisys/

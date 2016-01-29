@@ -3,7 +3,7 @@ MAINTAINER Elastisys <techteam@elastisys.com>
     
 # install ec2pool server
 COPY ${project.build.finalName}.jar /opt/elastisys/ec2pool/ec2pool.jar
-COPY opt/elastisys/ec2pool/start.sh /opt/elastisys/ec2pool/start.sh
+COPY start.sh /opt/elastisys/ec2pool/start.sh
 
 # create configuration directory
 COPY etc/elastisys/ /etc/elastisys/

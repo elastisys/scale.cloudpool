@@ -3,7 +3,7 @@ MAINTAINER Elastisys <techteam@elastisys.com>
 
 # install spotpool server
 COPY ${project.build.finalName}.jar /opt/elastisys/spotpool/spotpool.jar
-COPY opt/elastisys/spotpool/start.sh /opt/elastisys/spotpool/start.sh
+COPY start.sh /opt/elastisys/spotpool/start.sh
 
 # create configuration directory
 COPY etc/elastisys/ /etc/elastisys/
