@@ -5,12 +5,12 @@
        variable 'LOG_DIR'. If unspecified, a directory is used.-->
   <variable name="logdir" value="${LOG_DIR:-/tmp/elastisys/logs/ec2pool}"/>
   
-  <!-- captures everythin to file -->
+  <!-- captures to file -->
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>${logdir}/ec2pool.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
       <!-- daily rollover -->
-      <fileNamePattern>${logdir}/ec2pool.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <fileNamePattern>${logdir}/ec2pool.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
       <!-- keep 7 days' worth of history -->
       <maxHistory>7</maxHistory>
     </rollingPolicy>
@@ -19,11 +19,11 @@
     </encoder>
   </appender>
 
-  <!-- captures everything to stdout -->
+  <!-- captures to stdout -->
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <target>System.out</target>    
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-      <level>DEBUG</level>
+      <level>INFO</level>
     </filter>
     <encoder>
       <pattern>%date{ISO8601} [%thread] %-5level [%class{0}:%method:%line] - %msg%n</pattern>

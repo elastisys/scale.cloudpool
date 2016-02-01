@@ -168,7 +168,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 
 		// prevent concurrent pool modifications
 		synchronized (this.poolUpdateLock) {
-			LOG.debug("terminating {}", machineId);
+			LOG.info("terminating {}", machineId);
 			this.cloudDriver.terminateMachine(machineId);
 			if (decrementDesiredSize) {
 				synchronized (this.desiredSizeLock) {
@@ -186,7 +186,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 	@Override
 	public void setServiceState(String machineId, ServiceState serviceState)
 			throws NotFoundException, CloudPoolException {
-		LOG.debug("service state {} assigned to {}", serviceState.name(),
+		LOG.info("service state {} assigned to {}", serviceState.name(),
 				machineId);
 		this.cloudDriver.setServiceState(machineId, serviceState);
 		serviceStateAlert(machineId, serviceState);
@@ -196,7 +196,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 	public void setMembershipStatus(String machineId,
 			MembershipStatus membershipStatus)
 					throws NotFoundException, CloudPoolException {
-		LOG.debug("membership status {} assigned to {}", membershipStatus,
+		LOG.info("membership status {} assigned to {}", membershipStatus,
 				machineId);
 		this.cloudDriver.setMembershipStatus(machineId, membershipStatus);
 		membershipStatusAlert(machineId, membershipStatus);
@@ -210,7 +210,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 
 		// prevent concurrent pool modifications
 		synchronized (this.poolUpdateLock) {
-			LOG.debug("attaching instance {} to pool", machineId);
+			LOG.info("attaching instance {} to pool", machineId);
 			this.cloudDriver.attachMachine(machineId);
 			synchronized (this.desiredSizeLock) {
 				// implicitly increases pool size
@@ -228,7 +228,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 
 		// prevent concurrent pool modifications
 		synchronized (this.poolUpdateLock) {
-			LOG.debug("detaching {} from pool", machineId);
+			LOG.info("detaching {} from pool", machineId);
 			this.cloudDriver.detachMachine(machineId);
 			if (decrementDesiredSize) {
 				synchronized (this.desiredSizeLock) {
@@ -395,7 +395,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 		}
 
 		List<Machine> terminated = Lists.newArrayList();
-		LOG.info("Terminating {} overdue machine(s): {}",
+		LOG.info("terminating {} overdue machine(s): {}",
 				overdueInstances.size(), overdueInstances);
 		for (ScheduledTermination overdueInstance : overdueInstances) {
 			String victimId = overdueInstance.getInstance().getId();
