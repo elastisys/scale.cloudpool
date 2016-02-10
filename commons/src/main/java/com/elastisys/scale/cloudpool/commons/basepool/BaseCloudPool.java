@@ -275,6 +275,8 @@ public class BaseCloudPool implements CloudPool {
 				stop();
 			}
 
+			LOG.debug("setting new configuration: {}",
+					JsonUtils.toPrettyString(jsonConfig));
 			this.config.set(configuration);
 			// re-configure driver
 			this.cloudDriver.configure(configuration);

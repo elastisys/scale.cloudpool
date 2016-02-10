@@ -18,6 +18,8 @@ import org.openstack4j.model.compute.builder.ServerCreateBuilder;
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
+import com.elastisys.scale.commons.util.base64.Base64Utils;
+import com.google.common.base.Charsets;
 
 /**
  * An request that, when executed, creates a new server instance.
@@ -101,6 +103,8 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 				.name(this.serverName).flavor(getFlavorId()).image(getImageId())
 				.keypairName(this.keyPair).addMetadata(this.metadata);
 
+		logDebugInfo();
+
 		for (String securityGroup : this.securityGroups) {
 			serverCreateBuilder.addSecurityGroup(securityGroup);
 		}
@@ -179,4 +183,20 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
 				this.imageName, getApiAccessConfig().getRegion()));
 	}
 
+	/**
+	 * Logs debug information about the server that is to be launched.
+	 */
+	private void logDebugInfo() {
+		LOG.debug("Starting server: {}", this.serverName);
+		LOG.debug("Flavor: {}", this.flavorName);
+		LOG.debug("Image: {}", this.imageName);
+		LOG.debug("Key pair: {}", this.keyPair);
+		LOG.debug("Metadata: {}", this.metadata);
+		LOG.debug("Security groups: {}", this.securityGroups);
+		LOG.debug("Encoded user data: {}", this.encodedUserData);
+		if (this.encodedUserData != null) {
+			LOG.debug("User data: {}", Base64Utils
+					.fromBase64(this.encodedUserData, Charsets.UTF_8));
+		}
+	}
 }
