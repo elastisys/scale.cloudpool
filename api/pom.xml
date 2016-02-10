@@ -3,7 +3,7 @@
   <parent>
     <groupId>com.elastisys.scale</groupId>
     <artifactId>cloudpool.root</artifactId>
-    <version>4.1.6</version>
+    <version>4.1.7-SNAPSHOT</version>
   </parent>
   <artifactId>cloudpool.api</artifactId>
   <name>elastisys:scale :: cloudpool :: api</name>
