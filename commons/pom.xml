@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.elastisys.scale</groupId>
     <artifactId>cloudpool.root</artifactId>
-    <version>4.1.7</version>
+    <version>4.1.8-SNAPSHOT</version>
   </parent>
   <artifactId>cloudpool.commons</artifactId>
   <packaging>jar</packaging>
