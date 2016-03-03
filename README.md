@@ -8,8 +8,13 @@ for different cloud providers:
 
   - ``cloudpool.openstack``: a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages a group of [OpenStack](https://www.openstack.org/) servers.
+  - ``cloudpool.citycloud``: a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+    that manages a group of [OpenStack](https://www.openstack.org/) servers in City Cloud 
+    (an OpenStack-based cloud provider that uses Keystone v3 authentication).
   - ``cloudpool.aws.ec2``: a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages a group of [AWS EC2](http://aws.amazon.com/ec2/) instances.
+  - ``cloudpool.aws.spot``: a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+    that manages a group of [AWS Spot](http://aws.amazon.com/ec2/spot/) instances.
   - ``cloudpool.aws.autoscaling``: a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages the size of an [AWS Auto Scaling Group](http://docs.aws.amazon.com/AutoScaling/latest/DeveloperGuide/WorkingWithASG.html).
 
@@ -183,6 +188,29 @@ In a little more detail, the configuration keys have the following meaning:
     termination-due machines and placing new machine requests to replace 
     terminated machines. Default: 60.
 
+Multi-cloud support
+===================
+
+Elastisys has also developed a Splitter cloud pool implementation that can be 
+used to manage several clouds as one, complete with fail-over functionality 
+built in. It adheres to the exact same API as the provider-specific ones. 
+Users of the Splitter cloud pool defines a splitting policy, such as 
+"90 percent AWS Spot instances, 10 percent AWS EC2 instances", and the 
+Splitter takes care of maintaining this ratio.
+
+Should a cloud fail to provide an instance fast enough (for whatever reason), 
+the Splitter cloud pool will obtain an equivalent instance from another of 
+its configured cloud backends. Once the original cloud provider is operating
+as intended again, the Splitter will automatically decommission the replacement
+machine from the other cloud backend.
+
+Some of our customers use it to ensure that their services are highly available, 
+even in the face of cloud provider failure. Others use it to run mostly Spot
+instances, and fall back to on-demand instances when Spot instances are scarce.
+
+The Splitter cloud pool is not open source at this time, so 
+[contact Elastisys](http://elastisys.com/contact/) if you would like to
+discuss how the Splitter cloud pool can help optimize your cloud deployment.
 
 License
 =======
