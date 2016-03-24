@@ -324,11 +324,6 @@ below can be replaced with:
 
 Here are some examples illustrating basic interactions with the cloud pool endpoint:
 
- 1. Retrieve configuration JSON schema (note: requires ``--config-handler`` to be turned on):
-
-    ```
-    curl -v --insecure <authparams> -X GET https://localhost:8443/config/schema
-    ```
 
  2. Retrieve the currently set configuration document (note: requires ``--config-handler`` to be turned on):
 

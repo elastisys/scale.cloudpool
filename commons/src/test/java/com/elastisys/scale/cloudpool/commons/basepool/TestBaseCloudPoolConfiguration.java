@@ -44,7 +44,8 @@ import com.google.gson.JsonObject;
  */
 public class TestBaseCloudPoolConfiguration {
 
-	private static final File STATE_STORAGE_DIR = new File("target/state");
+	private static final File STATE_STORAGE_DIR = new File("target/state-"
+			+ TestBaseCloudPoolConfiguration.class.getSimpleName());
 	private static final StateStorage STATE_STORAGE = StateStorage
 			.builder(STATE_STORAGE_DIR).build();
 

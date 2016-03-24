@@ -1,0 +1,17 @@
+{
+    "apiServer": {
+        "host": "kubernetes",
+        "port": 443
+    },
+    "podPool": {
+        "namespace": "default",
+        "replicationController": "nginx"
+    },
+    "auth": {
+        "clientTokenPath": "/var/run/secrets/kubernetes.io/serviceaccount/token",
+        "serverCertPath": "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+     },
+     "poolUpdate": {
+         "updateInterval": { "time": 5, "unit": "seconds" }
+     }
+}  

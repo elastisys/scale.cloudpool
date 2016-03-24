@@ -89,7 +89,8 @@ public class TestBaseCloudPoolOperation {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(TestBaseCloudPoolOperation.class);
 
-	private static final File STATE_STORAGE_DIR = new File("target/state");
+	private static final File STATE_STORAGE_DIR = new File(
+			"target/state-" + TestBaseCloudPoolOperation.class.getSimpleName());
 	private static final StateStorage STATE_STORAGE = StateStorage
 			.builder(STATE_STORAGE_DIR).build();
 

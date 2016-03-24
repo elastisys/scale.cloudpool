@@ -57,7 +57,8 @@ public class TestCachingPoolFetcher {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(TestCachingPoolFetcher.class);
 
-	private static final File STATE_STORAGE_DIR = new File("target/state");
+	private static final File STATE_STORAGE_DIR = new File(
+			"target/state-" + TestCachingPoolFetcher.class.getSimpleName());
 	private static final StateStorage STATE_STORAGE = StateStorage
 			.builder(STATE_STORAGE_DIR).build();
 
@@ -104,6 +105,8 @@ public class TestCachingPoolFetcher {
 
 		// a call through to the delegate pool fetcher should have been made
 		verify(this.delegate, times(1)).get(FORCE_REFRESH);
+
+		fetcher.close();
 	}
 
 	/**
@@ -132,6 +135,7 @@ public class TestCachingPoolFetcher {
 		verify(this.delegate, times(1)).get(FORCE_REFRESH);
 		verify(this.mockEventbus)
 				.post(argThat(isAlert(POOL_FETCH.name(), WARN)));
+		fetcher.close();
 	}
 
 	/**
@@ -158,6 +162,7 @@ public class TestCachingPoolFetcher {
 		} catch (PoolUnreachableException e) {
 			assertTrue(e.noFetchAttemptCompletedYet());
 		}
+		fetcher.close();
 	}
 
 	/**
@@ -185,6 +190,7 @@ public class TestCachingPoolFetcher {
 		assertThat(fetcher.get(), is(cachedPool));
 		// no more calls through to delegate pool fetcher should have been made
 		verify(this.delegate, times(1)).get(FORCE_REFRESH);
+		fetcher.close();
 	}
 
 	/**
@@ -214,6 +220,7 @@ public class TestCachingPoolFetcher {
 		assertThat(fetcher.get(FORCE_REFRESH), is(newPool));
 		// ... should call through to delegate
 		verify(this.delegate, times(2)).get(FORCE_REFRESH);
+		fetcher.close();
 	}
 
 	/**
@@ -250,6 +257,7 @@ public class TestCachingPoolFetcher {
 		} catch (PoolReachabilityTimeoutException e) {
 			// expected
 		}
+		fetcher.close();
 	}
 
 	/**
@@ -275,6 +283,7 @@ public class TestCachingPoolFetcher {
 		// ... and an alert should have been posted on the event bus
 		verify(this.mockEventbus)
 				.post(argThat(isAlert(POOL_FETCH.name(), WARN)));
+		fetcher.close();
 	}
 
 	/**
@@ -308,6 +317,7 @@ public class TestCachingPoolFetcher {
 		when(this.delegate.get(FORCE_REFRESH)).thenReturn(pool(machines()));
 		fetcher.get(FetchOption.FORCE_REFRESH);
 		assertThat(restore(cacheFile), is(pool(machines())));
+		fetcher.close();
 	}
 
 	/**
@@ -325,6 +335,7 @@ public class TestCachingPoolFetcher {
 		CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE,
 				this.delegate, FETCH_CONFIG, this.mockEventbus);
 		assertThat(fetcher.get(), is(cachedPool));
+		fetcher.close();
 	}
 
 	/**
@@ -346,6 +357,7 @@ public class TestCachingPoolFetcher {
 		CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE,
 				this.delegate, FETCH_CONFIG, this.mockEventbus);
 		System.out.println(fetcher.get());
+		fetcher.close();
 	}
 
 	private void save(MachinePool pool, File destination) throws IOException {

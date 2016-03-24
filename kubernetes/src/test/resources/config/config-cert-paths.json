@@ -1,0 +1,18 @@
+{
+    "apiServer": {
+        "host": "172.17.4.101",
+        "port": 443
+    },
+    "podPool": {
+        "namespace": "default",
+        "replicationController": "nginx"
+    },
+    "auth": {
+        "clientCertPath": "src/test/resources/ssl/admin.pem",
+        "clientKeyPath": "src/test/resources/ssl/admin-key.pem",
+        "serverCertPath": "src/test/resources/ssl/ca.pem"
+     },
+     "poolUpdate": {
+         "updateInterval": { "time": 5, "unit": "seconds" }
+     }
+}  
