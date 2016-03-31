@@ -34,14 +34,17 @@ explained in the [Kubernetes documentation](http://kubernetes.io/docs/user-guide
 approach (1), since a service account token will always be available on the
 pod's file system.
 
-Tokens and certificates/keys can be passed either as a file system path
+Tokens and certificates/keys can be passed either as file system paths
 (referring to the file system on which the `kubernetespool` is
 running) or be passed as (base 64-encoded) values. Configuration variables
-ending in {@code Path} are used to pass file system references.
+ending in `Path` are used to pass file system references.
 
 So, when running the `kubernetespool` from a pod inside the targeted
 Kubernetes cluster one would typically make use of configuration similar
-to the following:
+to the following (as explained in the [Kubernetes documentation](http://kubernetes.io/docs/user-guide/accessing-the-cluster/#accessing-the-api-from-a-pod),
+a pod can always reach the apiserver via the `kubernetes` DNS entry and 
+authentication credentials for the service user are available under 
+`/var/run/secrets`):
 
 ```javascript
 {
@@ -66,7 +69,7 @@ to the following:
 This will manage the given ReplicationController using the given auth token to 
 authenticate against the specified Kubernetes apiserver.
 
-When running the `kubernetespool` outside Kubernetes one could either use
+When running the `kubernetespool` _outside_ Kubernetes one could either use
 token-based or certificate-based authentication. Configuring the pool to use a
 certificate and key to authenticate can be done as follows:
 
@@ -91,7 +94,7 @@ certificate and key to authenticate can be done as follows:
 }
 ```
 
-This will use the cert and key at the given file system path where the
+This will use the cert and key at the given file system locations where the
 `kubernetespool` is running.
 
 To pass the cert and key by value, one can send the PEM-encoded cert and
