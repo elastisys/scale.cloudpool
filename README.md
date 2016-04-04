@@ -22,7 +22,9 @@ for different cloud providers:
 Getting started
 ===============
 
-Clone the repository and build it with:
+This project depends on [scale.commons](https://github.com/elastisys/scale.commons). If you are building from `master` yourself (where the POM file refers to a SNAPSHOT version), you need to clone and build that code repository first.
+
+Once that has been installed using Maven, this project can be built with:
 
   `mvn clean install`
 
