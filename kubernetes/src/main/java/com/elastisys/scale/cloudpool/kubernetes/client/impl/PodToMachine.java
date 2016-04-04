@@ -36,16 +36,37 @@ public class PodToMachine implements Function<JsonObject, Machine> {
 		String machineSize = "N/A";
 		DateTime requestTime = UtcTime
 				.parse(metadata.get("creationTimestamp").getAsString());
-		DateTime launchTime = UtcTime
-				.parse(status.get("startTime").getAsString());
-		String publicIp = status.get("hostIP").getAsString();
-		String privateIp = status.get("podIP").getAsString();
+
+		// if pod isn't running, no startTime will be available
+		String launchTimeValue = getWithDefault(status, "startTime", null);
+		DateTime launchTime = launchTimeValue != null
+				? UtcTime.parse(launchTimeValue) : null;
+		// if pod isn't running, no IPs will be available
+		String publicIp = getWithDefault(status, "hostIP", null);
+		String privateIp = getWithDefault(status, "podIP", null);
 
 		return Machine.builder().id(id).machineState(machineState)
 				.cloudProvider(cloudProvider).region(region)
 				.machineSize(machineSize).launchTime(launchTime)
 				.requestTime(requestTime).publicIp(publicIp)
 				.privateIp(privateIp).metadata(pod).build();
+	}
+
+	/**
+	 * Returns a given property field from a JSON object or returns a default
+	 * value in case the property is missing.
+	 *
+	 * @param object
+	 * @param property
+	 * @param defaultValue
+	 * @return
+	 */
+	private String getWithDefault(JsonObject object, String property,
+			String defaultValue) {
+		if (object.has(property)) {
+			return object.get(property).getAsString();
+		}
+		return defaultValue;
 	}
 
 }
