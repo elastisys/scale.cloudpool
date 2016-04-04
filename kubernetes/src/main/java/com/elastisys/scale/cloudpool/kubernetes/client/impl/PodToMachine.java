@@ -42,8 +42,8 @@ public class PodToMachine implements Function<JsonObject, Machine> {
 		DateTime launchTime = launchTimeValue != null
 				? UtcTime.parse(launchTimeValue) : null;
 		// if pod isn't running, no IPs will be available
-		String publicIp = getWithDefault(status, "hostIP", null);
-		String privateIp = getWithDefault(status, "podIP", null);
+		String publicIp = getWithDefault(status, "hostIP", "N/A");
+		String privateIp = getWithDefault(status, "podIP", "N/A");
 
 		return Machine.builder().id(id).machineState(machineState)
 				.cloudProvider(cloudProvider).region(region)
