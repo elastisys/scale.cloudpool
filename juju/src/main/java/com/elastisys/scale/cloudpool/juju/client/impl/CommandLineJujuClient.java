@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -18,6 +19,9 @@ import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.juju.client.JujuClient;
 import com.elastisys.scale.cloudpool.juju.config.JujuCloudPoolConfig;
 import com.google.common.io.Files;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 /**
  * Manages the Juju deployment by calling out to the juju command line tool. The
@@ -34,11 +38,13 @@ import com.google.common.io.Files;
 public class CommandLineJujuClient implements JujuClient {
 	private static final Logger LOG = LoggerFactory.getLogger(CommandLineJujuClient.class);
 	private static final Charset UTF8 = Charset.forName("UTF-8");
+	private final Gson gson;
 
 	private JujuCloudPoolConfig config;
 
 	public CommandLineJujuClient() {
 		this.config = null;
+		this.gson = new Gson();
 	}
 
 	@Override
@@ -103,8 +109,52 @@ public class CommandLineJujuClient implements JujuClient {
 	public PoolSizeSummary getPoolSize() throws IOException {
 		ensureConfigured();
 
-		String output = command("juju", "status", "--format=yaml");
+		String output = command("juju", "status", "--format=json");
+		JsonObject jsonOutput = this.gson.fromJson(output, JsonObject.class);
 
+		switch (this.config.getMode()) {
+		case MACHINES:
+			return getMachinePoolSummary(jsonOutput);
+		case UNITS:
+			return getUnitPoolSummary(jsonOutput);
+		default:
+			throw new RuntimeException(
+					String.format("Programmer error, configuration mode %s is unknown", this.config.getMode()));
+		}
+	}
+
+	private PoolSizeSummary getUnitPoolSummary(JsonObject jsonOutput) {
+		int active;
+		int allocated;
+		int desiredSize = Integer.MAX_VALUE;
+
+		JsonElement services = jsonOutput.get("services");
+
+		PoolSizeSummary poolSizeSummary = new PoolSizeSummary(desiredSize, allocated, active);
+
+		return poolSizeSummary;
+	}
+
+	private PoolSizeSummary getMachinePoolSummary(JsonObject jsonOutput) {
+		int active = 0;
+		int allocated;
+		int desiredSize = Integer.MAX_VALUE;
+
+		JsonObject machines = jsonOutput.get("machines").getAsJsonObject();
+		Set<Entry<String, JsonElement>> entries = machines.entrySet();
+
+		for (Entry<String, JsonElement> machineEntry : entries) {
+			final String agentState = machineEntry.getValue().getAsJsonObject().get("agent-state").getAsString();
+			if (agentState.equals("started")) {
+				active++;
+			}
+		}
+
+		allocated = entries.size();
+
+		PoolSizeSummary poolSizeSummary = new PoolSizeSummary(desiredSize, allocated, active);
+
+		return poolSizeSummary;
 	}
 
 	@Override

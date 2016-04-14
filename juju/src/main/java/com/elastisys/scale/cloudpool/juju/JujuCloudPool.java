@@ -177,6 +177,7 @@ public class JujuCloudPool implements CloudPool {
 		PoolSizeSummary poolSize;
 		try {
 			poolSize = this.jujuClient.getPoolSize();
+			poolSize = new PoolSizeSummary(this.desiredSize.get(), poolSize.getAllocated(), poolSize.getActive());
 		} catch (IOException e) {
 			throw new CloudPoolException("Failed to get pool size", e);
 		}
