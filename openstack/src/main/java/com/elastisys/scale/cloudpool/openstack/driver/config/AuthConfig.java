@@ -10,8 +10,8 @@ import com.google.common.base.Objects;
  * identity service (Keystone).
  * <p/>
  * The {@link OpenStackPoolDriver} can be configured to use either use version 2
- * or version 3 of the <a
- * href="http://docs.openstack.org/developer/keystone/http-api.html#history"
+ * or version 3 of the
+ * <a href="http://docs.openstack.org/developer/keystone/http-api.html#history"
  * >identity HTTP API</a>.
  *
  * @see OpenStackPoolDriverConfig
@@ -34,14 +34,14 @@ public class AuthConfig {
 	 * {@link AuthV3Credentials} need to be specified, but not both.
 	 *
 	 * @param keystoneUrl
-	 *            Endpoint URL of the OpenStack authentication service
-	 *            (Keystone).
+	 *                Endpoint URL of the OpenStack authentication service
+	 *                (Keystone).
 	 * @param v2Credentials
-	 *            Version 2 type authentication credentials. May be
-	 *            <code>null</code> if version 3 credentials are given.
+	 *                Version 2 type authentication credentials. May be
+	 *                <code>null</code> if version 3 credentials are given.
 	 * @param v3Credentials
-	 *            Version 3 type authentication credentials. May be
-	 *            <code>null</code> if version 2 credentials are given.
+	 *                Version 3 type authentication credentials. May be
+	 *                <code>null</code> if version 2 credentials are given.
 	 */
 	public AuthConfig(String keystoneUrl, AuthV2Credentials v2Credentials,
 			AuthV3Credentials v3Credentials) {
@@ -73,8 +73,8 @@ public class AuthConfig {
 	}
 
 	/**
-	 * Returns <code>true</code> if version 2 type authentication credentials
-	 * are used.
+	 * Returns <code>true</code> if version 2 type authentication
+	 * credentials are used.
 	 *
 	 * @return
 	 */
@@ -83,8 +83,8 @@ public class AuthConfig {
 	}
 
 	/**
-	 * Returns <code>true</code> if version 3 type authentication credentials
-	 * are used.
+	 * Returns <code>true</code> if version 3 type authentication
+	 * credentials are used.
 	 *
 	 * @return
 	 */
@@ -118,5 +118,9 @@ public class AuthConfig {
 		}
 		return super.equals(obj);
 	}
-	// TODO: equals, hashCode
+
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(keystoneUrl, v2Credentials, v3Credentials);
+	}
 }
