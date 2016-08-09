@@ -18,6 +18,9 @@ hs_err_pid*
 **/.settings
 **/.project
 **/.classpath
+# IntelliJ
+.idea/
+*.iml
 # Maven
 target
 **/target
