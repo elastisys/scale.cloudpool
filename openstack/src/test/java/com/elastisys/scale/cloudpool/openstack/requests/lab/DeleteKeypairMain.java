@@ -3,7 +3,7 @@ package com.elastisys.scale.cloudpool.openstack.requests.lab;
 import org.openstack4j.api.OSClient;
 import org.openstack4j.api.compute.KeypairService;
 import org.openstack4j.core.transport.internal.HttpLoggingFilter;
-import org.openstack4j.model.compute.ActionResponse;
+import org.openstack4j.model.common.ActionResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

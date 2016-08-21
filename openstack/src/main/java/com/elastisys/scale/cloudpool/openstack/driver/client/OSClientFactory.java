@@ -3,10 +3,14 @@ package com.elastisys.scale.cloudpool.openstack.driver.client;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.openstack4j.api.OSClient;
+import org.openstack4j.api.OSClient.OSClientV2;
+import org.openstack4j.api.OSClient.OSClientV3;
 import org.openstack4j.core.transport.Config;
 import org.openstack4j.model.common.Identifier;
 import org.openstack4j.openstack.OSFactory;
 import org.openstack4j.openstack.internal.OSClientSession;
+import org.openstack4j.openstack.internal.OSClientSession.OSClientSessionV2;
+import org.openstack4j.openstack.internal.OSClientSession.OSClientSessionV3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,13 +110,23 @@ public class OSClientFactory {
 		// check if a client session is already bound to this thread and, if so,
 		// return that client.
 		if (OSClientSession.getCurrent() != null) {
-			return OSClientSession.getCurrent();
+			if (this.authenticatedClient instanceof OSClientV2) {
+			    return (OSClientSessionV2) OSClientSession.getCurrent();
+			} else {
+			    return (OSClientSessionV3) OSClientSession.getCurrent();
+			}
 		} else {
 			// if no client session is already bound to this thread, a copy
 			// that reuses the same auth token as the template client is bound
 			// to serve the current thread.
-			OSClient threadClient = OSFactory
-					.clientFromAccess(this.authenticatedClient.getAccess());
+			OSClient threadClient;
+			if (this.authenticatedClient instanceof OSClientV2) {
+				OSClientV2 client = (OSClientV2) this.authenticatedClient;
+				threadClient = OSFactory.clientFromAccess(client.getAccess());
+			} else {
+				OSClientV3 client = (OSClientV3) this.authenticatedClient;
+				threadClient = OSFactory.clientFromToken(client.getToken());
+			}
 			return threadClient.useRegion(this.apiAccessConfig.getRegion());
 		}
 	}
@@ -172,13 +186,13 @@ public class OSClientFactory {
 	 * schemes.
 	 */
 	interface OSClientCreator {
-		OSClient fromV2Auth(String keystoneUrl, String tenantName, String user,
+		OSClientV2 fromV2Auth(String keystoneUrl, String tenantName, String user,
 				String password);
 
-		OSClient fromProjectScopedV3Auth(String keystoneUrl, String projectId,
+		OSClientV3 fromProjectScopedV3Auth(String keystoneUrl, String projectId,
 				String userId, String password);
 
-		OSClient fromDomainScopedV3Auth(String keystoneUrl, String domainId,
+		OSClientV3 fromDomainScopedV3Auth(String keystoneUrl, String domainId,
 				String userId, String password);
 	}
 
@@ -218,9 +232,9 @@ public class OSClientFactory {
 		}
 
 		@Override
-		public OSClient fromV2Auth(String keystoneUrl, String tenantName,
+		public OSClientV2 fromV2Auth(String keystoneUrl, String tenantName,
 				String user, String password) {
-			return OSFactory.builder().withConfig(clientConfig())
+			return OSFactory.builderV2().withConfig(clientConfig())
 					.endpoint(keystoneUrl).credentials(user, password)
 					.tenantName(tenantName).authenticate();
 		}
@@ -232,7 +246,7 @@ public class OSClientFactory {
 		}
 
 		@Override
-		public OSClient fromProjectScopedV3Auth(String keystoneUrl,
+		public OSClientV3 fromProjectScopedV3Auth(String keystoneUrl,
 				String projectId, String userId, String password) {
 			return OSFactory.builderV3().withConfig(clientConfig())
 					.endpoint(keystoneUrl).credentials(userId, password)
@@ -242,7 +256,7 @@ public class OSClientFactory {
 		}
 
 		@Override
-		public OSClient fromDomainScopedV3Auth(String keystoneUrl,
+		public OSClientV3 fromDomainScopedV3Auth(String keystoneUrl,
 				String domainId, String userId, String password) {
 			return OSFactory.builderV3().withConfig(clientConfig())
 					.endpoint(keystoneUrl).credentials(userId, password)
