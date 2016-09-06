@@ -1,6 +1,7 @@
 package com.elastisys.scale.cloudpool.openstack.requests.lab;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import org.openstack4j.core.transport.internal.HttpLoggingFilter;
@@ -17,16 +18,15 @@ public class CreateServerMain {
 	private static Logger LOG = LoggerFactory.getLogger(CreateServerMain.class);
 
 	public static void main(String[] args) throws Exception {
-		Map<String, String> metadata = ImmutableMap.of("elastisys:cloudPool",
-				"cluster");
-		String encodedUserData = Base64Utils.toBase64("#!/bin/bash",
-				"sudo apt-get update -qy", "sudo apt-get install -qy apache2");
+		Map<String, String> metadata = ImmutableMap.of("elastisys:cloudPool", "cluster");
+		String encodedUserData = Base64Utils.toBase64("#!/bin/bash", "sudo apt-get update -qy",
+				"sudo apt-get install -qy apache2");
 
 		HttpLoggingFilter.toggleLogging(true);
-		CreateServerRequest request = new CreateServerRequest(
-				new OSClientFactory(DriverConfigLoader.loadDefault()),
-				"server1", "m1.small", "Ubuntu Server 14.04 64 bit",
-				"instancekey", Arrays.asList("web"), encodedUserData, metadata);
+		List<String> networks = null;
+		CreateServerRequest request = new CreateServerRequest(new OSClientFactory(DriverConfigLoader.loadDefault()),
+				"server1", "m1.small", "Ubuntu Trusty 14.04", "instancekey", Arrays.asList("web"), networks,
+				encodedUserData, metadata);
 		Server createdServer = request.call();
 		LOG.info("created server: {}", createdServer);
 	}

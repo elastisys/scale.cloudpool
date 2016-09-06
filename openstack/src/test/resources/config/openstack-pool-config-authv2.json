@@ -11,6 +11,7 @@
           }
         },    
         "region": "RegionTwo", 
+        "networks": ["private-net"],
         "assignFloatingIp": false
       }
     },

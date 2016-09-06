@@ -47,16 +47,13 @@ public class TestOpenStackPoolDriverConfiguration {
 	 */
 	@Test
 	public void configureWithV2Auth() {
-		BaseCloudPoolConfig config = loadCloudPoolConfig(
-				"config/openstack-pool-config-authv2.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig("config/openstack-pool-config-authv2.json");
 		this.driver.configure(config);
 
 		OpenStackPoolDriverConfig expectedDriverConfig = new OpenStackPoolDriverConfig(
 				new AuthConfig("http://nova.host.com:5000/v2.0",
-						new AuthV2Credentials("tenant", "clouduser",
-								"cloudpass"),
-						null),
-				"RegionTwo", false);
+						new AuthV2Credentials("tenant", "clouduser", "cloudpass"), null),
+				"RegionTwo", Arrays.asList("private-net"), false);
 		assertTrue(this.driver.isConfigured());
 		assertThat(this.driver.getPoolName(), is("my-scaling-pool"));
 		assertThat(this.driver.config(), is(expectedDriverConfig));
@@ -71,15 +68,13 @@ public class TestOpenStackPoolDriverConfiguration {
 	 */
 	@Test
 	public void configureWithDomainScopedV3Auth() {
-		BaseCloudPoolConfig config = loadCloudPoolConfig(
-				"config/openstack-pool-config-authv3-domain-scoped.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig("config/openstack-pool-config-authv3-domain-scoped.json");
 		this.driver.configure(config);
 
 		OpenStackPoolDriverConfig expectedDriverConfig = new OpenStackPoolDriverConfig(
 				new AuthConfig("http://nova.host.com:5000/v3", null,
-						new AuthV3Credentials(new Scope("domain_id", null),
-								"user_id", "secret")),
-				"RegionTwo", false);
+						new AuthV3Credentials(new Scope("domain_id", null), "user_id", "secret")),
+				"RegionTwo", null, false);
 		assertTrue(this.driver.isConfigured());
 		assertThat(this.driver.getPoolName(), is("my-scaling-pool2"));
 		assertThat(this.driver.config(), is(expectedDriverConfig));
@@ -94,15 +89,13 @@ public class TestOpenStackPoolDriverConfiguration {
 	 */
 	@Test
 	public void configureWithProjectScopedV3Auth() {
-		BaseCloudPoolConfig config = loadCloudPoolConfig(
-				"config/openstack-pool-config-authv3-project-scoped.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig("config/openstack-pool-config-authv3-project-scoped.json");
 		this.driver.configure(config);
 
 		OpenStackPoolDriverConfig expectedDriverConfig = new OpenStackPoolDriverConfig(
 				new AuthConfig("http://nova.host.com:5000/v3", null,
-						new AuthV3Credentials(new Scope(null, "project_id"),
-								"user_id", "secret")),
-				"RegionTwo", false);
+						new AuthV3Credentials(new Scope(null, "project_id"), "user_id", "secret")),
+				"RegionTwo", null, false);
 		assertTrue(this.driver.isConfigured());
 		assertThat(this.driver.getPoolName(), is("my-scaling-pool3"));
 		assertThat(this.driver.config(), is(expectedDriverConfig));
@@ -116,39 +109,33 @@ public class TestOpenStackPoolDriverConfiguration {
 		assertFalse(this.driver.isConfigured());
 
 		// configure
-		BaseCloudPoolConfig config1 = loadCloudPoolConfig(
-				"config/openstack-pool-config-authv3-project-scoped.json");
+		BaseCloudPoolConfig config1 = loadCloudPoolConfig("config/openstack-pool-config-authv3-project-scoped.json");
 		this.driver.configure(config1);
-		OpenStackPoolDriverConfig expectedDriverConfig = JsonUtils.toObject(
-				config1.getCloudPool().getDriverConfig(),
+		OpenStackPoolDriverConfig expectedDriverConfig = JsonUtils.toObject(config1.getCloudPool().getDriverConfig(),
 				OpenStackPoolDriverConfig.class);
 		assertThat(this.driver.getPoolName(), is("my-scaling-pool3"));
 		assertThat(this.driver.config(), is(expectedDriverConfig));
 
 		// re-configure
-		BaseCloudPoolConfig config2 = loadCloudPoolConfig(
-				"config/openstack-pool-config-authv2.json");
+		BaseCloudPoolConfig config2 = loadCloudPoolConfig("config/openstack-pool-config-authv2.json");
 		this.driver.configure(config2);
-		expectedDriverConfig = JsonUtils.toObject(
-				config2.getCloudPool().getDriverConfig(),
+		expectedDriverConfig = JsonUtils.toObject(config2.getCloudPool().getDriverConfig(),
 				OpenStackPoolDriverConfig.class);
 		assertThat(this.driver.getPoolName(), is("my-scaling-pool"));
 		assertThat(this.driver.config(), is(expectedDriverConfig));
 	}
 
 	@Test(expected = IllegalStateException.class)
-	public void invokeStartMachineBeforeBeingConfigured()
-			throws CloudPoolException {
-		String encodedUserData = Base64Utils.toBase64("#!/bin/bash",
-				"sudo apt-get update -qy", "sudo apt-get install -qy apache2");
-		ScaleOutConfig scaleUpConfig = new ScaleOutConfig("size", "image",
-				"keyPair", Arrays.asList("web"), encodedUserData);
+	public void invokeStartMachineBeforeBeingConfigured() throws CloudPoolException {
+		String encodedUserData = Base64Utils.toBase64("#!/bin/bash", "sudo apt-get update -qy",
+				"sudo apt-get install -qy apache2");
+		ScaleOutConfig scaleUpConfig = new ScaleOutConfig("size", "image", "keyPair", Arrays.asList("web"),
+				encodedUserData);
 		this.driver.startMachines(2, scaleUpConfig);
 	}
 
 	@Test(expected = IllegalStateException.class)
-	public void invokeListMachinesBeforeBeingConfigured()
-			throws CloudPoolException {
+	public void invokeListMachinesBeforeBeingConfigured() throws CloudPoolException {
 		this.driver.listMachines();
 	}
 
@@ -173,10 +160,8 @@ public class TestOpenStackPoolDriverConfiguration {
 	}
 
 	@Test(expected = IllegalStateException.class)
-	public void invokeSetMembershipStatusStateBeforeBeingConfigured()
-			throws Exception {
-		this.driver.setMembershipStatus("i-1",
-				MembershipStatus.defaultStatus());
+	public void invokeSetMembershipStatusStateBeforeBeingConfigured() throws Exception {
+		this.driver.setMembershipStatus("i-1", MembershipStatus.defaultStatus());
 	}
 
 	@Test(expected = IllegalStateException.class)
@@ -186,83 +171,71 @@ public class TestOpenStackPoolDriverConfiguration {
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureMissingAuth() {
-		BaseCloudPoolConfig config = loadCloudPoolConfig(
-				"config/config-missing-auth.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig("config/config-missing-auth.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithAuthV2Credentials() {
-		BaseCloudPoolConfig config = loadCloudPoolConfig(
-				"config/authv2-missing-v2credentials.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv2-missing-v2credentials.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithAuthV2MissingKeystoneUrl() {
-		BaseCloudPoolConfig config = loadCloudPoolConfig(
-				"config/authv2-missing-keystone.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv2-missing-keystone.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithAuthV2MissingUser() {
-		BaseCloudPoolConfig config = loadCloudPoolConfig(
-				"config/authv2-missing-user.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv2-missing-user.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithAuthV2MissingTenant() {
-		BaseCloudPoolConfig config = loadCloudPoolConfig(
-				"config/authv2-missing-tenant.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv2-missing-tenant.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithAuthV2MissingPassword() {
-		BaseCloudPoolConfig config = loadCloudPoolConfig(
-				"config/authv2-missing-password.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv2-missing-password.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithAuthV3MissingKeystoneUrl() {
-		BaseCloudPoolConfig config = loadCloudPoolConfig(
-				"config/authv3-missing-keystone.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv3-missing-keystone.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithAuthV3MissingPassword() {
-		BaseCloudPoolConfig config = loadCloudPoolConfig(
-				"config/authv3-missing-password.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv3-missing-password.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithAuthV3MissingScopeSpecifier() {
-		BaseCloudPoolConfig config = loadCloudPoolConfig(
-				"config/authv3-missing-scope-specifier.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv3-missing-scope-specifier.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithAuthV3MissingScope() {
-		BaseCloudPoolConfig config = loadCloudPoolConfig(
-				"config/authv3-missing-scope.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv3-missing-scope.json");
 		this.driver.configure(config);
 	}
 
 	@Test(expected = CloudPoolDriverException.class)
 	public void configureWithAuthV3MissingUser() {
-		BaseCloudPoolConfig config = loadCloudPoolConfig(
-				"config/authv3-missing-user.json");
+		BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv3-missing-user.json");
 		this.driver.configure(config);
 	}
 
 	private BaseCloudPoolConfig loadCloudPoolConfig(String resourcePath) {
-		return JsonUtils.toObject(JsonUtils.parseJsonResource(resourcePath),
-				BaseCloudPoolConfig.class);
+		return JsonUtils.toObject(JsonUtils.parseJsonResource(resourcePath), BaseCloudPoolConfig.class);
 	}
 }
