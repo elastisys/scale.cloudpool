@@ -7,7 +7,7 @@ import org.openstack4j.model.compute.Flavor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
+import com.elastisys.scale.commons.openstack.OSClientFactory;
 import com.google.common.collect.ImmutableList;
 
 /**

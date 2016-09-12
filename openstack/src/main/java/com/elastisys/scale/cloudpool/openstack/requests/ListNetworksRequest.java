@@ -6,7 +6,7 @@ import java.util.List;
 import org.openstack4j.api.OSClient;
 import org.openstack4j.model.network.Network;
 
-import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
+import com.elastisys.scale.commons.openstack.OSClientFactory;
 
 /**
  * An OpenStack request task that, when executed, retrieves all available

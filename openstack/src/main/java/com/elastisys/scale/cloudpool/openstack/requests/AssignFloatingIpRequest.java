@@ -12,10 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
-import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
 import com.elastisys.scale.cloudpool.openstack.tasks.ServerIpAddressRequester;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
+import com.elastisys.scale.commons.openstack.OSClientFactory;
 import com.google.common.base.Predicate;
 
 /**
@@ -26,20 +26,18 @@ import com.google.common.base.Predicate;
  * thrown.
  */
 public class AssignFloatingIpRequest extends AbstractOpenstackRequest<String> {
-	static final Logger LOG = LoggerFactory
-			.getLogger(AssignFloatingIpRequest.class);
+	static final Logger LOG = LoggerFactory.getLogger(AssignFloatingIpRequest.class);
 
 	private final Server server;
 
 	/**
 	 * Creates a new {@link AssignFloatingIpRequest}.
-	 * 
+	 *
 	 * @param clientFactory
 	 *            OpenStack API client factory.
 	 * @param server
 	 */
-	public AssignFloatingIpRequest(OSClientFactory clientFactory,
-			Server server) {
+	public AssignFloatingIpRequest(OSClientFactory clientFactory, Server server) {
 		super(clientFactory);
 		this.server = server;
 	}
@@ -49,15 +47,12 @@ public class AssignFloatingIpRequest extends AbstractOpenstackRequest<String> {
 		try {
 			return assignFloatingIp(api, this.server);
 		} catch (Exception e) {
-			throw new CloudPoolDriverException(format(
-					"failed to assign floating IP "
-							+ "address to server \"%s\": %s",
+			throw new CloudPoolDriverException(format("failed to assign floating IP " + "address to server \"%s\": %s",
 					this.server.getId(), e.getMessage()), e);
 		}
 	}
 
-	private String assignFloatingIp(OSClient api, Server server)
-			throws Exception {
+	private String assignFloatingIp(OSClient api, Server server) throws Exception {
 		LOG.debug("assigning a floating IP address to {} ...", server.getId());
 		// It appears as though a server must have a private IP address before a
 		// floating IP can be assigned
@@ -66,8 +61,7 @@ public class AssignFloatingIpRequest extends AbstractOpenstackRequest<String> {
 		ComputeFloatingIPService floatingIpApi = api.compute().floatingIps();
 		FloatingIP floatingIp = acquireFloatingIp(floatingIpApi);
 		String ipAddress = floatingIp.getFloatingIpAddress();
-		LOG.debug("assigning floating IP {} to server {}", ipAddress,
-				server.getId());
+		LOG.debug("assigning floating IP {} to server {}", ipAddress, server.getId());
 		floatingIpApi.addFloatingIP(server, ipAddress);
 		return ipAddress;
 	}
@@ -79,19 +73,16 @@ public class AssignFloatingIpRequest extends AbstractOpenstackRequest<String> {
 	 * @param floatingIpApi
 	 * @return
 	 */
-	private FloatingIP acquireFloatingIp(ComputeFloatingIPService floatingIpApi)
-			throws CloudPoolDriverException {
+	private FloatingIP acquireFloatingIp(ComputeFloatingIPService floatingIpApi) throws CloudPoolDriverException {
 		for (String floatingIpPool : floatingIpApi.getPoolNames()) {
 			LOG.debug("checking floating IP pool {}", floatingIpPool);
 			try {
 				return floatingIpApi.allocateIP(floatingIpPool);
 			} catch (Exception e) {
-				LOG.debug("failed to allocate floating IP from {}: {}",
-						floatingIpPool, e.getMessage());
+				LOG.debug("failed to allocate floating IP from {}: {}", floatingIpPool, e.getMessage());
 			}
 		}
-		throw new CloudPoolDriverException(
-				"failed to allocate floating IP address for server");
+		throw new CloudPoolDriverException("failed to allocate floating IP address for server");
 	}
 
 	/**
@@ -102,16 +93,13 @@ public class AssignFloatingIpRequest extends AbstractOpenstackRequest<String> {
 	 * @return The IP address(es) of the server.
 	 * @throws Exception
 	 */
-	private Addresses waitForPrivateIpAddress(OSClient api, String serverId)
-			throws Exception {
+	private Addresses waitForPrivateIpAddress(OSClient api, String serverId) throws Exception {
 		String taskName = String.format("ip-address-waiter{%s}", serverId);
-		ServerIpAddressRequester serverIpRequester = new ServerIpAddressRequester(
-				api, serverId);
+		ServerIpAddressRequester serverIpRequester = new ServerIpAddressRequester(api, serverId);
 		int fixedDelay = 6;
 		int maxRetries = 10;
-		Retryable<Addresses> retryer = Retryers.fixedDelayRetryer(taskName,
-				serverIpRequester, fixedDelay, SECONDS, maxRetries,
-				ipAddressAssigned());
+		Retryable<Addresses> retryer = Retryers.fixedDelayRetryer(taskName, serverIpRequester, fixedDelay, SECONDS,
+				maxRetries, ipAddressAssigned());
 
 		return retryer.call();
 	}

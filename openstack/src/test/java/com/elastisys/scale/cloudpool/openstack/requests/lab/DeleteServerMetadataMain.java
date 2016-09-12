@@ -2,8 +2,8 @@ package com.elastisys.scale.cloudpool.openstack.requests.lab;
 
 import java.util.List;
 
-import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
 import com.elastisys.scale.cloudpool.openstack.requests.DeleteServerMetadataRequest;
+import com.elastisys.scale.commons.openstack.OSClientFactory;
 import com.google.common.collect.ImmutableList;
 
 public class DeleteServerMetadataMain {
@@ -13,8 +13,7 @@ public class DeleteServerMetadataMain {
 
 	public static void main(String[] args) {
 		List<String> metadataKeys = ImmutableList.of("key1");
-		new DeleteServerMetadataRequest(
-				new OSClientFactory(DriverConfigLoader.loadDefault()), serverId,
-				metadataKeys).call();
+		new DeleteServerMetadataRequest(new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig()),
+				serverId, metadataKeys).call();
 	}
 }

@@ -20,7 +20,7 @@ import org.openstack4j.model.network.Network;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
-import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
+import com.elastisys.scale.commons.openstack.OSClientFactory;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.common.base.Charsets;
 

@@ -10,8 +10,8 @@ import org.openstack4j.model.compute.Keypair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
 import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
+import com.elastisys.scale.commons.openstack.OSClientFactory;
 import com.google.common.io.Files;
 
 public class CreateKeypairMain {
@@ -22,16 +22,14 @@ public class CreateKeypairMain {
 	private static final String keyPairName = "myinstancekey";
 
 	/** TODO: change to public key to upload */
-	private static final File publicKeyFile = Paths.get(System.getenv("HOME"),
-			"keys", "citycloud", "instancekey.pem.pub").toFile();
+	private static final File publicKeyFile = Paths
+			.get(System.getenv("HOME"), "keys", "citycloud", "instancekey.pem.pub").toFile();
 
 	public static void main(String[] args) throws Exception {
 		HttpLoggingFilter.toggleLogging(false);
-		OpenStackPoolDriverConfig driverConfig = DriverConfigLoader
-				.loadDefault();
+		OpenStackPoolDriverConfig driverConfig = DriverConfigLoader.loadDefault();
 
-		OSClient client = new OSClientFactory(driverConfig)
-				.authenticatedClient();
+		OSClient client = new OSClientFactory(driverConfig.toApiAccessConfig()).authenticatedClient();
 		KeypairService keyApi = client.compute().keypairs();
 
 		String publicKeyContent = new String(Files.toByteArray(publicKeyFile));

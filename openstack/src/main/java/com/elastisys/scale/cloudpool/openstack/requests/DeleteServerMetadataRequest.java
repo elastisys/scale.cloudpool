@@ -10,14 +10,13 @@ import org.openstack4j.api.compute.ServerService;
 import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
+import com.elastisys.scale.commons.openstack.OSClientFactory;
 
 /**
  * An Openstack request that, when executed, deletes selected tags from a
  * {@link Server}'s metadata.
  */
-public class DeleteServerMetadataRequest
-		extends AbstractOpenstackRequest<Void> {
+public class DeleteServerMetadataRequest extends AbstractOpenstackRequest<Void> {
 
 	/** The id of the server whose metadata is to be updated. */
 	private final String serverId;
@@ -36,8 +35,8 @@ public class DeleteServerMetadataRequest
 	 * @param metadataKeysToDelete
 	 *            Meta data tags to be removed from the server.
 	 */
-	public DeleteServerMetadataRequest(OSClientFactory clientFactory,
-			String serverId, List<String> metadataKeysToDelete) {
+	public DeleteServerMetadataRequest(OSClientFactory clientFactory, String serverId,
+			List<String> metadataKeysToDelete) {
 		super(clientFactory);
 
 		checkNotNull(serverId, "server id cannot be null");
@@ -53,8 +52,7 @@ public class DeleteServerMetadataRequest
 		Server server = serverApi.get(this.serverId);
 		if (server == null) {
 			throw new NotFoundException(
-					format("failed to update meta data on server '%s': "
-							+ "server not found", this.serverId));
+					format("failed to update meta data on server '%s': " + "server not found", this.serverId));
 		}
 		// delete tags
 		for (String metadataKey : this.metadataKeysToDelete) {

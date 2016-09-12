@@ -7,6 +7,10 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
+import com.elastisys.scale.commons.openstack.AuthConfig;
+import com.elastisys.scale.commons.openstack.AuthV3Credentials;
+import com.elastisys.scale.commons.openstack.Scope;
+
 public class TestOpenStackPoolDriverConfig {
 
 	@Test

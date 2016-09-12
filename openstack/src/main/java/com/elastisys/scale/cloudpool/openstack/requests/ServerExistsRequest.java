@@ -3,7 +3,7 @@ package com.elastisys.scale.cloudpool.openstack.requests;
 import org.openstack4j.api.OSClient;
 import org.openstack4j.model.compute.Server;
 
-import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
+import com.elastisys.scale.commons.openstack.OSClientFactory;
 
 /**
  * A request that, when called, determines if a particular {@link Server}

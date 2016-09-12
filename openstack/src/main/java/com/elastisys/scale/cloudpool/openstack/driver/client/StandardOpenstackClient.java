@@ -18,6 +18,7 @@ import com.elastisys.scale.cloudpool.openstack.requests.DeleteServerRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.GetServerRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.ListServersWithTagRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.UpdateServerMetadataRequest;
+import com.elastisys.scale.commons.openstack.OSClientFactory;
 import com.google.common.util.concurrent.Atomics;
 
 /**
@@ -31,6 +32,9 @@ public class StandardOpenstackClient implements OpenstackClient {
 	 */
 	private final AtomicReference<OSClientFactory> clientFactory;
 
+	/** The currently set configuration. */
+	private OpenStackPoolDriverConfig config;
+
 	public StandardOpenstackClient() {
 		this.clientFactory = Atomics.newReference();
 	}
@@ -39,8 +43,9 @@ public class StandardOpenstackClient implements OpenstackClient {
 	public void configure(OpenStackPoolDriverConfig configuration) {
 		checkArgument(configuration != null, "null configuration");
 
-		this.clientFactory.set(new OSClientFactory(configuration));
+		this.clientFactory.set(new OSClientFactory(configuration.toApiAccessConfig()));
 
+		this.config = configuration;
 	}
 
 	@Override
@@ -103,7 +108,7 @@ public class StandardOpenstackClient implements OpenstackClient {
 	}
 
 	private OpenStackPoolDriverConfig config() {
-		return this.clientFactory.get().getApiAccessConfig();
+		return this.config;
 	}
 
 }

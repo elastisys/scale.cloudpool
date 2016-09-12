@@ -4,7 +4,7 @@ import org.openstack4j.api.OSClient;
 import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
+import com.elastisys.scale.commons.openstack.OSClientFactory;
 
 /**
  * A request that, when called, requests meta data about a particular
@@ -35,9 +35,8 @@ public class GetServerRequest extends AbstractOpenstackRequest<Server> {
 	public Server doRequest(OSClient api) throws NotFoundException {
 		Server server = api.compute().servers().get(this.serverId);
 		if (server == null) {
-			throw new NotFoundException(String.format(
-					"failed to retrieve " + "server '%s' in region %s",
-					this.serverId, getApiAccessConfig().getRegion()));
+			throw new NotFoundException(String.format("failed to retrieve " + "server '%s' in region %s", this.serverId,
+					getApiAccessConfig().getRegion()));
 		}
 		return server;
 	}

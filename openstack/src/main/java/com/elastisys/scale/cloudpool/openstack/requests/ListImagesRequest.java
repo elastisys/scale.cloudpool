@@ -5,7 +5,7 @@ import java.util.List;
 import org.openstack4j.api.OSClient;
 import org.openstack4j.model.compute.Image;
 
-import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
+import com.elastisys.scale.commons.openstack.OSClientFactory;
 import com.google.common.collect.Lists;
 
 /**
@@ -27,8 +27,7 @@ public class ListImagesRequest extends AbstractOpenstackRequest<List<Image>> {
 
 	@Override
 	public List<Image> doRequest(OSClient api) {
-		List<Image> images = Lists
-				.newArrayList(api.compute().images().list(true));
+		List<Image> images = Lists.newArrayList(api.compute().images().list(true));
 		return images;
 	}
 }

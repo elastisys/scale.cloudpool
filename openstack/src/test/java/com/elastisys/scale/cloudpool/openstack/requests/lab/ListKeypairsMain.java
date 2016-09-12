@@ -9,8 +9,8 @@ import org.openstack4j.model.compute.Keypair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
 import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
+import com.elastisys.scale.commons.openstack.OSClientFactory;
 
 public class ListKeypairsMain {
 
@@ -18,11 +18,9 @@ public class ListKeypairsMain {
 
 	public static void main(String[] args) throws Exception {
 		HttpLoggingFilter.toggleLogging(false);
-		OpenStackPoolDriverConfig driverConfig = DriverConfigLoader
-				.loadDefault();
+		OpenStackPoolDriverConfig driverConfig = DriverConfigLoader.loadDefault();
 
-		OSClient client = new OSClientFactory(driverConfig)
-				.authenticatedClient();
+		OSClient client = new OSClientFactory(driverConfig.toApiAccessConfig()).authenticatedClient();
 		KeypairService keyApi = client.compute().keypairs();
 
 		listKeys(keyApi);

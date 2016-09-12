@@ -8,8 +8,8 @@ import org.openstack4j.api.OSClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
-import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
+import com.elastisys.scale.commons.openstack.ApiAccessConfig;
+import com.elastisys.scale.commons.openstack.OSClientFactory;
 
 /**
  * An abstract base class for implementing OpenStack request clients.
@@ -46,7 +46,7 @@ public abstract class AbstractOpenstackRequest<R> implements Callable<R> {
 
 	/**
 	 * Returns the OpenStack API client factory.
-	 * 
+	 *
 	 * @return
 	 */
 	public OSClientFactory getClientFactory() {
@@ -59,7 +59,7 @@ public abstract class AbstractOpenstackRequest<R> implements Callable<R> {
 	 *
 	 * @return
 	 */
-	public OpenStackPoolDriverConfig getApiAccessConfig() {
+	public ApiAccessConfig getApiAccessConfig() {
 		return this.clientFactory.getApiAccessConfig();
 	}
 

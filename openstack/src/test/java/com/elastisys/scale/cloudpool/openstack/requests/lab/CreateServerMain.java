@@ -9,8 +9,8 @@ import org.openstack4j.model.compute.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.elastisys.scale.cloudpool.openstack.driver.client.OSClientFactory;
 import com.elastisys.scale.cloudpool.openstack.requests.CreateServerRequest;
+import com.elastisys.scale.commons.openstack.OSClientFactory;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.common.collect.ImmutableMap;
 
@@ -24,9 +24,9 @@ public class CreateServerMain {
 
 		HttpLoggingFilter.toggleLogging(true);
 		List<String> networks = null;
-		CreateServerRequest request = new CreateServerRequest(new OSClientFactory(DriverConfigLoader.loadDefault()),
-				"server1", "m1.small", "Ubuntu Trusty 14.04", "instancekey", Arrays.asList("web"), networks,
-				encodedUserData, metadata);
+		CreateServerRequest request = new CreateServerRequest(
+				new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig()), "server1", "m1.small",
+				"Ubuntu Trusty 14.04", "instancekey", Arrays.asList("web"), networks, encodedUserData, metadata);
 		Server createdServer = request.call();
 		LOG.info("created server: {}", createdServer);
 	}

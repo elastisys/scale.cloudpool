@@ -19,12 +19,12 @@ import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.openstack.driver.client.OpenstackClient;
-import com.elastisys.scale.cloudpool.openstack.driver.config.AuthConfig;
-import com.elastisys.scale.cloudpool.openstack.driver.config.AuthV2Credentials;
-import com.elastisys.scale.cloudpool.openstack.driver.config.AuthV3Credentials;
 import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
-import com.elastisys.scale.cloudpool.openstack.driver.config.Scope;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.openstack.AuthConfig;
+import com.elastisys.scale.commons.openstack.AuthV2Credentials;
+import com.elastisys.scale.commons.openstack.AuthV3Credentials;
+import com.elastisys.scale.commons.openstack.Scope;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
 
 /**

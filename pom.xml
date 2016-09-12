@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <!-- Usage: As per the general contract of Maven builds a full build that compiles, 
     runs tests, packages and installs build artifacts (jar files) in the local Maven 
     repository can be executed via: mvn clean install. To generate a project site with 
@@ -53,8 +54,7 @@
     <java.version>1.8</java.version>
 
     <!-- scale.commons version to use -->
-    <commons.version>2.2.3</commons.version>
-    <openstack4j.version>3.0.2</openstack4j.version>
+    <commons.version>2.2.4-SNAPSHOT</commons.version>
   </properties>
 
   <dependencyManagement>
@@ -100,14 +100,9 @@
         <version>${commons.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.pacesys</groupId>
-        <artifactId>openstack4j-core</artifactId>
-        <version>${openstack4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.pacesys.openstack4j.connectors</groupId>
-        <artifactId>openstack4j-jersey2</artifactId>
-        <version>${openstack4j.version}</version>
+        <groupId>com.elastisys.scale</groupId>
+        <artifactId>commons.openstack</artifactId>
+        <version>${commons.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -284,7 +279,7 @@
         </configuration>
       </plugin>
       <!-- reports test coverage of unit tests -->
-      <!-- Note: cobertura doesn't work with Java7, unless -XX:-UseSplitVerifier
+      <!-- Note: cobertura doesn't work with Java7, unless -XX:-UseSplitVerifier 
         is given as JVM argument to surefire test plugin -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
@@ -305,8 +300,8 @@
         <artifactId>maven-checkstyle-plugin</artifactId>
         <version>2.10</version>
         <configuration>
-          <!-- make sure project-specific checkstyle rules are picked up from
-            the buildtools module -->
+          <!-- make sure project-specific checkstyle rules are picked up from the 
+            buildtools module -->
           <configLocation>checkstyle/checkstyle-rules.xml</configLocation>
         </configuration>
       </plugin>

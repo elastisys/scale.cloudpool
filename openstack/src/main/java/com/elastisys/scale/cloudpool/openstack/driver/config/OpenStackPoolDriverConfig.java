@@ -7,6 +7,9 @@ import java.util.List;
 
 import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriver;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.openstack.ApiAccessConfig;
+import com.elastisys.scale.commons.openstack.AuthConfig;
+import com.elastisys.scale.commons.openstack.OSClientFactory;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 
@@ -224,6 +227,17 @@ public class OpenStackPoolDriverConfig {
 	 */
 	public Integer getSocketTimeout() {
 		return Optional.fromNullable(this.socketTimeout).or(DEFAULT_SOCKET_TIMEOUT);
+	}
+
+	/**
+	 * Returns an {@link ApiAccessConfig} that can be used with an
+	 * {@link OSClientFactory} and corresponds to this
+	 * {@link OpenStackPoolDriverConfig}.
+	 *
+	 * @return
+	 */
+	public ApiAccessConfig toApiAccessConfig() {
+		return new ApiAccessConfig(this.auth, this.region);
 	}
 
 	/**
