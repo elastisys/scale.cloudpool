@@ -54,7 +54,7 @@
     <java.version>1.8</java.version>
 
     <!-- scale.commons version to use -->
-    <commons.version>2.2.4-SNAPSHOT</commons.version>
+    <commons.version>2.2.4</commons.version>
   </properties>
 
   <dependencyManagement>
