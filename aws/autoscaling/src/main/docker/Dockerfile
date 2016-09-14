@@ -1,6 +1,9 @@
-FROM java:openjdk-8-jdk
+FROM openjdk:8-jdk-alpine
 MAINTAINER Elastisys <techteam@elastisys.com>
-   
+
+# install bash shell in alpine linux
+RUN apk add --no-cache bash
+
 # install awsaspool server
 COPY ${project.build.finalName}.jar /opt/elastisys/awsaspool/awsaspool.jar
 COPY start.sh /opt/elastisys/awsaspool/start.sh
