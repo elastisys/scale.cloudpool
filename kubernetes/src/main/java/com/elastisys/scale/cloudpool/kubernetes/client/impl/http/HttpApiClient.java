@@ -19,36 +19,35 @@ import com.google.gson.JsonObject;
  */
 public interface HttpApiClient {
 
-	/**
-	 * Re-configures the {@link HttpApiClient} with a given set of
-	 * authentication credentials.
-	 *
-	 * @param config
-	 *            Authentication configuration.
-	 * @throws IllegalArgumentException
-	 */
-	public void configure(AuthConfig config) throws IllegalArgumentException;
+    /**
+     * Re-configures the {@link HttpApiClient} with a given set of
+     * authentication credentials.
+     *
+     * @param config
+     *            Authentication configuration.
+     * @throws IllegalArgumentException
+     */
+    public void configure(AuthConfig config) throws IllegalArgumentException;
 
-	/**
-	 * Performs a {@code GET} for a particular server URL. Returns the resulting
-	 * JSON response.
-	 *
-	 * @param url
-	 * @return
-	 * @throws HttpResponseException
-	 * @throws IOException
-	 */
-	JsonObject get(String url) throws HttpResponseException, IOException;
+    /**
+     * Performs a {@code GET} for a particular server URL. Returns the resulting
+     * JSON response.
+     *
+     * @param url
+     * @return
+     * @throws HttpResponseException
+     * @throws IOException
+     */
+    JsonObject get(String url) throws HttpResponseException, IOException;
 
-	/**
-	 * Performs a {@code PATCH} of the given data object against a particular
-	 * server URL. Returns the resulting JSON response.
-	 *
-	 * @param url
-	 * @return
-	 * @throws HttpResponseException
-	 * @throws IOException
-	 */
-	JsonObject patch(String url, JsonObject data)
-			throws HttpResponseException, IOException;
+    /**
+     * Performs a {@code PATCH} of the given data object against a particular
+     * server URL. Returns the resulting JSON response.
+     *
+     * @param url
+     * @return
+     * @throws HttpResponseException
+     * @throws IOException
+     */
+    JsonObject patch(String url, JsonObject data) throws HttpResponseException, IOException;
 }

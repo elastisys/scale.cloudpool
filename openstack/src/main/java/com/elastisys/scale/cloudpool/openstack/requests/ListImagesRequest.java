@@ -14,20 +14,20 @@ import com.google.common.collect.Lists;
  */
 public class ListImagesRequest extends AbstractOpenstackRequest<List<Image>> {
 
-	/**
-	 * Constructs a new {@link ListImagesRequest} task.
-	 *
-	 * @param clientFactory
-	 *            OpenStack API client factory.
-	 *
-	 */
-	public ListImagesRequest(OSClientFactory clientFactory) {
-		super(clientFactory);
-	}
+    /**
+     * Constructs a new {@link ListImagesRequest} task.
+     *
+     * @param clientFactory
+     *            OpenStack API client factory.
+     *
+     */
+    public ListImagesRequest(OSClientFactory clientFactory) {
+        super(clientFactory);
+    }
 
-	@Override
-	public List<Image> doRequest(OSClient api) {
-		List<Image> images = Lists.newArrayList(api.compute().images().list(true));
-		return images;
-	}
+    @Override
+    public List<Image> doRequest(OSClient api) {
+        List<Image> images = Lists.newArrayList(api.compute().images().list(true));
+        return images;
+    }
 }

@@ -33,153 +33,130 @@ import com.google.common.util.concurrent.Atomics;
  *
  */
 public class AwsAutoScalingClient implements AutoScalingClient {
-	private final AtomicReference<AwsAsPoolDriverConfig> config;
+    private final AtomicReference<AwsAsPoolDriverConfig> config;
 
-	public AwsAutoScalingClient() {
-		this.config = Atomics.newReference();
-	}
+    public AwsAutoScalingClient() {
+        this.config = Atomics.newReference();
+    }
 
-	@Override
-	public void configure(AwsAsPoolDriverConfig configuration) {
-		checkArgument(configuration != null, "null configuration");
-		this.config.set(configuration);
-	}
+    @Override
+    public void configure(AwsAsPoolDriverConfig configuration) {
+        checkArgument(configuration != null, "null configuration");
+        this.config.set(configuration);
+    }
 
-	@Override
-	public AutoScalingGroup getAutoScalingGroup(String autoScalingGroupName) {
-		checkArgument(isConfigured(),
-				"can't use client before it's configured");
+    @Override
+    public AutoScalingGroup getAutoScalingGroup(String autoScalingGroupName) {
+        checkArgument(isConfigured(), "can't use client before it's configured");
 
-		return new GetAutoScalingGroup(awsCredentials(), region(),
-				clientConfig(), autoScalingGroupName).call();
-	}
+        return new GetAutoScalingGroup(awsCredentials(), region(), clientConfig(), autoScalingGroupName).call();
+    }
 
-	@Override
-	public LaunchConfiguration getLaunchConfiguration(
-			String launchConfigurationName) {
-		checkArgument(isConfigured(),
-				"can't use client before it's configured");
+    @Override
+    public LaunchConfiguration getLaunchConfiguration(String launchConfigurationName) {
+        checkArgument(isConfigured(), "can't use client before it's configured");
 
-		return new GetLaunchConfiguration(awsCredentials(), region(),
-				clientConfig(), launchConfigurationName).call();
-	}
+        return new GetLaunchConfiguration(awsCredentials(), region(), clientConfig(), launchConfigurationName).call();
+    }
 
-	@Override
-	public List<Instance> getAutoScalingGroupMembers(
-			String autoScalingGroupName) {
-		checkArgument(isConfigured(),
-				"can't use client before it's configured");
+    @Override
+    public List<Instance> getAutoScalingGroupMembers(String autoScalingGroupName) {
+        checkArgument(isConfigured(), "can't use client before it's configured");
 
-		return new GetAutoScalingGroupInstances(awsCredentials(), region(),
-				clientConfig(), autoScalingGroupName).call();
-	}
+        return new GetAutoScalingGroupInstances(awsCredentials(), region(), clientConfig(), autoScalingGroupName)
+                .call();
+    }
 
-	@Override
-	public void setDesiredSize(String autoScalingGroupName, int desiredSize) {
-		checkArgument(isConfigured(),
-				"can't use client before it's configured");
+    @Override
+    public void setDesiredSize(String autoScalingGroupName, int desiredSize) {
+        checkArgument(isConfigured(), "can't use client before it's configured");
 
-		new SetDesiredAutoScalingGroupSize(awsCredentials(), region(),
-				clientConfig(), autoScalingGroupName, desiredSize).call();
-	}
+        new SetDesiredAutoScalingGroupSize(awsCredentials(), region(), clientConfig(), autoScalingGroupName,
+                desiredSize).call();
+    }
 
-	@Override
-	public void terminateInstance(String autoScalingGroupName,
-			String instanceId) throws NotFoundException {
-		checkArgument(isConfigured(),
-				"can't use client before it's configured");
+    @Override
+    public void terminateInstance(String autoScalingGroupName, String instanceId) throws NotFoundException {
+        checkArgument(isConfigured(), "can't use client before it's configured");
 
-		// verify that instance exists
-		getInstanceOrFail(instanceId);
+        // verify that instance exists
+        getInstanceOrFail(instanceId);
 
-		new TerminateAutoScalingGroupInstance(awsCredentials(), region(),
-				clientConfig(), instanceId).call();
-	}
+        new TerminateAutoScalingGroupInstance(awsCredentials(), region(), clientConfig(), instanceId).call();
+    }
 
-	@Override
-	public void attachInstance(String autoScalingGroupName, String instanceId)
-			throws NotFoundException {
-		checkArgument(isConfigured(),
-				"can't use client before it's configured");
+    @Override
+    public void attachInstance(String autoScalingGroupName, String instanceId) throws NotFoundException {
+        checkArgument(isConfigured(), "can't use client before it's configured");
 
-		// verify that instance exists
-		getInstanceOrFail(instanceId);
+        // verify that instance exists
+        getInstanceOrFail(instanceId);
 
-		new AttachAutoScalingGroupInstance(awsCredentials(), region(),
-				clientConfig(), autoScalingGroupName, instanceId).call();
-	}
+        new AttachAutoScalingGroupInstance(awsCredentials(), region(), clientConfig(), autoScalingGroupName, instanceId)
+                .call();
+    }
 
-	@Override
-	public void detachInstance(String autoScalingGroupName, String instanceId)
-			throws NotFoundException {
-		checkArgument(isConfigured(),
-				"can't use client before it's configured");
+    @Override
+    public void detachInstance(String autoScalingGroupName, String instanceId) throws NotFoundException {
+        checkArgument(isConfigured(), "can't use client before it's configured");
 
-		// verify that instance exists
-		getInstanceOrFail(instanceId);
+        // verify that instance exists
+        getInstanceOrFail(instanceId);
 
-		new DetachAutoScalingGroupInstance(awsCredentials(), region(),
-				clientConfig(), autoScalingGroupName, instanceId).call();
-	}
+        new DetachAutoScalingGroupInstance(awsCredentials(), region(), clientConfig(), autoScalingGroupName, instanceId)
+                .call();
+    }
 
-	@Override
-	public void tagInstance(String instanceId, List<Tag> tags)
-			throws NotFoundException {
-		checkArgument(isConfigured(),
-				"can't use client before it's configured");
+    @Override
+    public void tagInstance(String instanceId, List<Tag> tags) throws NotFoundException {
+        checkArgument(isConfigured(), "can't use client before it's configured");
 
-		// verify that instance exists
-		getInstanceOrFail(instanceId);
+        // verify that instance exists
+        getInstanceOrFail(instanceId);
 
-		new TagEc2Resources(awsCredentials(), region(), clientConfig(),
-				Arrays.asList(instanceId), tags).call();
-	}
+        new TagEc2Resources(awsCredentials(), region(), clientConfig(), Arrays.asList(instanceId), tags).call();
+    }
 
-	private Instance getInstanceOrFail(String instanceId)
-			throws NotFoundException {
-		checkArgument(isConfigured(),
-				"can't use client before it's configured");
+    private Instance getInstanceOrFail(String instanceId) throws NotFoundException {
+        checkArgument(isConfigured(), "can't use client before it's configured");
 
-		return new GetInstance(awsCredentials(), region(), clientConfig(),
-				instanceId).call();
-	}
+        return new GetInstance(awsCredentials(), region(), clientConfig(), instanceId).call();
+    }
 
-	private boolean isConfigured() {
-		return this.config.get() != null;
-	}
+    private boolean isConfigured() {
+        return this.config.get() != null;
+    }
 
-	private AwsAsPoolDriverConfig config() {
-		return this.config.get();
-	}
+    private AwsAsPoolDriverConfig config() {
+        return this.config.get();
+    }
 
-	/**
-	 * The AWS credentials that the client has been configured to use.
-	 *
-	 * @return
-	 */
-	private AWSCredentials awsCredentials() {
-		return new BasicAWSCredentials(config().getAwsAccessKeyId(),
-				config().getAwsSecretAccessKey());
-	}
+    /**
+     * The AWS credentials that the client has been configured to use.
+     *
+     * @return
+     */
+    private AWSCredentials awsCredentials() {
+        return new BasicAWSCredentials(config().getAwsAccessKeyId(), config().getAwsSecretAccessKey());
+    }
 
-	/**
-	 * The region that the client has been configured to operate against.
-	 *
-	 * @return
-	 */
-	private String region() {
-		return config().getRegion();
-	}
+    /**
+     * The region that the client has been configured to operate against.
+     *
+     * @return
+     */
+    private String region() {
+        return config().getRegion();
+    }
 
-	/**
-	 * Returns a {@link ClientConfiguration} that captures the connection
-	 * settings that the client has been configured to use.
-	 *
-	 * @return
-	 */
-	private ClientConfiguration clientConfig() {
-		return new ClientConfiguration()
-				.withConnectionTimeout(config().getConnectionTimeout())
-				.withSocketTimeout(config().getSocketTimeout());
-	}
+    /**
+     * Returns a {@link ClientConfiguration} that captures the connection
+     * settings that the client has been configured to use.
+     *
+     * @return
+     */
+    private ClientConfiguration clientConfig() {
+        return new ClientConfiguration().withConnectionTimeout(config().getConnectionTimeout())
+                .withSocketTimeout(config().getSocketTimeout());
+    }
 }

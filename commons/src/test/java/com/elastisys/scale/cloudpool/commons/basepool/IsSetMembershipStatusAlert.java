@@ -14,34 +14,30 @@ import com.elastisys.scale.commons.net.alerter.Alert;
 
 public class IsSetMembershipStatusAlert extends TypeSafeMatcher<Alert> {
 
-	private final String machineId;
-	private final MembershipStatus membershipStatus;
+    private final String machineId;
+    private final MembershipStatus membershipStatus;
 
-	public IsSetMembershipStatusAlert(String machineId,
-			MembershipStatus membershipStatus) {
-		this.machineId = machineId;
-		this.membershipStatus = membershipStatus;
-	}
+    public IsSetMembershipStatusAlert(String machineId, MembershipStatus membershipStatus) {
+        this.machineId = machineId;
+        this.membershipStatus = membershipStatus;
+    }
 
-	@Override
-	public boolean matchesSafely(Alert someAlert) {
-		String messagePattern = format(
-				"Membership status set to %s for machine %s",
-				this.membershipStatus, this.machineId);
-		return equal(AlertTopics.MEMBERSHIP_STATUS.name(), someAlert.getTopic())
-				&& someAlert.getMessage().contains(messagePattern);
-	}
+    @Override
+    public boolean matchesSafely(Alert someAlert) {
+        String messagePattern = format("Membership status set to %s for machine %s", this.membershipStatus,
+                this.machineId);
+        return equal(AlertTopics.MEMBERSHIP_STATUS.name(), someAlert.getTopic())
+                && someAlert.getMessage().contains(messagePattern);
+    }
 
-	@Override
-	public void describeTo(Description description) {
-		description.appendText(String.format(
-				"membership status alert (%s, %s)", this.machineId,
-				this.membershipStatus));
-	}
+    @Override
+    public void describeTo(Description description) {
+        description
+                .appendText(String.format("membership status alert (%s, %s)", this.machineId, this.membershipStatus));
+    }
 
-	@Factory
-	public static <T> Matcher<Alert> isMembershipStatusAlert(String machineId,
-			MembershipStatus membershipStatus) {
-		return new IsSetMembershipStatusAlert(machineId, membershipStatus);
-	}
+    @Factory
+    public static <T> Matcher<Alert> isMembershipStatusAlert(String machineId, MembershipStatus membershipStatus) {
+        return new IsSetMembershipStatusAlert(machineId, membershipStatus);
+    }
 }

@@ -15,29 +15,29 @@ import com.elastisys.scale.commons.openstack.OSClientFactory;
  */
 public class GetServerRequest extends AbstractOpenstackRequest<Server> {
 
-	/** The identifier of the server to get. */
-	private String serverId;
+    /** The identifier of the server to get. */
+    private String serverId;
 
-	/**
-	 * Creates a new {@link GetServerRequest}.
-	 *
-	 * @param clientFactory
-	 *            OpenStack API client factory.
-	 * @param serverId
-	 *            The id of the server to get.
-	 */
-	public GetServerRequest(OSClientFactory clientFactory, String serverId) {
-		super(clientFactory);
-		this.serverId = serverId;
-	}
+    /**
+     * Creates a new {@link GetServerRequest}.
+     *
+     * @param clientFactory
+     *            OpenStack API client factory.
+     * @param serverId
+     *            The id of the server to get.
+     */
+    public GetServerRequest(OSClientFactory clientFactory, String serverId) {
+        super(clientFactory);
+        this.serverId = serverId;
+    }
 
-	@Override
-	public Server doRequest(OSClient api) throws NotFoundException {
-		Server server = api.compute().servers().get(this.serverId);
-		if (server == null) {
-			throw new NotFoundException(String.format("failed to retrieve " + "server '%s' in region %s", this.serverId,
-					getApiAccessConfig().getRegion()));
-		}
-		return server;
-	}
+    @Override
+    public Server doRequest(OSClient api) throws NotFoundException {
+        Server server = api.compute().servers().get(this.serverId);
+        if (server == null) {
+            throw new NotFoundException(String.format("failed to retrieve " + "server '%s' in region %s", this.serverId,
+                    getApiAccessConfig().getRegion()));
+        }
+        return server;
+    }
 }

@@ -26,89 +26,89 @@ import com.google.common.util.concurrent.Atomics;
  */
 public class StandardOpenstackClient implements OpenstackClient {
 
-	/**
-	 * {@link OSClientFactory} configured to use the latest set
-	 * {@link OpenStackPoolDriverConfig}.
-	 */
-	private final AtomicReference<OSClientFactory> clientFactory;
+    /**
+     * {@link OSClientFactory} configured to use the latest set
+     * {@link OpenStackPoolDriverConfig}.
+     */
+    private final AtomicReference<OSClientFactory> clientFactory;
 
-	/** The currently set configuration. */
-	private OpenStackPoolDriverConfig config;
+    /** The currently set configuration. */
+    private OpenStackPoolDriverConfig config;
 
-	public StandardOpenstackClient() {
-		this.clientFactory = Atomics.newReference();
-	}
+    public StandardOpenstackClient() {
+        this.clientFactory = Atomics.newReference();
+    }
 
-	@Override
-	public void configure(OpenStackPoolDriverConfig configuration) {
-		checkArgument(configuration != null, "null configuration");
+    @Override
+    public void configure(OpenStackPoolDriverConfig configuration) {
+        checkArgument(configuration != null, "null configuration");
 
-		this.clientFactory.set(new OSClientFactory(configuration.toApiAccessConfig()));
+        this.clientFactory.set(new OSClientFactory(configuration.toApiAccessConfig()));
 
-		this.config = configuration;
-	}
+        this.config = configuration;
+    }
 
-	@Override
-	public List<Server> getServers(String tag, String tagValue) {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+    @Override
+    public List<Server> getServers(String tag, String tagValue) {
+        checkArgument(isConfigured(), "can't use client before it's configured");
 
-		return new ListServersWithTagRequest(clientFactory(), tag, tagValue).call();
-	}
+        return new ListServersWithTagRequest(clientFactory(), tag, tagValue).call();
+    }
 
-	@Override
-	public Server getServer(String serverId) throws NotFoundException {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+    @Override
+    public Server getServer(String serverId) throws NotFoundException {
+        checkArgument(isConfigured(), "can't use client before it's configured");
 
-		return new GetServerRequest(clientFactory(), serverId).call();
-	}
+        return new GetServerRequest(clientFactory(), serverId).call();
+    }
 
-	@Override
-	public Server launchServer(String serverName, ScaleOutConfig provisioningDetails, Map<String, String> tags) {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+    @Override
+    public Server launchServer(String serverName, ScaleOutConfig provisioningDetails, Map<String, String> tags) {
+        checkArgument(isConfigured(), "can't use client before it's configured");
 
-		CreateServerRequest request = new CreateServerRequest(clientFactory(), serverName,
-				provisioningDetails.getSize(), provisioningDetails.getImage(), provisioningDetails.getKeyPair(),
-				provisioningDetails.getSecurityGroups(), config().getNetworks(),
-				provisioningDetails.getEncodedUserData(), tags);
-		return request.call();
-	}
+        CreateServerRequest request = new CreateServerRequest(clientFactory(), serverName,
+                provisioningDetails.getSize(), provisioningDetails.getImage(), provisioningDetails.getKeyPair(),
+                provisioningDetails.getSecurityGroups(), config().getNetworks(),
+                provisioningDetails.getEncodedUserData(), tags);
+        return request.call();
+    }
 
-	@Override
-	public String assignFloatingIp(String serverId) throws NotFoundException {
-		Server server = getServer(serverId);
-		return new AssignFloatingIpRequest(clientFactory(), server).call();
-	}
+    @Override
+    public String assignFloatingIp(String serverId) throws NotFoundException {
+        Server server = getServer(serverId);
+        return new AssignFloatingIpRequest(clientFactory(), server).call();
+    }
 
-	@Override
-	public void terminateServer(String serverId) throws NotFoundException {
-		checkArgument(isConfigured(), "can't use client before it's configured");
-		new DeleteServerRequest(clientFactory(), serverId).call();
-	}
+    @Override
+    public void terminateServer(String serverId) throws NotFoundException {
+        checkArgument(isConfigured(), "can't use client before it's configured");
+        new DeleteServerRequest(clientFactory(), serverId).call();
+    }
 
-	@Override
-	public void tagServer(String serverId, Map<String, String> tags) {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+    @Override
+    public void tagServer(String serverId, Map<String, String> tags) {
+        checkArgument(isConfigured(), "can't use client before it's configured");
 
-		new UpdateServerMetadataRequest(clientFactory(), serverId, tags).call();
-	}
+        new UpdateServerMetadataRequest(clientFactory(), serverId, tags).call();
+    }
 
-	@Override
-	public void untagServer(String serverId, List<String> tagKeys) {
-		checkArgument(isConfigured(), "can't use client before it's configured");
+    @Override
+    public void untagServer(String serverId, List<String> tagKeys) {
+        checkArgument(isConfigured(), "can't use client before it's configured");
 
-		new DeleteServerMetadataRequest(clientFactory(), serverId, tagKeys).call();
-	}
+        new DeleteServerMetadataRequest(clientFactory(), serverId, tagKeys).call();
+    }
 
-	private boolean isConfigured() {
-		return config() != null;
-	}
+    private boolean isConfigured() {
+        return config() != null;
+    }
 
-	public OSClientFactory clientFactory() {
-		return this.clientFactory.get();
-	}
+    public OSClientFactory clientFactory() {
+        return this.clientFactory.get();
+    }
 
-	private OpenStackPoolDriverConfig config() {
-		return this.config;
-	}
+    private OpenStackPoolDriverConfig config() {
+        return this.config;
+    }
 
 }

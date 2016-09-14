@@ -14,23 +14,23 @@ import com.elastisys.scale.commons.openstack.OSClientFactory;
 
 public class ListKeypairsMain {
 
-	private static Logger LOG = LoggerFactory.getLogger(CreateServerMain.class);
+    private static Logger LOG = LoggerFactory.getLogger(CreateServerMain.class);
 
-	public static void main(String[] args) throws Exception {
-		HttpLoggingFilter.toggleLogging(false);
-		OpenStackPoolDriverConfig driverConfig = DriverConfigLoader.loadDefault();
+    public static void main(String[] args) throws Exception {
+        HttpLoggingFilter.toggleLogging(false);
+        OpenStackPoolDriverConfig driverConfig = DriverConfigLoader.loadDefault();
 
-		OSClient client = new OSClientFactory(driverConfig.toApiAccessConfig()).authenticatedClient();
-		KeypairService keyApi = client.compute().keypairs();
+        OSClient client = new OSClientFactory(driverConfig.toApiAccessConfig()).authenticatedClient();
+        KeypairService keyApi = client.compute().keypairs();
 
-		listKeys(keyApi);
-	}
+        listKeys(keyApi);
+    }
 
-	private static void listKeys(KeypairService keyApi) {
-		List<? extends Keypair> keypairs = keyApi.list();
-		LOG.info("found {} keypair(s)", keypairs.size());
-		for (Keypair keypair : keypairs) {
-			LOG.info("keypair: " + keypair);
-		}
-	}
+    private static void listKeys(KeypairService keyApi) {
+        List<? extends Keypair> keypairs = keyApi.list();
+        LOG.info("found {} keypair(s)", keypairs.size());
+        for (Keypair keypair : keypairs) {
+            LOG.info("keypair: " + keypair);
+        }
+    }
 }

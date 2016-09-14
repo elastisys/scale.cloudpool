@@ -23,27 +23,26 @@ import com.elastisys.scale.cloudpool.aws.commons.functions.InstanceStateToMachin
  */
 public class TestInstanceStateToMachineState {
 
-	@Test
-	public void convert() {
-		assertThat(convert(state(Pending)), is(MachineState.PENDING));
-		assertThat(convert(state(InstanceStateName.Running)),
-				is(MachineState.RUNNING));
-		assertThat(convert(state(ShuttingDown)), is(MachineState.TERMINATING));
-		assertThat(convert(state(Stopped)), is(MachineState.TERMINATED));
-		assertThat(convert(state(Stopping)), is(MachineState.TERMINATING));
-		assertThat(convert(state(Terminated)), is(MachineState.TERMINATED));
-	}
+    @Test
+    public void convert() {
+        assertThat(convert(state(Pending)), is(MachineState.PENDING));
+        assertThat(convert(state(InstanceStateName.Running)), is(MachineState.RUNNING));
+        assertThat(convert(state(ShuttingDown)), is(MachineState.TERMINATING));
+        assertThat(convert(state(Stopped)), is(MachineState.TERMINATED));
+        assertThat(convert(state(Stopping)), is(MachineState.TERMINATING));
+        assertThat(convert(state(Terminated)), is(MachineState.TERMINATED));
+    }
 
-	private InstanceState state(InstanceStateName stateName) {
-		return new InstanceState().withName(stateName);
-	}
+    private InstanceState state(InstanceStateName stateName) {
+        return new InstanceState().withName(stateName);
+    }
 
-	@Test(expected = IllegalArgumentException.class)
-	public void convertUnrecognizedState() {
-		convert(new InstanceState().withName("UNRECOGNIZED"));
-	}
+    @Test(expected = IllegalArgumentException.class)
+    public void convertUnrecognizedState() {
+        convert(new InstanceState().withName("UNRECOGNIZED"));
+    }
 
-	private MachineState convert(InstanceState instanceState) {
-		return new InstanceStateToMachineState().apply(instanceState);
-	}
+    private MachineState convert(InstanceState instanceState) {
+        return new InstanceStateToMachineState().apply(instanceState);
+    }
 }

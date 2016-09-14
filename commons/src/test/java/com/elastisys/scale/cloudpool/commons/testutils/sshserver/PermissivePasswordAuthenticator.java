@@ -17,13 +17,11 @@ import org.slf4j.LoggerFactory;
  */
 public class PermissivePasswordAuthenticator implements PasswordAuthenticator {
 
-	static final Logger LOG = LoggerFactory
-			.getLogger(PermissivePasswordAuthenticator.class);
+    static final Logger LOG = LoggerFactory.getLogger(PermissivePasswordAuthenticator.class);
 
-	@Override
-	public boolean authenticate(String username, String password,
-			ServerSession session) {
-		LOG.info("password login attempt by '{}'", username);
-		return true;
-	}
+    @Override
+    public boolean authenticate(String username, String password, ServerSession session) {
+        LOG.info("password login attempt by '{}'", username);
+        return true;
+    }
 }

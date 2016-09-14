@@ -11,30 +11,26 @@ import com.amazonaws.services.autoscaling.model.DetachInstancesRequest;
  * instance to be detached from an Auto Scaling Group. As a side-effect, the
  * desired capacity of the Auto Scaling Group is decremented.
  */
-public class DetachAutoScalingGroupInstance
-		extends AmazonAutoScalingRequest<Void> {
+public class DetachAutoScalingGroupInstance extends AmazonAutoScalingRequest<Void> {
 
-	/** The name of the Auto Scaling Group. */
-	private final String autoScalingGroup;
-	/** The machine instance identifier to be detached. */
-	private final String instanceId;
+    /** The name of the Auto Scaling Group. */
+    private final String autoScalingGroup;
+    /** The machine instance identifier to be detached. */
+    private final String instanceId;
 
-	public DetachAutoScalingGroupInstance(AWSCredentials awsCredentials,
-			String region, ClientConfiguration clientConfig,
-			String autoScalingGroup, String instanceId) {
-		super(awsCredentials, region, clientConfig);
-		this.autoScalingGroup = autoScalingGroup;
-		this.instanceId = instanceId;
-	}
+    public DetachAutoScalingGroupInstance(AWSCredentials awsCredentials, String region,
+            ClientConfiguration clientConfig, String autoScalingGroup, String instanceId) {
+        super(awsCredentials, region, clientConfig);
+        this.autoScalingGroup = autoScalingGroup;
+        this.instanceId = instanceId;
+    }
 
-	@Override
-	public Void call() {
-		DetachInstancesRequest request = new DetachInstancesRequest()
-				.withAutoScalingGroupName(this.autoScalingGroup)
-				.withInstanceIds(this.instanceId)
-				.withShouldDecrementDesiredCapacity(true);
-		getClient().getApi().detachInstances(request);
+    @Override
+    public Void call() {
+        DetachInstancesRequest request = new DetachInstancesRequest().withAutoScalingGroupName(this.autoScalingGroup)
+                .withInstanceIds(this.instanceId).withShouldDecrementDesiredCapacity(true);
+        getClient().getApi().detachInstances(request);
 
-		return null;
-	}
+        return null;
+    }
 }

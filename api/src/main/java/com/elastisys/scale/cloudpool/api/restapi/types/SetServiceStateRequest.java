@@ -12,40 +12,39 @@ import com.google.common.base.Objects;
  */
 public class SetServiceStateRequest {
 
-	/**
-	 * Service state to set for instance.
-	 */
-	private ServiceState serviceState;
+    /**
+     * Service state to set for instance.
+     */
+    private ServiceState serviceState;
 
-	public SetServiceStateRequest(ServiceState serviceState) {
-		this.serviceState = serviceState;
-	}
+    public SetServiceStateRequest(ServiceState serviceState) {
+        this.serviceState = serviceState;
+    }
 
-	public void setServiceState(ServiceState serviceState) {
-		this.serviceState = serviceState;
-	}
+    public void setServiceState(ServiceState serviceState) {
+        this.serviceState = serviceState;
+    }
 
-	public ServiceState getServiceState() {
-		return this.serviceState;
-	}
+    public ServiceState getServiceState() {
+        return this.serviceState;
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hashCode(this.serviceState);
-	}
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this.serviceState);
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof SetServiceStateRequest) {
-			SetServiceStateRequest that = (SetServiceStateRequest) obj;
-			return Objects.equal(this.serviceState, that.serviceState);
-		}
-		return false;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof SetServiceStateRequest) {
+            SetServiceStateRequest that = (SetServiceStateRequest) obj;
+            return Objects.equal(this.serviceState, that.serviceState);
+        }
+        return false;
+    }
 
-	@Override
-	public String toString() {
-		return String
-				.format("{\"serviceState\": %s}", this.serviceState.name());
-	}
+    @Override
+    public String toString() {
+        return String.format("{\"serviceState\": %s}", this.serviceState.name());
+    }
 }

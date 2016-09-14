@@ -8,12 +8,12 @@ import com.google.common.collect.ImmutableList;
 
 public class DeleteServerMetadataMain {
 
-	/** TODO: set to server uuid */
-	private static final String serverId = "47d3376e-e6e0-4ebd-8ba5-add5d67a6c8e";
+    /** TODO: set to server uuid */
+    private static final String serverId = "47d3376e-e6e0-4ebd-8ba5-add5d67a6c8e";
 
-	public static void main(String[] args) {
-		List<String> metadataKeys = ImmutableList.of("key1");
-		new DeleteServerMetadataRequest(new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig()),
-				serverId, metadataKeys).call();
-	}
+    public static void main(String[] args) {
+        List<String> metadataKeys = ImmutableList.of("key1");
+        new DeleteServerMetadataRequest(new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig()),
+                serverId, metadataKeys).call();
+    }
 }

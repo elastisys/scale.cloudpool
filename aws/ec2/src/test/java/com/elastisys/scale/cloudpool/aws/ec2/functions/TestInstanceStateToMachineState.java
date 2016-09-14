@@ -14,30 +14,26 @@ import com.elastisys.scale.cloudpool.aws.ec2.functions.InstanceStateToMachineSta
  */
 public class TestInstanceStateToMachineState {
 
-	@Test
-	public void convert() {
-		assertThat(convert(instanceState("pending")), is(MachineState.PENDING));
-		assertThat(convert(instanceState("running")), is(MachineState.RUNNING));
-		assertThat(convert(instanceState("shutting-down")),
-				is(MachineState.TERMINATING));
-		assertThat(convert(instanceState("stopped")),
-				is(MachineState.TERMINATED));
-		assertThat(convert(instanceState("stopping")),
-				is(MachineState.TERMINATING));
-		assertThat(convert(instanceState("terminated")),
-				is(MachineState.TERMINATED));
-	}
+    @Test
+    public void convert() {
+        assertThat(convert(instanceState("pending")), is(MachineState.PENDING));
+        assertThat(convert(instanceState("running")), is(MachineState.RUNNING));
+        assertThat(convert(instanceState("shutting-down")), is(MachineState.TERMINATING));
+        assertThat(convert(instanceState("stopped")), is(MachineState.TERMINATED));
+        assertThat(convert(instanceState("stopping")), is(MachineState.TERMINATING));
+        assertThat(convert(instanceState("terminated")), is(MachineState.TERMINATED));
+    }
 
-	@Test(expected = IllegalArgumentException.class)
-	public void convertUnrecognizedState() {
-		convert(instanceState("UNRECOGNIZED"));
-	}
+    @Test(expected = IllegalArgumentException.class)
+    public void convertUnrecognizedState() {
+        convert(instanceState("UNRECOGNIZED"));
+    }
 
-	private MachineState convert(InstanceState instanceState) {
-		return new InstanceStateToMachineState().apply(instanceState);
-	}
+    private MachineState convert(InstanceState instanceState) {
+        return new InstanceStateToMachineState().apply(instanceState);
+    }
 
-	private InstanceState instanceState(String state) {
-		return new InstanceState().withName(state);
-	}
+    private InstanceState instanceState(String state) {
+        return new InstanceState().withName(state);
+    }
 }

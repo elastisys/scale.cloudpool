@@ -14,22 +14,22 @@ import com.elastisys.scale.commons.openstack.OSClientFactory;
  */
 public class ListNetworksRequest extends AbstractOpenstackRequest<List<Network>> {
 
-	/**
-	 * Constructs a new {@link ListNetworksRequest} task.
-	 *
-	 * @param clientFactory
-	 *            OpenStack API client factory.
-	 *
-	 */
-	public ListNetworksRequest(OSClientFactory clientFactory) {
-		super(clientFactory);
-	}
+    /**
+     * Constructs a new {@link ListNetworksRequest} task.
+     *
+     * @param clientFactory
+     *            OpenStack API client factory.
+     *
+     */
+    public ListNetworksRequest(OSClientFactory clientFactory) {
+        super(clientFactory);
+    }
 
-	@Override
-	public List<Network> doRequest(OSClient api) throws RuntimeException {
-		List<Network> networks = new ArrayList<>();
-		networks.addAll(api.networking().network().list());
-		return networks;
-	}
+    @Override
+    public List<Network> doRequest(OSClient api) throws RuntimeException {
+        List<Network> networks = new ArrayList<>();
+        networks.addAll(api.networking().network().list());
+        return networks;
+    }
 
 }

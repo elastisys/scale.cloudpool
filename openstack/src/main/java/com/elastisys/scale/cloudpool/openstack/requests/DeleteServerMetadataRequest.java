@@ -18,47 +18,47 @@ import com.elastisys.scale.commons.openstack.OSClientFactory;
  */
 public class DeleteServerMetadataRequest extends AbstractOpenstackRequest<Void> {
 
-	/** The id of the server whose metadata is to be updated. */
-	private final String serverId;
-	/**
-	 * Meta data tags to be removed from the server.
-	 */
-	private final List<String> metadataKeysToDelete;
+    /** The id of the server whose metadata is to be updated. */
+    private final String serverId;
+    /**
+     * Meta data tags to be removed from the server.
+     */
+    private final List<String> metadataKeysToDelete;
 
-	/**
-	 * Constructs a {@link DeleteServerMetadataRequest}.
-	 *
-	 * @param clientFactory
-	 *            OpenStack API client factory.
-	 * @param serverId
-	 *            The server whose metadata is to be updated.
-	 * @param metadataKeysToDelete
-	 *            Meta data tags to be removed from the server.
-	 */
-	public DeleteServerMetadataRequest(OSClientFactory clientFactory, String serverId,
-			List<String> metadataKeysToDelete) {
-		super(clientFactory);
+    /**
+     * Constructs a {@link DeleteServerMetadataRequest}.
+     *
+     * @param clientFactory
+     *            OpenStack API client factory.
+     * @param serverId
+     *            The server whose metadata is to be updated.
+     * @param metadataKeysToDelete
+     *            Meta data tags to be removed from the server.
+     */
+    public DeleteServerMetadataRequest(OSClientFactory clientFactory, String serverId,
+            List<String> metadataKeysToDelete) {
+        super(clientFactory);
 
-		checkNotNull(serverId, "server id cannot be null");
-		checkNotNull(metadataKeysToDelete, "metadata keys cannot be null");
+        checkNotNull(serverId, "server id cannot be null");
+        checkNotNull(metadataKeysToDelete, "metadata keys cannot be null");
 
-		this.serverId = serverId;
-		this.metadataKeysToDelete = metadataKeysToDelete;
-	}
+        this.serverId = serverId;
+        this.metadataKeysToDelete = metadataKeysToDelete;
+    }
 
-	@Override
-	public Void doRequest(OSClient api) throws NotFoundException {
-		ServerService serverApi = api.compute().servers();
-		Server server = serverApi.get(this.serverId);
-		if (server == null) {
-			throw new NotFoundException(
-					format("failed to update meta data on server '%s': " + "server not found", this.serverId));
-		}
-		// delete tags
-		for (String metadataKey : this.metadataKeysToDelete) {
-			serverApi.deleteMetadataItem(this.serverId, metadataKey);
-		}
+    @Override
+    public Void doRequest(OSClient api) throws NotFoundException {
+        ServerService serverApi = api.compute().servers();
+        Server server = serverApi.get(this.serverId);
+        if (server == null) {
+            throw new NotFoundException(
+                    format("failed to update meta data on server '%s': " + "server not found", this.serverId));
+        }
+        // delete tags
+        for (String metadataKey : this.metadataKeysToDelete) {
+            serverApi.deleteMetadataItem(this.serverId, metadataKey);
+        }
 
-		return null;
-	}
+        return null;
+    }
 }

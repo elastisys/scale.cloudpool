@@ -14,32 +14,28 @@ import com.elastisys.scale.commons.net.alerter.Alert;
 
 public class IsSetServiceStateAlert extends TypeSafeMatcher<Alert> {
 
-	private final String machineId;
-	private final ServiceState serviceState;
+    private final String machineId;
+    private final ServiceState serviceState;
 
-	public IsSetServiceStateAlert(String machineId, ServiceState serviceState) {
-		this.machineId = machineId;
-		this.serviceState = serviceState;
-	}
+    public IsSetServiceStateAlert(String machineId, ServiceState serviceState) {
+        this.machineId = machineId;
+        this.serviceState = serviceState;
+    }
 
-	@Override
-	public boolean matchesSafely(Alert someAlert) {
-		String messagePattern = format(
-				"Service state set to %s for machine %s", this.serviceState,
-				this.machineId);
-		return equal(AlertTopics.SERVICE_STATE.name(), someAlert.getTopic())
-				&& someAlert.getMessage().contains(messagePattern);
-	}
+    @Override
+    public boolean matchesSafely(Alert someAlert) {
+        String messagePattern = format("Service state set to %s for machine %s", this.serviceState, this.machineId);
+        return equal(AlertTopics.SERVICE_STATE.name(), someAlert.getTopic())
+                && someAlert.getMessage().contains(messagePattern);
+    }
 
-	@Override
-	public void describeTo(Description description) {
-		description.appendText(String.format("service state alert (%s, %s)",
-				this.machineId, this.serviceState));
-	}
+    @Override
+    public void describeTo(Description description) {
+        description.appendText(String.format("service state alert (%s, %s)", this.machineId, this.serviceState));
+    }
 
-	@Factory
-	public static <T> Matcher<Alert> isSetServiceStateAlert(String machineId,
-			ServiceState serviceState) {
-		return new IsSetServiceStateAlert(machineId, serviceState);
-	}
+    @Factory
+    public static <T> Matcher<Alert> isSetServiceStateAlert(String machineId, ServiceState serviceState) {
+        return new IsSetServiceStateAlert(machineId, serviceState);
+    }
 }

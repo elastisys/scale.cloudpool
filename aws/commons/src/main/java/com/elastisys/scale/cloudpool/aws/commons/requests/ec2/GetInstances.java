@@ -41,140 +41,136 @@ import com.google.common.collect.Lists;
  */
 public class GetInstances extends AmazonEc2Request<List<Instance>> {
 
-	/**
-	 * A list of instance ids of interest to limit the query to. If specified,
-	 * meta data will only be fetched for these instances. If <code>null</code>
-	 * or empty list, meta data will be fetched for all instances.
-	 */
-	private List<String> instanceIds;
-	/**
-	 * An (optional) list of filter to narrow the query. Only instances matching
-	 * the given filters will be returned. May be <code>null</code>.
-	 */
-	private List<Filter> filters;
+    /**
+     * A list of instance ids of interest to limit the query to. If specified,
+     * meta data will only be fetched for these instances. If <code>null</code>
+     * or empty list, meta data will be fetched for all instances.
+     */
+    private List<String> instanceIds;
+    /**
+     * An (optional) list of filter to narrow the query. Only instances matching
+     * the given filters will be returned. May be <code>null</code>.
+     */
+    private List<Filter> filters;
 
-	/**
-	 * Constructs a new {@link GetInstances} task that will fetch all instances
-	 * in the region.
-	 *
-	 * @param awsCredentials
-	 *            The AWS security credentials to the account.
-	 * @param region
-	 *            The AWS region of interest.
-	 * @param clientConfig
-	 *            Client configuration options such as connection timeout, etc.
-	 */
-	public GetInstances(AWSCredentials awsCredentials, String region,
-			ClientConfiguration clientConfig) {
-		super(awsCredentials, region, clientConfig);
-		this.instanceIds = null;
-		this.filters = null;
-	}
+    /**
+     * Constructs a new {@link GetInstances} task that will fetch all instances
+     * in the region.
+     *
+     * @param awsCredentials
+     *            The AWS security credentials to the account.
+     * @param region
+     *            The AWS region of interest.
+     * @param clientConfig
+     *            Client configuration options such as connection timeout, etc.
+     */
+    public GetInstances(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig) {
+        super(awsCredentials, region, clientConfig);
+        this.instanceIds = null;
+        this.filters = null;
+    }
 
-	/**
-	 * Constructs a new {@link GetInstances} task that will fetch instances in
-	 * the region that match any of the specified instance ids.
-	 *
-	 * @param awsCredentials
-	 *            The AWS security credentials to the account.
-	 * @param region
-	 *            The AWS region of interest.
-	 * @param clientConfig
-	 *            Client configuration options such as connection timeout, etc.
-	 * @param instanceIds
-	 *            A list of instance ids of interest to limit the query to. If
-	 *            <code>null</code> or empty list, meta data will be fetched for
-	 *            all instances.
-	 */
-	public GetInstances(AWSCredentials awsCredentials, String region,
-			ClientConfiguration clientConfig, List<String> instanceIds) {
-		super(awsCredentials, region, clientConfig);
-		this.instanceIds = instanceIds;
-		this.filters = null;
-	}
+    /**
+     * Constructs a new {@link GetInstances} task that will fetch instances in
+     * the region that match any of the specified instance ids.
+     *
+     * @param awsCredentials
+     *            The AWS security credentials to the account.
+     * @param region
+     *            The AWS region of interest.
+     * @param clientConfig
+     *            Client configuration options such as connection timeout, etc.
+     * @param instanceIds
+     *            A list of instance ids of interest to limit the query to. If
+     *            <code>null</code> or empty list, meta data will be fetched for
+     *            all instances.
+     */
+    public GetInstances(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig,
+            List<String> instanceIds) {
+        super(awsCredentials, region, clientConfig);
+        this.instanceIds = instanceIds;
+        this.filters = null;
+    }
 
-	/**
-	 * Constructs a new {@link GetInstances} task that will fetch instances in
-	 * the region that match any of the specified instance ids and satisfy the
-	 * given filters.
-	 *
-	 * @param awsCredentials
-	 *            The AWS security credentials to the account.
-	 * @param region
-	 *            The AWS region of interest.
-	 * @param clientConfig
-	 *            Client configuration options such as connection timeout, etc.
-	 * @param instanceIds
-	 *            A list of instance ids of interest to limit the query to. If
-	 *            <code>null</code> or empty list, meta data will be fetched for
-	 *            all instances.
-	 * @param filters
-	 *            A list of filter to narrow the query. Only instances matching
-	 *            the given filters will be returned. May be <code>null</code>.
-	 */
-	public GetInstances(AWSCredentials awsCredentials, String region,
-			ClientConfiguration clientConfig, List<String> instanceIds,
-			List<Filter> filters) {
-		super(awsCredentials, region, clientConfig);
-		this.instanceIds = instanceIds;
-		this.filters = filters;
-	}
+    /**
+     * Constructs a new {@link GetInstances} task that will fetch instances in
+     * the region that match any of the specified instance ids and satisfy the
+     * given filters.
+     *
+     * @param awsCredentials
+     *            The AWS security credentials to the account.
+     * @param region
+     *            The AWS region of interest.
+     * @param clientConfig
+     *            Client configuration options such as connection timeout, etc.
+     * @param instanceIds
+     *            A list of instance ids of interest to limit the query to. If
+     *            <code>null</code> or empty list, meta data will be fetched for
+     *            all instances.
+     * @param filters
+     *            A list of filter to narrow the query. Only instances matching
+     *            the given filters will be returned. May be <code>null</code>.
+     */
+    public GetInstances(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig,
+            List<String> instanceIds, List<Filter> filters) {
+        super(awsCredentials, region, clientConfig);
+        this.instanceIds = instanceIds;
+        this.filters = filters;
+    }
 
-	/**
-	 * Sets {@link Filter}s that will be used to narrow down the query when
-	 * {@link #call()}ed.
-	 *
-	 * @param filters
-	 *            A list of filter to narrow the query. Only instances matching
-	 *            the given filters will be returned.
-	 * @return
-	 */
-	public GetInstances withFilters(List<Filter> filters) {
-		this.filters = filters;
-		return this;
-	}
+    /**
+     * Sets {@link Filter}s that will be used to narrow down the query when
+     * {@link #call()}ed.
+     *
+     * @param filters
+     *            A list of filter to narrow the query. Only instances matching
+     *            the given filters will be returned.
+     * @return
+     */
+    public GetInstances withFilters(List<Filter> filters) {
+        this.filters = filters;
+        return this;
+    }
 
-	/**
-	 * Sets an instance id filter that will be used to narrow down the result
-	 * set when the query is {@link #call()}ed.
-	 *
-	 * @param filters
-	 *            A list of instance ids of interest to limit the query to. If
-	 *            <code>null</code> or empty list, meta data will be fetched for
-	 *            all instances.
-	 */
-	public GetInstances withInstanceIds(List<String> instanceIds) {
-		this.instanceIds = instanceIds;
-		return this;
-	}
+    /**
+     * Sets an instance id filter that will be used to narrow down the result
+     * set when the query is {@link #call()}ed.
+     *
+     * @param filters
+     *            A list of instance ids of interest to limit the query to. If
+     *            <code>null</code> or empty list, meta data will be fetched for
+     *            all instances.
+     */
+    public GetInstances withInstanceIds(List<String> instanceIds) {
+        this.instanceIds = instanceIds;
+        return this;
+    }
 
-	@Override
-	public List<Instance> call() {
-		List<Instance> instances = Lists.newArrayList();
-		DescribeInstancesRequest request = new DescribeInstancesRequest();
-		request.withInstanceIds(this.instanceIds);
-		request.withFilters(this.filters);
-		// paginate through result as long as there is another response token
-		boolean moreResults = false;
-		do {
-			DescribeInstancesResult result = getClient().getApi()
-					.describeInstances(request);
-			instances.addAll(instances(result));
-			moreResults = (result.getNextToken() != null)
-					&& !result.getNextToken().equals("");
-			request.setNextToken(result.getNextToken());
-		} while (moreResults);
+    @Override
+    public List<Instance> call() {
+        List<Instance> instances = Lists.newArrayList();
+        DescribeInstancesRequest request = new DescribeInstancesRequest();
+        request.withInstanceIds(this.instanceIds);
+        request.withFilters(this.filters);
+        // paginate through result as long as there is another response token
+        boolean moreResults = false;
+        do {
+            DescribeInstancesResult result = getClient().getApi().describeInstances(request);
+            instances.addAll(instances(result));
+            moreResults = (result.getNextToken() != null) && !result.getNextToken().equals("");
+            request.setNextToken(result.getNextToken());
+        } while (moreResults);
 
-		return instances;
-	}
+        return instances;
+    }
 
-	private List<Instance> instances(DescribeInstancesResult result) {
-		List<Instance> instances = Lists.newArrayList();
-		List<Reservation> reservations = result.getReservations();
-		for (Reservation reservation : reservations) {
-			instances.addAll(reservation.getInstances());
-		}
-		return instances;
-	}
+    private List<Instance> instances(DescribeInstancesResult result) {
+        List<Instance> instances = Lists.newArrayList();
+        List<Reservation> reservations = result.getReservations();
+        for (Reservation reservation : reservations) {
+            instances.addAll(reservation.getInstances());
+        }
+        return instances;
+    }
 
 }

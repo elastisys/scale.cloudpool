@@ -11,15 +11,17 @@ import com.elastisys.scale.commons.net.alerter.Alert;
  *
  */
 public enum AlertTopics {
-	/** Topic for {@link Alert}s related to pool size changes. */
-	RESIZE,
-	/** Topic for {@link Alert}s related to fetching the machine pool. */
-	POOL_FETCH,
-	/** Topic for {@link Alert}s related to service state changes on machines. */
-	SERVICE_STATE,
-	/**
-	 * Topic for {@link Alert}s related to membership status changes on
-	 * machines.
-	 */
-	MEMBERSHIP_STATUS;
+    /** Topic for {@link Alert}s related to pool size changes. */
+    RESIZE,
+    /** Topic for {@link Alert}s related to fetching the machine pool. */
+    POOL_FETCH,
+    /**
+     * Topic for {@link Alert}s related to service state changes on machines.
+     */
+    SERVICE_STATE,
+    /**
+     * Topic for {@link Alert}s related to membership status changes on
+     * machines.
+     */
+    MEMBERSHIP_STATUS;
 }

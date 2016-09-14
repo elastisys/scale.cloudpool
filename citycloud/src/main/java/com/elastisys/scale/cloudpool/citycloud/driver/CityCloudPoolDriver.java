@@ -19,31 +19,30 @@ import com.elastisys.scale.cloudpool.openstack.driver.client.OpenstackClient;
  */
 public class CityCloudPoolDriver extends OpenStackPoolDriver {
 
-	/**
-	 * Supported API versions by this implementation.
-	 */
-	private final static List<String> supportedApiVersions = Arrays
-			.asList(ApiVersion.LATEST);
-	/**
-	 * Cloud pool metadata for this implementation.
-	 */
-	private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
-			PoolIdentifiers.CITYCLOUD, supportedApiVersions);
+    /**
+     * Supported API versions by this implementation.
+     */
+    private final static List<String> supportedApiVersions = Arrays.asList(ApiVersion.LATEST);
+    /**
+     * Cloud pool metadata for this implementation.
+     */
+    private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(PoolIdentifiers.CITYCLOUD,
+            supportedApiVersions);
 
-	/**
-	 * Creates a new {@link CityCloudPoolDriver}. Needs to be configured before
-	 * use.
-	 *
-	 * @param client
-	 *            The client to be used to communicate with the OpenStack API.
-	 */
-	public CityCloudPoolDriver(OpenstackClient client) {
-		super(client);
-	}
+    /**
+     * Creates a new {@link CityCloudPoolDriver}. Needs to be configured before
+     * use.
+     *
+     * @param client
+     *            The client to be used to communicate with the OpenStack API.
+     */
+    public CityCloudPoolDriver(OpenstackClient client) {
+        super(client);
+    }
 
-	@Override
-	public CloudPoolMetadata getMetadata() {
-		return cloudPoolMetadata;
-	}
+    @Override
+    public CloudPoolMetadata getMetadata() {
+        return cloudPoolMetadata;
+    }
 
 }

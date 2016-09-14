@@ -35,73 +35,71 @@ import com.google.gson.JsonObject;
  */
 public class TestAwsAsCloudPoolRestApi {
 
-	private static final String SERVER_KEYSTORE = Resources
-			.getResource("security/server/server_keystore.p12").toString();
-	private static final String SERVER_KEYSTORE_PASSWORD = "serverpass";
+    private static final String SERVER_KEYSTORE = Resources.getResource("security/server/server_keystore.p12")
+            .toString();
+    private static final String SERVER_KEYSTORE_PASSWORD = "serverpass";
 
-	private static final File STATE_STORAGE_DIR = new File("target/state");
-	private static final StateStorage STATE_STORAGE = StateStorage
-			.builder(STATE_STORAGE_DIR).build();
+    private static final File STATE_STORAGE_DIR = new File("target/state");
+    private static final StateStorage STATE_STORAGE = StateStorage.builder(STATE_STORAGE_DIR).build();
 
-	/** Web server to use throughout the tests. */
-	private static Server server;
-	/** Server port to use for HTTPS. */
-	private static int httpsPort;
-	private final static String storageDir = "target/test/cloudpool/storage";
-	private static CloudPool cloudPool;
+    /** Web server to use throughout the tests. */
+    private static Server server;
+    /** Server port to use for HTTPS. */
+    private static int httpsPort;
+    private final static String storageDir = "target/test/cloudpool/storage";
+    private static CloudPool cloudPool;
 
-	@BeforeClass
-	public static void onSetup() throws Exception {
-		FileUtils.deleteRecursively(STATE_STORAGE_DIR);
+    @BeforeClass
+    public static void onSetup() throws Exception {
+        FileUtils.deleteRecursively(STATE_STORAGE_DIR);
 
-		List<Integer> freePorts = HostUtils.findFreePorts(1);
-		httpsPort = freePorts.get(0);
+        List<Integer> freePorts = HostUtils.findFreePorts(1);
+        httpsPort = freePorts.get(0);
 
-		cloudPool = new BaseCloudPool(STATE_STORAGE,
-				new AwsAsPoolDriver(new AwsAutoScalingClient()));
+        cloudPool = new BaseCloudPool(STATE_STORAGE, new AwsAsPoolDriver(new AwsAutoScalingClient()));
 
-		CloudPoolOptions options = new CloudPoolOptions();
-		options.httpsPort = httpsPort;
-		options.sslKeyStore = SERVER_KEYSTORE;
-		options.sslKeyStorePassword = SERVER_KEYSTORE_PASSWORD;
-		options.requireClientCert = false;
-		options.storageDir = storageDir;
+        CloudPoolOptions options = new CloudPoolOptions();
+        options.httpsPort = httpsPort;
+        options.sslKeyStore = SERVER_KEYSTORE;
+        options.sslKeyStorePassword = SERVER_KEYSTORE_PASSWORD;
+        options.requireClientCert = false;
+        options.storageDir = storageDir;
 
-		server = CloudPoolServer.createServer(cloudPool, options);
-		server.start();
-	}
+        server = CloudPoolServer.createServer(cloudPool, options);
+        server.start();
+    }
 
-	@AfterClass
-	public static void onTeardown() throws Exception {
-		server.stop();
-		server.join();
-	}
+    @AfterClass
+    public static void onTeardown() throws Exception {
+        server.stop();
+        server.join();
+    }
 
-	/**
-	 * Verifies that a {@code GET /config} request against the cloud pool before
-	 * it has had its configuration set results in a {@code 404} (Not Found)
-	 * error response.
-	 * <p/>
-	 * At one time, this caused a bug due to conflicting versions of the Jackson
-	 * library (pulled in by Jersey and aws-sdk, respectively).
-	 */
-	@Test
-	public void testGetConfigBeforeSet() throws IOException {
-		Client client = RestClients.httpsNoAuth();
-		Response response = client.target(getUrl("/config")).request().get();
-		assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
-		assertNotNull(response.readEntity(JsonObject.class));
-	}
+    /**
+     * Verifies that a {@code GET /config} request against the cloud pool before
+     * it has had its configuration set results in a {@code 404} (Not Found)
+     * error response.
+     * <p/>
+     * At one time, this caused a bug due to conflicting versions of the Jackson
+     * library (pulled in by Jersey and aws-sdk, respectively).
+     */
+    @Test
+    public void testGetConfigBeforeSet() throws IOException {
+        Client client = RestClients.httpsNoAuth();
+        Response response = client.target(getUrl("/config")).request().get();
+        assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
+        assertNotNull(response.readEntity(JsonObject.class));
+    }
 
-	/**
-	 * URL to do a {@code GET /pool} request.
-	 *
-	 * @param path
-	 *            The resource path on the remote server.
-	 * @return
-	 */
-	private static String getUrl(String path) {
-		return String.format("https://localhost:%d%s", httpsPort, path);
-	}
+    /**
+     * URL to do a {@code GET /pool} request.
+     *
+     * @param path
+     *            The resource path on the remote server.
+     * @return
+     */
+    private static String getUrl(String path) {
+        return String.format("https://localhost:%d%s", httpsPort, path);
+    }
 
 }

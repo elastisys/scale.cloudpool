@@ -45,278 +45,244 @@ import com.google.common.util.concurrent.Atomics;
  * @see BaseCloudPool
  */
 public class OpenStackPoolDriver implements CloudPoolDriver {
-	private static Logger LOG = LoggerFactory
-			.getLogger(OpenStackPoolDriver.class);
+    private static Logger LOG = LoggerFactory.getLogger(OpenStackPoolDriver.class);
 
-	/** OpenStack client API configuration. */
-	private final AtomicReference<OpenStackPoolDriverConfig> config;
-	/** Logical name of the managed machine pool. */
-	private final AtomicReference<String> poolName;
+    /** OpenStack client API configuration. */
+    private final AtomicReference<OpenStackPoolDriverConfig> config;
+    /** Logical name of the managed machine pool. */
+    private final AtomicReference<String> poolName;
 
-	/** Client used to communicate with the OpenStack API. */
-	private final OpenstackClient client;
+    /** Client used to communicate with the OpenStack API. */
+    private final OpenstackClient client;
 
-	/**
-	 * Supported API versions by this implementation.
-	 */
-	private final static List<String> supportedApiVersions = Arrays
-			.asList(ApiVersion.LATEST);
-	/**
-	 * Cloud pool metadata for this implementation.
-	 */
-	private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
-			PoolIdentifiers.OPENSTACK, supportedApiVersions);
+    /**
+     * Supported API versions by this implementation.
+     */
+    private final static List<String> supportedApiVersions = Arrays.asList(ApiVersion.LATEST);
+    /**
+     * Cloud pool metadata for this implementation.
+     */
+    private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(PoolIdentifiers.OPENSTACK,
+            supportedApiVersions);
 
-	/**
-	 * Creates a new {@link OpenStackPoolDriver}. Needs to be configured before
-	 * use.
-	 *
-	 * @param client
-	 *            The client to be used to communicate with the OpenStack API.
-	 */
-	public OpenStackPoolDriver(OpenstackClient client) {
-		this.config = Atomics.newReference();
-		this.poolName = Atomics.newReference();
-		this.client = client;
-	}
+    /**
+     * Creates a new {@link OpenStackPoolDriver}. Needs to be configured before
+     * use.
+     *
+     * @param client
+     *            The client to be used to communicate with the OpenStack API.
+     */
+    public OpenStackPoolDriver(OpenstackClient client) {
+        this.config = Atomics.newReference();
+        this.poolName = Atomics.newReference();
+        this.client = client;
+    }
 
-	@Override
-	public void configure(BaseCloudPoolConfig configuration)
-			throws CloudPoolDriverException {
-		CloudPoolConfig cloudPoolConfig = configuration.getCloudPool();
-		checkArgument(cloudPoolConfig != null, "missing cloudPool config");
+    @Override
+    public void configure(BaseCloudPoolConfig configuration) throws CloudPoolDriverException {
+        CloudPoolConfig cloudPoolConfig = configuration.getCloudPool();
+        checkArgument(cloudPoolConfig != null, "missing cloudPool config");
 
-		try {
-			// parse and validate cloud login configuration
-			OpenStackPoolDriverConfig config = JsonUtils.toObject(
-					cloudPoolConfig.getDriverConfig(),
-					OpenStackPoolDriverConfig.class);
-			config.validate();
-			this.config.set(config);
-			this.poolName.set(cloudPoolConfig.getName());
-			this.client.configure(config);
-		} catch (Exception e) {
-			Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
-			throw new CloudPoolDriverException(
-					format("failed to apply driver configuration: %s",
-							e.getMessage()),
-					e);
-		}
-	}
+        try {
+            // parse and validate cloud login configuration
+            OpenStackPoolDriverConfig config = JsonUtils.toObject(cloudPoolConfig.getDriverConfig(),
+                    OpenStackPoolDriverConfig.class);
+            config.validate();
+            this.config.set(config);
+            this.poolName.set(cloudPoolConfig.getName());
+            this.client.configure(config);
+        } catch (Exception e) {
+            Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
+            throw new CloudPoolDriverException(format("failed to apply driver configuration: %s", e.getMessage()), e);
+        }
+    }
 
-	@Override
-	public List<Machine> listMachines() throws CloudPoolDriverException {
-		checkState(isConfigured(), "attempt to use unconfigured driver");
+    @Override
+    public List<Machine> listMachines() throws CloudPoolDriverException {
+        checkState(isConfigured(), "attempt to use unconfigured driver");
 
-		try {
-			List<Server> servers = this.client
-					.getServers(Constants.CLOUD_POOL_TAG, getPoolName());
-			return transform(servers, serverToMachine());
-		} catch (Exception e) {
-			throw new CloudPoolDriverException(
-					format("failed to retrieve machines in cloud pool \"%s\": %s",
-							this.poolName, e.getMessage()),
-					e);
-		}
-	}
+        try {
+            List<Server> servers = this.client.getServers(Constants.CLOUD_POOL_TAG, getPoolName());
+            return transform(servers, serverToMachine());
+        } catch (Exception e) {
+            throw new CloudPoolDriverException(
+                    format("failed to retrieve machines in cloud pool \"%s\": %s", this.poolName, e.getMessage()), e);
+        }
+    }
 
-	@Override
-	public List<Machine> startMachines(int count, ScaleOutConfig scaleUpConfig)
-			throws StartMachinesException {
-		checkState(isConfigured(), "attempt to use unconfigured driver");
+    @Override
+    public List<Machine> startMachines(int count, ScaleOutConfig scaleUpConfig) throws StartMachinesException {
+        checkState(isConfigured(), "attempt to use unconfigured driver");
 
-		List<Machine> startedMachines = Lists.newArrayList();
-		try {
-			for (int i = 0; i < count; i++) {
-				// tag new server with cloud pool membership
-				Map<String, String> tags = ImmutableMap
-						.of(Constants.CLOUD_POOL_TAG, getPoolName());
-				Server newServer = this.client.launchServer(uniqueServerName(),
-						scaleUpConfig, tags);
-				startedMachines.add(serverToMachine().apply(newServer));
+        List<Machine> startedMachines = Lists.newArrayList();
+        try {
+            for (int i = 0; i < count; i++) {
+                // tag new server with cloud pool membership
+                Map<String, String> tags = ImmutableMap.of(Constants.CLOUD_POOL_TAG, getPoolName());
+                Server newServer = this.client.launchServer(uniqueServerName(), scaleUpConfig, tags);
+                startedMachines.add(serverToMachine().apply(newServer));
 
-				if (config().isAssignFloatingIp()) {
-					String serverId = newServer.getId();
-					this.client.assignFloatingIp(serverId);
-					// update meta data to include the public IP
-					startedMachines.set(i, serverToMachine()
-							.apply(this.client.getServer(serverId)));
-				}
-			}
-		} catch (Exception e) {
-			throw new StartMachinesException(count, startedMachines, e);
-		}
-		return startedMachines;
-	}
+                if (config().isAssignFloatingIp()) {
+                    String serverId = newServer.getId();
+                    this.client.assignFloatingIp(serverId);
+                    // update meta data to include the public IP
+                    startedMachines.set(i, serverToMachine().apply(this.client.getServer(serverId)));
+                }
+            }
+        } catch (Exception e) {
+            throw new StartMachinesException(count, startedMachines, e);
+        }
+        return startedMachines;
+    }
 
-	@Override
-	public void terminateMachine(String machineId)
-			throws CloudPoolDriverException {
-		checkState(isConfigured(), "attempt to use unconfigured driver");
+    @Override
+    public void terminateMachine(String machineId) throws CloudPoolDriverException {
+        checkState(isConfigured(), "attempt to use unconfigured driver");
 
-		// verify that machine exists in group
-		getMachineOrFail(machineId);
+        // verify that machine exists in group
+        getMachineOrFail(machineId);
 
-		try {
-			this.client.terminateServer(machineId);
-		} catch (Exception e) {
-			Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
-			String message = format("failed to terminate server \"%s\": %s",
-					machineId, e.getMessage());
-			throw new CloudPoolDriverException(message, e);
-		}
-	}
+        try {
+            this.client.terminateServer(machineId);
+        } catch (Exception e) {
+            Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
+            String message = format("failed to terminate server \"%s\": %s", machineId, e.getMessage());
+            throw new CloudPoolDriverException(message, e);
+        }
+    }
 
-	@Override
-	public void attachMachine(String machineId)
-			throws NotFoundException, CloudPoolDriverException {
-		checkState(isConfigured(), "attempt to use unconfigured driver");
+    @Override
+    public void attachMachine(String machineId) throws NotFoundException, CloudPoolDriverException {
+        checkState(isConfigured(), "attempt to use unconfigured driver");
 
-		Map<String, String> tags = ImmutableMap.of(Constants.CLOUD_POOL_TAG,
-				getPoolName());
-		try {
-			this.client.tagServer(machineId, tags);
-		} catch (Exception e) {
-			Throwables.propagateIfInstanceOf(e, NotFoundException.class);
-			Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
-			String message = format("failed to attach server \"%s\": %s",
-					machineId, e.getMessage());
-			throw new CloudPoolDriverException(message, e);
-		}
+        Map<String, String> tags = ImmutableMap.of(Constants.CLOUD_POOL_TAG, getPoolName());
+        try {
+            this.client.tagServer(machineId, tags);
+        } catch (Exception e) {
+            Throwables.propagateIfInstanceOf(e, NotFoundException.class);
+            Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
+            String message = format("failed to attach server \"%s\": %s", machineId, e.getMessage());
+            throw new CloudPoolDriverException(message, e);
+        }
 
-	}
+    }
 
-	@Override
-	public void detachMachine(String machineId)
-			throws NotFoundException, CloudPoolDriverException {
-		checkState(isConfigured(), "attempt to use unconfigured driver");
+    @Override
+    public void detachMachine(String machineId) throws NotFoundException, CloudPoolDriverException {
+        checkState(isConfigured(), "attempt to use unconfigured driver");
 
-		// verify that machine exists in group
-		getMachineOrFail(machineId);
+        // verify that machine exists in group
+        getMachineOrFail(machineId);
 
-		try {
-			List<String> tagKeys = Arrays.asList(Constants.CLOUD_POOL_TAG);
-			this.client.untagServer(machineId, tagKeys);
-		} catch (Exception e) {
-			Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
-			String message = format("failed to detach server \"%s\": %s",
-					machineId, e.getMessage());
-			throw new CloudPoolDriverException(message, e);
-		}
-	}
+        try {
+            List<String> tagKeys = Arrays.asList(Constants.CLOUD_POOL_TAG);
+            this.client.untagServer(machineId, tagKeys);
+        } catch (Exception e) {
+            Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
+            String message = format("failed to detach server \"%s\": %s", machineId, e.getMessage());
+            throw new CloudPoolDriverException(message, e);
+        }
+    }
 
-	@Override
-	public void setServiceState(String machineId, ServiceState serviceState)
-			throws NotFoundException {
-		checkState(isConfigured(), "attempt to use unconfigured driver");
+    @Override
+    public void setServiceState(String machineId, ServiceState serviceState) throws NotFoundException {
+        checkState(isConfigured(), "attempt to use unconfigured driver");
 
-		// verify that machine exists in group
-		getMachineOrFail(machineId);
+        // verify that machine exists in group
+        getMachineOrFail(machineId);
 
-		try {
-			LOG.debug("service state {} reported for {}", serviceState.name(),
-					machineId);
-			// set serviceState as tag on machine instance
-			Map<String, String> tags = ImmutableMap
-					.of(Constants.SERVICE_STATE_TAG, serviceState.name());
-			this.client.tagServer(machineId, tags);
-		} catch (Exception e) {
-			Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
-			String message = format(
-					"failed to tag service state on server \"%s\": %s",
-					machineId, e.getMessage());
-			throw new CloudPoolDriverException(message, e);
-		}
-	}
+        try {
+            LOG.debug("service state {} reported for {}", serviceState.name(), machineId);
+            // set serviceState as tag on machine instance
+            Map<String, String> tags = ImmutableMap.of(Constants.SERVICE_STATE_TAG, serviceState.name());
+            this.client.tagServer(machineId, tags);
+        } catch (Exception e) {
+            Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
+            String message = format("failed to tag service state on server \"%s\": %s", machineId, e.getMessage());
+            throw new CloudPoolDriverException(message, e);
+        }
+    }
 
-	@Override
-	public void setMembershipStatus(String machineId,
-			MembershipStatus membershipStatus)
-					throws NotFoundException, CloudPoolDriverException {
-		checkState(isConfigured(), "attempt to use unconfigured driver");
+    @Override
+    public void setMembershipStatus(String machineId, MembershipStatus membershipStatus)
+            throws NotFoundException, CloudPoolDriverException {
+        checkState(isConfigured(), "attempt to use unconfigured driver");
 
-		// verify that machine exists in group
-		getMachineOrFail(machineId);
+        // verify that machine exists in group
+        getMachineOrFail(machineId);
 
-		try {
-			LOG.debug("membership status {} reported for {}", membershipStatus,
-					machineId);
-			// set serviceState as tag on machine instance
-			Map<String, String> tags = ImmutableMap.of(
-					Constants.MEMBERSHIP_STATUS_TAG,
-					JsonUtils.toString(JsonUtils.toJson(membershipStatus)));
-			this.client.tagServer(machineId, tags);
-		} catch (Exception e) {
-			Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
-			String message = format(
-					"failed to tag membership status on server \"%s\": %s",
-					machineId, e.getMessage());
-			throw new CloudPoolDriverException(message, e);
-		}
-	}
+        try {
+            LOG.debug("membership status {} reported for {}", membershipStatus, machineId);
+            // set serviceState as tag on machine instance
+            Map<String, String> tags = ImmutableMap.of(Constants.MEMBERSHIP_STATUS_TAG,
+                    JsonUtils.toString(JsonUtils.toJson(membershipStatus)));
+            this.client.tagServer(machineId, tags);
+        } catch (Exception e) {
+            Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
+            String message = format("failed to tag membership status on server \"%s\": %s", machineId, e.getMessage());
+            throw new CloudPoolDriverException(message, e);
+        }
+    }
 
-	@Override
-	public String getPoolName() {
-		checkState(isConfigured(), "attempt to use unconfigured driver");
+    @Override
+    public String getPoolName() {
+        checkState(isConfigured(), "attempt to use unconfigured driver");
 
-		return this.poolName.get();
-	}
+        return this.poolName.get();
+    }
 
-	@Override
-	public CloudPoolMetadata getMetadata() {
-		return cloudPoolMetadata;
-	}
+    @Override
+    public CloudPoolMetadata getMetadata() {
+        return cloudPoolMetadata;
+    }
 
-	/**
-	 * Retrieves a particular member machine from the cloud pool or throws an
-	 * exception if it could not be found.
-	 *
-	 * @param machineId
-	 *            The id of the machine of interest.
-	 * @return
-	 * @throws NotFoundException
-	 */
-	private Machine getMachineOrFail(String machineId)
-			throws NotFoundException {
-		List<Machine> machines = listMachines();
-		for (Machine machine : machines) {
-			if (machine.getId().equals(machineId)) {
-				return machine;
-			}
-		}
+    /**
+     * Retrieves a particular member machine from the cloud pool or throws an
+     * exception if it could not be found.
+     *
+     * @param machineId
+     *            The id of the machine of interest.
+     * @return
+     * @throws NotFoundException
+     */
+    private Machine getMachineOrFail(String machineId) throws NotFoundException {
+        List<Machine> machines = listMachines();
+        for (Machine machine : machines) {
+            if (machine.getId().equals(machineId)) {
+                return machine;
+            }
+        }
 
-		throw new NotFoundException(String.format(
-				"no machine with id '%s' found in cloud pool", machineId));
-	}
+        throw new NotFoundException(String.format("no machine with id '%s' found in cloud pool", machineId));
+    }
 
-	/**
-	 * Create a unique server host name for a new server instance. This is
-	 * necessary to make sure that different hosts do not report monitoring
-	 * values using the same host name, which may confuse OpenTSDB.
-	 *
-	 * @return
-	 */
-	private String uniqueServerName() {
-		String prefix = getPoolName();
-		String suffix = UUID.randomUUID().toString();
-		return String.format("%s-%s", prefix, suffix);
-	}
+    /**
+     * Create a unique server host name for a new server instance. This is
+     * necessary to make sure that different hosts do not report monitoring
+     * values using the same host name, which may confuse OpenTSDB.
+     *
+     * @return
+     */
+    private String uniqueServerName() {
+        String prefix = getPoolName();
+        String suffix = UUID.randomUUID().toString();
+        return String.format("%s-%s", prefix, suffix);
+    }
 
-	/**
-	 * A {@link Function} that converts from {@link Server} to {@link Machine}.
-	 *
-	 * @return
-	 */
-	private ServerToMachine serverToMachine() {
-		return new ServerToMachine(getMetadata().poolIdentifier(),
-				config().getRegion());
-	}
+    /**
+     * A {@link Function} that converts from {@link Server} to {@link Machine}.
+     *
+     * @return
+     */
+    private ServerToMachine serverToMachine() {
+        return new ServerToMachine(getMetadata().poolIdentifier(), config().getRegion());
+    }
 
-	boolean isConfigured() {
-		return config() != null;
-	}
+    boolean isConfigured() {
+        return config() != null;
+    }
 
-	OpenStackPoolDriverConfig config() {
-		return this.config.get();
-	}
+    OpenStackPoolDriverConfig config() {
+        return this.config.get();
+    }
 }

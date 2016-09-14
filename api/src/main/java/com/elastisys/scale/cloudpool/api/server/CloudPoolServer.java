@@ -38,195 +38,174 @@ import com.google.gson.JsonObject;
  * cloud pool REST API documentation</a>.
  */
 public class CloudPoolServer {
-	private final static Logger LOG = LoggerFactory
-			.getLogger(CloudPoolServer.class);
+    private final static Logger LOG = LoggerFactory.getLogger(CloudPoolServer.class);
 
-	/**
-	 * Parses command-line arguments into {@link CloudPoolOptions}. On failure
-	 * to process the command-line arguments, an error will be written together
-	 * with a usage string and then the program will exit with a failure code.
-	 * <p/>
-	 * The {@code --help} will cause the uasge text to be written before exiting
-	 * the program (with a zero exit code).
-	 *
-	 * @param args
-	 * @return
-	 */
-	public static CloudPoolOptions parseArgs(String[] args) {
-		CloudPoolOptions arguments = new CloudPoolOptions();
-		ParserProperties parserConfig = ParserProperties.defaults()
-				.withUsageWidth(80);
-		CmdLineParser parser = new CmdLineParser(arguments, parserConfig);
+    /**
+     * Parses command-line arguments into {@link CloudPoolOptions}. On failure
+     * to process the command-line arguments, an error will be written together
+     * with a usage string and then the program will exit with a failure code.
+     * <p/>
+     * The {@code --help} will cause the uasge text to be written before exiting
+     * the program (with a zero exit code).
+     *
+     * @param args
+     * @return
+     */
+    public static CloudPoolOptions parseArgs(String[] args) {
+        CloudPoolOptions arguments = new CloudPoolOptions();
+        ParserProperties parserConfig = ParserProperties.defaults().withUsageWidth(80);
+        CmdLineParser parser = new CmdLineParser(arguments, parserConfig);
 
-		try {
-			parser.parseArgument(args);
-		} catch (CmdLineException e) {
-			LOG.error("error: " + e.getMessage());
-			parser.printUsage(System.err);
-			System.exit(-1);
-		}
+        try {
+            parser.parseArgument(args);
+        } catch (CmdLineException e) {
+            LOG.error("error: " + e.getMessage());
+            parser.printUsage(System.err);
+            System.exit(-1);
+        }
 
-		if (arguments.help) {
-			parser.printUsage(System.err);
-			System.exit(0);
-		}
+        if (arguments.help) {
+            parser.printUsage(System.err);
+            System.exit(0);
+        }
 
-		if (arguments.version) {
-			System.err.println(IoUtils.toString("VERSION.txt", Charsets.UTF_8));
-			System.exit(0);
-		}
-		return arguments;
-	}
+        if (arguments.version) {
+            System.err.println(IoUtils.toString("VERSION.txt", Charsets.UTF_8));
+            System.exit(0);
+        }
+        return arguments;
+    }
 
-	/**
-	 * Parse command-line arguments and start an HTTPS server that serves REST
-	 * API requests for a given {@link CloudPool}.
-	 * <p/>
-	 * A failure to parse the command-line arguments will cause the program to
-	 * print a usage message and exit with an error code. The function blocks
-	 * until the started server is stopped.
-	 *
-	 * @param cloudPool
-	 *            The cloud pool that the started server will publish.
-	 * @param args
-	 *            The command-line arguments.
-	 * @throws Exception
-	 */
-	public static void main(CloudPool cloudPool, String[] args)
-			throws Exception {
-		CloudPoolOptions arguments = parseArgs(args);
-		Server server = createServer(cloudPool, arguments);
+    /**
+     * Parse command-line arguments and start an HTTPS server that serves REST
+     * API requests for a given {@link CloudPool}.
+     * <p/>
+     * A failure to parse the command-line arguments will cause the program to
+     * print a usage message and exit with an error code. The function blocks
+     * until the started server is stopped.
+     *
+     * @param cloudPool
+     *            The cloud pool that the started server will publish.
+     * @param args
+     *            The command-line arguments.
+     * @throws Exception
+     */
+    public static void main(CloudPool cloudPool, String[] args) throws Exception {
+        CloudPoolOptions arguments = parseArgs(args);
+        Server server = createServer(cloudPool, arguments);
 
-		// start server and wait
-		LOG.info(
-				"Starting Jetty server with HTTPS port " + arguments.httpsPort);
-		try {
-			server.start();
-		} catch (Exception e) {
-			LOG.error("failed to start server: " + e.getMessage(), e);
-			System.exit(-1);
-		}
-		LOG.info("Started Jetty server with HTTPS port " + arguments.httpsPort);
-		server.join();
-	}
+        // start server and wait
+        LOG.info("Starting Jetty server with HTTPS port " + arguments.httpsPort);
+        try {
+            server.start();
+        } catch (Exception e) {
+            LOG.error("failed to start server: " + e.getMessage(), e);
+            System.exit(-1);
+        }
+        LOG.info("Started Jetty server with HTTPS port " + arguments.httpsPort);
+        server.join();
+    }
 
-	/**
-	 * Creates a HTTPS server that serves REST API requests for a given
-	 * {@link CloudPool}.
-	 * <p/>
-	 * The created server is returned with the {@link CloudPool} REST API
-	 * deployed, but in an <i>unstarted</i> state, so the client is responsible
-	 * for starting the server.
-	 * <p/>
-	 * The behavior of the HTTPS server is controlled via a set of
-	 * {@link CloudPoolOptions}.
-	 *
-	 * @param cloudPool
-	 *            The cloud pool that the {@link Server} will publish.
-	 * @param options
-	 *            A set of options that control the behavior of the HTTPS
-	 *            server.
-	 * @return The created {@link Server}.
-	 * @throws Exception
-	 *             Thrown on a failure to initialize the {@link CloudPool} or
-	 *             create the server.
-	 */
-	public static Server createServer(CloudPool cloudPool,
-			CloudPoolOptions options) throws Exception {
+    /**
+     * Creates a HTTPS server that serves REST API requests for a given
+     * {@link CloudPool}.
+     * <p/>
+     * The created server is returned with the {@link CloudPool} REST API
+     * deployed, but in an <i>unstarted</i> state, so the client is responsible
+     * for starting the server.
+     * <p/>
+     * The behavior of the HTTPS server is controlled via a set of
+     * {@link CloudPoolOptions}.
+     *
+     * @param cloudPool
+     *            The cloud pool that the {@link Server} will publish.
+     * @param options
+     *            A set of options that control the behavior of the HTTPS
+     *            server.
+     * @return The created {@link Server}.
+     * @throws Exception
+     *             Thrown on a failure to initialize the {@link CloudPool} or
+     *             create the server.
+     */
+    public static Server createServer(CloudPool cloudPool, CloudPoolOptions options) throws Exception {
 
-		JaxRsApplication application = new JaxRsApplication();
-		// deploy pool handler
-		application.addHandler(new CloudPoolHandler(cloudPool));
+        JaxRsApplication application = new JaxRsApplication();
+        // deploy pool handler
+        application.addHandler(new CloudPoolHandler(cloudPool));
 
-		ConfigHandler configHandler = new ConfigHandler(cloudPool,
-				options.storageDir);
-		application.addHandler(configHandler);
-		if (options.config != null) {
-			// use explicitly specified configuration file
-			JsonObject config = parseJsonConfig(options.config);
-			cloudPool.configure(config);
-			configHandler.storeConfig(config);
-			if (!options.stopped) {
-				cloudPool.start();
-			}
-		} else {
-			// restore cloudpool config from storage directory (if available)
-			Optional<JsonObject> config = restoreConfig(
-					configHandler.getCloudPoolConfigPath());
-			if (config.isPresent()) {
-				cloudPool.configure(config.get());
-				if (!options.stopped) {
-					cloudPool.start();
-				}
-			}
-		}
+        ConfigHandler configHandler = new ConfigHandler(cloudPool, options.storageDir);
+        application.addHandler(configHandler);
+        if (options.config != null) {
+            // use explicitly specified configuration file
+            JsonObject config = parseJsonConfig(options.config);
+            cloudPool.configure(config);
+            configHandler.storeConfig(config);
+            if (!options.stopped) {
+                cloudPool.start();
+            }
+        } else {
+            // restore cloudpool config from storage directory (if available)
+            Optional<JsonObject> config = restoreConfig(configHandler.getCloudPoolConfigPath());
+            if (config.isPresent()) {
+                cloudPool.configure(config.get());
+                if (!options.stopped) {
+                    cloudPool.start();
+                }
+            }
+        }
 
-		application.addHandler(new StartStopHandler(cloudPool));
+        application.addHandler(new StartStopHandler(cloudPool));
 
-		if (options.enableExitHandler) {
-			// optionally deploy exit handler
-			application.addHandler(new ExitHandler());
-		}
-		ResourceConfig appConfig = ResourceConfig.forApplication(application);
-		appConfig.register(new RequestLogFilter());
+        if (options.enableExitHandler) {
+            // optionally deploy exit handler
+            application.addHandler(new ExitHandler());
+        }
+        ResourceConfig appConfig = ResourceConfig.forApplication(application);
+        appConfig.register(new RequestLogFilter());
 
-		// build server
-		ServletContainer restApiServlet = new ServletContainer(appConfig);
-		ServletDefinition servlet = new ServletDefinition.Builder()
-				.servlet(restApiServlet)
-				.requireBasicAuth(options.requireBasicAuth)
-				.realmFile(options.realmFile).requireRole(options.requireRole)
-				.build();
-		Server server = ServletServerBuilder.create()
-				.httpsPort(options.httpsPort)
-				.sslKeyStoreType(SslKeyStoreType.PKCS12)
-				.sslKeyStorePath(options.sslKeyStore)
-				.sslKeyStorePassword(options.sslKeyStorePassword)
-				.sslTrustStoreType(SslKeyStoreType.JKS)
-				.sslTrustStorePath(options.sslTrustStore)
-				.sslTrustStorePassword(options.sslTrustStorePassword)
-				.sslRequireClientCert(options.requireClientCert)
-				.addServlet(servlet).build();
+        // build server
+        ServletContainer restApiServlet = new ServletContainer(appConfig);
+        ServletDefinition servlet = new ServletDefinition.Builder().servlet(restApiServlet)
+                .requireBasicAuth(options.requireBasicAuth).realmFile(options.realmFile)
+                .requireRole(options.requireRole).build();
+        Server server = ServletServerBuilder.create().httpsPort(options.httpsPort)
+                .sslKeyStoreType(SslKeyStoreType.PKCS12).sslKeyStorePath(options.sslKeyStore)
+                .sslKeyStorePassword(options.sslKeyStorePassword).sslTrustStoreType(SslKeyStoreType.JKS)
+                .sslTrustStorePath(options.sslTrustStore).sslTrustStorePassword(options.sslTrustStorePassword)
+                .sslRequireClientCert(options.requireClientCert).addServlet(servlet).build();
 
-		return server;
-	}
+        return server;
+    }
 
-	/**
-	 * Loads any previously set {@link CloudPool} configuration file from the
-	 * storage directory, if one exists.
-	 *
-	 * @param storageDir
-	 * @return The previously set {@link CloudPool} configuration, if available.
-	 * @throws IOException
-	 */
-	private static Optional<JsonObject> restoreConfig(Path configPath)
-			throws IOException {
-		File cloudPoolConfig = configPath.toFile();
-		LOG.info("restoring cloudpool config from {}",
-				cloudPoolConfig.getAbsolutePath());
-		if (!cloudPoolConfig.isFile()) {
-			LOG.info(
-					"no cloud pool configuration found at {}. "
-							+ "starting without config ...",
-					cloudPoolConfig.getAbsolutePath());
-			return Optional.absent();
-		}
+    /**
+     * Loads any previously set {@link CloudPool} configuration file from the
+     * storage directory, if one exists.
+     *
+     * @param storageDir
+     * @return The previously set {@link CloudPool} configuration, if available.
+     * @throws IOException
+     */
+    private static Optional<JsonObject> restoreConfig(Path configPath) throws IOException {
+        File cloudPoolConfig = configPath.toFile();
+        LOG.info("restoring cloudpool config from {}", cloudPoolConfig.getAbsolutePath());
+        if (!cloudPoolConfig.isFile()) {
+            LOG.info("no cloud pool configuration found at {}. " + "starting without config ...",
+                    cloudPoolConfig.getAbsolutePath());
+            return Optional.absent();
+        }
 
-		return Optional.of(parseJsonConfig(cloudPoolConfig.getAbsolutePath()));
-	}
+        return Optional.of(parseJsonConfig(cloudPoolConfig.getAbsolutePath()));
+    }
 
-	private static JsonObject parseJsonConfig(String configFile)
-			throws IOException {
-		JsonObject configuration;
-		try {
-			configuration = JsonUtils.parseJsonFile(new File(configFile))
-					.getAsJsonObject();
-		} catch (Exception e) {
-			throw new IllegalArgumentException(String.format(
-					"failed to parse JSON configuration file %s: %s",
-					configFile, e.getMessage()), e);
-		}
-		return configuration;
-	}
+    private static JsonObject parseJsonConfig(String configFile) throws IOException {
+        JsonObject configuration;
+        try {
+            configuration = JsonUtils.parseJsonFile(new File(configFile)).getAsJsonObject();
+        } catch (Exception e) {
+            throw new IllegalArgumentException(
+                    String.format("failed to parse JSON configuration file %s: %s", configFile, e.getMessage()), e);
+        }
+        return configuration;
+    }
 
 }

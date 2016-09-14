@@ -23,25 +23,21 @@ import com.google.gson.JsonObject;
  * from {@code stdin}.
  */
 public class RunPool extends AbstractClient {
-	static Logger logger = LoggerFactory.getLogger(RunPool.class);
+    static Logger logger = LoggerFactory.getLogger(RunPool.class);
 
-	private static final Path configFile = Paths.get(".", "myconfig.json");
+    private static final Path configFile = Paths.get(".", "myconfig.json");
 
-	private static final ScheduledExecutorService executorService = Executors
-			.newScheduledThreadPool(10);
+    private static final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(10);
 
-	public static void main(String[] args) throws Exception {
-		StateStorage stateStorage = StateStorage
-				.builder(new File("target/state")).build();
-		CloudPool pool = new BaseCloudPool(stateStorage,
-				new Ec2PoolDriver(new AwsEc2Client()));
+    public static void main(String[] args) throws Exception {
+        StateStorage stateStorage = StateStorage.builder(new File("target/state")).build();
+        CloudPool pool = new BaseCloudPool(stateStorage, new Ec2PoolDriver(new AwsEc2Client()));
 
-		JsonObject config = JsonUtils.parseJsonFile(configFile.toFile())
-				.getAsJsonObject();
-		pool.configure(config);
+        JsonObject config = JsonUtils.parseJsonFile(configFile.toFile()).getAsJsonObject();
+        pool.configure(config);
 
-		new CloudPoolCommandLineDriver(pool).start();
+        new CloudPoolCommandLineDriver(pool).start();
 
-		executorService.shutdownNow();
-	}
+        executorService.shutdownNow();
+    }
 }

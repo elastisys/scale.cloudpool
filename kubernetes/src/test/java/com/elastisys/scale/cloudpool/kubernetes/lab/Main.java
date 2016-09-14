@@ -13,27 +13,26 @@ import com.elastisys.scale.commons.security.pem.PemUtils;
 
 public class Main {
 
-	public static void main(String[] args) throws Exception {
-		File certFile = new File("/tmp/ssl/admin.pem");
-		File keyFile = new File("/tmp/ssl/admin-key.pem");
+    public static void main(String[] args) throws Exception {
+        File certFile = new File("/tmp/ssl/admin.pem");
+        File keyFile = new File("/tmp/ssl/admin-key.pem");
 
-		PrivateKey privateKey = PemUtils.parseRsaPrivateKey(keyFile);
+        PrivateKey privateKey = PemUtils.parseRsaPrivateKey(keyFile);
 
-		// parse cert
-		X509Certificate cert = PemUtils.parseX509Cert(certFile);
+        // parse cert
+        X509Certificate cert = PemUtils.parseX509Cert(certFile);
 
-		System.out.println("cert: " + cert);
-		System.out.println("key: " + privateKey);
+        System.out.println("cert: " + cert);
+        System.out.println("key: " + privateKey);
 
-		KeyStore keyStore = PemUtils.keyStoreFromCertAndKey(cert, privateKey,
-				"secret");
+        KeyStore keyStore = PemUtils.keyStoreFromCertAndKey(cert, privateKey, "secret");
 
-		Http http = Http.builder().clientCertAuth(keyStore, "secret")
-				.verifyHostname(false).verifyHostCert(false).build();
-		HttpRequestResponse response = http.execute(new HttpGet(
-				"https://172.17.4.101:443/api/v1/namespaces/default/replicationcontrollers/nginx"));
+        Http http = Http.builder().clientCertAuth(keyStore, "secret").verifyHostname(false).verifyHostCert(false)
+                .build();
+        HttpRequestResponse response = http.execute(
+                new HttpGet("https://172.17.4.101:443/api/v1/namespaces/default/replicationcontrollers/nginx"));
 
-		System.out.println(response);
-		System.out.println(response.getResponseBody());
-	}
+        System.out.println(response);
+        System.out.println(response.getResponseBody());
+    }
 }

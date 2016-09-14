@@ -190,298 +190,277 @@ import com.google.gson.JsonObject;
  */
 public class BaseCloudPool implements CloudPool {
 
-	/** {@link Logger} instance. */
-	static final Logger LOG = LoggerFactory.getLogger(BaseCloudPool.class);
+    /** {@link Logger} instance. */
+    static final Logger LOG = LoggerFactory.getLogger(BaseCloudPool.class);
 
-	/** Declares where the runtime state is stored. */
-	private final StateStorage stateStorage;
-	/** A cloud-specific management driver for the cloud pool. */
-	private CloudPoolDriver cloudDriver = null;
+    /** Declares where the runtime state is stored. */
+    private final StateStorage stateStorage;
+    /** A cloud-specific management driver for the cloud pool. */
+    private CloudPoolDriver cloudDriver = null;
 
-	/**
-	 * {@link EventBus} used to post {@link Alert} events that are to be
-	 * forwarded by configured {@link Alerter}s (if any).
-	 */
-	private final EventBus eventBus;
+    /**
+     * {@link EventBus} used to post {@link Alert} events that are to be
+     * forwarded by configured {@link Alerter}s (if any).
+     */
+    private final EventBus eventBus;
 
-	/** The currently set configuration. */
-	private final AtomicReference<BaseCloudPoolConfig> config;
-	/** <code>true</code> if pool has been started. */
-	private final AtomicBoolean started;
+    /** The currently set configuration. */
+    private final AtomicReference<BaseCloudPoolConfig> config;
+    /** <code>true</code> if pool has been started. */
+    private final AtomicBoolean started;
 
-	/**
-	 * Dispatches {@link Alert}s sent on the {@link EventBus} to configured
-	 * {@link Alerter}s.
-	 */
-	private final MultiplexingAlerter alerter;
+    /**
+     * Dispatches {@link Alert}s sent on the {@link EventBus} to configured
+     * {@link Alerter}s.
+     */
+    private final MultiplexingAlerter alerter;
 
-	/** Retrieves {@link MachinePool} members. */
-	private CachingPoolFetcher poolFetcher;
-	/** Manages the machine pool to keep it at its desired size. */
-	private PoolUpdater poolUpdater;
+    /** Retrieves {@link MachinePool} members. */
+    private CachingPoolFetcher poolFetcher;
+    /** Manages the machine pool to keep it at its desired size. */
+    private PoolUpdater poolUpdater;
 
-	/**
-	 * Constructs a new {@link BaseCloudPool} managing a given
-	 * {@link CloudPoolDriver}.
-	 *
-	 * @param stateStorage
-	 *            Declares where the runtime state is stored.
-	 * @param cloudDriver
-	 *            A cloud-specific management driver for the cloud pool.
-	 */
-	public BaseCloudPool(StateStorage stateStorage,
-			CloudPoolDriver cloudDriver) {
-		this(stateStorage, cloudDriver, new EventBus());
-	}
+    /**
+     * Constructs a new {@link BaseCloudPool} managing a given
+     * {@link CloudPoolDriver}.
+     *
+     * @param stateStorage
+     *            Declares where the runtime state is stored.
+     * @param cloudDriver
+     *            A cloud-specific management driver for the cloud pool.
+     */
+    public BaseCloudPool(StateStorage stateStorage, CloudPoolDriver cloudDriver) {
+        this(stateStorage, cloudDriver, new EventBus());
+    }
 
-	/**
-	 * Constructs a new {@link BaseCloudPool} managing a given
-	 * {@link CloudPoolDriver} and using an {@link EventBus} provided by the
-	 * caller.
-	 *
-	 * @param stateStorage
-	 *            Declares where the runtime state is stored.
-	 * @param cloudDriver
-	 *            A cloud-specific management driver for the cloud pool.
-	 * @param eventBus
-	 *            The {@link EventBus} used to send {@link Alert}s and event
-	 *            messages between components of the cloud pool.
-	 */
-	public BaseCloudPool(StateStorage stateStorage, CloudPoolDriver cloudDriver,
-			EventBus eventBus) {
-		checkArgument(stateStorage != null, "no stateStorage given");
-		checkArgument(cloudDriver != null, "no cloudDriver given");
-		checkArgument(eventBus != null, "no eventBus given");
+    /**
+     * Constructs a new {@link BaseCloudPool} managing a given
+     * {@link CloudPoolDriver} and using an {@link EventBus} provided by the
+     * caller.
+     *
+     * @param stateStorage
+     *            Declares where the runtime state is stored.
+     * @param cloudDriver
+     *            A cloud-specific management driver for the cloud pool.
+     * @param eventBus
+     *            The {@link EventBus} used to send {@link Alert}s and event
+     *            messages between components of the cloud pool.
+     */
+    public BaseCloudPool(StateStorage stateStorage, CloudPoolDriver cloudDriver, EventBus eventBus) {
+        checkArgument(stateStorage != null, "no stateStorage given");
+        checkArgument(cloudDriver != null, "no cloudDriver given");
+        checkArgument(eventBus != null, "no eventBus given");
 
-		this.stateStorage = stateStorage;
-		this.cloudDriver = cloudDriver;
-		this.eventBus = eventBus;
+        this.stateStorage = stateStorage;
+        this.cloudDriver = cloudDriver;
+        this.eventBus = eventBus;
 
-		this.alerter = new MultiplexingAlerter();
-		this.eventBus.register(this.alerter);
+        this.alerter = new MultiplexingAlerter();
+        this.eventBus.register(this.alerter);
 
-		this.config = Atomics.newReference();
-		this.started = new AtomicBoolean(false);
-	}
+        this.config = Atomics.newReference();
+        this.started = new AtomicBoolean(false);
+    }
 
-	@Override
-	public void configure(JsonObject jsonConfig)
-			throws IllegalArgumentException, CloudPoolException {
-		BaseCloudPoolConfig configuration = validate(jsonConfig);
+    @Override
+    public void configure(JsonObject jsonConfig) throws IllegalArgumentException, CloudPoolException {
+        BaseCloudPoolConfig configuration = validate(jsonConfig);
 
-		synchronized (this) {
-			boolean wasStarted = isStarted();
-			if (wasStarted) {
-				stop();
-			}
+        synchronized (this) {
+            boolean wasStarted = isStarted();
+            if (wasStarted) {
+                stop();
+            }
 
-			LOG.debug("setting new configuration: {}",
-					JsonUtils.toPrettyString(jsonConfig));
-			this.config.set(configuration);
-			// re-configure driver
-			this.cloudDriver.configure(configuration);
-			// alerters may have changed
-			this.alerter.unregisterAlerters();
-			this.alerter.registerAlerters(config().getAlerts(),
-					standardAlertMetadata());
+            LOG.debug("setting new configuration: {}", JsonUtils.toPrettyString(jsonConfig));
+            this.config.set(configuration);
+            // re-configure driver
+            this.cloudDriver.configure(configuration);
+            // alerters may have changed
+            this.alerter.unregisterAlerters();
+            this.alerter.registerAlerters(config().getAlerts(), standardAlertMetadata());
 
-			if (wasStarted) {
-				start();
-			}
-		}
-	}
+            if (wasStarted) {
+                start();
+            }
+        }
+    }
 
-	private BaseCloudPoolConfig validate(JsonObject jsonConfig)
-			throws IllegalArgumentException {
-		try {
-			BaseCloudPoolConfig configuration = JsonUtils.toObject(jsonConfig,
-					BaseCloudPoolConfig.class);
-			configuration.validate();
-			return configuration;
-		} catch (Exception e) {
-			Throwables.propagateIfInstanceOf(e, IllegalArgumentException.class);
-			throw new IllegalArgumentException(
-					"failed to validate cloud pool configuration: "
-							+ e.getMessage(),
-					e);
-		}
-	}
+    private BaseCloudPoolConfig validate(JsonObject jsonConfig) throws IllegalArgumentException {
+        try {
+            BaseCloudPoolConfig configuration = JsonUtils.toObject(jsonConfig, BaseCloudPoolConfig.class);
+            configuration.validate();
+            return configuration;
+        } catch (Exception e) {
+            Throwables.propagateIfInstanceOf(e, IllegalArgumentException.class);
+            throw new IllegalArgumentException("failed to validate cloud pool configuration: " + e.getMessage(), e);
+        }
+    }
 
-	@Override
-	public Optional<JsonObject> getConfiguration() {
-		BaseCloudPoolConfig currentConfig = this.config.get();
-		if (currentConfig == null) {
-			return Optional.absent();
-		}
-		return Optional.of(JsonUtils.toJson(currentConfig).getAsJsonObject());
-	}
+    @Override
+    public Optional<JsonObject> getConfiguration() {
+        BaseCloudPoolConfig currentConfig = this.config.get();
+        if (currentConfig == null) {
+            return Optional.absent();
+        }
+        return Optional.of(JsonUtils.toJson(currentConfig).getAsJsonObject());
+    }
 
-	@Override
-	public void start() throws NotConfiguredException {
-		ensureConfigured();
+    @Override
+    public void start() throws NotConfiguredException {
+        ensureConfigured();
 
-		if (isStarted()) {
-			return;
-		}
-		LOG.info("starting {} driving a {}", getClass().getSimpleName(),
-				this.cloudDriver.getClass().getSimpleName());
+        if (isStarted()) {
+            return;
+        }
+        LOG.info("starting {} driving a {}", getClass().getSimpleName(), this.cloudDriver.getClass().getSimpleName());
 
-		RetryingPoolFetcher retryingFetcher = new RetryingPoolFetcher(
-				this.cloudDriver, config().getPoolFetch().getRetries());
-		// note: we wait for first attempt to get the pool to complete
-		this.poolFetcher = new CachingPoolFetcher(this.stateStorage,
-				retryingFetcher, config().getPoolFetch(), this.eventBus);
-		this.poolFetcher.awaitFirstFetch();
-		this.poolUpdater = new StandardPoolUpdater(this.cloudDriver,
-				this.poolFetcher, this.eventBus, config());
+        RetryingPoolFetcher retryingFetcher = new RetryingPoolFetcher(this.cloudDriver,
+                config().getPoolFetch().getRetries());
+        // note: we wait for first attempt to get the pool to complete
+        this.poolFetcher = new CachingPoolFetcher(this.stateStorage, retryingFetcher, config().getPoolFetch(),
+                this.eventBus);
+        this.poolFetcher.awaitFirstFetch();
+        this.poolUpdater = new StandardPoolUpdater(this.cloudDriver, this.poolFetcher, this.eventBus, config());
 
-		this.started.set(true);
-		LOG.info(getClass().getSimpleName() + " started.");
-	}
+        this.started.set(true);
+        LOG.info(getClass().getSimpleName() + " started.");
+    }
 
-	@Override
-	public void stop() {
-		if (isStarted()) {
-			LOG.debug("stopping {} ...", getClass().getSimpleName());
-			// cancel tasks (allow any running tasks to finish)
-			this.poolFetcher.close();
-			this.poolUpdater.close();
-			this.started.set(false);
-		}
-		LOG.info(getClass().getSimpleName() + " stopped.");
-	}
+    @Override
+    public void stop() {
+        if (isStarted()) {
+            LOG.debug("stopping {} ...", getClass().getSimpleName());
+            // cancel tasks (allow any running tasks to finish)
+            this.poolFetcher.close();
+            this.poolUpdater.close();
+            this.started.set(false);
+        }
+        LOG.info(getClass().getSimpleName() + " stopped.");
+    }
 
-	@Override
-	public CloudPoolStatus getStatus() {
-		return new CloudPoolStatus(isStarted(), isConfigured());
-	}
+    @Override
+    public CloudPoolStatus getStatus() {
+        return new CloudPoolStatus(isStarted(), isConfigured());
+    }
 
-	private boolean isConfigured() {
-		return getConfiguration().isPresent();
-	}
+    private boolean isConfigured() {
+        return getConfiguration().isPresent();
+    }
 
-	/**
-	 * Checks that a configuration has been set for the {@link CloudPool} or
-	 * throws a {@link NotConfiguredException}.
-	 */
-	private void ensureConfigured() throws NotConfiguredException {
-		if (!isConfigured()) {
-			throw new NotConfiguredException("cloud pool is not configured");
-		}
-	}
+    /**
+     * Checks that a configuration has been set for the {@link CloudPool} or
+     * throws a {@link NotConfiguredException}.
+     */
+    private void ensureConfigured() throws NotConfiguredException {
+        if (!isConfigured()) {
+            throw new NotConfiguredException("cloud pool is not configured");
+        }
+    }
 
-	boolean isStarted() {
-		return this.started.get();
-	}
+    boolean isStarted() {
+        return this.started.get();
+    }
 
-	@Override
-	public MachinePool getMachinePool() throws CloudPoolException {
-		ensureStarted();
+    @Override
+    public MachinePool getMachinePool() throws CloudPoolException {
+        ensureStarted();
 
-		return this.poolFetcher.get();
-	}
+        return this.poolFetcher.get();
+    }
 
-	/**
-	 * Ensures that the {@link CloudPool} has been started or otherwise throws a
-	 * {@link NotStartedException}.
-	 */
-	private void ensureStarted() throws NotStartedException {
-		if (!isStarted()) {
-			throw new NotStartedException(
-					"attempt to use cloud pool that is stopped");
-		}
-	}
+    /**
+     * Ensures that the {@link CloudPool} has been started or otherwise throws a
+     * {@link NotStartedException}.
+     */
+    private void ensureStarted() throws NotStartedException {
+        if (!isStarted()) {
+            throw new NotStartedException("attempt to use cloud pool that is stopped");
+        }
+    }
 
-	@Override
-	public PoolSizeSummary getPoolSize() throws CloudPoolException {
-		ensureStarted();
+    @Override
+    public PoolSizeSummary getPoolSize() throws CloudPoolException {
+        ensureStarted();
 
-		MachinePool pool = this.poolFetcher.get();
-		return new PoolSizeSummary(pool.getTimestamp(),
-				this.poolUpdater.getDesiredSize(),
-				pool.getAllocatedMachines().size(),
-				pool.getActiveMachines().size());
-	}
+        MachinePool pool = this.poolFetcher.get();
+        return new PoolSizeSummary(pool.getTimestamp(), this.poolUpdater.getDesiredSize(),
+                pool.getAllocatedMachines().size(), pool.getActiveMachines().size());
+    }
 
-	@Override
-	public void setDesiredSize(int desiredSize)
-			throws IllegalArgumentException, CloudPoolException {
-		ensureStarted();
+    @Override
+    public void setDesiredSize(int desiredSize) throws IllegalArgumentException, CloudPoolException {
+        ensureStarted();
 
-		this.poolUpdater.setDesiredSize(desiredSize);
-	}
+        this.poolUpdater.setDesiredSize(desiredSize);
+    }
 
-	@Override
-	public void terminateMachine(String machineId, boolean decrementDesiredSize)
-			throws IllegalArgumentException, CloudPoolException {
-		ensureStarted();
+    @Override
+    public void terminateMachine(String machineId, boolean decrementDesiredSize)
+            throws IllegalArgumentException, CloudPoolException {
+        ensureStarted();
 
-		this.poolUpdater.terminateMachine(machineId, decrementDesiredSize);
-	}
+        this.poolUpdater.terminateMachine(machineId, decrementDesiredSize);
+    }
 
-	@Override
-	public void attachMachine(String machineId)
-			throws IllegalArgumentException, CloudPoolException {
-		ensureStarted();
+    @Override
+    public void attachMachine(String machineId) throws IllegalArgumentException, CloudPoolException {
+        ensureStarted();
 
-		this.poolUpdater.attachMachine(machineId);
-	}
+        this.poolUpdater.attachMachine(machineId);
+    }
 
-	@Override
-	public void detachMachine(String machineId, boolean decrementDesiredSize)
-			throws IllegalArgumentException, CloudPoolException {
-		ensureStarted();
+    @Override
+    public void detachMachine(String machineId, boolean decrementDesiredSize)
+            throws IllegalArgumentException, CloudPoolException {
+        ensureStarted();
 
-		this.poolUpdater.detachMachine(machineId, decrementDesiredSize);
-	}
+        this.poolUpdater.detachMachine(machineId, decrementDesiredSize);
+    }
 
-	@Override
-	public void setServiceState(String machineId, ServiceState serviceState)
-			throws IllegalArgumentException {
-		ensureStarted();
+    @Override
+    public void setServiceState(String machineId, ServiceState serviceState) throws IllegalArgumentException {
+        ensureStarted();
 
-		this.poolUpdater.setServiceState(machineId, serviceState);
-	}
+        this.poolUpdater.setServiceState(machineId, serviceState);
+    }
 
-	@Override
-	public void setMembershipStatus(String machineId,
-			MembershipStatus membershipStatus)
-					throws NotFoundException, CloudPoolException {
-		ensureStarted();
+    @Override
+    public void setMembershipStatus(String machineId, MembershipStatus membershipStatus)
+            throws NotFoundException, CloudPoolException {
+        ensureStarted();
 
-		this.poolUpdater.setMembershipStatus(machineId, membershipStatus);
-	}
+        this.poolUpdater.setMembershipStatus(machineId, membershipStatus);
+    }
 
-	@Override
-	public CloudPoolMetadata getMetadata() {
-		return this.cloudDriver.getMetadata();
-	}
+    @Override
+    public CloudPoolMetadata getMetadata() {
+        return this.cloudDriver.getMetadata();
+    }
 
-	/**
-	 * Standard tags that are to be included in all sent out {@link Alert}s (in
-	 * addition to those already set on the {@link Alert} itself).
-	 *
-	 * @return
-	 */
-	private Map<String, JsonElement> standardAlertMetadata() {
-		Map<String, JsonElement> standardTags = Maps.newHashMap();
-		List<String> ipv4Addresses = Lists.newArrayList();
-		for (InetAddress inetAddr : HostUtils.hostIpv4Addresses()) {
-			ipv4Addresses.add(inetAddr.getHostAddress());
-		}
-		standardTags.put("cloudPoolEndpointIps",
-				JsonUtils.toJson(ipv4Addresses));
-		standardTags.put("cloudPoolName",
-				JsonUtils.toJson(config().getCloudPool().getName()));
-		return standardTags;
-	}
+    /**
+     * Standard tags that are to be included in all sent out {@link Alert}s (in
+     * addition to those already set on the {@link Alert} itself).
+     *
+     * @return
+     */
+    private Map<String, JsonElement> standardAlertMetadata() {
+        Map<String, JsonElement> standardTags = Maps.newHashMap();
+        List<String> ipv4Addresses = Lists.newArrayList();
+        for (InetAddress inetAddr : HostUtils.hostIpv4Addresses()) {
+            ipv4Addresses.add(inetAddr.getHostAddress());
+        }
+        standardTags.put("cloudPoolEndpointIps", JsonUtils.toJson(ipv4Addresses));
+        standardTags.put("cloudPoolName", JsonUtils.toJson(config().getCloudPool().getName()));
+        return standardTags;
+    }
 
-	BaseCloudPoolConfig config() {
-		return this.config.get();
-	}
+    BaseCloudPoolConfig config() {
+        return this.config.get();
+    }
 
-	void updateMachinePool() {
-		this.poolUpdater.resize(config());
-	}
+    void updateMachinePool() {
+        this.poolUpdater.resize(config());
+    }
 
 }

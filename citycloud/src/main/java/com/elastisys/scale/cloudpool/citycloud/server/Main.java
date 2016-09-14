@@ -15,13 +15,10 @@ import com.elastisys.scale.cloudpool.openstack.driver.client.StandardOpenstackCl
  */
 public class Main {
 
-	public static void main(String[] args) throws Exception {
-		CloudPoolOptions options = CloudPoolServer.parseArgs(args);
-		StateStorage stateStorage = StateStorage.builder(options.storageDir)
-				.build();
-		CloudPoolDriver openstackDriver = new CityCloudPoolDriver(
-				new StandardOpenstackClient());
-		CloudPoolServer.main(new BaseCloudPool(stateStorage, openstackDriver),
-				args);
-	}
+    public static void main(String[] args) throws Exception {
+        CloudPoolOptions options = CloudPoolServer.parseArgs(args);
+        StateStorage stateStorage = StateStorage.builder(options.storageDir).build();
+        CloudPoolDriver openstackDriver = new CityCloudPoolDriver(new StandardOpenstackClient());
+        CloudPoolServer.main(new BaseCloudPool(stateStorage, openstackDriver), args);
+    }
 }

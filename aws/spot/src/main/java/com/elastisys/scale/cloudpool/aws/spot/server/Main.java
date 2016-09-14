@@ -16,16 +16,13 @@ import com.google.common.eventbus.EventBus;
  */
 public class Main {
 
-	public static void main(String[] args) throws Exception {
-		CloudPoolOptions options = CloudPoolServer.parseArgs(args);
-		StateStorage stateStorage = StateStorage.builder(options.storageDir)
-				.build();
-		// event bus on which to send alerts are to be distributed to registered
-		// email/webhook recipients
-		EventBus eventBus = new EventBus();
-		CloudPoolDriver driver = new SpotPoolDriver(new AwsSpotClient(),
-				eventBus);
-		CloudPoolServer.main(new BaseCloudPool(stateStorage, driver, eventBus),
-				args);
-	}
+    public static void main(String[] args) throws Exception {
+        CloudPoolOptions options = CloudPoolServer.parseArgs(args);
+        StateStorage stateStorage = StateStorage.builder(options.storageDir).build();
+        // event bus on which to send alerts are to be distributed to registered
+        // email/webhook recipients
+        EventBus eventBus = new EventBus();
+        CloudPoolDriver driver = new SpotPoolDriver(new AwsSpotClient(), eventBus);
+        CloudPoolServer.main(new BaseCloudPool(stateStorage, driver, eventBus), args);
+    }
 }

@@ -17,29 +17,29 @@ import com.elastisys.scale.cloudpool.api.types.MachinePool;
  */
 public class PoolUnreachableException extends CloudPoolException {
 
-	public PoolUnreachableException() {
-		super();
-	}
+    public PoolUnreachableException() {
+        super();
+    }
 
-	public PoolUnreachableException(String message, Throwable cause) {
-		super(message, cause);
-	}
+    public PoolUnreachableException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-	public PoolUnreachableException(String message) {
-		super(message);
-	}
+    public PoolUnreachableException(String message) {
+        super(message);
+    }
 
-	public PoolUnreachableException(Throwable cause) {
-		super(cause);
-	}
+    public PoolUnreachableException(Throwable cause) {
+        super(cause);
+    }
 
-	/**
-	 * Returns <code>true</code> if no pool fetch attempt has completed yet.
-	 *
-	 * @return
-	 */
-	public boolean noFetchAttemptCompletedYet() {
-		return this.getCause() == null;
-	}
+    /**
+     * Returns <code>true</code> if no pool fetch attempt has completed yet.
+     *
+     * @return
+     */
+    public boolean noFetchAttemptCompletedYet() {
+        return this.getCause() == null;
+    }
 
 }

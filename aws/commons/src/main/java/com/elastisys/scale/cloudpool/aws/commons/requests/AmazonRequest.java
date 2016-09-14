@@ -15,41 +15,40 @@ import com.amazonaws.auth.AWSCredentials;
  *            The response type.
  */
 public abstract class AmazonRequest<R> implements Callable<R> {
-	protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	/** AWS security credentials for the account to be used. */
-	private final AWSCredentials awsCredentials;
-	/** The AWS region that the request will be sent to. */
-	private final String region;
-	/** Client configuration options such as connection timeout, etc. */
-	private final ClientConfiguration clientConfig;
+    /** AWS security credentials for the account to be used. */
+    private final AWSCredentials awsCredentials;
+    /** The AWS region that the request will be sent to. */
+    private final String region;
+    /** Client configuration options such as connection timeout, etc. */
+    private final ClientConfiguration clientConfig;
 
-	/**
-	 * Constructs a new {@link AmazonRequest} instance.
-	 *
-	 * @param awsCredentials
-	 *            AWS security credentials for the account to be used.
-	 * @param region
-	 *            The AWS region that the request will be sent to.
-	 * @param clientConfig
-	 *            Client configuration options such as connection timeout, etc.
-	 */
-	public AmazonRequest(AWSCredentials awsCredentials, String region,
-			ClientConfiguration clientConfig) {
-		this.awsCredentials = awsCredentials;
-		this.clientConfig = clientConfig;
-		this.region = region;
-	}
+    /**
+     * Constructs a new {@link AmazonRequest} instance.
+     *
+     * @param awsCredentials
+     *            AWS security credentials for the account to be used.
+     * @param region
+     *            The AWS region that the request will be sent to.
+     * @param clientConfig
+     *            Client configuration options such as connection timeout, etc.
+     */
+    public AmazonRequest(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig) {
+        this.awsCredentials = awsCredentials;
+        this.clientConfig = clientConfig;
+        this.region = region;
+    }
 
-	public AWSCredentials getAwsCredentials() {
-		return this.awsCredentials;
-	}
+    public AWSCredentials getAwsCredentials() {
+        return this.awsCredentials;
+    }
 
-	public String getRegion() {
-		return this.region;
-	}
+    public String getRegion() {
+        return this.region;
+    }
 
-	public ClientConfiguration getClientConfig() {
-		return this.clientConfig;
-	}
+    public ClientConfiguration getClientConfig() {
+        return this.clientConfig;
+    }
 }

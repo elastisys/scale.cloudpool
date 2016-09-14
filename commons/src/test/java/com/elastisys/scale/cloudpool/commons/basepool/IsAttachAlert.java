@@ -13,27 +13,26 @@ import com.elastisys.scale.commons.net.alerter.Alert;
 
 public class IsAttachAlert extends TypeSafeMatcher<Alert> {
 
-	private final String machineId;
+    private final String machineId;
 
-	public IsAttachAlert(String machineId) {
-		this.machineId = machineId;
-	}
+    public IsAttachAlert(String machineId) {
+        this.machineId = machineId;
+    }
 
-	@Override
-	public boolean matchesSafely(Alert someAlert) {
-		String messagePattern = format("Attached machine %s", this.machineId);
-		return equal(AlertTopics.RESIZE.name(), someAlert.getTopic())
-				&& someAlert.getMessage().contains(messagePattern);
-	}
+    @Override
+    public boolean matchesSafely(Alert someAlert) {
+        String messagePattern = format("Attached machine %s", this.machineId);
+        return equal(AlertTopics.RESIZE.name(), someAlert.getTopic())
+                && someAlert.getMessage().contains(messagePattern);
+    }
 
-	@Override
-	public void describeTo(Description description) {
-		description.appendText(String.format("attach alert for %s",
-				this.machineId));
-	}
+    @Override
+    public void describeTo(Description description) {
+        description.appendText(String.format("attach alert for %s", this.machineId));
+    }
 
-	@Factory
-	public static <T> Matcher<Alert> isAttachAlert(String machineId) {
-		return new IsAttachAlert(machineId);
-	}
+    @Factory
+    public static <T> Matcher<Alert> isAttachAlert(String machineId) {
+        return new IsAttachAlert(machineId);
+    }
 }

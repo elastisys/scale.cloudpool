@@ -23,50 +23,43 @@ import com.elastisys.scale.commons.net.retryable.Retryers;
  * Due to the eventual consistency semantics of the Amazon API, operations may
  * need time to propagate through the system and results may not be immediate.
  */
-public class TerminateAutoScalingGroupInstance
-		extends AmazonAutoScalingRequest<Void> {
+public class TerminateAutoScalingGroupInstance extends AmazonAutoScalingRequest<Void> {
 
-	/** The machine instance identifier to be terminated. */
-	private final String instanceId;
+    /** The machine instance identifier to be terminated. */
+    private final String instanceId;
 
-	public TerminateAutoScalingGroupInstance(AWSCredentials awsCredentials,
-			String region, ClientConfiguration clientConfig,
-			String instanceId) {
-		super(awsCredentials, region, clientConfig);
-		this.instanceId = instanceId;
-	}
+    public TerminateAutoScalingGroupInstance(AWSCredentials awsCredentials, String region,
+            ClientConfiguration clientConfig, String instanceId) {
+        super(awsCredentials, region, clientConfig);
+        this.instanceId = instanceId;
+    }
 
-	@Override
-	public Void call() {
-		TerminateInstanceInAutoScalingGroupRequest request = new TerminateInstanceInAutoScalingGroupRequest()
-				.withInstanceId(this.instanceId)
-				.withShouldDecrementDesiredCapacity(true);
-		getClient().getApi().terminateInstanceInAutoScalingGroup(request);
+    @Override
+    public Void call() {
+        TerminateInstanceInAutoScalingGroupRequest request = new TerminateInstanceInAutoScalingGroupRequest()
+                .withInstanceId(this.instanceId).withShouldDecrementDesiredCapacity(true);
+        getClient().getApi().terminateInstanceInAutoScalingGroup(request);
 
-		awaitTermination(this.instanceId);
-		return null;
-	}
+        awaitTermination(this.instanceId);
+        return null;
+    }
 
-	private void awaitTermination(String instanceId) {
-		String name = String.format("await-terminal-state{%s}", instanceId);
-		try (Ec2ApiClient ec2Client = new Ec2ApiClient(getAwsCredentials(),
-				getRegion(), getClientConfig())) {
-			Callable<Instance> stateRequester = new GetInstance(
-					getAwsCredentials(), getRegion(), getClientConfig(),
-					instanceId);
+    private void awaitTermination(String instanceId) {
+        String name = String.format("await-terminal-state{%s}", instanceId);
+        try (Ec2ApiClient ec2Client = new Ec2ApiClient(getAwsCredentials(), getRegion(), getClientConfig())) {
+            Callable<Instance> stateRequester = new GetInstance(getAwsCredentials(), getRegion(), getClientConfig(),
+                    instanceId);
 
-			int initialDelay = 1;
-			int maxRetries = 8;
-			Retryable<Instance> retryer = Retryers.exponentialBackoffRetryer(
-					name, stateRequester, initialDelay, TimeUnit.SECONDS,
-					maxRetries, inAnyOfStates("shutting-down", "terminated"));
-			try {
-				retryer.call();
-			} catch (Exception e) {
-				throw new RuntimeException(String.format(
-						"gave up waiting for instance to terminate: '%s': %s",
-						instanceId, e.getMessage()), e);
-			}
-		}
-	}
+            int initialDelay = 1;
+            int maxRetries = 8;
+            Retryable<Instance> retryer = Retryers.exponentialBackoffRetryer(name, stateRequester, initialDelay,
+                    TimeUnit.SECONDS, maxRetries, inAnyOfStates("shutting-down", "terminated"));
+            try {
+                retryer.call();
+            } catch (Exception e) {
+                throw new RuntimeException(String.format("gave up waiting for instance to terminate: '%s': %s",
+                        instanceId, e.getMessage()), e);
+            }
+        }
+    }
 }

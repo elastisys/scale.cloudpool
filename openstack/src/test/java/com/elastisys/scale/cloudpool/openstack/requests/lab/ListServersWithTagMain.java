@@ -10,14 +10,14 @@ import com.elastisys.scale.cloudpool.openstack.requests.ListServersWithTagReques
 import com.elastisys.scale.commons.openstack.OSClientFactory;
 
 public class ListServersWithTagMain {
-	private static Logger LOG = LoggerFactory.getLogger(ListServersWithTagMain.class);
+    private static Logger LOG = LoggerFactory.getLogger(ListServersWithTagMain.class);
 
-	public static void main(String[] args) {
-		List<Server> taggedServers = new ListServersWithTagRequest(
-				new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig()), "key1", "value1").call();
-		LOG.info("{} tagged server(s) found", taggedServers.size());
-		for (Server server : taggedServers) {
-			LOG.info("server: {}", server);
-		}
-	}
+    public static void main(String[] args) {
+        List<Server> taggedServers = new ListServersWithTagRequest(
+                new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig()), "key1", "value1").call();
+        LOG.info("{} tagged server(s) found", taggedServers.size());
+        for (Server server : taggedServers) {
+            LOG.info("server: {}", server);
+        }
+    }
 }

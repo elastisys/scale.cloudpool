@@ -28,125 +28,117 @@ import com.elastisys.scale.commons.json.types.ErrorType;
  * incoming calls to the backing {@link CloudPool} implementation.
  */
 public class TestStartStopHandlerDispatch {
-	/** The object under test. */
-	private StartStopHandler restEndpoint;
-	/**
-	 * Backing {@link CloudPool} that endpoint will dispatch incoming calls to.
-	 */
-	private CloudPool cloudPoolMock = mock(CloudPool.class);
+    /** The object under test. */
+    private StartStopHandler restEndpoint;
+    /**
+     * Backing {@link CloudPool} that endpoint will dispatch incoming calls to.
+     */
+    private CloudPool cloudPoolMock = mock(CloudPool.class);
 
-	@Before
-	public void onSetup() {
-		this.restEndpoint = new StartStopHandler(this.cloudPoolMock);
-	}
+    @Before
+    public void onSetup() {
+        this.restEndpoint = new StartStopHandler(this.cloudPoolMock);
+    }
 
-	/**
-	 * Verify proper delegation of {@code getStatus} to backing
-	 * {@link CloudPool}.
-	 */
-	@Test
-	public void testGetStatusDispatch() throws IOException {
-		// set up mock response
-		when(this.cloudPoolMock.getStatus()).thenReturn(
-				new CloudPoolStatus(true, true));
+    /**
+     * Verify proper delegation of {@code getStatus} to backing
+     * {@link CloudPool}.
+     */
+    @Test
+    public void testGetStatusDispatch() throws IOException {
+        // set up mock response
+        when(this.cloudPoolMock.getStatus()).thenReturn(new CloudPoolStatus(true, true));
 
-		// call rest endpoint and verify proper dispatching to mock
-		Response response = this.restEndpoint.getStatus();
-		assertEquals(response.getStatus(), Status.OK.getStatusCode());
-		assertEquals(response.getEntity(), new CloudPoolStatus(true, true));
-	}
+        // call rest endpoint and verify proper dispatching to mock
+        Response response = this.restEndpoint.getStatus();
+        assertEquals(response.getStatus(), Status.OK.getStatusCode());
+        assertEquals(response.getEntity(), new CloudPoolStatus(true, true));
+    }
 
-	/**
-	 * Verify proper handling of {@code getStatus} calls when an error is thrown
-	 * from the backing {@link CloudPool}.
-	 */
-	@Test
-	public void testGetStatusDispatchOnCloudPoolError() throws Exception {
-		// set up mock response
-		when(this.cloudPoolMock.getStatus()).thenThrow(
-				new CloudPoolException("error!"));
+    /**
+     * Verify proper handling of {@code getStatus} calls when an error is thrown
+     * from the backing {@link CloudPool}.
+     */
+    @Test
+    public void testGetStatusDispatchOnCloudPoolError() throws Exception {
+        // set up mock response
+        when(this.cloudPoolMock.getStatus()).thenThrow(new CloudPoolException("error!"));
 
-		// call rest endpoint and verify proper dispatching to mock
-		Response response = this.restEndpoint.getStatus();
-		assertEquals(response.getStatus(),
-				Status.INTERNAL_SERVER_ERROR.getStatusCode());
-		assertThat(response.getEntity(), instanceOf(ErrorType.class));
-	}
+        // call rest endpoint and verify proper dispatching to mock
+        Response response = this.restEndpoint.getStatus();
+        assertEquals(response.getStatus(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertThat(response.getEntity(), instanceOf(ErrorType.class));
+    }
 
-	/**
-	 * Verify proper delegation of {@code start} to backing {@link CloudPool}.
-	 */
-	@Test
-	public void testStartDispatch() throws Exception {
-		Response response = this.restEndpoint.start();
-		assertEquals(response.getStatus(), Status.OK.getStatusCode());
-		assertEquals(response.getEntity(), null);
+    /**
+     * Verify proper delegation of {@code start} to backing {@link CloudPool}.
+     */
+    @Test
+    public void testStartDispatch() throws Exception {
+        Response response = this.restEndpoint.start();
+        assertEquals(response.getStatus(), Status.OK.getStatusCode());
+        assertEquals(response.getEntity(), null);
 
-		verify(this.cloudPoolMock).start();
-		verifyNoMoreInteractions(this.cloudPoolMock);
-	}
+        verify(this.cloudPoolMock).start();
+        verifyNoMoreInteractions(this.cloudPoolMock);
+    }
 
-	/**
-	 * Verify proper handling of {@code start} calls when a cloud provider error
-	 * is thrown from the backing {@link CloudPool}.
-	 */
-	@Test
-	public void testStartDispatchOnNonConfiguredCloudPool() throws Exception {
-		// set up mock response: should throw error
-		doThrow(new NotConfiguredException("attempt to start without config"))
-				.when(this.cloudPoolMock).start();
+    /**
+     * Verify proper handling of {@code start} calls when a cloud provider error
+     * is thrown from the backing {@link CloudPool}.
+     */
+    @Test
+    public void testStartDispatchOnNonConfiguredCloudPool() throws Exception {
+        // set up mock response: should throw error
+        doThrow(new NotConfiguredException("attempt to start without config")).when(this.cloudPoolMock).start();
 
-		// call rest endpoint and verify proper dispatching to mock
-		Response response = this.restEndpoint.start();
-		assertEquals(response.getStatus(), Status.BAD_REQUEST.getStatusCode());
-		assertThat(response.getEntity(), instanceOf(ErrorType.class));
-	}
+        // call rest endpoint and verify proper dispatching to mock
+        Response response = this.restEndpoint.start();
+        assertEquals(response.getStatus(), Status.BAD_REQUEST.getStatusCode());
+        assertThat(response.getEntity(), instanceOf(ErrorType.class));
+    }
 
-	/**
-	 * Verify proper handling of {@code start} calls when an unexpected error is
-	 * thrown from the backing {@link CloudPool}.
-	 */
-	@Test
-	public void testStartDispatchOnUnexpectedCloudPoolError() throws Exception {
-		// set up mock response: should throw error
-		doThrow(new IllegalStateException("start failed!")).when(
-				this.cloudPoolMock).start();
+    /**
+     * Verify proper handling of {@code start} calls when an unexpected error is
+     * thrown from the backing {@link CloudPool}.
+     */
+    @Test
+    public void testStartDispatchOnUnexpectedCloudPoolError() throws Exception {
+        // set up mock response: should throw error
+        doThrow(new IllegalStateException("start failed!")).when(this.cloudPoolMock).start();
 
-		// call rest endpoint and verify proper dispatching to mock
-		Response response = this.restEndpoint.start();
-		assertEquals(response.getStatus(),
-				Status.INTERNAL_SERVER_ERROR.getStatusCode());
-		assertThat(response.getEntity(), instanceOf(ErrorType.class));
-	}
+        // call rest endpoint and verify proper dispatching to mock
+        Response response = this.restEndpoint.start();
+        assertEquals(response.getStatus(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertThat(response.getEntity(), instanceOf(ErrorType.class));
+    }
 
-	/**
-	 * Verify proper delegation of {@code stop} to backing {@link CloudPool}.
-	 */
-	@Test
-	public void testStopDispatch() throws Exception {
-		Response response = this.restEndpoint.stop();
-		assertEquals(response.getStatus(), Status.OK.getStatusCode());
-		assertEquals(response.getEntity(), null);
+    /**
+     * Verify proper delegation of {@code stop} to backing {@link CloudPool}.
+     */
+    @Test
+    public void testStopDispatch() throws Exception {
+        Response response = this.restEndpoint.stop();
+        assertEquals(response.getStatus(), Status.OK.getStatusCode());
+        assertEquals(response.getEntity(), null);
 
-		verify(this.cloudPoolMock).stop();
-		verifyNoMoreInteractions(this.cloudPoolMock);
-	}
+        verify(this.cloudPoolMock).stop();
+        verifyNoMoreInteractions(this.cloudPoolMock);
+    }
 
-	/**
-	 * Verify proper handling of {@code stop} calls when an unexpected error is
-	 * thrown from the backing {@link CloudPool}.
-	 */
-	@Test
-	public void testStopDispatchOnUnexpectedCloudPoolError() throws Exception {
-		// set up mock response: should throw error
-		doThrow(new IllegalStateException("stop failed!")).when(
-				this.cloudPoolMock).stop();
+    /**
+     * Verify proper handling of {@code stop} calls when an unexpected error is
+     * thrown from the backing {@link CloudPool}.
+     */
+    @Test
+    public void testStopDispatchOnUnexpectedCloudPoolError() throws Exception {
+        // set up mock response: should throw error
+        doThrow(new IllegalStateException("stop failed!")).when(this.cloudPoolMock).stop();
 
-		// call rest endpoint and verify proper dispatching to mock
-		Response response = this.restEndpoint.stop();
-		assertEquals(response.getStatus(),
-				Status.INTERNAL_SERVER_ERROR.getStatusCode());
-		assertThat(response.getEntity(), instanceOf(ErrorType.class));
-	}
+        // call rest endpoint and verify proper dispatching to mock
+        Response response = this.restEndpoint.stop();
+        assertEquals(response.getStatus(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertThat(response.getEntity(), instanceOf(ErrorType.class));
+    }
 
 }

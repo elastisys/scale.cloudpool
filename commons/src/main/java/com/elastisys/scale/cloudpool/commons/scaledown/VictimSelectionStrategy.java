@@ -11,13 +11,13 @@ import com.elastisys.scale.cloudpool.api.types.Machine;
  */
 public interface VictimSelectionStrategy {
 
-	/**
-	 * Selects which instance, from a collection of machine instances, to
-	 * schedule for (eventual) termination.
-	 *
-	 * @param candidates
-	 *            The collection of machines eligible for termination.
-	 * @return The selected victim machine instance.
-	 */
-	Machine selectVictim(Collection<Machine> candidates);
+    /**
+     * Selects which instance, from a collection of machine instances, to
+     * schedule for (eventual) termination.
+     *
+     * @param candidates
+     *            The collection of machines eligible for termination.
+     * @return The selected victim machine instance.
+     */
+    Machine selectVictim(Collection<Machine> candidates);
 }

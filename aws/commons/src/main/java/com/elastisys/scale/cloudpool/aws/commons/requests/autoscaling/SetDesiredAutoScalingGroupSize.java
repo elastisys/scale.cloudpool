@@ -23,36 +23,33 @@ import com.amazonaws.services.autoscaling.model.SetDesiredCapacityRequest;
  * of its billing hour. To pick a particular instance for termination, use
  * {@link TerminateAutoScalingGroupInstance}.
  */
-public class SetDesiredAutoScalingGroupSize
-		extends AmazonAutoScalingRequest<Void> {
+public class SetDesiredAutoScalingGroupSize extends AmazonAutoScalingRequest<Void> {
 
-	/** The name of the Auto Scaling Group whose size is to be changed. */
-	private final String autoScalingGroup;
-	/** The new desired capacity of the Auto Scaling group. */
-	private final int desiredCapacity;
+    /** The name of the Auto Scaling Group whose size is to be changed. */
+    private final String autoScalingGroup;
+    /** The new desired capacity of the Auto Scaling group. */
+    private final int desiredCapacity;
 
-	public SetDesiredAutoScalingGroupSize(AWSCredentials awsCredentials,
-			String region, ClientConfiguration clientConfig,
-			String autoScalingGroup, int desiredCapacity) {
-		super(awsCredentials, region, clientConfig);
-		this.autoScalingGroup = autoScalingGroup;
-		this.desiredCapacity = desiredCapacity;
-	}
+    public SetDesiredAutoScalingGroupSize(AWSCredentials awsCredentials, String region,
+            ClientConfiguration clientConfig, String autoScalingGroup, int desiredCapacity) {
+        super(awsCredentials, region, clientConfig);
+        this.autoScalingGroup = autoScalingGroup;
+        this.desiredCapacity = desiredCapacity;
+    }
 
-	@Override
-	public Void call() throws RuntimeException {
-		setDesiredSize();
-		return null;
-	}
+    @Override
+    public Void call() throws RuntimeException {
+        setDesiredSize();
+        return null;
+    }
 
-	/**
-	 * Updates the Auto Scaling group size by setting the desired capacity only.
-	 */
-	private void setDesiredSize() {
-		SetDesiredCapacityRequest request = new SetDesiredCapacityRequest()
-				.withAutoScalingGroupName(this.autoScalingGroup)
-				.withDesiredCapacity(this.desiredCapacity)
-				.withHonorCooldown(false);
-		getClient().getApi().setDesiredCapacity(request);
-	}
+    /**
+     * Updates the Auto Scaling group size by setting the desired capacity only.
+     */
+    private void setDesiredSize() {
+        SetDesiredCapacityRequest request = new SetDesiredCapacityRequest()
+                .withAutoScalingGroupName(this.autoScalingGroup).withDesiredCapacity(this.desiredCapacity)
+                .withHonorCooldown(false);
+        getClient().getApi().setDesiredCapacity(request);
+    }
 }

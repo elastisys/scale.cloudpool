@@ -16,100 +16,96 @@ import com.google.common.base.Preconditions;
  */
 public class AwsEc2Functions {
 
-	/**
-	 * Returns a {@link Function} that for a given EC2 {@link Instance} input
-	 * returns its id.
-	 *
-	 * @return
-	 */
-	public static Function<Instance, String> toInstanceId() {
-		return new ToInstanceId();
-	}
+    /**
+     * Returns a {@link Function} that for a given EC2 {@link Instance} input
+     * returns its id.
+     *
+     * @return
+     */
+    public static Function<Instance, String> toInstanceId() {
+        return new ToInstanceId();
+    }
 
-	/**
-	 * Returns a {@link Function} that for a given EC2
-	 * {@link SpotInstanceRequest} input returns its id.
-	 *
-	 * @return
-	 */
-	public static Function<SpotInstanceRequest, String> toSpotRequestId() {
-		return new ToSpotRequestId();
-	}
+    /**
+     * Returns a {@link Function} that for a given EC2
+     * {@link SpotInstanceRequest} input returns its id.
+     *
+     * @return
+     */
+    public static Function<SpotInstanceRequest, String> toSpotRequestId() {
+        return new ToSpotRequestId();
+    }
 
-	/**
-	 * Returns a {@link Function} that for a given {@link Instance} calculates
-	 * the remaining time (in seconds) of the instance's last started billing
-	 * hour.
-	 *
-	 * @param timeSource
-	 * @return
-	 */
-	public static Function<Instance, Long> remainingBillingHourTime() {
-		return new RemainingBillingHourTime();
-	}
+    /**
+     * Returns a {@link Function} that for a given {@link Instance} calculates
+     * the remaining time (in seconds) of the instance's last started billing
+     * hour.
+     *
+     * @param timeSource
+     * @return
+     */
+    public static Function<Instance, Long> remainingBillingHourTime() {
+        return new RemainingBillingHourTime();
+    }
 
-	/**
-	 * A {@link Function} that for a given {@link Instance} input returns its
-	 * identity.
-	 */
-	public static class ToInstanceId implements Function<Instance, String> {
-		@Override
-		public String apply(Instance instance) {
-			Preconditions.checkNotNull(instance, "null instance");
-			return instance.getInstanceId();
-		}
-	}
+    /**
+     * A {@link Function} that for a given {@link Instance} input returns its
+     * identity.
+     */
+    public static class ToInstanceId implements Function<Instance, String> {
+        @Override
+        public String apply(Instance instance) {
+            Preconditions.checkNotNull(instance, "null instance");
+            return instance.getInstanceId();
+        }
+    }
 
-	/**
-	 * A {@link Function} that for a given
-	 * {@link com.amazonaws.services.autoscaling.model.Instance} input returns
-	 * the name of its identifier.
-	 */
-	public static class ToAutoScalingInstanceId implements
-			Function<com.amazonaws.services.autoscaling.model.Instance, String> {
-		@Override
-		public String apply(
-				com.amazonaws.services.autoscaling.model.Instance instance) {
-			Preconditions.checkNotNull(instance, "null instance");
-			return instance.getInstanceId();
-		}
-	}
+    /**
+     * A {@link Function} that for a given
+     * {@link com.amazonaws.services.autoscaling.model.Instance} input returns
+     * the name of its identifier.
+     */
+    public static class ToAutoScalingInstanceId
+            implements Function<com.amazonaws.services.autoscaling.model.Instance, String> {
+        @Override
+        public String apply(com.amazonaws.services.autoscaling.model.Instance instance) {
+            Preconditions.checkNotNull(instance, "null instance");
+            return instance.getInstanceId();
+        }
+    }
 
-	/**
-	 * A {@link Function} that for a given {@link SpotInstanceRequest} input
-	 * returns its identity.
-	 */
-	public static class ToSpotRequestId implements
-			Function<SpotInstanceRequest, String> {
-		@Override
-		public String apply(SpotInstanceRequest request) {
-			Preconditions.checkNotNull(request, "null spot instance request");
-			return request.getSpotInstanceRequestId();
-		}
-	}
+    /**
+     * A {@link Function} that for a given {@link SpotInstanceRequest} input
+     * returns its identity.
+     */
+    public static class ToSpotRequestId implements Function<SpotInstanceRequest, String> {
+        @Override
+        public String apply(SpotInstanceRequest request) {
+            Preconditions.checkNotNull(request, "null spot instance request");
+            return request.getSpotInstanceRequestId();
+        }
+    }
 
-	/**
-	 * A {@link Function} that for a given {@link Instance} calculates the
-	 * remaining time (in seconds) of the instance's last started billing hour.
-	 */
-	public static class RemainingBillingHourTime implements
-			Function<Instance, Long> {
+    /**
+     * A {@link Function} that for a given {@link Instance} calculates the
+     * remaining time (in seconds) of the instance's last started billing hour.
+     */
+    public static class RemainingBillingHourTime implements Function<Instance, Long> {
 
-		/**
-		 * Calculates the remaining time (in seconds) of the instance's last
-		 * started billing hour.
-		 *
-		 * @param instance
-		 * @return
-		 */
-		@Override
-		public Long apply(Instance instance) {
-			checkNotNull(instance, "null instance");
-			long executionTimeInSeconds = (UtcTime.now().getMillis() - instance
-					.getLaunchTime().getTime()) / 1000;
-			long secondsIntoPrepaidHour = executionTimeInSeconds % 3600;
-			long secondsLeftOfPrepaidHour = 3600 - secondsIntoPrepaidHour;
-			return secondsLeftOfPrepaidHour;
-		}
-	}
+        /**
+         * Calculates the remaining time (in seconds) of the instance's last
+         * started billing hour.
+         *
+         * @param instance
+         * @return
+         */
+        @Override
+        public Long apply(Instance instance) {
+            checkNotNull(instance, "null instance");
+            long executionTimeInSeconds = (UtcTime.now().getMillis() - instance.getLaunchTime().getTime()) / 1000;
+            long secondsIntoPrepaidHour = executionTimeInSeconds % 3600;
+            long secondsLeftOfPrepaidHour = 3600 - secondsIntoPrepaidHour;
+            return secondsLeftOfPrepaidHour;
+        }
+    }
 }

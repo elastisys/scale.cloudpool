@@ -13,19 +13,17 @@ import com.elastisys.scale.commons.rest.client.RestClients;
 import com.google.common.base.Throwables;
 
 public class RestTestUtils {
-	public static Client httpsCertAuth(String keyStorePath,
-			String keyStorePassword, KeyStoreType keystoreType)
-			throws RuntimeException {
-		try (InputStream keyStoreStream = new FileInputStream(keyStorePath)) {
-			KeyStore keystore = KeyStore.getInstance(keystoreType.name());
-			keystore.load(keyStoreStream, keyStorePassword.toCharArray());
-			Client client = RestClients.httpsCertAuth(keystore,
-					keyStorePassword);
-			client.register(new LoggingFilter());
-			return client;
-		} catch (Exception e) {
-			throw Throwables.propagate(e);
-		}
-	}
+    public static Client httpsCertAuth(String keyStorePath, String keyStorePassword, KeyStoreType keystoreType)
+            throws RuntimeException {
+        try (InputStream keyStoreStream = new FileInputStream(keyStorePath)) {
+            KeyStore keystore = KeyStore.getInstance(keystoreType.name());
+            keystore.load(keyStoreStream, keyStorePassword.toCharArray());
+            Client client = RestClients.httpsCertAuth(keystore, keyStorePassword);
+            client.register(new LoggingFilter());
+            return client;
+        } catch (Exception e) {
+            throw Throwables.propagate(e);
+        }
+    }
 
 }

@@ -15,22 +15,16 @@ import com.elastisys.scale.cloudpool.commons.scaledown.strategies.OldestInstance
  */
 public class TestVictimSelectionPolicy {
 
-	@Test
-	public void testPolicyStrategyAssociations() {
-		assertThat(
-				VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR
-						.getVictimSelectionStrategy(),
-				instanceOf(ClosestToInstanceHourVictimSelectionStrategy.class));
+    @Test
+    public void testPolicyStrategyAssociations() {
+        assertThat(VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR.getVictimSelectionStrategy(),
+                instanceOf(ClosestToInstanceHourVictimSelectionStrategy.class));
 
-		assertThat(
-				VictimSelectionPolicy.NEWEST_INSTANCE
-						.getVictimSelectionStrategy(),
-				instanceOf(NewestInstanceVictimSelectionStrategy.class));
+        assertThat(VictimSelectionPolicy.NEWEST_INSTANCE.getVictimSelectionStrategy(),
+                instanceOf(NewestInstanceVictimSelectionStrategy.class));
 
-		assertThat(
-				VictimSelectionPolicy.OLDEST_INSTANCE
-						.getVictimSelectionStrategy(),
-				instanceOf(OldestInstanceVictimSelectionStrategy.class));
+        assertThat(VictimSelectionPolicy.OLDEST_INSTANCE.getVictimSelectionStrategy(),
+                instanceOf(OldestInstanceVictimSelectionStrategy.class));
 
-	}
+    }
 }

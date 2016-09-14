@@ -21,27 +21,24 @@ import com.google.gson.JsonObject;
  * commands read from {@code stdin}.
  */
 public class RunPool {
-	static Logger LOG = LoggerFactory.getLogger(RunPool.class);
+    static Logger LOG = LoggerFactory.getLogger(RunPool.class);
 
-	/**
-	 * TODO: set to your config file for the {@link KubernetesCloudPool}. Paths
-	 * are relative to the base directory of enclosing Maven project.
-	 */
-	private static final Path cloudPoolConfig = Paths.get(".", "myconfig.json");
+    /**
+     * TODO: set to your config file for the {@link KubernetesCloudPool}. Paths
+     * are relative to the base directory of enclosing Maven project.
+     */
+    private static final Path cloudPoolConfig = Paths.get(".", "myconfig.json");
 
-	private static final ScheduledExecutorService executorService = Executors
-			.newScheduledThreadPool(10);
+    private static final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(10);
 
-	public static void main(String[] args) throws Exception {
-		CloudPool pool = new KubernetesCloudPool(new StandardKubernetesClient(
-				new AuthenticatingHttpApiClient()));
+    public static void main(String[] args) throws Exception {
+        CloudPool pool = new KubernetesCloudPool(new StandardKubernetesClient(new AuthenticatingHttpApiClient()));
 
-		JsonObject config = JsonUtils.parseJsonFile(cloudPoolConfig.toFile())
-				.getAsJsonObject();
-		pool.configure(config);
+        JsonObject config = JsonUtils.parseJsonFile(cloudPoolConfig.toFile()).getAsJsonObject();
+        pool.configure(config);
 
-		new CloudPoolCommandLineDriver(pool).start();
+        new CloudPoolCommandLineDriver(pool).start();
 
-		executorService.shutdownNow();
-	}
+        executorService.shutdownNow();
+    }
 }

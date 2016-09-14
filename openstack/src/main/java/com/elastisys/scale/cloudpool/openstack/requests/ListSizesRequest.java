@@ -15,21 +15,21 @@ import com.google.common.collect.ImmutableList;
  * instance sizes (or "server flavors" in OpenStack lingo).
  */
 public class ListSizesRequest extends AbstractOpenstackRequest<List<Flavor>> {
-	static Logger LOG = LoggerFactory.getLogger(ListSizesRequest.class);
+    static Logger LOG = LoggerFactory.getLogger(ListSizesRequest.class);
 
-	/**
-	 * Constructs a new {@link ListSizesRequest} task.
-	 *
-	 * @param clientFactory
-	 *            OpenStack API client factory.
-	 */
-	public ListSizesRequest(OSClientFactory clientFactory) {
-		super(clientFactory);
-	}
+    /**
+     * Constructs a new {@link ListSizesRequest} task.
+     *
+     * @param clientFactory
+     *            OpenStack API client factory.
+     */
+    public ListSizesRequest(OSClientFactory clientFactory) {
+        super(clientFactory);
+    }
 
-	@Override
-	public List<Flavor> doRequest(OSClient api) {
-		List<? extends Flavor> flavors = api.compute().flavors().list();
-		return ImmutableList.copyOf(flavors);
-	}
+    @Override
+    public List<Flavor> doRequest(OSClient api) {
+        List<? extends Flavor> flavors = api.compute().flavors().list();
+        return ImmutableList.copyOf(flavors);
+    }
 }

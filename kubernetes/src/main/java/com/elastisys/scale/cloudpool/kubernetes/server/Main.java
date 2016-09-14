@@ -12,9 +12,9 @@ import com.elastisys.scale.cloudpool.kubernetes.client.impl.http.impl.Authentica
  */
 public class Main {
 
-	public static void main(String[] args) throws Exception {
-		KubernetesCloudPool cloudPool = new KubernetesCloudPool(
-				new StandardKubernetesClient(new AuthenticatingHttpApiClient()));
-		CloudPoolServer.main(cloudPool, args);
-	}
+    public static void main(String[] args) throws Exception {
+        KubernetesCloudPool cloudPool = new KubernetesCloudPool(
+                new StandardKubernetesClient(new AuthenticatingHttpApiClient()));
+        CloudPoolServer.main(cloudPool, args);
+    }
 }

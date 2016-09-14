@@ -15,33 +15,30 @@ import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionStrategy;
  *
  *
  */
-public enum NewestInstanceVictimSelectionStrategy implements
-		VictimSelectionStrategy {
+public enum NewestInstanceVictimSelectionStrategy implements VictimSelectionStrategy {
 
-	/** The single instance of this class. */
-	INSTANCE;
+    /** The single instance of this class. */
+    INSTANCE;
 
-	@Override
-	public Machine selectVictim(Collection<Machine> candidates)
-			throws IllegalArgumentException {
-		checkNotNull(candidates, "null candidate set");
-		checkArgument(!candidates.isEmpty(), "empty candidate set");
+    @Override
+    public Machine selectVictim(Collection<Machine> candidates) throws IllegalArgumentException {
+        checkNotNull(candidates, "null candidate set");
+        checkArgument(!candidates.isEmpty(), "empty candidate set");
 
-		return Machine.sort(candidates, new NewestFirstOrder()).get(0);
-	}
+        return Machine.sort(candidates, new NewestFirstOrder()).get(0);
+    }
 
-	/**
-	 * {@link Comparator} that orders {@link Machine} instances in order of
-	 * increasing age (youngest instance first).
-	 *
-	 *
-	 *
-	 */
-	public class NewestFirstOrder implements Comparator<Machine> {
-		@Override
-		public int compare(Machine instance1, Machine instance2) {
-			return instance2.getLaunchTime().compareTo(
-					instance1.getLaunchTime());
-		}
-	}
+    /**
+     * {@link Comparator} that orders {@link Machine} instances in order of
+     * increasing age (youngest instance first).
+     *
+     *
+     *
+     */
+    public class NewestFirstOrder implements Comparator<Machine> {
+        @Override
+        public int compare(Machine instance1, Machine instance2) {
+            return instance2.getLaunchTime().compareTo(instance1.getLaunchTime());
+        }
+    }
 }

@@ -19,25 +19,25 @@ import com.elastisys.scale.commons.net.retryable.Retryable;
  */
 public class ServerIpAddressRequester implements Callable<Addresses> {
 
-	private final OSClient api;
-	private final String serverId;
+    private final OSClient api;
+    private final String serverId;
 
-	/**
-	 * Constructs a new {@link ServerIpAddressRequester} task.
-	 *
-	 * @param api
-	 *            An Openstack API client.
-	 * @param serverId
-	 *            The identifier of the server instance whose IP addresses are
-	 *            to be retrieved.
-	 */
-	public ServerIpAddressRequester(OSClient api, String serverId) {
-		this.api = api;
-		this.serverId = serverId;
-	}
+    /**
+     * Constructs a new {@link ServerIpAddressRequester} task.
+     *
+     * @param api
+     *            An Openstack API client.
+     * @param serverId
+     *            The identifier of the server instance whose IP addresses are
+     *            to be retrieved.
+     */
+    public ServerIpAddressRequester(OSClient api, String serverId) {
+        this.api = api;
+        this.serverId = serverId;
+    }
 
-	@Override
-	public Addresses call() throws Exception {
-		return this.api.compute().servers().get(this.serverId).getAddresses();
-	}
+    @Override
+    public Addresses call() throws Exception {
+        return this.api.compute().servers().get(this.serverId).getAddresses();
+    }
 }

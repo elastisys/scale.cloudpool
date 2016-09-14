@@ -13,29 +13,28 @@ import com.google.common.base.Preconditions;
  */
 public class AwsAutoScalingFunctions {
 
-	/**
-	 * Returns a {@link Function} that for a given Auto Scaling {@link Instance}
-	 * input returns its identity.
-	 *
-	 * @return
-	 */
-	public static Function<Instance, String> toAutoScalingInstanceId() {
-		return new ToAutoScalingInstanceId();
-	}
+    /**
+     * Returns a {@link Function} that for a given Auto Scaling {@link Instance}
+     * input returns its identity.
+     *
+     * @return
+     */
+    public static Function<Instance, String> toAutoScalingInstanceId() {
+        return new ToAutoScalingInstanceId();
+    }
 
-	/**
-	 * A {@link Function} that for a given Auto Scaling {@link Instance} input
-	 * returns the name of its identifier.
-	 *
-	 * 
-	 */
-	public static class ToAutoScalingInstanceId implements
-			Function<Instance, String> {
-		@Override
-		public String apply(Instance instance) {
-			Preconditions.checkNotNull(instance, "null instance");
-			return instance.getInstanceId();
-		}
-	}
+    /**
+     * A {@link Function} that for a given Auto Scaling {@link Instance} input
+     * returns the name of its identifier.
+     *
+     * 
+     */
+    public static class ToAutoScalingInstanceId implements Function<Instance, String> {
+        @Override
+        public String apply(Instance instance) {
+            Preconditions.checkNotNull(instance, "null instance");
+            return instance.getInstanceId();
+        }
+    }
 
 }

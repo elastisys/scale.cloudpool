@@ -19,41 +19,37 @@ import com.google.gson.JsonPrimitive;
 
 public class IsCancelAlert extends TypeSafeMatcher<Alert> {
 
-	private final List<String> spotRequestIds;
+    private final List<String> spotRequestIds;
 
-	public IsCancelAlert(List<String> spotRequestIds) {
-		this.spotRequestIds = spotRequestIds;
-	}
+    public IsCancelAlert(List<String> spotRequestIds) {
+        this.spotRequestIds = spotRequestIds;
+    }
 
-	@Override
-	public boolean matchesSafely(Alert someAlert) {
-		if (!equal(AlertTopics.SPOT_REQUEST_CANCELLATION.name(),
-				someAlert.getTopic())) {
-			return false;
-		}
-		for (String spotRequestId : this.spotRequestIds) {
-			Map<String, JsonElement> alertTags = someAlert.getMetadata();
-			if (alertTags == null
-					|| !alertTags.containsKey("cancelledRequests")) {
-				return false;
-			}
-			JsonArray requested = alertTags.get("cancelledRequests")
-					.getAsJsonArray();
-			if (!requested.contains(new JsonPrimitive(spotRequestId))) {
-				return false;
-			}
-		}
-		return true;
-	}
+    @Override
+    public boolean matchesSafely(Alert someAlert) {
+        if (!equal(AlertTopics.SPOT_REQUEST_CANCELLATION.name(), someAlert.getTopic())) {
+            return false;
+        }
+        for (String spotRequestId : this.spotRequestIds) {
+            Map<String, JsonElement> alertTags = someAlert.getMetadata();
+            if (alertTags == null || !alertTags.containsKey("cancelledRequests")) {
+                return false;
+            }
+            JsonArray requested = alertTags.get("cancelledRequests").getAsJsonArray();
+            if (!requested.contains(new JsonPrimitive(spotRequestId))) {
+                return false;
+            }
+        }
+        return true;
+    }
 
-	@Override
-	public void describeTo(Description description) {
-		description.appendText(String.format("cancellation alert for %s",
-				this.spotRequestIds));
-	}
+    @Override
+    public void describeTo(Description description) {
+        description.appendText(String.format("cancellation alert for %s", this.spotRequestIds));
+    }
 
-	@Factory
-	public static <T> Matcher<Alert> isCancelAlert(String... spotRequestIds) {
-		return new IsCancelAlert(Arrays.asList(spotRequestIds));
-	}
+    @Factory
+    public static <T> Matcher<Alert> isCancelAlert(String... spotRequestIds) {
+        return new IsCancelAlert(Arrays.asList(spotRequestIds));
+    }
 }

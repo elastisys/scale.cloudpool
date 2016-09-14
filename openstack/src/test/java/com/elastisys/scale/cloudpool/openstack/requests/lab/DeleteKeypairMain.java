@@ -12,18 +12,18 @@ import com.elastisys.scale.commons.openstack.OSClientFactory;
 
 public class DeleteKeypairMain {
 
-	private static Logger LOG = LoggerFactory.getLogger(CreateServerMain.class);
+    private static Logger LOG = LoggerFactory.getLogger(CreateServerMain.class);
 
-	private static final String keyPairName = "mykey";
+    private static final String keyPairName = "mykey";
 
-	public static void main(String[] args) throws Exception {
-		HttpLoggingFilter.toggleLogging(false);
-		OpenStackPoolDriverConfig driverConfig = DriverConfigLoader.loadDefault();
+    public static void main(String[] args) throws Exception {
+        HttpLoggingFilter.toggleLogging(false);
+        OpenStackPoolDriverConfig driverConfig = DriverConfigLoader.loadDefault();
 
-		OSClient client = new OSClientFactory(driverConfig.toApiAccessConfig()).authenticatedClient();
-		KeypairService keyApi = client.compute().keypairs();
+        OSClient client = new OSClientFactory(driverConfig.toApiAccessConfig()).authenticatedClient();
+        KeypairService keyApi = client.compute().keypairs();
 
-		ActionResponse response = keyApi.delete(keyPairName);
-		LOG.info("deleted keypair {}: {}", keyPairName, response);
-	}
+        ActionResponse response = keyApi.delete(keyPairName);
+        LOG.info("deleted keypair {}: {}", keyPairName, response);
+    }
 }

@@ -20,49 +20,39 @@ import com.elastisys.scale.cloudpool.aws.commons.client.AmazonApiUtils;
 import com.google.common.base.Joiner;
 
 public class PlaceMultiInstanceRequest extends BaseClient {
-	private static final Logger LOG = LoggerFactory
-			.getLogger(PlaceMultiInstanceRequest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PlaceMultiInstanceRequest.class);
 
-	public static void main(String[] args) {
-		String region = "us-east-1";
+    public static void main(String[] args) {
+        String region = "us-east-1";
 
-		AWSCredentials credentials = new BasicAWSCredentials(awsAccessKeyId,
-				awsSecretAccessKey);
-		AmazonEC2Client api = new AmazonEC2Client(credentials,
-				new ClientConfiguration());
+        AWSCredentials credentials = new BasicAWSCredentials(awsAccessKeyId, awsSecretAccessKey);
+        AmazonEC2Client api = new AmazonEC2Client(credentials, new ClientConfiguration());
 
-		String ec2Endpoint = "ec2." + region + ".amazonaws.com";
-		api.setEndpoint(ec2Endpoint);
+        String ec2Endpoint = "ec2." + region + ".amazonaws.com";
+        api.setEndpoint(ec2Endpoint);
 
-		// no particular availability zone
-		String availabilityZone = null;
-		String instanceType = "t1.micro";
-		String imageId = "ami-3cf8b154";
-		List<String> securityGroups = Arrays.asList("webserver");
-		String keyPair = "instancekey";
+        // no particular availability zone
+        String availabilityZone = null;
+        String instanceType = "t1.micro";
+        String imageId = "ami-3cf8b154";
+        List<String> securityGroups = Arrays.asList("webserver");
+        String keyPair = "instancekey";
 
-		String bootScript = Joiner.on("\n").join(
-				Arrays.asList("#!/bin/bash", "sudo apt-get update -qy",
-						"sudo apt-get install -qy apache2"));
-		int instanceCount = 50;
-		String bidPrice = "0.001";
+        String bootScript = Joiner.on("\n")
+                .join(Arrays.asList("#!/bin/bash", "sudo apt-get update -qy", "sudo apt-get install -qy apache2"));
+        int instanceCount = 50;
+        String bidPrice = "0.001";
 
-		SpotPlacement placement = new SpotPlacement()
-				.withAvailabilityZone(availabilityZone);
-		LaunchSpecification launchSpec = new LaunchSpecification()
-				.withInstanceType(instanceType).withImageId(imageId)
-				.withPlacement(placement).withSecurityGroups(securityGroups)
-				.withKeyName(keyPair)
-				.withUserData(AmazonApiUtils.base64Encode(bootScript));
-		RequestSpotInstancesRequest request = new RequestSpotInstancesRequest()
-				.withInstanceCount(instanceCount)
-				.withType(SpotInstanceType.Persistent).withSpotPrice(bidPrice)
-				.withLaunchSpecification(launchSpec);
-		RequestSpotInstancesResult result = api.requestSpotInstances(request);
+        SpotPlacement placement = new SpotPlacement().withAvailabilityZone(availabilityZone);
+        LaunchSpecification launchSpec = new LaunchSpecification().withInstanceType(instanceType).withImageId(imageId)
+                .withPlacement(placement).withSecurityGroups(securityGroups).withKeyName(keyPair)
+                .withUserData(AmazonApiUtils.base64Encode(bootScript));
+        RequestSpotInstancesRequest request = new RequestSpotInstancesRequest().withInstanceCount(instanceCount)
+                .withType(SpotInstanceType.Persistent).withSpotPrice(bidPrice).withLaunchSpecification(launchSpec);
+        RequestSpotInstancesResult result = api.requestSpotInstances(request);
 
-		for (SpotInstanceRequest spotRequest : result.getSpotInstanceRequests()) {
-			LOG.info("placed request: {}",
-					spotRequest.getSpotInstanceRequestId());
-		}
-	}
+        for (SpotInstanceRequest spotRequest : result.getSpotInstanceRequests()) {
+            LOG.info("placed request: {}", spotRequest.getSpotInstanceRequestId());
+        }
+    }
 }

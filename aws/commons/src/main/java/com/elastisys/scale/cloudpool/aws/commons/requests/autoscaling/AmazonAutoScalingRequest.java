@@ -14,33 +14,31 @@ import com.elastisys.scale.cloudpool.aws.commons.requests.AmazonRequest;
  *            The response type.
  */
 public abstract class AmazonAutoScalingRequest<R> extends AmazonRequest<R> {
-	/** AWS Auto Scaling API client. */
-	private final AutoScalingApiClient client;
+    /** AWS Auto Scaling API client. */
+    private final AutoScalingApiClient client;
 
-	/**
-	 * Constructs a new {@link AmazonAutoScalingRequest}.
-	 *
-	 * @param awsCredentials
-	 *            AWS security credentials for the account to be used.
-	 * @param region
-	 *            The AWS region that the request will be sent to.
-	 * @param clientConfig
-	 *            Client configuration options such as connection timeout, etc.
-	 */
-	public AmazonAutoScalingRequest(AWSCredentials awsCredentials,
-			String region, ClientConfiguration clientConfig) {
-		super(awsCredentials, region, clientConfig);
-		this.client = new AutoScalingApiClient(getAwsCredentials(), getRegion(),
-				clientConfig);
-	}
+    /**
+     * Constructs a new {@link AmazonAutoScalingRequest}.
+     *
+     * @param awsCredentials
+     *            AWS security credentials for the account to be used.
+     * @param region
+     *            The AWS region that the request will be sent to.
+     * @param clientConfig
+     *            Client configuration options such as connection timeout, etc.
+     */
+    public AmazonAutoScalingRequest(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig) {
+        super(awsCredentials, region, clientConfig);
+        this.client = new AutoScalingApiClient(getAwsCredentials(), getRegion(), clientConfig);
+    }
 
-	/**
-	 * Returns the AWS Auto Scaling API client.
-	 *
-	 * @return
-	 */
-	public AutoScalingApiClient getClient() {
-		return this.client;
-	}
+    /**
+     * Returns the AWS Auto Scaling API client.
+     *
+     * @return
+     */
+    public AutoScalingApiClient getClient() {
+        return this.client;
+    }
 
 }

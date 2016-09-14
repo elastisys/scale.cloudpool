@@ -19,47 +19,47 @@ import com.elastisys.scale.commons.openstack.OSClientFactory;
  */
 public class UpdateServerMetadataRequest extends AbstractOpenstackRequest<Void> {
 
-	/** The id of the server whose metadata is to be updated. */
-	private final String serverId;
-	/**
-	 * Meta data tags to be copied to the server. Any meta data keys that
-	 * already exist on the node will be overwritten.
-	 */
-	private final Map<String, String> metadata;
+    /** The id of the server whose metadata is to be updated. */
+    private final String serverId;
+    /**
+     * Meta data tags to be copied to the server. Any meta data keys that
+     * already exist on the node will be overwritten.
+     */
+    private final Map<String, String> metadata;
 
-	/**
-	 * Constructs a {@link UpdateServerMetadataRequest}.
-	 *
-	 * @param clientFactory
-	 *            OpenStack API client factory.
-	 * @param serverId
-	 *            The server whose metadata is to be updated.
-	 * @param metadata
-	 *            Meta data tags to be copied to the server. Any meta data keys
-	 *            that already exist on the node will be overwritten.
-	 */
-	public UpdateServerMetadataRequest(OSClientFactory clientFactory, String serverId, Map<String, String> metadata) {
-		super(clientFactory);
+    /**
+     * Constructs a {@link UpdateServerMetadataRequest}.
+     *
+     * @param clientFactory
+     *            OpenStack API client factory.
+     * @param serverId
+     *            The server whose metadata is to be updated.
+     * @param metadata
+     *            Meta data tags to be copied to the server. Any meta data keys
+     *            that already exist on the node will be overwritten.
+     */
+    public UpdateServerMetadataRequest(OSClientFactory clientFactory, String serverId, Map<String, String> metadata) {
+        super(clientFactory);
 
-		checkNotNull(serverId, "server id cannot be null");
-		checkNotNull(metadata, "metadata map cannot be null");
+        checkNotNull(serverId, "server id cannot be null");
+        checkNotNull(metadata, "metadata map cannot be null");
 
-		this.serverId = serverId;
-		this.metadata = metadata;
-	}
+        this.serverId = serverId;
+        this.metadata = metadata;
+    }
 
-	@Override
-	public Void doRequest(OSClient api) throws NotFoundException {
-		ServerService serverApi = api.compute().servers();
-		Server server = serverApi.get(this.serverId);
-		if (server == null) {
-			throw new NotFoundException(
-					format("failed to update meta data on server '%s': " + "server not found", this.serverId));
-		}
-		// set tags
-		Map<String, String> tags = new HashMap<>(server.getMetadata());
-		tags.putAll(this.metadata);
-		serverApi.updateMetadata(this.serverId, tags);
-		return null;
-	}
+    @Override
+    public Void doRequest(OSClient api) throws NotFoundException {
+        ServerService serverApi = api.compute().servers();
+        Server server = serverApi.get(this.serverId);
+        if (server == null) {
+            throw new NotFoundException(
+                    format("failed to update meta data on server '%s': " + "server not found", this.serverId));
+        }
+        // set tags
+        Map<String, String> tags = new HashMap<>(server.getMetadata());
+        tags.putAll(this.metadata);
+        serverApi.updateMetadata(this.serverId, tags);
+        return null;
+    }
 }

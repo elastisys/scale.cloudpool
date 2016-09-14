@@ -16,24 +16,24 @@ import com.google.common.io.Files;
 
 public class CreateKeypairMain {
 
-	private static Logger LOG = LoggerFactory.getLogger(CreateServerMain.class);
+    private static Logger LOG = LoggerFactory.getLogger(CreateServerMain.class);
 
-	/** TODO: change to keypair name to use. */
-	private static final String keyPairName = "myinstancekey";
+    /** TODO: change to keypair name to use. */
+    private static final String keyPairName = "myinstancekey";
 
-	/** TODO: change to public key to upload */
-	private static final File publicKeyFile = Paths
-			.get(System.getenv("HOME"), "keys", "citycloud", "instancekey.pem.pub").toFile();
+    /** TODO: change to public key to upload */
+    private static final File publicKeyFile = Paths
+            .get(System.getenv("HOME"), "keys", "citycloud", "instancekey.pem.pub").toFile();
 
-	public static void main(String[] args) throws Exception {
-		HttpLoggingFilter.toggleLogging(false);
-		OpenStackPoolDriverConfig driverConfig = DriverConfigLoader.loadDefault();
+    public static void main(String[] args) throws Exception {
+        HttpLoggingFilter.toggleLogging(false);
+        OpenStackPoolDriverConfig driverConfig = DriverConfigLoader.loadDefault();
 
-		OSClient client = new OSClientFactory(driverConfig.toApiAccessConfig()).authenticatedClient();
-		KeypairService keyApi = client.compute().keypairs();
+        OSClient client = new OSClientFactory(driverConfig.toApiAccessConfig()).authenticatedClient();
+        KeypairService keyApi = client.compute().keypairs();
 
-		String publicKeyContent = new String(Files.toByteArray(publicKeyFile));
-		Keypair createdKeypair = keyApi.create(keyPairName, publicKeyContent);
-		LOG.info("created keypair: {}", createdKeypair);
-	}
+        String publicKeyContent = new String(Files.toByteArray(publicKeyFile));
+        Keypair createdKeypair = keyApi.create(keyPairName, publicKeyContent);
+        LOG.info("created keypair: {}", createdKeypair);
+    }
 }

@@ -26,60 +26,52 @@ import jersey.repackaged.com.google.common.collect.ImmutableList;
  * "http://docs.aws.amazon.com/AWSEC2/latest/APIReference/query-api-troubleshooting.html#eventual-consistency"
  * >eventual consistency semantics</a> of the Amazon API.
  */
-public class TerminateInstances
-		extends AmazonEc2Request<List<InstanceStateChange>> {
+public class TerminateInstances extends AmazonEc2Request<List<InstanceStateChange>> {
 
-	/** Initial exponential back-off delay in ms. */
-	private static final int INITIAL_BACKOFF_DELAY = 1000;
-	/** Maximum number of retries of operations. */
-	private static final int MAX_RETRIES = 8;
+    /** Initial exponential back-off delay in ms. */
+    private static final int INITIAL_BACKOFF_DELAY = 1000;
+    /** Maximum number of retries of operations. */
+    private static final int MAX_RETRIES = 8;
 
-	/** The identifiers of the instances to be terminated. */
-	private final List<String> instanceIds;
+    /** The identifiers of the instances to be terminated. */
+    private final List<String> instanceIds;
 
-	public TerminateInstances(AWSCredentials awsCredentials, String region,
-			ClientConfiguration clientConfig, String... instanceIds) {
-		this(awsCredentials, region, clientConfig,
-				ImmutableList.copyOf(instanceIds));
-	}
+    public TerminateInstances(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig,
+            String... instanceIds) {
+        this(awsCredentials, region, clientConfig, ImmutableList.copyOf(instanceIds));
+    }
 
-	public TerminateInstances(AWSCredentials awsCredentials, String region,
-			ClientConfiguration clientConfig, Collection<String> instanceIds) {
-		super(awsCredentials, region, clientConfig);
-		this.instanceIds = ImmutableList.copyOf(instanceIds);
-	}
+    public TerminateInstances(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig,
+            Collection<String> instanceIds) {
+        super(awsCredentials, region, clientConfig);
+        this.instanceIds = ImmutableList.copyOf(instanceIds);
+    }
 
-	@Override
-	public List<InstanceStateChange> call() {
-		TerminateInstancesRequest request = new TerminateInstancesRequest()
-				.withInstanceIds(this.instanceIds);
-		TerminateInstancesResult result = getClient().getApi()
-				.terminateInstances(request);
-		List<InstanceStateChange> stateChanges = result
-				.getTerminatingInstances();
+    @Override
+    public List<InstanceStateChange> call() {
+        TerminateInstancesRequest request = new TerminateInstancesRequest().withInstanceIds(this.instanceIds);
+        TerminateInstancesResult result = getClient().getApi().terminateInstances(request);
+        List<InstanceStateChange> stateChanges = result.getTerminatingInstances();
 
-		awaitTermination(this.instanceIds);
+        awaitTermination(this.instanceIds);
 
-		return stateChanges;
-	}
+        return stateChanges;
+    }
 
-	private void awaitTermination(List<String> instanceIds) {
-		String name = String.format("await-terminal-state{%s}", instanceIds);
+    private void awaitTermination(List<String> instanceIds) {
+        String name = String.format("await-terminal-state{%s}", instanceIds);
 
-		Callable<List<Instance>> stateRequester = new GetInstances(
-				getAwsCredentials(), getRegion(), getClientConfig(),
-				instanceIds);
-		Retryable<List<Instance>> retryer = Retryers.exponentialBackoffRetryer(
-				name, stateRequester, INITIAL_BACKOFF_DELAY,
-				TimeUnit.MILLISECONDS, MAX_RETRIES,
-				allInAnyOfStates("shutting-down", "terminated"));
+        Callable<List<Instance>> stateRequester = new GetInstances(getAwsCredentials(), getRegion(), getClientConfig(),
+                instanceIds);
+        Retryable<List<Instance>> retryer = Retryers.exponentialBackoffRetryer(name, stateRequester,
+                INITIAL_BACKOFF_DELAY, TimeUnit.MILLISECONDS, MAX_RETRIES,
+                allInAnyOfStates("shutting-down", "terminated"));
 
-		try {
-			retryer.call();
-		} catch (Exception e) {
-			throw new RuntimeException(String.format(
-					"gave up waiting for instances to terminate %s: %s",
-					instanceIds, e.getMessage()), e);
-		}
-	}
+        try {
+            retryer.call();
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    String.format("gave up waiting for instances to terminate %s: %s", instanceIds, e.getMessage()), e);
+        }
+    }
 }

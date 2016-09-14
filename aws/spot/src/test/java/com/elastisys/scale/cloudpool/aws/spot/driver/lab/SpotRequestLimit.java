@@ -28,34 +28,29 @@ import jersey.repackaged.com.google.common.collect.Lists;
  */
 public class SpotRequestLimit extends BaseClient {
 
-	private static final Logger LOG = LoggerFactory
-			.getLogger(SpotRequestLimit.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SpotRequestLimit.class);
 
-	public static void main(String[] args) {
-		AwsSpotClient client = new AwsSpotClient();
-		client.configure(awsAccessKeyId, awsSecretAccessKey, region,
-				new ClientConfiguration());
+    public static void main(String[] args) {
+        AwsSpotClient client = new AwsSpotClient();
+        client.configure(awsAccessKeyId, awsSecretAccessKey, region, new ClientConfiguration());
 
-		LOG.info("Testing spot request limit in region {}", region);
-		BaseCloudPoolConfig config = JsonUtils.toObject(
-				JsonUtils.parseJsonFile(new File("myconfig.json")),
-				BaseCloudPoolConfig.class);
-		LOG.info("config: {}", config.getScaleOutConfig());
-		List<SpotInstanceRequest> placedRequests = Lists.newArrayList();
-		int MAX = 200;
-		try {
-			placedRequests.addAll(
-					client.placeSpotRequests(0.001, config.getScaleOutConfig(),
-							MAX, Arrays.asList(new Tag("key", "value"))));
-		} catch (Exception e) {
-			LOG.error("failed: {}", e.getMessage(), e);
-		} finally {
-			LOG.info("cancelling all placed requests ...");
-			for (SpotInstanceRequest request : placedRequests) {
-				client.cancelSpotRequests(
-						Arrays.asList(request.getSpotInstanceRequestId()));
-			}
-			LOG.info("cancelled all requests.");
-		}
-	}
+        LOG.info("Testing spot request limit in region {}", region);
+        BaseCloudPoolConfig config = JsonUtils.toObject(JsonUtils.parseJsonFile(new File("myconfig.json")),
+                BaseCloudPoolConfig.class);
+        LOG.info("config: {}", config.getScaleOutConfig());
+        List<SpotInstanceRequest> placedRequests = Lists.newArrayList();
+        int MAX = 200;
+        try {
+            placedRequests.addAll(client.placeSpotRequests(0.001, config.getScaleOutConfig(), MAX,
+                    Arrays.asList(new Tag("key", "value"))));
+        } catch (Exception e) {
+            LOG.error("failed: {}", e.getMessage(), e);
+        } finally {
+            LOG.info("cancelling all placed requests ...");
+            for (SpotInstanceRequest request : placedRequests) {
+                client.cancelSpotRequests(Arrays.asList(request.getSpotInstanceRequestId()));
+            }
+            LOG.info("cancelled all requests.");
+        }
+    }
 }

@@ -31,138 +31,123 @@ import com.google.gson.JsonObject;
  * incoming calls to the backing {@link CloudPool} implementation.
  */
 public class TestConfigHandlerDispatch {
-	/** The object under test. */
-	private ConfigHandler restEndpoint;
-	/**
-	 * Mock backing {@link CloudPool} that endpoint will dispatch incoming calls
-	 * to.
-	 */
-	private CloudPool cloudPoolMock = mock(CloudPool.class);
+    /** The object under test. */
+    private ConfigHandler restEndpoint;
+    /**
+     * Mock backing {@link CloudPool} that endpoint will dispatch incoming calls
+     * to.
+     */
+    private CloudPool cloudPoolMock = mock(CloudPool.class);
 
-	/** Storage dir for configurations. */
-	private static final String storageDir = Paths
-			.get("target", "cloudpool", "storage").toString();
+    /** Storage dir for configurations. */
+    private static final String storageDir = Paths.get("target", "cloudpool", "storage").toString();
 
-	@Before
-	public void onSetup() {
-		this.restEndpoint = new ConfigHandler(this.cloudPoolMock, storageDir);
-	}
+    @Before
+    public void onSetup() {
+        this.restEndpoint = new ConfigHandler(this.cloudPoolMock, storageDir);
+    }
 
-	/**
-	 * Verify proper delegation of {@code getConfiguration} to backing
-	 * {@link CloudPool}.
-	 */
-	@Test
-	public void testGetConfigurationDispatch() throws IOException {
-		// set up mock response
-		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}")
-				.getAsJsonObject();
-		when(this.cloudPoolMock.getConfiguration())
-				.thenReturn(Optional.of(config));
+    /**
+     * Verify proper delegation of {@code getConfiguration} to backing
+     * {@link CloudPool}.
+     */
+    @Test
+    public void testGetConfigurationDispatch() throws IOException {
+        // set up mock response
+        JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}").getAsJsonObject();
+        when(this.cloudPoolMock.getConfiguration()).thenReturn(Optional.of(config));
 
-		// call rest endpoint and verify proper dispatching to mock
-		Response response = this.restEndpoint.getConfig();
-		assertEquals(response.getStatus(), Status.OK.getStatusCode());
-		assertEquals(response.getEntity(), config);
-	}
+        // call rest endpoint and verify proper dispatching to mock
+        Response response = this.restEndpoint.getConfig();
+        assertEquals(response.getStatus(), Status.OK.getStatusCode());
+        assertEquals(response.getEntity(), config);
+    }
 
-	/**
-	 * Verify proper handling of {@code getConfiguration} calls when an error is
-	 * thrown from the backing {@link CloudPool}.
-	 */
-	@SuppressWarnings("unchecked")
-	@Test
-	public void testGetConfigurationDispatchOnCloudPoolError()
-			throws Exception {
-		// set up mock response
-		when(this.cloudPoolMock.getConfiguration())
-				.thenThrow(CloudPoolException.class);
+    /**
+     * Verify proper handling of {@code getConfiguration} calls when an error is
+     * thrown from the backing {@link CloudPool}.
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testGetConfigurationDispatchOnCloudPoolError() throws Exception {
+        // set up mock response
+        when(this.cloudPoolMock.getConfiguration()).thenThrow(CloudPoolException.class);
 
-		// call rest endpoint and verify proper dispatching to mock
-		Response response = this.restEndpoint.getConfig();
-		assertEquals(response.getStatus(),
-				Status.INTERNAL_SERVER_ERROR.getStatusCode());
-		assertThat(response.getEntity(), instanceOf(ErrorType.class));
-	}
+        // call rest endpoint and verify proper dispatching to mock
+        Response response = this.restEndpoint.getConfig();
+        assertEquals(response.getStatus(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertThat(response.getEntity(), instanceOf(ErrorType.class));
+    }
 
-	/**
-	 * Verify proper delegation of {@code postConfig} to backing
-	 * {@link CloudPool}.
-	 */
-	@Test
-	public void testPostConfigDispatch() throws Exception {
-		// call rest endpoint and verify proper dispatching to mock
-		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}")
-				.getAsJsonObject();
-		Response response = this.restEndpoint.setAndStoreConfig(config);
-		assertEquals(response.getStatus(), Status.OK.getStatusCode());
-		assertEquals(response.getEntity(), null);
+    /**
+     * Verify proper delegation of {@code postConfig} to backing
+     * {@link CloudPool}.
+     */
+    @Test
+    public void testPostConfigDispatch() throws Exception {
+        // call rest endpoint and verify proper dispatching to mock
+        JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}").getAsJsonObject();
+        Response response = this.restEndpoint.setAndStoreConfig(config);
+        assertEquals(response.getStatus(), Status.OK.getStatusCode());
+        assertEquals(response.getEntity(), null);
 
-		verify(this.cloudPoolMock).configure(config);
-		verifyNoMoreInteractions(this.cloudPoolMock);
-	}
+        verify(this.cloudPoolMock).configure(config);
+        verifyNoMoreInteractions(this.cloudPoolMock);
+    }
 
-	/**
-	 * Verify proper handling of {@code psotConfig} calls when a cloud provider
-	 * error is thrown from the backing {@link CloudPool}. Should render a
-	 * {@code 502} response.
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	public void testPostConfigOnCloudError() throws Exception {
-		// set up mock response: should throw error
-		doThrow(new CloudPoolException("api error")).when(this.cloudPoolMock)
-				.configure(any(JsonObject.class));
+    /**
+     * Verify proper handling of {@code psotConfig} calls when a cloud provider
+     * error is thrown from the backing {@link CloudPool}. Should render a
+     * {@code 502} response.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testPostConfigOnCloudError() throws Exception {
+        // set up mock response: should throw error
+        doThrow(new CloudPoolException("api error")).when(this.cloudPoolMock).configure(any(JsonObject.class));
 
-		// call rest endpoint and verify proper dispatching to mock
-		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}")
-				.getAsJsonObject();
-		Response response = this.restEndpoint.setAndStoreConfig(config);
-		assertEquals(response.getStatus(), Status.BAD_GATEWAY.getStatusCode());
-		assertThat(response.getEntity(), instanceOf(ErrorType.class));
-	}
+        // call rest endpoint and verify proper dispatching to mock
+        JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}").getAsJsonObject();
+        Response response = this.restEndpoint.setAndStoreConfig(config);
+        assertEquals(response.getStatus(), Status.BAD_GATEWAY.getStatusCode());
+        assertThat(response.getEntity(), instanceOf(ErrorType.class));
+    }
 
-	/**
-	 * Verify proper handling of {@code psotConfig} calls when an internal error
-	 * is thrown from the backing {@link CloudPool}. Should render a {@code 500}
-	 * response.
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	public void testPostConfigOnInternalError() throws Exception {
-		// set up mock response: should throw error
-		doThrow(new RuntimeException("buggy code")).when(this.cloudPoolMock)
-				.configure(any(JsonObject.class));
+    /**
+     * Verify proper handling of {@code psotConfig} calls when an internal error
+     * is thrown from the backing {@link CloudPool}. Should render a {@code 500}
+     * response.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testPostConfigOnInternalError() throws Exception {
+        // set up mock response: should throw error
+        doThrow(new RuntimeException("buggy code")).when(this.cloudPoolMock).configure(any(JsonObject.class));
 
-		// call rest endpoint and verify proper dispatching to mock
-		JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}")
-				.getAsJsonObject();
-		Response response = this.restEndpoint.setAndStoreConfig(config);
-		assertEquals(response.getStatus(),
-				Status.INTERNAL_SERVER_ERROR.getStatusCode());
-		assertThat(response.getEntity(), instanceOf(ErrorType.class));
-	}
+        // call rest endpoint and verify proper dispatching to mock
+        JsonObject config = JsonUtils.parseJsonString("{\"key\": \"value\"}").getAsJsonObject();
+        Response response = this.restEndpoint.setAndStoreConfig(config);
+        assertEquals(response.getStatus(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertThat(response.getEntity(), instanceOf(ErrorType.class));
+    }
 
-	/**
-	 * Verify proper handling of {@code postConfig} calls when an error is
-	 * thrown from the backing {@link CloudPool}.Should render a {@code 400}
-	 * response.
-	 */
-	@Test
-	public void testPostConfigOnIllegalInputError() throws Exception {
-		// set up mock response: should throw error
-		doThrow(IllegalArgumentException.class).when(this.cloudPoolMock)
-				.configure(any(JsonObject.class));
+    /**
+     * Verify proper handling of {@code postConfig} calls when an error is
+     * thrown from the backing {@link CloudPool}.Should render a {@code 400}
+     * response.
+     */
+    @Test
+    public void testPostConfigOnIllegalInputError() throws Exception {
+        // set up mock response: should throw error
+        doThrow(IllegalArgumentException.class).when(this.cloudPoolMock).configure(any(JsonObject.class));
 
-		// call rest endpoint and verify proper dispatching to mock
-		JsonObject config = JsonUtils
-				.parseJsonString("{\"key\": \"illegal-value\"}")
-				.getAsJsonObject();
-		Response response = this.restEndpoint.setAndStoreConfig(config);
-		assertEquals(response.getStatus(), Status.BAD_REQUEST.getStatusCode());
-		assertThat(response.getEntity(), instanceOf(ErrorType.class));
-	}
+        // call rest endpoint and verify proper dispatching to mock
+        JsonObject config = JsonUtils.parseJsonString("{\"key\": \"illegal-value\"}").getAsJsonObject();
+        Response response = this.restEndpoint.setAndStoreConfig(config);
+        assertEquals(response.getStatus(), Status.BAD_REQUEST.getStatusCode());
+        assertThat(response.getEntity(), instanceOf(ErrorType.class));
+    }
 
 }

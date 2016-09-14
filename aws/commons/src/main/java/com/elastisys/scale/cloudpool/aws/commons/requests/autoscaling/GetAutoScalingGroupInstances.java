@@ -25,67 +25,60 @@ import com.google.common.collect.Lists;
  *
  * @see AutoScalingInstance
  */
-public class GetAutoScalingGroupInstances
-		extends AmazonAutoScalingRequest<List<Instance>> {
+public class GetAutoScalingGroupInstances extends AmazonAutoScalingRequest<List<Instance>> {
 
-	/** The name of the {@link AutoScalingGroup} of interest. */
-	private final String groupName;
+    /** The name of the {@link AutoScalingGroup} of interest. */
+    private final String groupName;
 
-	/**
-	 * Constructs a new {@link GetAutoScalingGroupInstances} task.
-	 *
-	 * @param awsCredentials
-	 * @param region
-	 * @param clientConfig
-	 *            Client configuration options such as connection timeout, etc.
-	 * @param groupName
-	 */
-	public GetAutoScalingGroupInstances(AWSCredentials awsCredentials,
-			String region, ClientConfiguration clientConfig, String groupName) {
-		super(awsCredentials, region, clientConfig);
-		this.groupName = groupName;
-	}
+    /**
+     * Constructs a new {@link GetAutoScalingGroupInstances} task.
+     *
+     * @param awsCredentials
+     * @param region
+     * @param clientConfig
+     *            Client configuration options such as connection timeout, etc.
+     * @param groupName
+     */
+    public GetAutoScalingGroupInstances(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig,
+            String groupName) {
+        super(awsCredentials, region, clientConfig);
+        this.groupName = groupName;
+    }
 
-	@Override
-	public List<Instance> call() {
-		AutoScalingGroup autoScalingGroup = new GetAutoScalingGroup(
-				getAwsCredentials(), getRegion(), getClientConfig(),
-				this.groupName).call();
+    @Override
+    public List<Instance> call() {
+        AutoScalingGroup autoScalingGroup = new GetAutoScalingGroup(getAwsCredentials(), getRegion(), getClientConfig(),
+                this.groupName).call();
 
-		try {
-			return listGroupInstances(autoScalingGroup);
-		} catch (Exception e) {
-			throw new RuntimeException(String.format(
-					"failed waiting for auto scaling group members: %s",
-					e.getMessage()), e);
-		}
-	}
+        try {
+            return listGroupInstances(autoScalingGroup);
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    String.format("failed waiting for auto scaling group members: %s", e.getMessage()), e);
+        }
+    }
 
-	private List<Instance> listGroupInstances(AutoScalingGroup autoScalingGroup)
-			throws Exception {
-		List<String> instanceIds = Lists.transform(
-				autoScalingGroup.getInstances(),
-				AwsAutoScalingFunctions.toAutoScalingInstanceId());
-		if (instanceIds.isEmpty()) {
-			// note: we don't want to call get instances with an emtpy list
-			// since this causes DescribeInstances to get *all* instances in the
-			// region (not just the ones in our Auto Scaling Group, which is
-			// what we want)
-			return new ArrayList<>();
-		}
+    private List<Instance> listGroupInstances(AutoScalingGroup autoScalingGroup) throws Exception {
+        List<String> instanceIds = Lists.transform(autoScalingGroup.getInstances(),
+                AwsAutoScalingFunctions.toAutoScalingInstanceId());
+        if (instanceIds.isEmpty()) {
+            // note: we don't want to call get instances with an emtpy list
+            // since this causes DescribeInstances to get *all* instances in the
+            // region (not just the ones in our Auto Scaling Group, which is
+            // what we want)
+            return new ArrayList<>();
+        }
 
-		List<Filter> filters = Collections.emptyList();
-		Callable<List<Instance>> requester = new GetInstances(
-				getAwsCredentials(), getRegion(), getClientConfig(),
-				instanceIds, filters);
+        List<Filter> filters = Collections.emptyList();
+        Callable<List<Instance>> requester = new GetInstances(getAwsCredentials(), getRegion(), getClientConfig(),
+                instanceIds, filters);
 
-		int initialDelay = 1;
-		int maxAttempts = 10; // max 2 ^ 9 - 1 seconds = 511 seconds
-		String name = String.format("await-describe-instances");
-		Retryable<List<Instance>> retryer = Retryers.exponentialBackoffRetryer(
-				name, requester, initialDelay, TimeUnit.SECONDS, maxAttempts,
-				instancesPresent(instanceIds));
+        int initialDelay = 1;
+        int maxAttempts = 10; // max 2 ^ 9 - 1 seconds = 511 seconds
+        String name = String.format("await-describe-instances");
+        Retryable<List<Instance>> retryer = Retryers.exponentialBackoffRetryer(name, requester, initialDelay,
+                TimeUnit.SECONDS, maxAttempts, instancesPresent(instanceIds));
 
-		return retryer.call();
-	}
+        return retryer.call();
+    }
 }

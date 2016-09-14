@@ -17,34 +17,34 @@ import com.elastisys.scale.commons.openstack.OSClientFactory;
  */
 public class ListServersWithTagRequest extends AbstractOpenstackRequest<List<Server>> {
 
-	/** A meta data tag that must be present on returned servers. */
-	private final String tag;
-	/**
-	 * The value for the meta data tag that must be present on returned servers.
-	 */
-	private final String tagValue;
+    /** A meta data tag that must be present on returned servers. */
+    private final String tag;
+    /**
+     * The value for the meta data tag that must be present on returned servers.
+     */
+    private final String tagValue;
 
-	/**
-	 * Constructs a new {@link ListServersWithTagRequest} task.
-	 *
-	 * @param clientFactory
-	 *            OpenStack API client factory.
-	 * @param tag
-	 *            A meta data tag that must be present on returned servers.
-	 * @param tagValue
-	 *            The value for the meta data tag that must be present on
-	 *            returned servers.
-	 */
-	public ListServersWithTagRequest(OSClientFactory clientFactory, String tag, String tagValue) {
-		super(clientFactory);
-		this.tag = tag;
-		this.tagValue = tagValue;
+    /**
+     * Constructs a new {@link ListServersWithTagRequest} task.
+     *
+     * @param clientFactory
+     *            OpenStack API client factory.
+     * @param tag
+     *            A meta data tag that must be present on returned servers.
+     * @param tagValue
+     *            The value for the meta data tag that must be present on
+     *            returned servers.
+     */
+    public ListServersWithTagRequest(OSClientFactory clientFactory, String tag, String tagValue) {
+        super(clientFactory);
+        this.tag = tag;
+        this.tagValue = tagValue;
 
-	}
+    }
 
-	@Override
-	public List<Server> doRequest(OSClient api) {
-		List<? extends Server> servers = api.compute().servers().list();
-		return newArrayList(filter(servers, withTag(this.tag, this.tagValue)));
-	}
+    @Override
+    public List<Server> doRequest(OSClient api) {
+        List<? extends Server> servers = api.compute().servers().list();
+        return newArrayList(filter(servers, withTag(this.tag, this.tagValue)));
+    }
 }

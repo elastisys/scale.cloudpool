@@ -12,77 +12,73 @@ import com.elastisys.scale.cloudpool.api.types.Machine;
  * before the error occurred.
  */
 public class StartMachinesException extends CloudPoolDriverException {
-	/** Default serial version UID. */
-	private static final long serialVersionUID = 1L;
+    /** Default serial version UID. */
+    private static final long serialVersionUID = 1L;
 
-	/** The number of {@link Machine}s that were requested. */
-	private final int requestedMachines;
+    /** The number of {@link Machine}s that were requested. */
+    private final int requestedMachines;
 
-	/** {@link Machine}s that were started before the request failed. */
-	private final List<Machine> startedMachines;
+    /** {@link Machine}s that were started before the request failed. */
+    private final List<Machine> startedMachines;
 
-	/**
-	 * Constructs a new {@link StartMachinesException}.
-	 *
-	 * @param requestedMachines
-	 *            The number of {@link Machine}s that were requested.
-	 * @param startedMachines
-	 *            {@link Machine}s that were started before the request failed.
-	 * @param cause
-	 *            The error that caused the request to fail.
-	 */
-	public StartMachinesException(int requestedMachines,
-			List<Machine> startedMachines, Throwable cause) {
-		this(requestedMachines, startedMachines, cause, defaultErrorMessage(
-				requestedMachines, startedMachines, cause));
-	}
+    /**
+     * Constructs a new {@link StartMachinesException}.
+     *
+     * @param requestedMachines
+     *            The number of {@link Machine}s that were requested.
+     * @param startedMachines
+     *            {@link Machine}s that were started before the request failed.
+     * @param cause
+     *            The error that caused the request to fail.
+     */
+    public StartMachinesException(int requestedMachines, List<Machine> startedMachines, Throwable cause) {
+        this(requestedMachines, startedMachines, cause, defaultErrorMessage(requestedMachines, startedMachines, cause));
+    }
 
-	/**
-	 * Constructs a new {@link StartMachinesException} with a custom error
-	 * detail message.
-	 *
-	 * @param requestedMachines
-	 *            The number of {@link Machine}s that were requested.
-	 * @param startedMachines
-	 *            {@link Machine}s that were started before the request failed.
-	 * @param cause
-	 *            The error that caused the request to fail.
-	 * @param message
-	 *            The detail message.
-	 */
-	public StartMachinesException(int requestedMachines,
-			List<Machine> startedMachines, Throwable cause, String message) {
-		super(message, cause);
-		this.requestedMachines = requestedMachines;
-		this.startedMachines = startedMachines;
-	}
+    /**
+     * Constructs a new {@link StartMachinesException} with a custom error
+     * detail message.
+     *
+     * @param requestedMachines
+     *            The number of {@link Machine}s that were requested.
+     * @param startedMachines
+     *            {@link Machine}s that were started before the request failed.
+     * @param cause
+     *            The error that caused the request to fail.
+     * @param message
+     *            The detail message.
+     */
+    public StartMachinesException(int requestedMachines, List<Machine> startedMachines, Throwable cause,
+            String message) {
+        super(message, cause);
+        this.requestedMachines = requestedMachines;
+        this.startedMachines = startedMachines;
+    }
 
-	/**
-	 * Returns the number of {@link Machine}s that were requested.
-	 *
-	 * @return
-	 */
-	public int getRequestedMachines() {
-		return this.requestedMachines;
-	}
+    /**
+     * Returns the number of {@link Machine}s that were requested.
+     *
+     * @return
+     */
+    public int getRequestedMachines() {
+        return this.requestedMachines;
+    }
 
-	/**
-	 * Returns the list of {@link Machine}s that were started before the request
-	 * failed.
-	 *
-	 * @return
-	 */
-	public List<Machine> getStartedMachines() {
-		return this.startedMachines;
-	}
+    /**
+     * Returns the list of {@link Machine}s that were started before the request
+     * failed.
+     *
+     * @return
+     */
+    public List<Machine> getStartedMachines() {
+        return this.startedMachines;
+    }
 
-	private static String defaultErrorMessage(int numRequestedMachines,
-			List<Machine> startedMachines, Throwable cause) {
-		String message = String.format(
-				"failure to complete request to start %d machine(s) "
-						+ "(%d machine(s) were launched): %s",
-				numRequestedMachines, startedMachines.size(),
-				cause.getMessage());
-		return message;
-	}
+    private static String defaultErrorMessage(int numRequestedMachines, List<Machine> startedMachines,
+            Throwable cause) {
+        String message = String.format(
+                "failure to complete request to start %d machine(s) " + "(%d machine(s) were launched): %s",
+                numRequestedMachines, startedMachines.size(), cause.getMessage());
+        return message;
+    }
 }

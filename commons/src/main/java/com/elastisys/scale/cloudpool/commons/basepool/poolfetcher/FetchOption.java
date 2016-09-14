@@ -6,9 +6,9 @@ package com.elastisys.scale.cloudpool.commons.basepool.poolfetcher;
  */
 public enum FetchOption {
 
-	/**
-	 * Force the {@link PoolFetcher} to refresh its view of the pool members
-	 * (and not return cached data).
-	 */
-	FORCE_REFRESH;
+    /**
+     * Force the {@link PoolFetcher} to refresh its view of the pool members
+     * (and not return cached data).
+     */
+    FORCE_REFRESH;
 }

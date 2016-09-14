@@ -22,83 +22,75 @@ import com.google.common.collect.Lists;
  */
 public class TerminationScheduler {
 
-	/**
-	 * How many seconds prior to the next instance hour machine instances are to
-	 * be scheduled for termination. This should be set to a conservative and
-	 * safe value to prevent machines from being billed for an additional hour.
-	 * A value of zero is used to specify immediate termination when a
-	 * scale-down is ordered.
-	 */
-	private final long instanceHourMargin;
+    /**
+     * How many seconds prior to the next instance hour machine instances are to
+     * be scheduled for termination. This should be set to a conservative and
+     * safe value to prevent machines from being billed for an additional hour.
+     * A value of zero is used to specify immediate termination when a
+     * scale-down is ordered.
+     */
+    private final long instanceHourMargin;
 
-	/**
-	 * Constructs a new {@link TerminationScheduler}.
-	 *
-	 * @param instanceHourMargin
-	 *            How many seconds prior to the next instance hour machine
-	 *            instances are to be scheduled for termination. This should be
-	 *            set to a conservative and safe value to prevent machines from
-	 *            being billed for an additional hour. A value of zero is used
-	 *            to specify immediate termination when a scale-down is ordered.
-	 */
-	public TerminationScheduler(long instanceHourMargin) {
-		checkArgument(instanceHourMargin < 3600,
-				"instanceHourMargin must be smaller than 3600 seconds");
-		this.instanceHourMargin = instanceHourMargin;
-	}
+    /**
+     * Constructs a new {@link TerminationScheduler}.
+     *
+     * @param instanceHourMargin
+     *            How many seconds prior to the next instance hour machine
+     *            instances are to be scheduled for termination. This should be
+     *            set to a conservative and safe value to prevent machines from
+     *            being billed for an additional hour. A value of zero is used
+     *            to specify immediate termination when a scale-down is ordered.
+     */
+    public TerminationScheduler(long instanceHourMargin) {
+        checkArgument(instanceHourMargin < 3600, "instanceHourMargin must be smaller than 3600 seconds");
+        this.instanceHourMargin = instanceHourMargin;
+    }
 
-	/**
-	 * Schedules termination for a number of machine instances.
-	 *
-	 * @param victims
-	 *            The machine instances to be scheduled for termination.
-	 * @return A list of {@link ScheduledTermination}s, one for each victim.
-	 */
-	public List<ScheduledTermination> scheduleEvictions(List<Machine> victims) {
-		Preconditions.checkNotNull(victims, "null victims");
-		List<ScheduledTermination> evictions = Lists.newArrayList();
-		for (Machine victim : victims) {
-			evictions.add(scheduleEviction(victim));
-		}
-		return evictions;
-	}
+    /**
+     * Schedules termination for a number of machine instances.
+     *
+     * @param victims
+     *            The machine instances to be scheduled for termination.
+     * @return A list of {@link ScheduledTermination}s, one for each victim.
+     */
+    public List<ScheduledTermination> scheduleEvictions(List<Machine> victims) {
+        Preconditions.checkNotNull(victims, "null victims");
+        List<ScheduledTermination> evictions = Lists.newArrayList();
+        for (Machine victim : victims) {
+            evictions.add(scheduleEviction(victim));
+        }
+        return evictions;
+    }
 
-	/**
-	 * Schedules termination for a single machine instance.
-	 *
-	 * @param victim
-	 *            The machine instance to be scheduled for termination.
-	 * @return A list of {@link ScheduledTermination}s, one for each victim.
-	 */
-	public ScheduledTermination scheduleEviction(Machine victim) {
-		Preconditions.checkNotNull(victim, "null victim");
-		Preconditions.checkNotNull(victim.getLaunchTime(),
-				"cannot schedule termination for a "
-						+ "machine instance without launch time");
+    /**
+     * Schedules termination for a single machine instance.
+     *
+     * @param victim
+     *            The machine instance to be scheduled for termination.
+     * @return A list of {@link ScheduledTermination}s, one for each victim.
+     */
+    public ScheduledTermination scheduleEviction(Machine victim) {
+        Preconditions.checkNotNull(victim, "null victim");
+        Preconditions.checkNotNull(victim.getLaunchTime(),
+                "cannot schedule termination for a " + "machine instance without launch time");
 
-		DateTime terminationTime = calculateTerminationTime(victim,
-				this.instanceHourMargin);
-		return new ScheduledTermination(victim, terminationTime);
-	}
+        DateTime terminationTime = calculateTerminationTime(victim, this.instanceHourMargin);
+        return new ScheduledTermination(victim, terminationTime);
+    }
 
-	private DateTime calculateTerminationTime(Machine victim,
-			long instanceHourMargin) {
-		if (instanceHourMargin <= 0) {
-			// non-positive margin implies immediate termination
-			return UtcTime.now();
-		}
+    private DateTime calculateTerminationTime(Machine victim, long instanceHourMargin) {
+        if (instanceHourMargin <= 0) {
+            // non-positive margin implies immediate termination
+            return UtcTime.now();
+        }
 
-		long secondsLeftOfInstanceHour = remainingInstanceHourTime().apply(
-				victim);
-		long secondsLeftOfInstanceHourWithMargin = secondsLeftOfInstanceHour
-				- instanceHourMargin;
-		// if time left of billing hour is less than margin, we terminate
-		// immediately
-		secondsLeftOfInstanceHourWithMargin = Math.max(
-				secondsLeftOfInstanceHourWithMargin, 0);
-		DateTime terminationTime = UtcTime.now().plusSeconds(
-				(int) secondsLeftOfInstanceHourWithMargin);
-		return terminationTime;
-	}
+        long secondsLeftOfInstanceHour = remainingInstanceHourTime().apply(victim);
+        long secondsLeftOfInstanceHourWithMargin = secondsLeftOfInstanceHour - instanceHourMargin;
+        // if time left of billing hour is less than margin, we terminate
+        // immediately
+        secondsLeftOfInstanceHourWithMargin = Math.max(secondsLeftOfInstanceHourWithMargin, 0);
+        DateTime terminationTime = UtcTime.now().plusSeconds((int) secondsLeftOfInstanceHourWithMargin);
+        return terminationTime;
+    }
 
 }

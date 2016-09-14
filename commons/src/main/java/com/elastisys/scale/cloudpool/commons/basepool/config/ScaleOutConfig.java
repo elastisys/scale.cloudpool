@@ -19,146 +19,140 @@ import com.google.common.collect.ImmutableList;
  * @see BaseCloudPoolConfig
  */
 public class ScaleOutConfig {
-	/** The name of the server type to launch. For example, m1.medium. */
-	private final String size;
-	/** The name of the machine image used to boot new servers. */
-	private final String image;
-	/**
-	 * The name of the key pair to use for new machine instances. May be
-	 * <code>null</code>.
-	 */
-	private final String keyPair;
-	/**
-	 * The security group(s) to use for new machine instances. May be
-	 * <code>null</code>.
-	 */
-	private final List<String> securityGroups;
-	/**
-	 * A <a href="http://tools.ietf.org/html/rfc4648">base 64-encoded</a> blob
-	 * of data used to pass custom data to started machines. It is supported by
-	 * many cloud providers and is typically used to pass a boot-up shell script
-	 * or cloud-init parameters to launched machines. May be <code>null</code>.
-	 */
-	private final String encodedUserData;
+    /** The name of the server type to launch. For example, m1.medium. */
+    private final String size;
+    /** The name of the machine image used to boot new servers. */
+    private final String image;
+    /**
+     * The name of the key pair to use for new machine instances. May be
+     * <code>null</code>.
+     */
+    private final String keyPair;
+    /**
+     * The security group(s) to use for new machine instances. May be
+     * <code>null</code>.
+     */
+    private final List<String> securityGroups;
+    /**
+     * A <a href="http://tools.ietf.org/html/rfc4648">base 64-encoded</a> blob
+     * of data used to pass custom data to started machines. It is supported by
+     * many cloud providers and is typically used to pass a boot-up shell script
+     * or cloud-init parameters to launched machines. May be <code>null</code>.
+     */
+    private final String encodedUserData;
 
-	/**
-	 * Creates a new {@link ScaleOutConfig}.
-	 *
-	 * @param size
-	 *            The name of the server type to launch. For example, m1.medium.
-	 * @param image
-	 *            The name of the machine image used to boot new servers.
-	 * @param keyPair
-	 *            The name of the key pair to use for new machine instances. May
-	 *            be <code>null</code>.
-	 * @param securityGroups
-	 *            The security group(s) to use for new machine instances. May be
-	 *            <code>null</code>.
-	 * @param encodedUserData
-	 *            A <a href="http://tools.ietf.org/html/rfc4648">base
-	 *            64-encoded</a> blob of data used to pass custom data to
-	 *            started machines. It is supported by many cloud providers and
-	 *            is typically used to pass a boot-up shell script or cloud-init
-	 *            parameters to launched machines. May be <code>null</code>.
-	 */
-	public ScaleOutConfig(String size, String image, String keyPair,
-			List<String> securityGroups, String encodedUserData) {
-		this.size = size;
-		this.image = image;
-		this.keyPair = keyPair;
-		List<String> emptyList = ImmutableList.of();
-		this.securityGroups = Optional.fromNullable(securityGroups)
-				.or(emptyList);
-		this.encodedUserData = encodedUserData;
-	}
+    /**
+     * Creates a new {@link ScaleOutConfig}.
+     *
+     * @param size
+     *            The name of the server type to launch. For example, m1.medium.
+     * @param image
+     *            The name of the machine image used to boot new servers.
+     * @param keyPair
+     *            The name of the key pair to use for new machine instances. May
+     *            be <code>null</code>.
+     * @param securityGroups
+     *            The security group(s) to use for new machine instances. May be
+     *            <code>null</code>.
+     * @param encodedUserData
+     *            A <a href="http://tools.ietf.org/html/rfc4648">base
+     *            64-encoded</a> blob of data used to pass custom data to
+     *            started machines. It is supported by many cloud providers and
+     *            is typically used to pass a boot-up shell script or cloud-init
+     *            parameters to launched machines. May be <code>null</code>.
+     */
+    public ScaleOutConfig(String size, String image, String keyPair, List<String> securityGroups,
+            String encodedUserData) {
+        this.size = size;
+        this.image = image;
+        this.keyPair = keyPair;
+        List<String> emptyList = ImmutableList.of();
+        this.securityGroups = Optional.fromNullable(securityGroups).or(emptyList);
+        this.encodedUserData = encodedUserData;
+    }
 
-	/**
-	 * The name of the server type to launch. For example, m1.medium.
-	 *
-	 * @return
-	 */
-	public String getSize() {
-		return this.size;
-	}
+    /**
+     * The name of the server type to launch. For example, m1.medium.
+     *
+     * @return
+     */
+    public String getSize() {
+        return this.size;
+    }
 
-	/**
-	 * The name of the machine image used to boot new servers.
-	 *
-	 * @return
-	 */
-	public String getImage() {
-		return this.image;
-	}
+    /**
+     * The name of the machine image used to boot new servers.
+     *
+     * @return
+     */
+    public String getImage() {
+        return this.image;
+    }
 
-	/**
-	 * The name of the key pair to use for new machine instances. May be
-	 * <code>null</code>.
-	 *
-	 * @return
-	 */
-	public String getKeyPair() {
-		return this.keyPair;
-	}
+    /**
+     * The name of the key pair to use for new machine instances. May be
+     * <code>null</code>.
+     *
+     * @return
+     */
+    public String getKeyPair() {
+        return this.keyPair;
+    }
 
-	/**
-	 * The security group(s) to use for new machine instances. May be
-	 * <code>null</code>.
-	 *
-	 * @return
-	 */
-	public List<String> getSecurityGroups() {
-		return this.securityGroups;
-	}
+    /**
+     * The security group(s) to use for new machine instances. May be
+     * <code>null</code>.
+     *
+     * @return
+     */
+    public List<String> getSecurityGroups() {
+        return this.securityGroups;
+    }
 
-	/**
-	 * A <a href="http://tools.ietf.org/html/rfc4648">base 64-encoded</a> blob
-	 * of data used to pass custom data to started machines. It is supported by
-	 * many cloud providers and is typically used to pass a boot-up shell script
-	 * or cloud-init parameters to launched machines. May be <code>null</code>.
-	 *
-	 * @return
-	 */
-	public String getEncodedUserData() {
-		return this.encodedUserData;
-	}
+    /**
+     * A <a href="http://tools.ietf.org/html/rfc4648">base 64-encoded</a> blob
+     * of data used to pass custom data to started machines. It is supported by
+     * many cloud providers and is typically used to pass a boot-up shell script
+     * or cloud-init parameters to launched machines. May be <code>null</code>.
+     *
+     * @return
+     */
+    public String getEncodedUserData() {
+        return this.encodedUserData;
+    }
 
-	/**
-	 * Performs basic validation of this configuration.
-	 *
-	 * @throws CloudPoolException
-	 */
-	public void validate() throws CloudPoolException {
-		try {
-			checkNotNull(this.size, "missing size");
-			checkNotNull(this.image, "missing image");
-		} catch (Exception e) {
-			throw new CloudPoolException(
-					format("failed to validate scaleOutConfig: %s",
-							e.getMessage()),
-					e);
-		}
-	}
+    /**
+     * Performs basic validation of this configuration.
+     *
+     * @throws CloudPoolException
+     */
+    public void validate() throws CloudPoolException {
+        try {
+            checkNotNull(this.size, "missing size");
+            checkNotNull(this.image, "missing image");
+        } catch (Exception e) {
+            throw new CloudPoolException(format("failed to validate scaleOutConfig: %s", e.getMessage()), e);
+        }
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hashCode(this.size, this.image, this.keyPair,
-				this.securityGroups, this.encodedUserData);
-	}
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this.size, this.image, this.keyPair, this.securityGroups, this.encodedUserData);
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof ScaleOutConfig) {
-			ScaleOutConfig that = (ScaleOutConfig) obj;
-			return equal(this.size, that.size) && equal(this.image, that.image)
-					&& equal(this.keyPair, that.keyPair)
-					&& equal(this.securityGroups, that.securityGroups)
-					&& equal(this.encodedUserData, that.encodedUserData);
-		}
-		return false;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ScaleOutConfig) {
+            ScaleOutConfig that = (ScaleOutConfig) obj;
+            return equal(this.size, that.size) && equal(this.image, that.image) && equal(this.keyPair, that.keyPair)
+                    && equal(this.securityGroups, that.securityGroups)
+                    && equal(this.encodedUserData, that.encodedUserData);
+        }
+        return false;
+    }
 
-	@Override
-	public String toString() {
-		return JsonUtils.toPrettyString(JsonUtils.toJson(this));
-	}
+    @Override
+    public String toString() {
+        return JsonUtils.toPrettyString(JsonUtils.toJson(this));
+    }
 }

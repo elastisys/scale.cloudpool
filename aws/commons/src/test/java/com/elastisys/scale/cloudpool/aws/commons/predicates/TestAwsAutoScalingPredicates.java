@@ -17,28 +17,27 @@ import com.google.common.collect.Lists;
  */
 public class TestAwsAutoScalingPredicates {
 
-	/**
-	 * Exercise {@link AutoScalingPredicates#autoScalingGroupSize(int)}
-	 */
-	@Test
-	public void testAutoScalingGroupSizePredicate() {
-		Predicate<AutoScalingGroup> groupSizePredicate = AutoScalingPredicates
-				.autoScalingGroupSize(10);
+    /**
+     * Exercise {@link AutoScalingPredicates#autoScalingGroupSize(int)}
+     */
+    @Test
+    public void testAutoScalingGroupSizePredicate() {
+        Predicate<AutoScalingGroup> groupSizePredicate = AutoScalingPredicates.autoScalingGroupSize(10);
 
-		assertFalse(groupSizePredicate.apply(makeGroup(0)));
-		assertFalse(groupSizePredicate.apply(makeGroup(1)));
-		assertFalse(groupSizePredicate.apply(makeGroup(5)));
-		assertTrue(groupSizePredicate.apply(makeGroup(10)));
-		assertFalse(groupSizePredicate.apply(makeGroup(11)));
-		assertFalse(groupSizePredicate.apply(makeGroup(50)));
-	}
+        assertFalse(groupSizePredicate.apply(makeGroup(0)));
+        assertFalse(groupSizePredicate.apply(makeGroup(1)));
+        assertFalse(groupSizePredicate.apply(makeGroup(5)));
+        assertTrue(groupSizePredicate.apply(makeGroup(10)));
+        assertFalse(groupSizePredicate.apply(makeGroup(11)));
+        assertFalse(groupSizePredicate.apply(makeGroup(50)));
+    }
 
-	private AutoScalingGroup makeGroup(int members) {
-		List<Instance> groupMembers = Lists.newArrayList();
-		for (int i = 0; i < members; i++) {
-			groupMembers.add(new Instance().withInstanceId("i-" + i));
-		}
+    private AutoScalingGroup makeGroup(int members) {
+        List<Instance> groupMembers = Lists.newArrayList();
+        for (int i = 0; i < members; i++) {
+            groupMembers.add(new Instance().withInstanceId("i-" + i));
+        }
 
-		return new AutoScalingGroup().withInstances(groupMembers);
-	}
+        return new AutoScalingGroup().withInstances(groupMembers);
+    }
 }

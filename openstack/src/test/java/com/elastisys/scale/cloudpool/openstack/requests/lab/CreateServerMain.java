@@ -15,19 +15,19 @@ import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.common.collect.ImmutableMap;
 
 public class CreateServerMain {
-	private static Logger LOG = LoggerFactory.getLogger(CreateServerMain.class);
+    private static Logger LOG = LoggerFactory.getLogger(CreateServerMain.class);
 
-	public static void main(String[] args) throws Exception {
-		Map<String, String> metadata = ImmutableMap.of("elastisys:cloudPool", "cluster");
-		String encodedUserData = Base64Utils.toBase64("#!/bin/bash", "sudo apt-get update -qy",
-				"sudo apt-get install -qy apache2");
+    public static void main(String[] args) throws Exception {
+        Map<String, String> metadata = ImmutableMap.of("elastisys:cloudPool", "cluster");
+        String encodedUserData = Base64Utils.toBase64("#!/bin/bash", "sudo apt-get update -qy",
+                "sudo apt-get install -qy apache2");
 
-		HttpLoggingFilter.toggleLogging(true);
-		List<String> networks = null;
-		CreateServerRequest request = new CreateServerRequest(
-				new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig()), "server1", "m1.small",
-				"Ubuntu Trusty 14.04", "instancekey", Arrays.asList("web"), networks, encodedUserData, metadata);
-		Server createdServer = request.call();
-		LOG.info("created server: {}", createdServer);
-	}
+        HttpLoggingFilter.toggleLogging(true);
+        List<String> networks = null;
+        CreateServerRequest request = new CreateServerRequest(
+                new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig()), "server1", "m1.small",
+                "Ubuntu Trusty 14.04", "instancekey", Arrays.asList("web"), networks, encodedUserData, metadata);
+        Server createdServer = request.call();
+        LOG.info("created server: {}", createdServer);
+    }
 }

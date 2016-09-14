@@ -19,40 +19,37 @@ import com.google.gson.JsonPrimitive;
 
 public class IsStartAlert extends TypeSafeMatcher<Alert> {
 
-	private final List<String> machineIds;
+    private final List<String> machineIds;
 
-	public IsStartAlert(List<String> machineIds) {
-		this.machineIds = machineIds;
-	}
+    public IsStartAlert(List<String> machineIds) {
+        this.machineIds = machineIds;
+    }
 
-	@Override
-	public boolean matchesSafely(Alert someAlert) {
-		if (!equal(AlertTopics.RESIZE.name(), someAlert.getTopic())) {
-			return false;
-		}
-		for (String machineId : this.machineIds) {
-			Map<String, JsonElement> alertTags = someAlert.getMetadata();
-			if (alertTags == null
-					|| !alertTags.containsKey("requestedMachines")) {
-				return false;
-			}
-			JsonArray requested = alertTags.get("requestedMachines")
-					.getAsJsonArray();
-			if (!requested.contains(new JsonPrimitive(machineId))) {
-				return false;
-			}
-		}
-		return true;
-	}
+    @Override
+    public boolean matchesSafely(Alert someAlert) {
+        if (!equal(AlertTopics.RESIZE.name(), someAlert.getTopic())) {
+            return false;
+        }
+        for (String machineId : this.machineIds) {
+            Map<String, JsonElement> alertTags = someAlert.getMetadata();
+            if (alertTags == null || !alertTags.containsKey("requestedMachines")) {
+                return false;
+            }
+            JsonArray requested = alertTags.get("requestedMachines").getAsJsonArray();
+            if (!requested.contains(new JsonPrimitive(machineId))) {
+                return false;
+            }
+        }
+        return true;
+    }
 
-	@Override
-	public void describeTo(Description description) {
-		description.appendText(String.format("start alert for %s",
-				this.machineIds));
-	}
+    @Override
+    public void describeTo(Description description) {
+        description.appendText(String.format("start alert for %s", this.machineIds));
+    }
 
-	@Factory
-	public static <T> Matcher<Alert> isStartAlert(String... machineIds) {
-		return new IsStartAlert(Arrays.asList(machineIds));
-	}
+    @Factory
+    public static <T> Matcher<Alert> isStartAlert(String... machineIds) {
+        return new IsStartAlert(Arrays.asList(machineIds));
+    }
 }

@@ -10,14 +10,14 @@ import com.elastisys.scale.cloudpool.openstack.requests.ListImagesRequest;
 import com.elastisys.scale.commons.openstack.OSClientFactory;
 
 public class ListImagesMain {
-	private static Logger LOG = LoggerFactory.getLogger(ListImagesMain.class);
+    private static Logger LOG = LoggerFactory.getLogger(ListImagesMain.class);
 
-	public static void main(String[] args) {
-		List<Image> images = new ListImagesRequest(
-				new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig())).call();
-		LOG.info("{} server image(s) found", images.size());
-		for (Image image : images) {
-			LOG.info("image: {}", image);
-		}
-	}
+    public static void main(String[] args) {
+        List<Image> images = new ListImagesRequest(
+                new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig())).call();
+        LOG.info("{} server image(s) found", images.size());
+        for (Image image : images) {
+            LOG.info("image: {}", image);
+        }
+    }
 }

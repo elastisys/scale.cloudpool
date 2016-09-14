@@ -22,107 +22,103 @@ import com.elastisys.scale.cloudpool.aws.autoscaling.driver.AwsAsPoolDriverConfi
  */
 public interface AutoScalingClient {
 
-	/**
-	 * Configures this {@link AutoScalingClient} with credentials to allow it to
-	 * access the AWS Auto Scaling API.
-	 *
-	 * @param configuration
-	 *            A client configuration.
-	 */
-	void configure(AwsAsPoolDriverConfig configuration);
+    /**
+     * Configures this {@link AutoScalingClient} with credentials to allow it to
+     * access the AWS Auto Scaling API.
+     *
+     * @param configuration
+     *            A client configuration.
+     */
+    void configure(AwsAsPoolDriverConfig configuration);
 
-	/**
-	 * Retrieves a particular {@link AutoScalingGroup}.
-	 *
-	 * @param autoScalingGroupName
-	 *            The name of the Auto Scaling Group.
-	 * @return
-	 */
-	AutoScalingGroup getAutoScalingGroup(String autoScalingGroupName);
+    /**
+     * Retrieves a particular {@link AutoScalingGroup}.
+     *
+     * @param autoScalingGroupName
+     *            The name of the Auto Scaling Group.
+     * @return
+     */
+    AutoScalingGroup getAutoScalingGroup(String autoScalingGroupName);
 
-	/**
-	 * Retrieves a particular {@link LaunchConfiguration} (describing how to
-	 * launch on-demand or spot instances for an Auto Scaling Group).
-	 *
-	 * @param launchConfigurationName
-	 *            The name of the Launch configuration.
-	 * @return
-	 */
-	LaunchConfiguration getLaunchConfiguration(String launchConfigurationName);
+    /**
+     * Retrieves a particular {@link LaunchConfiguration} (describing how to
+     * launch on-demand or spot instances for an Auto Scaling Group).
+     *
+     * @param launchConfigurationName
+     *            The name of the Launch configuration.
+     * @return
+     */
+    LaunchConfiguration getLaunchConfiguration(String launchConfigurationName);
 
-	/**
-	 * Retrieves all members of a particular {@link AutoScalingGroup}.
-	 *
-	 * @param autoScalingGroupName
-	 *            The name of the Auto Scaling Group.
-	 * @return
-	 */
-	List<Instance> getAutoScalingGroupMembers(String autoScalingGroupName);
+    /**
+     * Retrieves all members of a particular {@link AutoScalingGroup}.
+     *
+     * @param autoScalingGroupName
+     *            The name of the Auto Scaling Group.
+     * @return
+     */
+    List<Instance> getAutoScalingGroupMembers(String autoScalingGroupName);
 
-	/**
-	 * Sets the desired capacity of a particular Auto Scaling Group.
-	 * <p/>
-	 * Note that this method will not block until the group has reached the
-	 * desired size, which may be a time-consuming process.
-	 *
-	 * @param autoScalingGroupName
-	 *            The name of the Auto Scaling Group.
-	 * @param desiredSize
-	 *            The desired capacity of the group to set.
-	 */
-	void setDesiredSize(String autoScalingGroupName, int desiredSize);
+    /**
+     * Sets the desired capacity of a particular Auto Scaling Group.
+     * <p/>
+     * Note that this method will not block until the group has reached the
+     * desired size, which may be a time-consuming process.
+     *
+     * @param autoScalingGroupName
+     *            The name of the Auto Scaling Group.
+     * @param desiredSize
+     *            The desired capacity of the group to set.
+     */
+    void setDesiredSize(String autoScalingGroupName, int desiredSize);
 
-	/**
-	 * Terminates a particular Auto Scaling Group member instance. As a
-	 * side-effect, the desired capacity of the Auto Scaling Group is
-	 * decremented.
-	 *
-	 * @param autoScalingGroupName
-	 *            The name of the Auto Scaling Group.
-	 * @param instanceId
-	 *            An instance identifier of a member in the Auto Scaling Group.
-	 * @throws NotFoundException
-	 *             if the instance does not exist
-	 */
-	void terminateInstance(String autoScalingGroupName, String instanceId)
-			throws NotFoundException;
+    /**
+     * Terminates a particular Auto Scaling Group member instance. As a
+     * side-effect, the desired capacity of the Auto Scaling Group is
+     * decremented.
+     *
+     * @param autoScalingGroupName
+     *            The name of the Auto Scaling Group.
+     * @param instanceId
+     *            An instance identifier of a member in the Auto Scaling Group.
+     * @throws NotFoundException
+     *             if the instance does not exist
+     */
+    void terminateInstance(String autoScalingGroupName, String instanceId) throws NotFoundException;
 
-	/**
-	 * Adds a machine instance to the scaling group. As a side-effect, the
-	 * desired capacity of the Auto Scaling Group is incremented.
-	 *
-	 * @param machineId
-	 *            The identifier of the instance to attach to the pool.
-	 * @throws NotFoundException
-	 *             if the instance does not exist
-	 */
-	void attachInstance(String autoScalingGroupName, String instanceId)
-			throws NotFoundException;
+    /**
+     * Adds a machine instance to the scaling group. As a side-effect, the
+     * desired capacity of the Auto Scaling Group is incremented.
+     *
+     * @param machineId
+     *            The identifier of the instance to attach to the pool.
+     * @throws NotFoundException
+     *             if the instance does not exist
+     */
+    void attachInstance(String autoScalingGroupName, String instanceId) throws NotFoundException;
 
-	/**
-	 * Removes a member from the scaling group without terminating it. As a
-	 * side-effect, the desired capacity of the Auto Scaling Group is
-	 * decremented.
-	 *
-	 * @param machineId
-	 *            The identifier of the instance to detach from the pool.
-	 * @throws NotFoundException
-	 *             if the instance does not exist
-	 */
-	void detachInstance(String autoScalingGroupName, String instanceId)
-			throws NotFoundException;
+    /**
+     * Removes a member from the scaling group without terminating it. As a
+     * side-effect, the desired capacity of the Auto Scaling Group is
+     * decremented.
+     *
+     * @param machineId
+     *            The identifier of the instance to detach from the pool.
+     * @throws NotFoundException
+     *             if the instance does not exist
+     */
+    void detachInstance(String autoScalingGroupName, String instanceId) throws NotFoundException;
 
-	/**
-	 * Sets a collection of tags on an EC2 instance.
-	 *
-	 * @param instanceId
-	 *            An instance identifier.
-	 * @param tags
-	 *            The {@link Tag}s to set on the {@link Instance}.
-	 * @throws NotFoundException
-	 *             if the instance does not exist
-	 */
-	void tagInstance(String instanceId, List<Tag> tags)
-			throws NotFoundException;
+    /**
+     * Sets a collection of tags on an EC2 instance.
+     *
+     * @param instanceId
+     *            An instance identifier.
+     * @param tags
+     *            The {@link Tag}s to set on the {@link Instance}.
+     * @throws NotFoundException
+     *             if the instance does not exist
+     */
+    void tagInstance(String instanceId, List<Tag> tags) throws NotFoundException;
 
 }

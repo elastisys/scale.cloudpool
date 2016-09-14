@@ -28,61 +28,59 @@ import com.amazonaws.services.autoscaling.AmazonAutoScalingClient;
  */
 public class AutoScalingApiClient implements Closeable {
 
-	/** The AWS region that this client operates against. */
-	private final String region;
-	/**
-	 * The {@link AmazonAutoScaling} client through which API operations can be
-	 * invoked.
-	 */
-	private final AmazonAutoScaling api;
+    /** The AWS region that this client operates against. */
+    private final String region;
+    /**
+     * The {@link AmazonAutoScaling} client through which API operations can be
+     * invoked.
+     */
+    private final AmazonAutoScaling api;
 
-	/**
-	 * Constructs a new {@link AutoScalingApiClient} that operates against a
-	 * given AWS region.
-	 *
-	 * @param awsCredentials
-	 *            The AWS credentials used to connect to the AWS account.
-	 * @param region
-	 *            The AWS region that this client operates against.
-	 * @param clientConfiguration
-	 *            Any HTTP client configuration to customize API invocations.
-	 */
-	public AutoScalingApiClient(AWSCredentials awsCredentials, String region,
-			ClientConfiguration clientConfiguration) {
-		// limit the time-to-live of the JVM's DNS cache (in seconds)
-		java.security.Security.setProperty("networkaddress.cache.ttl", "60");
+    /**
+     * Constructs a new {@link AutoScalingApiClient} that operates against a
+     * given AWS region.
+     *
+     * @param awsCredentials
+     *            The AWS credentials used to connect to the AWS account.
+     * @param region
+     *            The AWS region that this client operates against.
+     * @param clientConfiguration
+     *            Any HTTP client configuration to customize API invocations.
+     */
+    public AutoScalingApiClient(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfiguration) {
+        // limit the time-to-live of the JVM's DNS cache (in seconds)
+        java.security.Security.setProperty("networkaddress.cache.ttl", "60");
 
-		this.region = region;
-		this.api = new AmazonAutoScalingClient(awsCredentials,
-				clientConfiguration);
-		String endpoint = "autoscaling." + region + ".amazonaws.com";
-		this.api.setEndpoint(endpoint);
-	}
+        this.region = region;
+        this.api = new AmazonAutoScalingClient(awsCredentials, clientConfiguration);
+        String endpoint = "autoscaling." + region + ".amazonaws.com";
+        this.api.setEndpoint(endpoint);
+    }
 
-	/**
-	 * Returns the AWS region that this client operates against.
-	 *
-	 * @return
-	 */
-	public String getRegion() {
-		return this.region;
-	}
+    /**
+     * Returns the AWS region that this client operates against.
+     *
+     * @return
+     */
+    public String getRegion() {
+        return this.region;
+    }
 
-	/**
-	 * Returns the {@link AmazonAutoScaling} client through which API operations
-	 * can be invoked.
-	 *
-	 * @return
-	 */
-	public AmazonAutoScaling getApi() {
-		return this.api;
-	}
+    /**
+     * Returns the {@link AmazonAutoScaling} client through which API operations
+     * can be invoked.
+     *
+     * @return
+     */
+    public AmazonAutoScaling getApi() {
+        return this.api;
+    }
 
-	/**
-	 * Closes the client, releasing any held resources.
-	 */
-	@Override
-	public void close() {
-		this.api.shutdown();
-	}
+    /**
+     * Closes the client, releasing any held resources.
+     */
+    @Override
+    public void close() {
+        this.api.shutdown();
+    }
 }

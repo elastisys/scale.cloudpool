@@ -30,158 +30,138 @@ import com.elastisys.scale.commons.util.time.UtcTime;
  */
 public class TestInstancePairedSpotRequestToMachine {
 
-	private static final DateTime NOW = UtcTime
-			.parse("2015-01-01T12:00:00.000Z");
+    private static final DateTime NOW = UtcTime.parse("2015-01-01T12:00:00.000Z");
 
-	@Before
-	public void onSetup() {
-		FrozenTime.setFixed(NOW);
-	}
+    @Before
+    public void onSetup() {
+        FrozenTime.setFixed(NOW);
+    }
 
-	/** Conversion of open (not yet fulfilled) request. */
-	@Test
-	public void testConversionOfOpenRequest() {
-		InstancePairedSpotRequest openRequest = new InstancePairedSpotRequest(
-				SpotTestUtil.spotRequest("sir-1", "open", null), null);
+    /** Conversion of open (not yet fulfilled) request. */
+    @Test
+    public void testConversionOfOpenRequest() {
+        InstancePairedSpotRequest openRequest = new InstancePairedSpotRequest(
+                SpotTestUtil.spotRequest("sir-1", "open", null), null);
 
-		Machine machine = InstancePairedSpotRequestToMachine
-				.convert(openRequest);
-		assertThat(machine.getId(), is("sir-1"));
-		assertThat(machine.getMachineState(), is(MachineState.REQUESTED));
-		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
-		assertThat(machine.getRegion(), is("us-east-1"));
-		assertThat(machine.getMachineSize(), is("m1.medium"));
-		assertThat(machine.getMembershipStatus(),
-				is(MembershipStatus.defaultStatus()));
-		assertThat(machine.getLaunchTime(), is(nullValue()));
-		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
-		assertThat(machine.getPublicIps(), is(list()));
-		assertThat(machine.getPrivateIps(), is(list()));
-		assertThat(machine.getMetadata(), is(JsonUtils.toJson(openRequest)));
-	}
+        Machine machine = InstancePairedSpotRequestToMachine.convert(openRequest);
+        assertThat(machine.getId(), is("sir-1"));
+        assertThat(machine.getMachineState(), is(MachineState.REQUESTED));
+        assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+        assertThat(machine.getRegion(), is("us-east-1"));
+        assertThat(machine.getMachineSize(), is("m1.medium"));
+        assertThat(machine.getMembershipStatus(), is(MembershipStatus.defaultStatus()));
+        assertThat(machine.getLaunchTime(), is(nullValue()));
+        assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
+        assertThat(machine.getPublicIps(), is(list()));
+        assertThat(machine.getPrivateIps(), is(list()));
+        assertThat(machine.getMetadata(), is(JsonUtils.toJson(openRequest)));
+    }
 
-	/** Conversion of closed request. */
-	@Test
-	public void testConversionOfClosedRequest() {
-		InstancePairedSpotRequest closedRequest = new InstancePairedSpotRequest(
-				SpotTestUtil.spotRequest("sir-1", "closed", null), null);
+    /** Conversion of closed request. */
+    @Test
+    public void testConversionOfClosedRequest() {
+        InstancePairedSpotRequest closedRequest = new InstancePairedSpotRequest(
+                SpotTestUtil.spotRequest("sir-1", "closed", null), null);
 
-		Machine machine = InstancePairedSpotRequestToMachine
-				.convert(closedRequest);
-		assertThat(machine.getId(), is("sir-1"));
-		assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
-		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
-		assertThat(machine.getRegion(), is("us-east-1"));
-		assertThat(machine.getMachineSize(), is("m1.medium"));
-		assertThat(machine.getMembershipStatus(),
-				is(MembershipStatus.defaultStatus()));
-		assertThat(machine.getLaunchTime(), is(nullValue()));
-		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
-		assertThat(machine.getPublicIps(), is(list()));
-		assertThat(machine.getPrivateIps(), is(list()));
-		assertThat(machine.getMetadata(), is(JsonUtils.toJson(closedRequest)));
+        Machine machine = InstancePairedSpotRequestToMachine.convert(closedRequest);
+        assertThat(machine.getId(), is("sir-1"));
+        assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
+        assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+        assertThat(machine.getRegion(), is("us-east-1"));
+        assertThat(machine.getMachineSize(), is("m1.medium"));
+        assertThat(machine.getMembershipStatus(), is(MembershipStatus.defaultStatus()));
+        assertThat(machine.getLaunchTime(), is(nullValue()));
+        assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
+        assertThat(machine.getPublicIps(), is(list()));
+        assertThat(machine.getPrivateIps(), is(list()));
+        assertThat(machine.getMetadata(), is(JsonUtils.toJson(closedRequest)));
 
-	}
+    }
 
-	/** Conversion of failed request. */
-	@Test
-	public void testConversionOfFailedRequest() {
-		InstancePairedSpotRequest failedRequest = new InstancePairedSpotRequest(
-				SpotTestUtil.spotRequest("sir-1", "failed", null), null);
+    /** Conversion of failed request. */
+    @Test
+    public void testConversionOfFailedRequest() {
+        InstancePairedSpotRequest failedRequest = new InstancePairedSpotRequest(
+                SpotTestUtil.spotRequest("sir-1", "failed", null), null);
 
-		Machine machine = InstancePairedSpotRequestToMachine
-				.convert(failedRequest);
-		assertThat(machine.getId(), is("sir-1"));
-		assertThat(machine.getMachineState(), is(MachineState.REJECTED));
-		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
-		assertThat(machine.getRegion(), is("us-east-1"));
-		assertThat(machine.getMachineSize(), is("m1.medium"));
-		assertThat(machine.getMembershipStatus(),
-				is(MembershipStatus.defaultStatus()));
-		assertThat(machine.getLaunchTime(), is(nullValue()));
-		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
-		assertThat(machine.getPublicIps(), is(list()));
-		assertThat(machine.getPrivateIps(), is(list()));
-		assertThat(machine.getMetadata(), is(JsonUtils.toJson(failedRequest)));
-	}
+        Machine machine = InstancePairedSpotRequestToMachine.convert(failedRequest);
+        assertThat(machine.getId(), is("sir-1"));
+        assertThat(machine.getMachineState(), is(MachineState.REJECTED));
+        assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+        assertThat(machine.getRegion(), is("us-east-1"));
+        assertThat(machine.getMachineSize(), is("m1.medium"));
+        assertThat(machine.getMembershipStatus(), is(MembershipStatus.defaultStatus()));
+        assertThat(machine.getLaunchTime(), is(nullValue()));
+        assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
+        assertThat(machine.getPublicIps(), is(list()));
+        assertThat(machine.getPrivateIps(), is(list()));
+        assertThat(machine.getMetadata(), is(JsonUtils.toJson(failedRequest)));
+    }
 
-	/** Conversion of cancelled request. */
-	@Test
-	public void testConversionOfCancelledRequest() {
-		InstancePairedSpotRequest cancelledRequest = new InstancePairedSpotRequest(
-				SpotTestUtil.spotRequest("sir-1", "cancelled", null), null);
+    /** Conversion of cancelled request. */
+    @Test
+    public void testConversionOfCancelledRequest() {
+        InstancePairedSpotRequest cancelledRequest = new InstancePairedSpotRequest(
+                SpotTestUtil.spotRequest("sir-1", "cancelled", null), null);
 
-		Machine machine = InstancePairedSpotRequestToMachine
-				.convert(cancelledRequest);
-		assertThat(machine.getId(), is("sir-1"));
-		assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
-		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
-		assertThat(machine.getRegion(), is("us-east-1"));
-		assertThat(machine.getMachineSize(), is("m1.medium"));
-		assertThat(machine.getMembershipStatus(),
-				is(MembershipStatus.defaultStatus()));
-		assertThat(machine.getLaunchTime(), is(nullValue()));
-		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
-		assertThat(machine.getPublicIps(), is(list()));
-		assertThat(machine.getPrivateIps(), is(list()));
-		assertThat(machine.getMetadata(),
-				is(JsonUtils.toJson(cancelledRequest)));
-	}
+        Machine machine = InstancePairedSpotRequestToMachine.convert(cancelledRequest);
+        assertThat(machine.getId(), is("sir-1"));
+        assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
+        assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+        assertThat(machine.getRegion(), is("us-east-1"));
+        assertThat(machine.getMachineSize(), is("m1.medium"));
+        assertThat(machine.getMembershipStatus(), is(MembershipStatus.defaultStatus()));
+        assertThat(machine.getLaunchTime(), is(nullValue()));
+        assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
+        assertThat(machine.getPublicIps(), is(list()));
+        assertThat(machine.getPrivateIps(), is(list()));
+        assertThat(machine.getMetadata(), is(JsonUtils.toJson(cancelledRequest)));
+    }
 
-	/**
-	 * Conversion of request that has been cancelled but with an instance that
-	 * is still running.
-	 */
-	@Test
-	public void testConversionOfCancelledRequestWithRunningInstance() {
-		InstancePairedSpotRequest cancelledRequest = new InstancePairedSpotRequest(
-				SpotTestUtil.spotRequest("sir-1", "cancelled", "i-1"),
-				SpotTestUtil.instance("i-1", InstanceStateName.Running,
-						"sir-1"));
+    /**
+     * Conversion of request that has been cancelled but with an instance that
+     * is still running.
+     */
+    @Test
+    public void testConversionOfCancelledRequestWithRunningInstance() {
+        InstancePairedSpotRequest cancelledRequest = new InstancePairedSpotRequest(
+                SpotTestUtil.spotRequest("sir-1", "cancelled", "i-1"),
+                SpotTestUtil.instance("i-1", InstanceStateName.Running, "sir-1"));
 
-		Machine machine = InstancePairedSpotRequestToMachine
-				.convert(cancelledRequest);
-		assertThat(machine.getId(), is("sir-1"));
-		assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
-		assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
-		assertThat(machine.getRegion(), is("us-east-1"));
-		assertThat(machine.getMachineSize(), is("m1.medium"));
-		assertThat(machine.getMembershipStatus(),
-				is(MembershipStatus.defaultStatus()));
-		assertThat(machine.getLaunchTime(), is(FrozenTime.now()));
-		assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
-		assertThat(machine.getPublicIps(), is(list()));
-		assertThat(machine.getPrivateIps(), is(list()));
-		assertThat(machine.getMetadata(),
-				is(JsonUtils.toJson(cancelledRequest)));
-	}
+        Machine machine = InstancePairedSpotRequestToMachine.convert(cancelledRequest);
+        assertThat(machine.getId(), is("sir-1"));
+        assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
+        assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+        assertThat(machine.getRegion(), is("us-east-1"));
+        assertThat(machine.getMachineSize(), is("m1.medium"));
+        assertThat(machine.getMembershipStatus(), is(MembershipStatus.defaultStatus()));
+        assertThat(machine.getLaunchTime(), is(FrozenTime.now()));
+        assertThat(machine.getServiceState(), is(ServiceState.UNKNOWN));
+        assertThat(machine.getPublicIps(), is(list()));
+        assertThat(machine.getPrivateIps(), is(list()));
+        assertThat(machine.getMetadata(), is(JsonUtils.toJson(cancelledRequest)));
+    }
 
-	@Test
-	public void testConversionWithServiceStateTag() {
-		SpotInstanceRequest spotRequest = SpotTestUtil.spotRequest("sir-1",
-				"open", null);
-		spotRequest.withTags(new Tag().withKey(ScalingTags.SERVICE_STATE_TAG)
-				.withValue(ServiceState.IN_SERVICE.name()));
-		InstancePairedSpotRequest request = new InstancePairedSpotRequest(
-				spotRequest, null);
+    @Test
+    public void testConversionWithServiceStateTag() {
+        SpotInstanceRequest spotRequest = SpotTestUtil.spotRequest("sir-1", "open", null);
+        spotRequest
+                .withTags(new Tag().withKey(ScalingTags.SERVICE_STATE_TAG).withValue(ServiceState.IN_SERVICE.name()));
+        InstancePairedSpotRequest request = new InstancePairedSpotRequest(spotRequest, null);
 
-		Machine machine = InstancePairedSpotRequestToMachine.convert(request);
-		assertThat(machine.getServiceState(), is(ServiceState.IN_SERVICE));
-	}
+        Machine machine = InstancePairedSpotRequestToMachine.convert(request);
+        assertThat(machine.getServiceState(), is(ServiceState.IN_SERVICE));
+    }
 
-	@Test
-	public void testConversionWithMembershipStatusTag() {
-		SpotInstanceRequest spotRequest = SpotTestUtil.spotRequest("sir-1",
-				"open", null);
-		spotRequest
-				.withTags(new Tag().withKey(ScalingTags.MEMBERSHIP_STATUS_TAG)
-						.withValue(MembershipStatus.blessed().toString()));
-		InstancePairedSpotRequest request = new InstancePairedSpotRequest(
-				spotRequest, null);
+    @Test
+    public void testConversionWithMembershipStatusTag() {
+        SpotInstanceRequest spotRequest = SpotTestUtil.spotRequest("sir-1", "open", null);
+        spotRequest.withTags(
+                new Tag().withKey(ScalingTags.MEMBERSHIP_STATUS_TAG).withValue(MembershipStatus.blessed().toString()));
+        InstancePairedSpotRequest request = new InstancePairedSpotRequest(spotRequest, null);
 
-		Machine machine = InstancePairedSpotRequestToMachine.convert(request);
-		assertThat(machine.getMembershipStatus(),
-				is(MembershipStatus.blessed()));
-	}
+        Machine machine = InstancePairedSpotRequestToMachine.convert(request);
+        assertThat(machine.getMembershipStatus(), is(MembershipStatus.blessed()));
+    }
 
 }

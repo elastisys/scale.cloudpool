@@ -54,96 +54,92 @@ import com.elastisys.scale.commons.net.retryable.Retryers;
  * @see Retryable
  * @see Retryers
  */
-public class GetSpotInstanceRequests
-		extends AmazonEc2Request<List<SpotInstanceRequest>> {
+public class GetSpotInstanceRequests extends AmazonEc2Request<List<SpotInstanceRequest>> {
 
-	/**
-	 * A list of spot request ids of interest to limit the query to. If
-	 * specified, meta data will only be fetched for these instances. If
-	 * <code>null</code> or empty list, meta data will be fetched for all spot
-	 * requests.
-	 */
-	private final Collection<String> spotRequestIds;
-	/**
-	 * An (optional) list of filter to narrow the query. Only
-	 * {@link SpotInstanceRequest}s matching the given filters will be returned.
-	 */
-	private final Collection<Filter> filters;
+    /**
+     * A list of spot request ids of interest to limit the query to. If
+     * specified, meta data will only be fetched for these instances. If
+     * <code>null</code> or empty list, meta data will be fetched for all spot
+     * requests.
+     */
+    private final Collection<String> spotRequestIds;
+    /**
+     * An (optional) list of filter to narrow the query. Only
+     * {@link SpotInstanceRequest}s matching the given filters will be returned.
+     */
+    private final Collection<Filter> filters;
 
-	/**
-	 * Constructs a new {@link GetSpotInstanceRequests} task that will fetch all
-	 * {@link SpotInstanceRequest}s in the region.
-	 *
-	 * @param awsCredentials
-	 *            The AWS security credentials to the account.
-	 * @param region
-	 *            The AWS region of interest.
-	 * @param clientConfig
-	 *            Client configuration options such as connection timeout, etc.
-	 */
-	public GetSpotInstanceRequests(AWSCredentials awsCredentials, String region,
-			ClientConfiguration clientConfig) {
-		this(awsCredentials, region, clientConfig, null);
-	}
+    /**
+     * Constructs a new {@link GetSpotInstanceRequests} task that will fetch all
+     * {@link SpotInstanceRequest}s in the region.
+     *
+     * @param awsCredentials
+     *            The AWS security credentials to the account.
+     * @param region
+     *            The AWS region of interest.
+     * @param clientConfig
+     *            Client configuration options such as connection timeout, etc.
+     */
+    public GetSpotInstanceRequests(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig) {
+        this(awsCredentials, region, clientConfig, null);
+    }
 
-	/**
-	 * Constructs a new {@link GetSpotInstanceRequests} task that will fetch all
-	 * {@link SpotInstanceRequest}s in the region that match any of the
-	 * specified filters.
-	 *
-	 * @param awsCredentials
-	 *            The AWS security credentials to the account.
-	 * @param region
-	 *            The AWS region of interest.
-	 * @param clientConfig
-	 *            Client configuration options such as connection timeout, etc.
-	 * @param filters
-	 *            A list of filter to narrow the query. Only
-	 *            {@link SpotInstanceRequest}s matching the given filters will
-	 *            be returned. May be <code>null</code> (no filters).
-	 */
-	public GetSpotInstanceRequests(AWSCredentials awsCredentials, String region,
-			ClientConfiguration clientConfig, Collection<Filter> filters) {
-		this(awsCredentials, region, clientConfig, null, filters);
-	}
+    /**
+     * Constructs a new {@link GetSpotInstanceRequests} task that will fetch all
+     * {@link SpotInstanceRequest}s in the region that match any of the
+     * specified filters.
+     *
+     * @param awsCredentials
+     *            The AWS security credentials to the account.
+     * @param region
+     *            The AWS region of interest.
+     * @param clientConfig
+     *            Client configuration options such as connection timeout, etc.
+     * @param filters
+     *            A list of filter to narrow the query. Only
+     *            {@link SpotInstanceRequest}s matching the given filters will
+     *            be returned. May be <code>null</code> (no filters).
+     */
+    public GetSpotInstanceRequests(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig,
+            Collection<Filter> filters) {
+        this(awsCredentials, region, clientConfig, null, filters);
+    }
 
-	/**
-	 * Constructs a new {@link GetSpotInstanceRequests} task that will only
-	 * fetch meta data for the given spot instance request ids that match the
-	 * given filters.
-	 *
-	 * @param awsCredentials
-	 *            The AWS security credentials to the account.
-	 * @param region
-	 *            The AWS region of interest.
-	 * @param clientConfig
-	 *            Client configuration options such as connection timeout, etc.
-	 * @param spotRequestIds
-	 *            The spot request ids of interest. May be <code>null</code>.
-	 * @param filters
-	 *            A list of filter to narrow the query. Only
-	 *            {@link SpotInstanceRequest}s matching the given filters will
-	 *            be returned. May be <code>null</code> (no filters).
-	 */
-	public GetSpotInstanceRequests(AWSCredentials awsCredentials, String region,
-			ClientConfiguration clientConfig, Collection<String> spotRequestIds,
-			Collection<Filter> filters) {
-		super(awsCredentials, region, clientConfig);
-		this.spotRequestIds = spotRequestIds;
-		this.filters = filters;
-	}
+    /**
+     * Constructs a new {@link GetSpotInstanceRequests} task that will only
+     * fetch meta data for the given spot instance request ids that match the
+     * given filters.
+     *
+     * @param awsCredentials
+     *            The AWS security credentials to the account.
+     * @param region
+     *            The AWS region of interest.
+     * @param clientConfig
+     *            Client configuration options such as connection timeout, etc.
+     * @param spotRequestIds
+     *            The spot request ids of interest. May be <code>null</code>.
+     * @param filters
+     *            A list of filter to narrow the query. Only
+     *            {@link SpotInstanceRequest}s matching the given filters will
+     *            be returned. May be <code>null</code> (no filters).
+     */
+    public GetSpotInstanceRequests(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig,
+            Collection<String> spotRequestIds, Collection<Filter> filters) {
+        super(awsCredentials, region, clientConfig);
+        this.spotRequestIds = spotRequestIds;
+        this.filters = filters;
+    }
 
-	@Override
-	public List<SpotInstanceRequest> call() throws AmazonClientException {
-		DescribeSpotInstanceRequestsRequest request = new DescribeSpotInstanceRequestsRequest();
-		if (this.spotRequestIds != null) {
-			request.withSpotInstanceRequestIds(this.spotRequestIds);
-		}
-		if (this.filters != null) {
-			request.withFilters(this.filters);
-		}
-		DescribeSpotInstanceRequestsResult result = getClient().getApi()
-				.describeSpotInstanceRequests(request);
-		return result.getSpotInstanceRequests();
-	}
+    @Override
+    public List<SpotInstanceRequest> call() throws AmazonClientException {
+        DescribeSpotInstanceRequestsRequest request = new DescribeSpotInstanceRequestsRequest();
+        if (this.spotRequestIds != null) {
+            request.withSpotInstanceRequestIds(this.spotRequestIds);
+        }
+        if (this.filters != null) {
+            request.withFilters(this.filters);
+        }
+        DescribeSpotInstanceRequestsResult result = getClient().getApi().describeSpotInstanceRequests(request);
+        return result.getSpotInstanceRequests();
+    }
 }

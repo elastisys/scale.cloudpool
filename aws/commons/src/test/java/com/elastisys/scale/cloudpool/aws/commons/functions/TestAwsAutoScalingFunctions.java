@@ -14,17 +14,13 @@ import com.elastisys.scale.cloudpool.aws.commons.functions.AwsAutoScalingFunctio
  */
 public class TestAwsAutoScalingFunctions {
 
-	@Test
-	public void testToAutoScalingInstanceId() {
-		assertThat(
-				AwsAutoScalingFunctions.toAutoScalingInstanceId().apply(
-						awsAsInstance("i-123456")), is("i-123456"));
-	}
+    @Test
+    public void testToAutoScalingInstanceId() {
+        assertThat(AwsAutoScalingFunctions.toAutoScalingInstanceId().apply(awsAsInstance("i-123456")), is("i-123456"));
+    }
 
-	private com.amazonaws.services.autoscaling.model.Instance awsAsInstance(
-			String withInstanceId) {
-		return new com.amazonaws.services.autoscaling.model.Instance()
-				.withInstanceId(withInstanceId);
-	}
+    private com.amazonaws.services.autoscaling.model.Instance awsAsInstance(String withInstanceId) {
+        return new com.amazonaws.services.autoscaling.model.Instance().withInstanceId(withInstanceId);
+    }
 
 }

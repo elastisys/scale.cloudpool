@@ -12,20 +12,20 @@ import com.elastisys.scale.cloudpool.api.types.MachinePool;
  */
 public class PoolReachabilityTimeoutException extends CloudPoolException {
 
-	public PoolReachabilityTimeoutException() {
-		super();
-	}
+    public PoolReachabilityTimeoutException() {
+        super();
+    }
 
-	public PoolReachabilityTimeoutException(String message, Throwable cause) {
-		super(message, cause);
-	}
+    public PoolReachabilityTimeoutException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-	public PoolReachabilityTimeoutException(String message) {
-		super(message);
-	}
+    public PoolReachabilityTimeoutException(String message) {
+        super(message);
+    }
 
-	public PoolReachabilityTimeoutException(Throwable cause) {
-		super(cause);
-	}
+    public PoolReachabilityTimeoutException(Throwable cause) {
+        super(cause);
+    }
 
 }

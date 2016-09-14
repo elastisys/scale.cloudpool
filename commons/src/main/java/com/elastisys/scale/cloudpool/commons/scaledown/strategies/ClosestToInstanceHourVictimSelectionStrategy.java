@@ -16,37 +16,34 @@ import com.google.common.base.Function;
  *
  *
  */
-public enum ClosestToInstanceHourVictimSelectionStrategy implements
-		VictimSelectionStrategy {
-	/** The single instance of this class. */
-	INSTANCE;
+public enum ClosestToInstanceHourVictimSelectionStrategy implements VictimSelectionStrategy {
+    /** The single instance of this class. */
+    INSTANCE;
 
-	@Override
-	public Machine selectVictim(Collection<Machine> candidates)
-			throws IllegalArgumentException {
-		checkNotNull(candidates, "null candidate set");
-		checkArgument(!candidates.isEmpty(), "empty candidate set");
+    @Override
+    public Machine selectVictim(Collection<Machine> candidates) throws IllegalArgumentException {
+        checkNotNull(candidates, "null candidate set");
+        checkArgument(!candidates.isEmpty(), "empty candidate set");
 
-		return Machine.sort(candidates, new ClosestToInstanceHourOrder())
-				.get(0);
-	}
+        return Machine.sort(candidates, new ClosestToInstanceHourOrder()).get(0);
+    }
 
-	/**
-	 * A {@link Comparator} that orders {@link Machine} instances in order of
-	 * increasing time to the next instance hour (that is, the instance closest
-	 * to the end of its current instance hour first).
-	 *
-	 *
-	 *
-	 */
-	public class ClosestToInstanceHourOrder implements Comparator<Machine> {
+    /**
+     * A {@link Comparator} that orders {@link Machine} instances in order of
+     * increasing time to the next instance hour (that is, the instance closest
+     * to the end of its current instance hour first).
+     *
+     *
+     *
+     */
+    public class ClosestToInstanceHourOrder implements Comparator<Machine> {
 
-		@Override
-		public int compare(Machine instance1, Machine instance2) {
-			Function<Machine, Long> remainingInstanceHourTime = new Machine.RemainingInstanceHourTime();
-			long i1TimeLeft = remainingInstanceHourTime.apply(instance1);
-			long i2TimeLeft = remainingInstanceHourTime.apply(instance2);
-			return (int) (i1TimeLeft - i2TimeLeft);
-		}
-	}
+        @Override
+        public int compare(Machine instance1, Machine instance2) {
+            Function<Machine, Long> remainingInstanceHourTime = new Machine.RemainingInstanceHourTime();
+            long i1TimeLeft = remainingInstanceHourTime.apply(instance1);
+            long i2TimeLeft = remainingInstanceHourTime.apply(instance2);
+            return (int) (i1TimeLeft - i2TimeLeft);
+        }
+    }
 }

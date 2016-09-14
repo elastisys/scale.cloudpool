@@ -8,9 +8,9 @@ import com.elastisys.scale.commons.net.alerter.Alert;
  * {@link SpotPoolDriver}.
  */
 public enum AlertTopics {
-	/**
-	 * Topic for {@link Alert}s related to cancellation of spot instance
-	 * requests.
-	 */
-	SPOT_REQUEST_CANCELLATION,
+    /**
+     * Topic for {@link Alert}s related to cancellation of spot instance
+     * requests.
+     */
+    SPOT_REQUEST_CANCELLATION,
 }

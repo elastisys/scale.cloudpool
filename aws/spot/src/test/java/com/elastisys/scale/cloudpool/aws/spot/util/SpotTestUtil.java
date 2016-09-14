@@ -13,43 +13,38 @@ import com.amazonaws.services.ec2.model.SpotPlacement;
 import com.amazonaws.services.ec2.model.Tag;
 
 public class SpotTestUtil {
-	/**
-	 * Create a {@link SpotInstanceRequest} that may be associated with an
-	 * {@link Instance}.
-	 *
-	 * @param id
-	 * @param state
-	 * @param instanceId
-	 * @return
-	 */
-	public static SpotInstanceRequest spotRequest(String id, String state,
-			String instanceId, Tag... tags) {
-		return new SpotInstanceRequest().withSpotInstanceRequestId(id)
-				.withLaunchSpecification(new LaunchSpecification()
-						.withInstanceType(InstanceType.M1Medium)
-						.withPlacement(new SpotPlacement("us-east-1b")))
-				.withState(state).withInstanceId(instanceId).withTags(tags);
-	}
+    /**
+     * Create a {@link SpotInstanceRequest} that may be associated with an
+     * {@link Instance}.
+     *
+     * @param id
+     * @param state
+     * @param instanceId
+     * @return
+     */
+    public static SpotInstanceRequest spotRequest(String id, String state, String instanceId, Tag... tags) {
+        return new SpotInstanceRequest().withSpotInstanceRequestId(id)
+                .withLaunchSpecification(new LaunchSpecification().withInstanceType(InstanceType.M1Medium)
+                        .withPlacement(new SpotPlacement("us-east-1b")))
+                .withState(state).withInstanceId(instanceId).withTags(tags);
+    }
 
-	/**
-	 * Create an {@link Instance} that may be associated with a
-	 * {@link SpotInstanceRequest}.
-	 *
-	 * @param id
-	 * @param state
-	 * @param spotRequestId
-	 * @return
-	 */
-	public static Instance instance(String id, InstanceStateName state,
-			String spotRequestId) {
-		return new Instance().withInstanceId(id)
-				.withInstanceType(InstanceType.M1Medium)
-				.withState(new InstanceState().withName(state.toString()))
-				.withSpotInstanceRequestId(spotRequestId);
-	}
+    /**
+     * Create an {@link Instance} that may be associated with a
+     * {@link SpotInstanceRequest}.
+     *
+     * @param id
+     * @param state
+     * @param spotRequestId
+     * @return
+     */
+    public static Instance instance(String id, InstanceStateName state, String spotRequestId) {
+        return new Instance().withInstanceId(id).withInstanceType(InstanceType.M1Medium)
+                .withState(new InstanceState().withName(state.toString())).withSpotInstanceRequestId(spotRequestId);
+    }
 
-	public static List<String> list(String... values) {
-		return Arrays.asList(values);
-	}
+    public static List<String> list(String... values) {
+        return Arrays.asList(values);
+    }
 
 }

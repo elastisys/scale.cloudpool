@@ -14,11 +14,10 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
  */
 public class Main {
 
-	public static void main(String[] args) throws Exception {
-		CloudPoolOptions options = CloudPoolServer.parseArgs(args);
-		StateStorage stateStorage = StateStorage.builder(options.storageDir)
-				.build();
-		CloudPoolDriver driver = new Ec2PoolDriver(new AwsEc2Client());
-		CloudPoolServer.main(new BaseCloudPool(stateStorage, driver), args);
-	}
+    public static void main(String[] args) throws Exception {
+        CloudPoolOptions options = CloudPoolServer.parseArgs(args);
+        StateStorage stateStorage = StateStorage.builder(options.storageDir).build();
+        CloudPoolDriver driver = new Ec2PoolDriver(new AwsEc2Client());
+        CloudPoolServer.main(new BaseCloudPool(stateStorage, driver), args);
+    }
 }

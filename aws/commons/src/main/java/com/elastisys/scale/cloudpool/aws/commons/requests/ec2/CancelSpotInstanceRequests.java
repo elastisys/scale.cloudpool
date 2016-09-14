@@ -25,57 +25,50 @@ import com.google.common.collect.ImmutableList;
  * "http://docs.aws.amazon.com/AWSEC2/latest/APIReference/query-api-troubleshooting.html#eventual-consistency"
  * >eventual consistency semantics</a> of the Amazon API.
  */
-public class CancelSpotInstanceRequests
-		extends AmazonEc2Request<CancelSpotInstanceRequestsResult> {
-	/** Initial exponential back-off delay in ms. */
-	private static final int INITIAL_BACKOFF_DELAY = 1000;
-	/** Maximum number of retries of operations. */
-	private static final int MAX_RETRIES = 8;
+public class CancelSpotInstanceRequests extends AmazonEc2Request<CancelSpotInstanceRequestsResult> {
+    /** Initial exponential back-off delay in ms. */
+    private static final int INITIAL_BACKOFF_DELAY = 1000;
+    /** Maximum number of retries of operations. */
+    private static final int MAX_RETRIES = 8;
 
-	/** The {@link SpotInstanceRequest} to cancel. */
-	private final List<String> spotRequestIds;
+    /** The {@link SpotInstanceRequest} to cancel. */
+    private final List<String> spotRequestIds;
 
-	public CancelSpotInstanceRequests(AWSCredentials awsCredentials,
-			String region, ClientConfiguration clientConfig,
-			List<String> spotInstanceRequestIds) {
-		super(awsCredentials, region, clientConfig);
-		this.spotRequestIds = ImmutableList.copyOf(spotInstanceRequestIds);
-	}
+    public CancelSpotInstanceRequests(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig,
+            List<String> spotInstanceRequestIds) {
+        super(awsCredentials, region, clientConfig);
+        this.spotRequestIds = ImmutableList.copyOf(spotInstanceRequestIds);
+    }
 
-	@Override
-	public CancelSpotInstanceRequestsResult call()
-			throws AmazonClientException {
-		CancelSpotInstanceRequestsRequest request = new CancelSpotInstanceRequestsRequest()
-				.withSpotInstanceRequestIds(this.spotRequestIds);
-		CancelSpotInstanceRequestsResult result = getClient().getApi()
-				.cancelSpotInstanceRequests(request);
-		awaitCancellation(this.spotRequestIds);
-		return result;
-	}
+    @Override
+    public CancelSpotInstanceRequestsResult call() throws AmazonClientException {
+        CancelSpotInstanceRequestsRequest request = new CancelSpotInstanceRequestsRequest()
+                .withSpotInstanceRequestIds(this.spotRequestIds);
+        CancelSpotInstanceRequestsResult result = getClient().getApi().cancelSpotInstanceRequests(request);
+        awaitCancellation(this.spotRequestIds);
+        return result;
+    }
 
-	/**
-	 * Waits for the cancelled spot instance requests to be reported as
-	 * cancelled by the Amazon API.
-	 *
-	 * @param spotRequestIds
-	 */
-	private void awaitCancellation(List<String> spotRequestIds) {
-		String name = String.format("await-cancelled{%s}", spotRequestIds);
-		GetSpotInstanceRequests requester = new GetSpotInstanceRequests(
-				getAwsCredentials(), getRegion(), getClientConfig(),
-				spotRequestIds, null);
-		Retryable<List<SpotInstanceRequest>> retryer = Retryers
-				.exponentialBackoffRetryer(name, requester,
-						INITIAL_BACKOFF_DELAY, TimeUnit.MILLISECONDS,
-						MAX_RETRIES, allInAnyOfStates(Cancelled.toString()));
+    /**
+     * Waits for the cancelled spot instance requests to be reported as
+     * cancelled by the Amazon API.
+     *
+     * @param spotRequestIds
+     */
+    private void awaitCancellation(List<String> spotRequestIds) {
+        String name = String.format("await-cancelled{%s}", spotRequestIds);
+        GetSpotInstanceRequests requester = new GetSpotInstanceRequests(getAwsCredentials(), getRegion(),
+                getClientConfig(), spotRequestIds, null);
+        Retryable<List<SpotInstanceRequest>> retryer = Retryers.exponentialBackoffRetryer(name, requester,
+                INITIAL_BACKOFF_DELAY, TimeUnit.MILLISECONDS, MAX_RETRIES, allInAnyOfStates(Cancelled.toString()));
 
-		try {
-			retryer.call();
-		} catch (Exception e) {
-			throw new RuntimeException(String.format(
-					"gave up waiting for spot instance requests "
-							+ "to be cancelled %s: %s",
-					spotRequestIds, e.getMessage()), e);
-		}
-	}
+        try {
+            retryer.call();
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    String.format("gave up waiting for spot instance requests " + "to be cancelled %s: %s",
+                            spotRequestIds, e.getMessage()),
+                    e);
+        }
+    }
 }

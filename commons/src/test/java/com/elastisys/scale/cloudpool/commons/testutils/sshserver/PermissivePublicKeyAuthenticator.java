@@ -19,13 +19,11 @@ import org.slf4j.LoggerFactory;
  */
 public class PermissivePublicKeyAuthenticator implements PublickeyAuthenticator {
 
-	static final Logger LOG = LoggerFactory
-			.getLogger(PermissivePublicKeyAuthenticator.class);
+    static final Logger LOG = LoggerFactory.getLogger(PermissivePublicKeyAuthenticator.class);
 
-	@Override
-	public boolean authenticate(String username, PublicKey key,
-			ServerSession session) {
-		LOG.info("public key login attempt by '{}'", username);
-		return true;
-	}
+    @Override
+    public boolean authenticate(String username, PublicKey key, ServerSession session) {
+        LOG.info("public key login attempt by '{}'", username);
+        return true;
+    }
 }

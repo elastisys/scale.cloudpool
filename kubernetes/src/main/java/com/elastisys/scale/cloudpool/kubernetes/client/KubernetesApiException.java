@@ -6,25 +6,25 @@ package com.elastisys.scale.cloudpool.kubernetes.client;
  */
 public class KubernetesApiException extends RuntimeException {
 
-	public KubernetesApiException() {
-		super();
-	}
+    public KubernetesApiException() {
+        super();
+    }
 
-	public KubernetesApiException(String message, Throwable cause,
-			boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-	}
+    public KubernetesApiException(String message, Throwable cause, boolean enableSuppression,
+            boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
 
-	public KubernetesApiException(String message, Throwable cause) {
-		super(message, cause);
-	}
+    public KubernetesApiException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-	public KubernetesApiException(String message) {
-		super(message);
-	}
+    public KubernetesApiException(String message) {
+        super(message);
+    }
 
-	public KubernetesApiException(Throwable cause) {
-		super(cause);
-	}
+    public KubernetesApiException(Throwable cause) {
+        super(cause);
+    }
 
 }

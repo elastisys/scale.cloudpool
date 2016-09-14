@@ -22,52 +22,49 @@ import com.elastisys.scale.cloudpool.commons.scaledown.strategies.OldestInstance
  */
 public class TestVictimSelector extends AbstractScaledownTest {
 
-	/** Object under test. */
-	private VictimSelector victimSelector;
+    /** Object under test. */
+    private VictimSelector victimSelector;
 
-	@Before
-	public void onSetup() {
-		this.victimSelector = new VictimSelector(
-				OldestInstanceVictimSelectionStrategy.INSTANCE);
-	}
+    @Before
+    public void onSetup() {
+        this.victimSelector = new VictimSelector(OldestInstanceVictimSelectionStrategy.INSTANCE);
+    }
 
-	@Test(expected = NullPointerException.class)
-	public void createWithNullStrategy() {
-		new VictimSelector(null);
-	}
+    @Test(expected = NullPointerException.class)
+    public void createWithNullStrategy() {
+        new VictimSelector(null);
+    }
 
-	@Test(expected = NullPointerException.class)
-	public void onNullCandidateSet() {
-		this.victimSelector.selectVictims(null, 1);
-	}
+    @Test(expected = NullPointerException.class)
+    public void onNullCandidateSet() {
+        this.victimSelector.selectVictims(null, 1);
+    }
 
-	@Test(expected = IllegalArgumentException.class)
-	public void onNegativeNumberOfVictims() {
-		List<Machine> set = Arrays
-				.asList(instance("i-1", "2012-06-01T12:00:00"));
-		this.victimSelector.selectVictims(set, -1);
-	}
+    @Test(expected = IllegalArgumentException.class)
+    public void onNegativeNumberOfVictims() {
+        List<Machine> set = Arrays.asList(instance("i-1", "2012-06-01T12:00:00"));
+        this.victimSelector.selectVictims(set, -1);
+    }
 
-	@Test(expected = IllegalArgumentException.class)
-	public void onMoreVictimsThanCandidates() {
-		List<Machine> set = Arrays
-				.asList(instance("i-1", "2012-06-01T12:00:00"));
-		this.victimSelector.selectVictims(set, 2);
-	}
+    @Test(expected = IllegalArgumentException.class)
+    public void onMoreVictimsThanCandidates() {
+        List<Machine> set = Arrays.asList(instance("i-1", "2012-06-01T12:00:00"));
+        this.victimSelector.selectVictims(set, 2);
+    }
 
-	@Test(expected = IllegalArgumentException.class)
-	public void onEmptyCandidateSet() {
-		List<Machine> set = Arrays.asList();
-		this.victimSelector.selectVictims(set, 1);
-	}
+    @Test(expected = IllegalArgumentException.class)
+    public void onEmptyCandidateSet() {
+        List<Machine> set = Arrays.asList();
+        this.victimSelector.selectVictims(set, 1);
+    }
 
-	@Test
-	public void onSingletonCandidateSet() {
-		Machine instance1 = instance("i-1", "2012-06-01T12:00:00");
-		List<Machine> set = asList(instance1);
-		List<Machine> victims = this.victimSelector.selectVictims(set, 1);
-		assertThat(victims.size(), is(1));
-		assertThat(victims.get(0), is(instance1));
-	}
+    @Test
+    public void onSingletonCandidateSet() {
+        Machine instance1 = instance("i-1", "2012-06-01T12:00:00");
+        List<Machine> set = asList(instance1);
+        List<Machine> victims = this.victimSelector.selectVictims(set, 1);
+        assertThat(victims.size(), is(1));
+        assertThat(victims.get(0), is(instance1));
+    }
 
 }

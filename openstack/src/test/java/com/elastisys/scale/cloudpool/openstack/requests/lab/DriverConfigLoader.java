@@ -16,33 +16,30 @@ import com.elastisys.scale.commons.json.JsonUtils;
  */
 public class DriverConfigLoader {
 
-	/**
-	 * TODO: set to a path holding the {@link OpenStackPoolDriverConfig} to use.
-	 */
-	private static final Path OPENSTACK_DRIVER_CONFIG = Paths
-			.get(System.getenv("HOME"), ".elastisys",
-					"openstack-driver-config.json");
+    /**
+     * TODO: set to a path holding the {@link OpenStackPoolDriverConfig} to use.
+     */
+    private static final Path OPENSTACK_DRIVER_CONFIG = Paths.get(System.getenv("HOME"), ".elastisys",
+            "openstack-driver-config.json");
 
-	/**
-	 * Loads an {@link OpenStackPoolDriverConfig} from
-	 * {@link #OPENSTACK_DRIVER_CONFIG}.
-	 *
-	 * @return
-	 */
-	public static OpenStackPoolDriverConfig loadDefault() {
-		return load(OPENSTACK_DRIVER_CONFIG.toFile());
-	}
+    /**
+     * Loads an {@link OpenStackPoolDriverConfig} from
+     * {@link #OPENSTACK_DRIVER_CONFIG}.
+     *
+     * @return
+     */
+    public static OpenStackPoolDriverConfig loadDefault() {
+        return load(OPENSTACK_DRIVER_CONFIG.toFile());
+    }
 
-	/**
-	 * Loads an {@link OpenStackPoolDriverConfig} from a given file system path.
-	 *
-	 * @return
-	 */
-	public static OpenStackPoolDriverConfig load(File configFile) {
-		checkArgument(configFile.isFile(),
-				"openstack driver config file %s does not exist",
-				configFile.getAbsolutePath());
-		return JsonUtils.toObject(JsonUtils.parseJsonFile(configFile),
-				OpenStackPoolDriverConfig.class);
-	}
+    /**
+     * Loads an {@link OpenStackPoolDriverConfig} from a given file system path.
+     *
+     * @return
+     */
+    public static OpenStackPoolDriverConfig load(File configFile) {
+        checkArgument(configFile.isFile(), "openstack driver config file %s does not exist",
+                configFile.getAbsolutePath());
+        return JsonUtils.toObject(JsonUtils.parseJsonFile(configFile), OpenStackPoolDriverConfig.class);
+    }
 }

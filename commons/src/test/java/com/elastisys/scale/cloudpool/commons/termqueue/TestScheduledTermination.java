@@ -19,73 +19,65 @@ import com.elastisys.scale.commons.util.time.UtcTime;
  */
 public class TestScheduledTermination {
 
-	@Test
-	public void create() {
-		DateTime terminationTime = UtcTime.now();
-		Machine instance = instance("i-123");
-		ScheduledTermination termination = new ScheduledTermination(instance,
-				terminationTime);
-		assertThat(termination.getInstance(), is(instance));
-		assertThat(termination.getTerminationTime(), is(terminationTime));
-	}
+    @Test
+    public void create() {
+        DateTime terminationTime = UtcTime.now();
+        Machine instance = instance("i-123");
+        ScheduledTermination termination = new ScheduledTermination(instance, terminationTime);
+        assertThat(termination.getInstance(), is(instance));
+        assertThat(termination.getTerminationTime(), is(terminationTime));
+    }
 
-	@Test(expected = NullPointerException.class)
-	public void createWithNullInstance() {
-		new ScheduledTermination(null, UtcTime.now());
-	}
+    @Test(expected = NullPointerException.class)
+    public void createWithNullInstance() {
+        new ScheduledTermination(null, UtcTime.now());
+    }
 
-	@Test(expected = NullPointerException.class)
-	public void createWithNullTime() {
-		new ScheduledTermination(instance("i-123"), null);
-	}
+    @Test(expected = NullPointerException.class)
+    public void createWithNullTime() {
+        new ScheduledTermination(instance("i-123"), null);
+    }
 
-	@Test
-	public void testEqualsAndHashCode() {
-		DateTime t1 = UtcTime.now().minusSeconds(1);
-		DateTime t2 = UtcTime.now().plusSeconds(1);
-		Machine instance1 = instance("i-1");
-		Machine instance2 = instance("i-2");
+    @Test
+    public void testEqualsAndHashCode() {
+        DateTime t1 = UtcTime.now().minusSeconds(1);
+        DateTime t2 = UtcTime.now().plusSeconds(1);
+        Machine instance1 = instance("i-1");
+        Machine instance2 = instance("i-2");
 
-		// equals
-		assertThat(new ScheduledTermination(instance1, t1),
-				is(new ScheduledTermination(instance1, t1)));
-		assertThat(new ScheduledTermination(instance1, t1),
-				is(not(new ScheduledTermination(instance1, t2))));
-		assertThat(new ScheduledTermination(instance1, t1),
-				is(not(new ScheduledTermination(instance2, t1))));
-		assertThat(new ScheduledTermination(instance1, t1),
-				is(not(new ScheduledTermination(instance2, t2))));
+        // equals
+        assertThat(new ScheduledTermination(instance1, t1), is(new ScheduledTermination(instance1, t1)));
+        assertThat(new ScheduledTermination(instance1, t1), is(not(new ScheduledTermination(instance1, t2))));
+        assertThat(new ScheduledTermination(instance1, t1), is(not(new ScheduledTermination(instance2, t1))));
+        assertThat(new ScheduledTermination(instance1, t1), is(not(new ScheduledTermination(instance2, t2))));
 
-		// hashcode
-		assertThat(new ScheduledTermination(instance1, t1).hashCode(),
-				is(new ScheduledTermination(instance1, t1).hashCode()));
-		assertThat(new ScheduledTermination(instance1, t1).hashCode(),
-				is(not(new ScheduledTermination(instance1, t2).hashCode())));
-		assertThat(new ScheduledTermination(instance1, t1).hashCode(),
-				is(not(new ScheduledTermination(instance2, t1).hashCode())));
-		assertThat(new ScheduledTermination(instance1, t1).hashCode(),
-				is(not(new ScheduledTermination(instance2, t2).hashCode())));
-	}
+        // hashcode
+        assertThat(new ScheduledTermination(instance1, t1).hashCode(),
+                is(new ScheduledTermination(instance1, t1).hashCode()));
+        assertThat(new ScheduledTermination(instance1, t1).hashCode(),
+                is(not(new ScheduledTermination(instance1, t2).hashCode())));
+        assertThat(new ScheduledTermination(instance1, t1).hashCode(),
+                is(not(new ScheduledTermination(instance2, t1).hashCode())));
+        assertThat(new ScheduledTermination(instance1, t1).hashCode(),
+                is(not(new ScheduledTermination(instance2, t2).hashCode())));
+    }
 
-	@Test
-	public void testCompareTo() {
-		DateTime t1 = UtcTime.now().minusSeconds(1);
-		DateTime t2 = UtcTime.now().plusSeconds(1);
-		Machine instance = instance("i-1");
+    @Test
+    public void testCompareTo() {
+        DateTime t1 = UtcTime.now().minusSeconds(1);
+        DateTime t2 = UtcTime.now().plusSeconds(1);
+        Machine instance = instance("i-1");
 
-		ScheduledTermination termination1 = new ScheduledTermination(instance,
-				t1);
-		ScheduledTermination termination2 = new ScheduledTermination(instance,
-				t2);
+        ScheduledTermination termination1 = new ScheduledTermination(instance, t1);
+        ScheduledTermination termination2 = new ScheduledTermination(instance, t2);
 
-		assertThat(termination1.compareTo(termination1), is(0));
-		assertThat(termination1.compareTo(termination2), is(-1));
-		assertThat(termination2.compareTo(termination1), is(1));
-	}
+        assertThat(termination1.compareTo(termination1), is(0));
+        assertThat(termination1.compareTo(termination2), is(-1));
+        assertThat(termination2.compareTo(termination1), is(1));
+    }
 
-	private Machine instance(String withId) {
-		return Machine.builder().id(withId).machineState(MachineState.RUNNING)
-				.cloudProvider("AWS-EC2").region("us-east-1")
-				.machineSize("m1.small").launchTime(UtcTime.now()).build();
-	}
+    private Machine instance(String withId) {
+        return Machine.builder().id(withId).machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
+                .region("us-east-1").machineSize("m1.small").launchTime(UtcTime.now()).build();
+    }
 }
