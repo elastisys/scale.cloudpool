@@ -17,6 +17,4 @@ RUN mkdir -p /var/log/elastisys && \
     mkdir -p /var/lib/elastisys/ && \
     chmod +x /opt/elastisys/spotpool/start.sh
 
-
-EXPOSE 443
 CMD ["/opt/elastisys/spotpool/start.sh"]

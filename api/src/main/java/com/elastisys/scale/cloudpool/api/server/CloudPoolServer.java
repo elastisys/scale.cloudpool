@@ -7,9 +7,6 @@ import java.nio.file.Path;
 import org.eclipse.jetty.server.Server;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
-import org.kohsuke.args4j.CmdLineException;
-import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.ParserProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +14,7 @@ import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.restapi.CloudPoolHandler;
 import com.elastisys.scale.cloudpool.api.restapi.ConfigHandler;
 import com.elastisys.scale.cloudpool.api.restapi.StartStopHandler;
+import com.elastisys.scale.commons.cli.CommandLineParser;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.rest.filters.RequestLogFilter;
 import com.elastisys.scale.commons.rest.responsehandlers.ExitHandler;
@@ -24,8 +22,6 @@ import com.elastisys.scale.commons.rest.server.JaxRsApplication;
 import com.elastisys.scale.commons.server.ServletDefinition;
 import com.elastisys.scale.commons.server.ServletServerBuilder;
 import com.elastisys.scale.commons.server.SslKeyStoreType;
-import com.elastisys.scale.commons.util.io.IoUtils;
-import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.gson.JsonObject;
 
@@ -52,28 +48,8 @@ public class CloudPoolServer {
      * @return
      */
     public static CloudPoolOptions parseArgs(String[] args) {
-        CloudPoolOptions arguments = new CloudPoolOptions();
-        ParserProperties parserConfig = ParserProperties.defaults().withUsageWidth(80);
-        CmdLineParser parser = new CmdLineParser(arguments, parserConfig);
-
-        try {
-            parser.parseArgument(args);
-        } catch (CmdLineException e) {
-            LOG.error("error: " + e.getMessage());
-            parser.printUsage(System.err);
-            System.exit(-1);
-        }
-
-        if (arguments.help) {
-            parser.printUsage(System.err);
-            System.exit(0);
-        }
-
-        if (arguments.version) {
-            System.err.println(IoUtils.toString("VERSION.txt", Charsets.UTF_8));
-            System.exit(0);
-        }
-        return arguments;
+        CommandLineParser<CloudPoolOptions> parser = new CommandLineParser<>(CloudPoolOptions.class);
+        return parser.parseCommandLine(args);
     }
 
     /**
@@ -91,18 +67,24 @@ public class CloudPoolServer {
      * @throws Exception
      */
     public static void main(CloudPool cloudPool, String[] args) throws Exception {
-        CloudPoolOptions arguments = parseArgs(args);
-        Server server = createServer(cloudPool, arguments);
+        CloudPoolOptions options = parseArgs(args);
+        Server server = createServer(cloudPool, options);
 
         // start server and wait
-        LOG.info("Starting Jetty server with HTTPS port " + arguments.httpsPort);
+        LOG.info("starting server ...");
         try {
             server.start();
         } catch (Exception e) {
             LOG.error("failed to start server: " + e.getMessage(), e);
             System.exit(-1);
         }
-        LOG.info("Started Jetty server with HTTPS port " + arguments.httpsPort);
+        if (options.httpPort != null) {
+            LOG.info("server listening on HTTP port {}", options.httpPort);
+        }
+        if (options.httpsPort != null) {
+            LOG.info("server listening on HTTPS port {}", options.httpsPort);
+        }
+
         server.join();
     }
 
@@ -168,13 +150,20 @@ public class CloudPoolServer {
         ServletDefinition servlet = new ServletDefinition.Builder().servlet(restApiServlet)
                 .requireBasicAuth(options.requireBasicAuth).realmFile(options.realmFile)
                 .requireRole(options.requireRole).build();
-        Server server = ServletServerBuilder.create().httpsPort(options.httpsPort)
-                .sslKeyStoreType(SslKeyStoreType.PKCS12).sslKeyStorePath(options.sslKeyStore)
-                .sslKeyStorePassword(options.sslKeyStorePassword).sslTrustStoreType(SslKeyStoreType.JKS)
-                .sslTrustStorePath(options.sslTrustStore).sslTrustStorePassword(options.sslTrustStorePassword)
-                .sslRequireClientCert(options.requireClientCert).addServlet(servlet).build();
 
-        return server;
+        ServletServerBuilder server = ServletServerBuilder.create();
+        if (options.httpPort != null) {
+            server.httpPort(options.httpPort);
+        }
+        if (options.httpsPort != null) {
+            server.httpsPort(options.httpsPort).sslKeyStoreType(SslKeyStoreType.PKCS12)
+                    .sslKeyStorePath(options.sslKeyStore).sslKeyStorePassword(options.sslKeyStorePassword)
+                    .sslTrustStoreType(SslKeyStoreType.JKS).sslTrustStorePath(options.sslTrustStore)
+                    .sslTrustStorePassword(options.sslTrustStorePassword)
+                    .sslRequireClientCert(options.requireClientCert);
+        }
+        server.addServlet(servlet);
+        return server.build();
     }
 
     /**

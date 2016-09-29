@@ -34,18 +34,17 @@
     <dependency>
       <groupId>com.elastisys.scale</groupId>
       <artifactId>commons.server</artifactId>
+    </dependency>
+    <!-- command-line parsing -->    
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>commons.cli</artifactId>
     </dependency>    
     <!-- Jersey and JAX-RS API -->
     <dependency>
       <groupId>org.glassfish.jersey.containers</groupId>
       <artifactId>jersey-container-servlet-core</artifactId>
     </dependency>
-    <!-- command-line parsing -->
-    <dependency>
-      <groupId>args4j</groupId>
-      <artifactId>args4j</artifactId>
-    </dependency>
-
 
     <!-- Logging -->
     <dependency>

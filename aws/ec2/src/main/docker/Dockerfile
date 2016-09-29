@@ -17,5 +17,4 @@ RUN mkdir -p /var/log/elastisys && \
     mkdir -p /var/lib/elastisys/ && \
     chmod +x /opt/elastisys/ec2pool/start.sh
 
-EXPOSE 443
 CMD ["/opt/elastisys/ec2pool/start.sh"]

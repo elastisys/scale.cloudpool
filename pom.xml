@@ -53,7 +53,7 @@
     <java.version>1.8</java.version>
 
     <!-- scale.commons version to use -->
-    <commons.version>2.2.4</commons.version>
+    <commons.version>2.2.6</commons.version>
   </properties>
 
   <dependencyManagement>
@@ -103,6 +103,11 @@
         <artifactId>commons.openstack</artifactId>
         <version>${commons.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.elastisys.scale</groupId>
+        <artifactId>commons.cli</artifactId>
+        <version>${commons.version}</version>
+      </dependency>      
     </dependencies>
   </dependencyManagement>
 
