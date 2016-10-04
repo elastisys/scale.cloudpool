@@ -150,6 +150,7 @@
             <imageTag>${project.version}</imageTag>
             <imageTag>latest</imageTag>
           </imageTags>
+	  <forceTags>true</forceTags>
 	</configuration>
 	<executions>
 	  <!-- On mvn install: build local Docker image -->
