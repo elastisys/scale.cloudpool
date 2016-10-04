@@ -17,8 +17,6 @@
   </description>
 
   <properties>
-    <!-- Default version to use when tagging docker image. -->
-    <docker.image.version>${project.version}</docker.image.version>  
   </properties>
 
   <dependencies>
@@ -68,12 +66,15 @@
     <resources>
       <resource>
         <directory>src/main/resources</directory>
-      </resource>    
+      </resource>
+      <!--
+	  Copy src/main/docker to target/docker-resources.
+      -->      
       <!-- Dockerfile needs placeholder substitution for project version 
         to include the (version-qualified) server jar. -->
       <resource>
         <directory>src/main/docker</directory>
-        <targetPath>${project.build.directory}</targetPath>
+        <targetPath>${project.build.directory}/docker-resources</targetPath>
         <filtering>true</filtering>
         <includes>
           <include>Dockerfile</include>
@@ -81,7 +82,7 @@
       </resource>
       <resource>
         <directory>src/main/docker</directory>
-        <targetPath>${project.build.directory}</targetPath>
+        <targetPath>${project.build.directory}/docker-resources</targetPath>
         <filtering>false</filtering>       
         <excludes>
           <exclude>Dockerfile</exclude>
@@ -127,36 +128,53 @@
         </executions>
       </plugin>
 
-      <!-- Runs docker build to create a docker image for the server.
-           Execute from command-line as follows:
-           
-             mvn exec:exec -Dexec.executable=docker [-Ddocker.image.version=<version>]
-           
-           NOTE: to be able to use docker without sudo/root privileges, you need
-           to add yourself to the "docker" group. See:
-           https://docs.docker.com/installation/ubuntulinux/#giving-non-root-access       
-        -->
+      <!--
+	  Builds a Docker image
+      -->
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.3.2</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <executable>docker</executable>
-          <workingDirectory>${project.build.directory}</workingDirectory>
-          <arguments>
-            <argument>build</argument>
-            <argument>--tag</argument>
-            <argument>elastisys/kubernetespool:${docker.image.version}</argument>
-            <argument>.</argument>
-          </arguments>
-        </configuration>
+	<groupId>com.spotify</groupId>
+	<artifactId>docker-maven-plugin</artifactId>
+	<configuration>
+          <imageName>assets.elastisys.com:5000/elastisys/kubernetespool</imageName>
+	  <!-- Directory to be copied to target/docker -->
+          <dockerDirectory>${project.build.directory}/docker-resources</dockerDirectory>
+          <resources>
+	    <!-- include jar file in target/docker directory. -->
+            <resource>
+	      <targetPath>/</targetPath>
+	      <directory>${project.build.directory}</directory>
+	      <include>${project.build.finalName}.jar</include>
+            </resource>
+          </resources>
+	  <imageTags>
+            <imageTag>${project.version}</imageTag>
+            <imageTag>latest</imageTag>
+          </imageTags>
+	</configuration>
+	<executions>
+	  <!-- On mvn install: build local Docker image -->
+	  <execution>
+	    <id>build.local.image</id>
+	    <phase>install</phase>
+	    <goals>
+              <goal>build</goal>
+	    </goals>
+	  </execution>
+	  <!-- On mvn release:perform: push to registry. -->
+	  <execution>
+	    <id>push.on.deploy</id>
+	    <phase>deploy</phase>
+	    <goals>
+              <goal>push</goal>
+	    </goals>
+	    <configuration>
+              <imageName>assets.elastisys.com:5000/elastisys/kubernetespool:${project.version}</imageName>
+	      <registryUrl>https://assets.elastisys.com:5000</registryUrl>
+	      <!-- docker registry credentials assumed to be in ~/.docker/config.json -->
+	      <useConfigFile>true</useConfigFile>
+	    </configuration>
+	  </execution>	  
+	</executions>
       </plugin>
 
     </plugins>

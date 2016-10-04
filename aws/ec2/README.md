@@ -215,21 +215,14 @@ for more details.
 
 
 ### Building the docker image
-A `Dockerfile` is included under `src/main/docker` and can be used to generate 
-the docker image. The module's build file also contains a build goal that can
-be used to produce the image, once the project binary has been built in the `target`
-directory (for example, via `mvn package`). To build the image simply run:
+The module's build file contains a build goal that can be used to produce a
+Docker image, once the project binary has been built in the `target`
+directory (for example, via `mvn package`). Whenever `mvn install` is
+executed the Docker image gets built locally on the machine. When
+`mvn deploy` is run, such as during a release, the image also gets
+pushed to our private docker registry.
 
-    mvn exec:exec -Dexec.executable=docker
-
-To specify a different version for the image tag than the default (the version 
-specified in the pom.xml), pass a `-Ddocker.image.version=<version>` option 
-with the desired version name.
-
-If you want to build the image yourself, issue the following commands:
-
-    cd target/
-    docker build --tag "elastisys/ec2pool:<version>" .
+*Note: make sure that you have issued `docker login` against the docker registry before trying to push an image.*
 
 
 

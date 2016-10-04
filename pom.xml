@@ -54,6 +54,7 @@
 
     <!-- scale.commons version to use -->
     <commons.version>2.2.6</commons.version>
+    <docker.plugin.version>0.4.13</docker.plugin.version>
   </properties>
 
   <dependencyManagement>
@@ -107,7 +108,14 @@
         <groupId>com.elastisys.scale</groupId>
         <artifactId>commons.cli</artifactId>
         <version>${commons.version}</version>
-      </dependency>      
+      </dependency>
+
+      <dependency>
+        <groupId>com.spotify</groupId>
+        <artifactId>docker-maven-plugin</artifactId>
+        <version>${docker.plugin.version}</version>
+      </dependency>
+      
     </dependencies>
   </dependencyManagement>
 
