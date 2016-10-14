@@ -126,6 +126,7 @@
       <plugin>
 	<groupId>com.spotify</groupId>
 	<artifactId>docker-maven-plugin</artifactId>
+	<version>${docker.plugin.version}</version>
 	<configuration>
           <imageName>assets.elastisys.com:5000/elastisys/awsaspool</imageName>
 	  <!-- Directory to be copied to target/docker -->
