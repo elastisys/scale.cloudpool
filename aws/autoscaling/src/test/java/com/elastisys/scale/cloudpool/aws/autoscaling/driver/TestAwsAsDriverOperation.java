@@ -177,6 +177,42 @@ public class TestAwsAsDriverOperation {
     }
 
     /**
+     * Exercises the scenario when a call to describe the autoscaling group
+     * yields a different outcome from a call to list the group members, which
+     * may happen since there is always a time-window between those calls where
+     * things may change. We need to verify that this doesn't confuse the
+     * AwsAsDriver when it creates pseudo-instances in REQUESTED state.
+     * <p/>
+     * In this particular case, the scenario is that a call is made to describe
+     * the autoscaling group (desiredCapacity: 1, instances: 0), then the
+     * requested instance comes online and the call to get the group members
+     * returns 1 RUNNING instance. In this case, the pool driver should act as
+     * if the first call to describe the group returned (desiredCapacity: 1,
+     * instances: 1) and not return any pseudo-machines in state REQUESTED.
+     */
+    @Test
+    public void listMachinesOnInconsistentApiInformation() {
+        int desiredCapacity = 1;
+        List<Instance> emptyGroup = ec2Instances();
+
+        // empty group returned on call to describe autoscaling group
+        AutoScalingGroup groupAtT1 = group(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, desiredCapacity, emptyGroup);
+        when(this.mockAwsClient.getLaunchConfiguration(ONDEMAND_LAUNCH_CONFIG.getLaunchConfigurationName()))
+                .thenReturn(ONDEMAND_LAUNCH_CONFIG);
+        when(this.mockAwsClient.getAutoScalingGroup(GROUP_NAME)).thenReturn(groupAtT1);
+
+        // one running instance returned on later call to get group members
+        List<Instance> groupMembersAtT2 = ec2Instances(ec2Instance("i-1", "running"));
+        when(this.mockAwsClient.getAutoScalingGroupMembers(GROUP_NAME)).thenReturn(groupMembersAtT2);
+
+        List<Machine> machines = this.cloudPool.listMachines();
+        assertThat(machines.size(), is(1));
+        assertThat(machines.get(0).getId(), is("i-1"));
+        assertThat(machines.get(0).getMachineState(), is(MachineState.RUNNING));
+
+    }
+
+    /**
      * Starting machines should result in incrementing the desiredCapacity of
      * the group and "placeholder instances" (with pseudo identifiers) should be
      * returned.

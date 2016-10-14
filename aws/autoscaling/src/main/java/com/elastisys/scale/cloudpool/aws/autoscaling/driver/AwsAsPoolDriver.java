@@ -111,17 +111,43 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
         }
     }
 
+    /**
+     * Returns the machine instances in the Auto Scaling Group pool.
+     * <p/>
+     * For the case where {@code desiredCapacity} is greater than the number of
+     * started instances, we produce a number of placeholder {@link Machine}s
+     * (in {@code REQUESTED} state) for requested, but not yet acquired,
+     * instances in an Auto Scaling Group. The number of produced placeholder
+     * instances is the the difference between {@code desiredCapacity} and
+     * {@code actualCapacity}.
+     * <p/>
+     * Rationale: the desired capacity of the AWS Auto Scaling Group may differ
+     * from the actual number of instances in the group. If the desiredCapacity
+     * of the Auto Scaling Group is greater than the actual number of instances
+     * in the group, we should return placeholder Machines in {@code REQUESTED}
+     * state for the missing instances. This prevents the {@link BaseCloudPool}
+     * from regarding the scaling group too small and ordering new machines via
+     * startMachines.
+     *
+     * @see com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver#listMachines()
+     */
     @Override
     public List<Machine> listMachines() throws CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured driver");
 
         try {
             AutoScalingGroup group = this.client.getAutoScalingGroup(getPoolName());
-            // requested, but not yet allocated, machines
-            List<Machine> requestedInstances = requestedInstances(group);
-            // actual scaling group members
+            int desiredCapacity = group.getDesiredCapacity();
+
+            // fetch actual scaling group members
             List<Instance> groupInstances = this.client.getAutoScalingGroupMembers(getPoolName());
             List<Machine> acquiredMachines = Lists.newArrayList(transform(groupInstances, new InstanceToMachine()));
+            int actualCapacity = acquiredMachines.size();
+
+            // requested, but not yet allocated, machines
+            int missingInstances = Math.max(desiredCapacity - actualCapacity, 0);
+            LaunchConfiguration launchConfig = this.client.getLaunchConfiguration(group.getLaunchConfigurationName());
+            List<Machine> requestedInstances = pseudoMachines(missingInstances, launchConfig);
 
             List<Machine> pool = Lists.newArrayList();
             pool.addAll(acquiredMachines);
@@ -131,38 +157,6 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
             throw new CloudPoolDriverException(
                     format("failed to retrieve machines in cloud pool \"%s\": %s", getPoolName(), e.getMessage()), e);
         }
-    }
-
-    /**
-     * Produces a number of placeholder {@link Machine}s (in {@code REQUESTED}
-     * state) for requested, but not yet acquired, instances in an Auto Scaling
-     * Group. The number of produced placeholder instances is the the difference
-     * between {@code desiredCapacity} and {@code actualCapacity}.
-     * <p/>
-     * Rationale: the desired capacity of the AWS Auto Scaling Group may differ
-     * from the actual number of instances in the group. If the desiredCapacity
-     * of the Auto Scaling Group is greater than the actual number of instances
-     * in the group, we should return placeholder Machines in {@code REQUESTED}
-     * state for the missing instances. This prevents the {@link BaseCloudPool}
-     * from regarding the scaling group too small and ordering new machines via
-     * startMachines.
-     * <p/>
-     * We set the request time to <code>null</code>, since AWS AutoScaling does
-     * not support reporting it and attempting to keep track of it manually is
-     * rather awkward and brittle.
-     *
-     * @param group
-     *            The Auto Scaling Group.
-     * @return
-     */
-    private List<Machine> requestedInstances(AutoScalingGroup group) {
-        int actualCapacity = group.getInstances().size();
-        int desiredCapacity = group.getDesiredCapacity();
-        int missingInstances = desiredCapacity - actualCapacity;
-
-        LaunchConfiguration launchConfig = this.client.getLaunchConfiguration(group.getLaunchConfigurationName());
-
-        return pseudoMachines(missingInstances, launchConfig);
     }
 
     /**
@@ -188,6 +182,10 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
     /**
      * Creates a "pseudo machine" in {@code REQUESTED} state as a place-holder
      * machine for a desired but not yet acquired Auto Scaling Group member.
+     * <p/>
+     * We set the request time to <code>null</code>, since AWS AutoScaling does
+     * not support reporting it and attempting to keep track of it manually is
+     * rather awkward and brittle.
      *
      * @param pseudoId
      *            The identifier to assign to the pseudo machine.

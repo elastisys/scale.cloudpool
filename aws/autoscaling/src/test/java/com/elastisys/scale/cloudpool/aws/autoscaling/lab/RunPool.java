@@ -36,6 +36,10 @@ public class RunPool {
 
     private static final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(10);
 
+    /**
+     * @param args
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
         StateStorage stateStorage = StateStorage.builder(new File("target/state")).build();
         CloudPool pool = new BaseCloudPool(stateStorage, new AwsAsPoolDriver(new AwsAutoScalingClient()));
