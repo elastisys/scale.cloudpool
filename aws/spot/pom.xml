@@ -137,7 +137,7 @@
 	<artifactId>docker-maven-plugin</artifactId>
 	<version>${docker.plugin.version}</version>
 	<configuration>
-          <imageName>assets.elastisys.com:5000/elastisys/spotpool</imageName>
+          <imageName>docker.elastisys.com:5000/elastisys/spotpool</imageName>
 	  <!-- Directory to be copied to target/docker -->
           <dockerDirectory>${project.build.directory}/docker-resources</dockerDirectory>
           <resources>
@@ -171,8 +171,8 @@
               <goal>push</goal>
 	    </goals>
 	    <configuration>
-              <imageName>assets.elastisys.com:5000/elastisys/spotpool:${project.version}</imageName>
-	      <registryUrl>https://assets.elastisys.com:5000</registryUrl>
+              <imageName>docker.elastisys.com:5000/elastisys/spotpool:${project.version}</imageName>
+	      <registryUrl>https://docker.elastisys.com:5000</registryUrl>
 	      <!-- docker registry credentials assumed to be in ~/.docker/config.json -->
 	      <useConfigFile>true</useConfigFile>
 	    </configuration>
