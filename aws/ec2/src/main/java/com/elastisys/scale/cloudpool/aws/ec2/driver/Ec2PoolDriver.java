@@ -22,7 +22,7 @@ import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
@@ -66,7 +66,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
     /**
      * Cloud pool metadata for this implementation.
      */
-    private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(PoolIdentifiers.AWS_EC2,
+    private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(CloudProviders.AWS_EC2,
             supportedApiVersions);
 
     /**

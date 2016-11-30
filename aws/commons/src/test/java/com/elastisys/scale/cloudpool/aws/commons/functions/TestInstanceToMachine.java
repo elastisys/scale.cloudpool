@@ -21,7 +21,7 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.commons.json.JsonUtils;
@@ -53,7 +53,7 @@ public class TestInstanceToMachine {
         assertThat(machine.getId(), is(instance.getInstanceId()));
         assertThat(machine.getLaunchTime(), is(launchTime));
         assertThat(machine.getMachineState(), is(MachineState.RUNNING));
-        assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_EC2));
+        assertThat(machine.getCloudProvider(), is(CloudProviders.AWS_EC2));
         assertThat(machine.getRegion(), is("us-east-1"));
         assertThat(machine.getMachineSize(), is("m1.small"));
         assertThat(machine.getMembershipStatus(), is(MembershipStatus.defaultStatus()));
@@ -77,7 +77,7 @@ public class TestInstanceToMachine {
 
         Machine machine = convert(instance);
         assertThat(machine.getId(), is(instance.getInstanceId()));
-        assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_EC2));
+        assertThat(machine.getCloudProvider(), is(CloudProviders.AWS_EC2));
         assertThat(machine.getRegion(), is("us-east-1"));
         assertThat(machine.getMachineSize(), is("m1.small"));
         assertThat(machine.getLaunchTime(), is(launchTime));
@@ -101,7 +101,7 @@ public class TestInstanceToMachine {
 
         Machine machine = convert(instance);
         assertThat(machine.getId(), is(instance.getInstanceId()));
-        assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_EC2));
+        assertThat(machine.getCloudProvider(), is(CloudProviders.AWS_EC2));
         assertThat(machine.getRegion(), is("us-east-1"));
         assertThat(machine.getMachineSize(), is("m1.medium"));
         assertThat(machine.getLaunchTime(), is(launchTime));
@@ -141,7 +141,7 @@ public class TestInstanceToMachine {
 
     /**
      * A converted spot instance {@link Machine} should have a cloud provider
-     * value of {@link PoolIdentifiers#AWS_SPOT} to distinguish it from a
+     * value of {@link CloudProviders#AWS_SPOT} to distinguish it from a
      * regular EC2 on-demand instance.
      */
     @Test
@@ -151,14 +151,14 @@ public class TestInstanceToMachine {
                 .withState(new InstanceState().withName(InstanceStateName.Running))
                 .withPlacement(new Placement("us-east-1b"));
         Machine onDemandMachine = convert(onDemandInstance);
-        assertThat(onDemandMachine.getCloudProvider(), is(PoolIdentifiers.AWS_EC2));
+        assertThat(onDemandMachine.getCloudProvider(), is(CloudProviders.AWS_EC2));
 
         // convert spot instance: cloud provider should be AWS_EC2
         Instance spotInstance = new Instance().withInstanceId("i-1").withInstanceType(InstanceType.M1Medium)
                 .withState(new InstanceState().withName(InstanceStateName.Running)).withSpotInstanceRequestId("sir-123")
                 .withPlacement(new Placement("us-east-1b"));
         Machine spotMachine = convert(spotInstance);
-        assertThat(spotMachine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+        assertThat(spotMachine.getCloudProvider(), is(CloudProviders.AWS_SPOT));
     }
 
     public Machine convert(Instance instance) {

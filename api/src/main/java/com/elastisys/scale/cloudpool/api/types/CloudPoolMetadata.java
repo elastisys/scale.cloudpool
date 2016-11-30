@@ -15,7 +15,8 @@ import com.google.common.collect.ImmutableList;
 public class CloudPoolMetadata {
 
     /**
-     * Unique identifier for the cloud that this cloud pool manages.
+     * An identifier for the cloud that this cloud pool manages. See
+     * {@link CloudProviders} for a list of known identifiers.
      */
     private final String poolIdentifier;
 
@@ -35,8 +36,9 @@ public class CloudPoolMetadata {
      * manages.
      *
      * @param poolIdentifier
-     *            The unique identifier for the cloud infrastructure managed by
-     *            this cloud pool.
+     *            An identifier for the cloud infrastructure managed by this
+     *            cloud pool. See {@link CloudProviders} for a list of known
+     *            identifiers.
      * @param supportedApiVersions
      *            List of supported API versions.
      */
@@ -54,35 +56,29 @@ public class CloudPoolMetadata {
     }
 
     /**
-     * @return The unique identifier for the cloud infrastructure managed by
-     *         this cloud pool.
+     * An identifier for the cloud that this cloud pool manages. See
+     * {@link CloudProviders} for a list of known identifiers.
+     *
+     * @return
      */
     public String poolIdentifier() {
         return this.poolIdentifier;
     }
 
     /**
-     * @return List of supported API versions.
+     * A list of supported API versions.
+     * 
+     * @return
      */
     public List<String> supportedApiVersions() {
         return this.supportedApiVersions;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.lang.Object#hashCode()
-     */
     @Override
     public int hashCode() {
         return Objects.hashCode(this.poolIdentifier, this.supportedApiVersions);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof CloudPoolMetadata) {

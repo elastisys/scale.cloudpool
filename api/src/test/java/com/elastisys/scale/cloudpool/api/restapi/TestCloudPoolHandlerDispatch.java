@@ -35,7 +35,7 @@ import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.api.types.TestUtils;
@@ -240,7 +240,7 @@ public class TestCloudPoolHandlerDispatch {
     @Test
     public void testGetMetadataDispatch() throws Exception {
         // set up mock response
-        CloudPoolMetadata metadata = new CloudPoolMetadata(PoolIdentifiers.AWS_EC2, Lists.<String>newArrayList("3.1"));
+        CloudPoolMetadata metadata = new CloudPoolMetadata(CloudProviders.AWS_EC2, Lists.<String>newArrayList("3.1"));
 
         when(this.cloudPoolMock.getMetadata()).thenReturn(metadata);
 

@@ -20,7 +20,7 @@ import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.kubernetes.client.KubernetesClient;
@@ -45,7 +45,7 @@ import com.google.gson.JsonObject;
  */
 public class KubernetesCloudPool implements CloudPool {
     private static final Logger LOG = LoggerFactory.getLogger(KubernetesCloudPool.class);
-    private static final CloudPoolMetadata METADATA = new CloudPoolMetadata(PoolIdentifiers.KUBERNETES,
+    private static final CloudPoolMetadata METADATA = new CloudPoolMetadata(CloudProviders.KUBERNETES,
             Arrays.asList(ApiVersion.LATEST));
     private static final int MAX_THREADS = 5;
 

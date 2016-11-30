@@ -15,7 +15,7 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.spot.metadata.InstancePairedSpotRequest;
@@ -84,7 +84,7 @@ public class InstancePairedSpotRequestToMachine implements Function<InstancePair
         String region = extractRegion(spotInstanceRequest);
 
         JsonObject metadata = JsonUtils.toJson(spotInstanceRequest).getAsJsonObject();
-        return Machine.builder().id(id).machineState(machineState).cloudProvider(PoolIdentifiers.AWS_SPOT)
+        return Machine.builder().id(id).machineState(machineState).cloudProvider(CloudProviders.AWS_SPOT)
                 .region(region).machineSize(request.getLaunchSpecification().getInstanceType())
                 .membershipStatus(membershipStatus).serviceState(serviceState).requestTime(requestTime)
                 .launchTime(launchTime).publicIps(publicIps).privateIps(privateIps).metadata(metadata).build();

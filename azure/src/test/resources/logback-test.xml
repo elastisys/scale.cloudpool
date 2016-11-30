@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level [%class{0}:%method:%line] - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root>
+    <level value="ERROR" />
+    <appender-ref ref="STDOUT" />
+    <!-- <appender-ref ref="FILE" /> -->
+  </root>
+  <logger name="com.elastisys">
+    <level value="debug" />
+  </logger>
+  <logger name="okhttp3">
+    <level value="info" />
+  </logger>
+  <logger name="com.microsoft">
+    <level value="warn" />
+  </logger>
+</configuration>

@@ -36,6 +36,7 @@
     <module>openstack</module>
     <module>citycloud</module>
     <module>kubernetes</module>
+    <module>azure</module>
   </modules>
 
   <!-- Location of Git repository. Used to tag releases. -->
@@ -53,7 +54,7 @@
     <java.version>1.8</java.version>
 
     <!-- scale.commons version to use -->
-    <commons.version>2.2.6</commons.version>
+    <commons.version>2.2.7-SNAPSHOT</commons.version>
     <docker.plugin.version>0.4.13</docker.plugin.version>
   </properties>
 

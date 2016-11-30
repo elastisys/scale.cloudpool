@@ -1,10 +1,10 @@
 package com.elastisys.scale.cloudpool.api.types;
 
 /**
- * Enumeration of currently known cloud pool implementations and unique
- * identifiers for each.
+ * Enumeration of known cloud providers/platforms for which there are cloud pool
+ * implementations.
  */
-public class PoolIdentifiers {
+public class CloudProviders {
     public static final String SPLITTER = "Splitter";
     public static final String OPENSTACK = "OpenStack";
     public static final String CITYCLOUD = "CityCloud";
@@ -12,4 +12,5 @@ public class PoolIdentifiers {
     public static final String AWS_SPOT = "AWS-SPOT";
     public static final String AWS_AUTO_SCALING_GROUP = "AWS-AUTO-SCALING-GROUP";
     public static final String KUBERNETES = "Kubernetes";
+    public static final String AZURE = "Azure";
 }

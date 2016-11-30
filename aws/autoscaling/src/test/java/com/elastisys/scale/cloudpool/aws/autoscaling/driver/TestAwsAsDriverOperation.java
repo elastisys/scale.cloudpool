@@ -38,7 +38,7 @@ import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AutoScalingClient;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
@@ -127,15 +127,15 @@ public class TestAwsAsDriverOperation {
         List<Machine> groupMembers = this.cloudPool.listMachines();
         assertThat(groupMembers, is(MachinesMatcher.machines("i-1", "i-requested1", "i-requested2")));
         assertThat(groupMembers.get(0).getMachineState(), is(MachineState.RUNNING));
-        assertThat(groupMembers.get(0).getCloudProvider(), is(PoolIdentifiers.AWS_EC2));
+        assertThat(groupMembers.get(0).getCloudProvider(), is(CloudProviders.AWS_EC2));
         assertThat(groupMembers.get(0).getMachineSize(), is(InstanceType.M1Medium.toString()));
 
         assertThat(groupMembers.get(1).getMachineState(), is(MachineState.REQUESTED));
-        assertThat(groupMembers.get(1).getCloudProvider(), is(PoolIdentifiers.AWS_EC2));
+        assertThat(groupMembers.get(1).getCloudProvider(), is(CloudProviders.AWS_EC2));
         assertThat(groupMembers.get(1).getMachineSize(), is(InstanceType.M1Medium.toString()));
 
         assertThat(groupMembers.get(2).getMachineState(), is(MachineState.REQUESTED));
-        assertThat(groupMembers.get(2).getCloudProvider(), is(PoolIdentifiers.AWS_EC2));
+        assertThat(groupMembers.get(2).getCloudProvider(), is(CloudProviders.AWS_EC2));
         assertThat(groupMembers.get(2).getMachineSize(), is(InstanceType.M1Medium.toString()));
     }
 
@@ -152,15 +152,15 @@ public class TestAwsAsDriverOperation {
         List<Machine> groupMembers = this.cloudPool.listMachines();
         assertThat(groupMembers, is(MachinesMatcher.machines("i-1", "i-requested1", "i-requested2")));
         assertThat(groupMembers.get(0).getMachineState(), is(MachineState.RUNNING));
-        assertThat(groupMembers.get(0).getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+        assertThat(groupMembers.get(0).getCloudProvider(), is(CloudProviders.AWS_SPOT));
         assertThat(groupMembers.get(0).getMachineSize(), is(InstanceType.M1Medium.toString()));
 
         assertThat(groupMembers.get(1).getMachineState(), is(MachineState.REQUESTED));
-        assertThat(groupMembers.get(1).getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+        assertThat(groupMembers.get(1).getCloudProvider(), is(CloudProviders.AWS_SPOT));
         assertThat(groupMembers.get(1).getMachineSize(), is(InstanceType.M1Medium.toString()));
 
         assertThat(groupMembers.get(2).getMachineState(), is(MachineState.REQUESTED));
-        assertThat(groupMembers.get(2).getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+        assertThat(groupMembers.get(2).getCloudProvider(), is(CloudProviders.AWS_SPOT));
         assertThat(groupMembers.get(2).getMachineSize(), is(InstanceType.M1Medium.toString()));
     }
 

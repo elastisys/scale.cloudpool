@@ -31,7 +31,7 @@ import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
-import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.commons.basepool.StateStorage;
 import com.elastisys.scale.cloudpool.commons.basepool.config.PoolFetchConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
@@ -369,7 +369,7 @@ public class TestCachingPoolFetcher {
         List<Machine> machines = new ArrayList<>();
         for (String id : machineIds) {
             machines.add(Machine.builder().id(id).machineSize("m1.medium").machineState(MachineState.RUNNING)
-                    .cloudProvider(PoolIdentifiers.AWS_EC2).region("us-east-1").build());
+                    .cloudProvider(CloudProviders.AWS_EC2).region("us-east-1").build());
         }
         return machines;
     }

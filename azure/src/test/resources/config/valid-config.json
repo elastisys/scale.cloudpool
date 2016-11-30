@@ -1,0 +1,79 @@
+{
+    "cloudPool": {
+        "name": "AzureTestPool",
+        "driverConfig": {
+            "apiAccess": {
+                "subscriptionId": "12345678-9abc-def0-1234-56789abcdef0",
+                "auth": {
+                    "clientId": "12345678-9abc-def0-1234-56789abcdef0",
+                    "domain": "12345678-9abc-def0-1234-56789abcdef0",
+                    "secret": "12345678-9abc-def0-1234-56789abcdef0",
+                    "environment": "AZURE"                    
+                },
+                "connectionTimeout": { "time": 10, "unit": "seconds" },
+                "readTimeout": { "time": 10, "unit": "seconds" },
+                "azureSdkLogLevel": "NONE"
+            },            
+            "resourceGroup": "testpool",
+            "region": "northeurope"
+        }
+    },
+    "scaleOutConfig": {
+        "size": "Standard_DS1_v2",
+        "image": "Canonical:UbuntuServer:16.04.0-LTS:latest",
+        "extensions": {
+            "linuxSettings": {
+                "rootUserName": "ubuntu",
+                "publicSshKey": "ssh-rsa XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX foo@bar",
+                "customScript": {
+                    "encodedCommand": "c2ggLWMgJ2FwdCB1cGRhdGUgLXF5ICYmIGFwdCBpbnN0YWxsIC1xeSBhcGFjaGUyJwo="
+                }
+            },
+            "storageAccountName": "testpooldisks",
+            "network": {
+                "virtualNetwork": "testnet",
+                "subnetName": "default",
+                "assignPublicIp": true,
+                "networkSecurityGroups": ["webserver"]
+            },
+            "tags": {
+                "custom-tag": "value"
+            }
+        }
+    },
+    "scaleInConfig": {
+        "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
+        "instanceHourMargin": 0
+    },
+    "alerts": {
+        "duplicateSuppression": { "time": 15, "unit": "minutes" },
+        "smtp": [
+            {
+                "subject": "[elastisys] alert for azure cloud pool",                
+                "recipients": ["debug@elastisys.com"],
+                "sender": "noreply@elastisys.com",
+                "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
+                "smtpClientConfig": {
+                    "smtpHost": "account.elastisys.com",
+                    "smtpPort": 465,
+                    "useSsl": true,
+                    "authentication": {
+                        "username": "elastisys",
+                        "password": "juuxen2loomi3quachietiCi3luchoingoopangohWohDeki"
+                    }
+                }
+            }
+        ]
+    },
+    "poolFetch": {
+        "retries": { 
+            "maxRetries": 3, 
+            "initialBackoffDelay": {"time": 2, "unit": "seconds"}
+        },
+        "refreshInterval": {"time": 30, "unit": "seconds"},
+        "reachabilityTimeout": {"time": 5, "unit": "minutes"}
+    },
+    "poolUpdate": {
+        "updateInterval": {"time": 30, "unit": "seconds"}
+    }
+}  

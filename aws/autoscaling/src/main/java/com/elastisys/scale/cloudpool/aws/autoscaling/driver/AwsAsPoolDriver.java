@@ -24,7 +24,7 @@ import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AutoScalingClient;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
@@ -75,7 +75,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
      * Cloud pool metadata for this implementation.
      */
     private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(
-            PoolIdentifiers.AWS_AUTO_SCALING_GROUP, supportedApiVersions);
+            CloudProviders.AWS_AUTO_SCALING_GROUP, supportedApiVersions);
 
     /**
      * Creates a new {@link AwsAsPoolDriver}. Needs to be configured before use.
@@ -107,7 +107,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
         } catch (Exception e) {
             Throwables.propagateIfInstanceOf(e, IllegalArgumentException.class);
             Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
-            throw new CloudPoolDriverException(String.format("failed to apply configuration: %s", e.getMessage()));
+            throw new CloudPoolDriverException(String.format("failed to apply configuration: %s", e.getMessage()), e);
         }
     }
 
@@ -197,7 +197,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
     private Machine pseudoMachine(String pseudoId, LaunchConfiguration launchConfig) {
         // are spot instances or on-demand instances being launched for the Auto
         // Scaling Group
-        String cloudProvider = launchConfig.getSpotPrice() != null ? PoolIdentifiers.AWS_SPOT : PoolIdentifiers.AWS_EC2;
+        String cloudProvider = launchConfig.getSpotPrice() != null ? CloudProviders.AWS_SPOT : CloudProviders.AWS_EC2;
         String instanceType = launchConfig.getInstanceType();
         return Machine.builder().id(pseudoId).machineState(MachineState.REQUESTED).cloudProvider(cloudProvider)
                 .region(config().getRegion()).machineSize(instanceType).build();

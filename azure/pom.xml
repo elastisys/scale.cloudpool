@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.elastisys.scale</groupId>
+    <artifactId>cloudpool.root</artifactId>
+    <version>4.1.13-SNAPSHOT</version>
+  </parent>
+  <artifactId>cloudpool.azure</artifactId>
+  <packaging>jar</packaging>
+  <name>elastisys:scale :: cloudpool :: azure</name>
+  <description>
+    A cloud pool capable of managing a pool of Linux servers in Microsoft Azure.
+    
+    This build module produces an all-in-one "server and application" executable
+    jar file. When executed, it starts an embedded web server that publishes 
+    the cloud pool REST API endpoint.
+  </description>
+
+  <properties>
+  </properties>
+
+  <dependencies>
+    <!-- Azure API -->
+    <dependency>
+      <groupId>com.microsoft.azure</groupId>
+      <artifactId>azure</artifactId>
+      <version>1.0.0-beta3</version>
+    </dependency>
+
+    <!-- Common cloud pool API/server classes -->
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>cloudpool.api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <!-- Common cloud pool functionality (such as TerminationQueue and ResizePlanner) -->
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>cloudpool.commons</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+
+    <!-- UTC Time -->
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>commons.util</artifactId>
+    </dependency>
+
+    <!-- Logging -->
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+    <!-- capture java.util.logging with slf4j. Requires a bridge handler to be programatically 
+      installed. See http://www.slf4j.org/api/org/slf4j/bridge/SLF4JBridgeHandler.html -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jul-to-slf4j</artifactId>
+    </dependency>
+
+
+    <!-- Test dependencies -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <!-- Copy src/main/docker to target/docker-resources. -->
+      <!-- Dockerfile needs placeholder substitution for project version to include 
+        the (version-qualified) server jar. -->
+      <resource>
+        <directory>src/main/docker</directory>
+        <targetPath>${project.build.directory}/docker-resources</targetPath>
+        <filtering>true</filtering>
+        <includes>
+          <include>Dockerfile</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>src/main/docker</directory>
+        <targetPath>${project.build.directory}/docker-resources</targetPath>
+        <filtering>false</filtering>
+        <excludes>
+          <exclude>Dockerfile</exclude>
+        </excludes>
+      </resource>
+    </resources>
+
+    <plugins>
+      <!-- Build a standalone executable jar file that embeds all classpath dependencies. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+          <transformers>
+            <!-- Make jar file executable (add Main-Class header to jar manifest) -->
+            <transformer
+              implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+              <mainClass>com.elastisys.scale.cloudpool.azure.server.Main</mainClass>
+            </transformer>
+          </transformers>
+          <!-- Make shaded jar file the main artifact output by the build. -->
+          <shadedArtifactAttached>false</shadedArtifactAttached>
+          <createDependencyReducedPom>false</createDependencyReducedPom>
+          <filters>
+            <filter>
+              <artifact>*:*</artifact>
+              <excludes>
+                <exclude>META-INF/*.SF</exclude>
+                <exclude>META-INF/*.DSA</exclude>
+                <exclude>META-INF/*.RSA</exclude>
+              </excludes>
+            </filter>
+          </filters>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Builds a Docker image -->
+      <plugin>
+        <groupId>com.spotify</groupId>
+        <artifactId>docker-maven-plugin</artifactId>
+        <version>${docker.plugin.version}</version>
+        <configuration>
+          <imageName>docker.elastisys.com:5000/elastisys/azurepool</imageName>
+          <!-- Directory to be copied to target/docker -->
+          <dockerDirectory>${project.build.directory}/docker-resources</dockerDirectory>
+          <resources>
+            <!-- include jar file in target/docker directory. -->
+            <resource>
+              <targetPath>/</targetPath>
+              <directory>${project.build.directory}</directory>
+              <include>${project.build.finalName}.jar</include>
+            </resource>
+          </resources>
+          <imageTags>
+            <imageTag>${project.version}</imageTag>
+            <imageTag>latest</imageTag>
+          </imageTags>
+          <forceTags>true</forceTags>
+        </configuration>
+        <executions>
+          <!-- On mvn install: build local Docker image -->
+          <execution>
+            <id>build.local.image</id>
+            <phase>install</phase>
+            <goals>
+              <goal>build</goal>
+            </goals>
+          </execution>
+          <!-- On mvn release:perform: push to registry. -->
+          <execution>
+            <id>push.on.deploy</id>
+            <phase>deploy</phase>
+            <goals>
+              <goal>push</goal>
+            </goals>
+            <configuration>
+              <imageName>docker.elastisys.com:5000/elastisys/azurepool:${project.version}</imageName>
+              <registryUrl>https://docker.elastisys.com:5000</registryUrl>
+              <!-- docker registry credentials assumed to be in ~/.docker/config.json -->
+              <useConfigFile>true</useConfigFile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+
+</project>

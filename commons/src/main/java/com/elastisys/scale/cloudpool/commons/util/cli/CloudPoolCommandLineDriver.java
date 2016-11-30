@@ -143,7 +143,7 @@ public class CloudPoolCommandLineDriver {
         }
         case "detach": {
             checkArgument(args.size() > 1,
-                    "error: attach requires two arguments: " + "<instance-id> <size--?: true|false>");
+                    "error: detach requires two arguments: " + "<instance-id> <size--?: true|false>");
             this.cloudPool.detachMachine(args.get(0), Boolean.valueOf(args.get(1)));
             break;
         }

@@ -1,0 +1,79 @@
+{
+    "cloudPool": {
+        "name": "AzureLinuxVmPool",
+        "driverConfig": {
+            "apiAccess": {
+                "subscriptionId": "12345678-9abc-def0-1234-56789abcdef0",
+                "auth": {
+                    "clientId": "12345678-9abc-def0-1234-56789abcdef0",
+                    "domain": "12345678-9abc-def0-1234-56789abcdef0",
+                    "secret": "12345678-9abc-def0-1234-56789abcdef0",
+                    "environment": "AZURE"                    
+                },
+                "connectionTimeout": { "time": 10, "unit": "seconds" },
+                "readTimeout": { "time": 10, "unit": "seconds" },
+                "azureSdkLogLevel": "NONE"
+            },            
+            "resourceGroup": "testpool",
+            "region": "northeurope"
+        }	
+    },
+    "scaleOutConfig": {
+        "size": "Standard_DS1_v2",
+        "image": "Canonical:UbuntuServer:16.04.0-LTS:latest",
+        "extensions": {
+            "linuxSettings": {
+                "rootUserName": "ubuntu",
+                "publicSshKey": "ssh-rsa XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX foo@bar",
+                "customScript": {
+                    "encodedCommand": "c2ggLWMgJ2FwdCB1cGRhdGUgLXF5ICYmIGFwdCBpbnN0YWxsIC1xeSBhcGFjaGUyJwo="
+                }
+            },
+            "storageAccountName": "testpooldisks",
+            "network": {
+                "virtualNetwork": "testnet",
+                "subnetName": "default",
+                "assignPublicIp": true,
+                "networkSecurityGroups": ["webserver"]
+            },
+            "tags": {
+                "tier": "web"
+            }
+        }
+    },
+    "scaleInConfig": {
+        "victimSelectionPolicy": "NEWEST_INSTANCE",
+        "instanceHourMargin": 0
+    },
+    "alerts": {
+        "duplicateSuppression": { "time": 5, "unit": "minutes" },
+        "smtp": [
+            {
+                "subject": "[elastisys] cloud pool alert for AzureLinuxVmPool",
+                "recipients": ["foo@bar.com"],
+                "sender": "noreply@foo.com",
+                "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
+                "smtpClientConfig": {
+                    "smtpHost": "my.smtp.server",
+                    "smtpPort": 465,
+                    "authentication": {
+                        "userName": "smtpclient", 
+                        "password": "password"
+                    },
+                    "useSsl": true
+                }
+            }
+        ]
+    },
+    "poolFetch": {
+        "retries": { 
+            "maxRetries": 3, 
+            "initialBackoffDelay": {"time": 3, "unit": "seconds"}
+        },
+        "refreshInterval": {"time": 30, "unit": "seconds"},
+        "reachabilityTimeout": {"time": 5, "unit": "minutes"}
+    },
+    "poolUpdate": {
+        "updateInterval": {"time": 60, "unit": "seconds"}
+    }
+}  

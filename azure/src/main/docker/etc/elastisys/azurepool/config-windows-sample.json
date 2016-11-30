@@ -1,0 +1,80 @@
+{
+    "cloudPool": {
+        "name": "AzureLinuxVmPool",
+        "driverConfig": {
+            "apiAccess": {
+                "subscriptionId": "12345678-9abc-def0-1234-56789abcdef0",
+                "auth": {
+                    "clientId": "12345678-9abc-def0-1234-56789abcdef0",
+                    "domain": "12345678-9abc-def0-1234-56789abcdef0",
+                    "secret": "12345678-9abc-def0-1234-56789abcdef0",
+                    "environment": "AZURE"                    
+                },
+                "connectionTimeout": { "time": 10, "unit": "seconds" },
+                "readTimeout": { "time": 10, "unit": "seconds" },
+                "azureSdkLogLevel": "NONE"
+            },            
+            "resourceGroup": "testpool",
+            "region": "northeurope"
+        }	
+    },
+    "scaleOutConfig": {
+        "size": "Standard_DS1_v2",
+        "image": "MicrosoftWindowsServer:WindowsServer:2008-R2-SP1:2.0.20161109",
+        "extensions": {
+            "windowsSettings": {
+                "adminUserName": "adminuser",
+                "password": "XXXXXXXXXX",
+                "customScript": {
+                    "fileUris": ["https://gist.githubusercontent.com/elastisys/09be421f09ae3646f1aadf4542f6b8f2/raw/e42334045905f908d781e78e03bb9412bf325da7/win-server-install-webserver.ps1"],
+                    "encodedCommand": "cG93ZXJzaGVsbC5leGUgLUV4ZWN1dGlvblBvbGljeSBVbnJlc3RyaWN0ZWQgLUZpbGUgd2luLXNlcnZlci1pbnN0YWxsLXdlYnNlcnZlci5wczEK"
+                }
+            },            
+            "storageAccountName": "testpooldisks",
+            "network": {
+                "virtualNetwork": "testnet",
+                "subnetName": "default",
+                "assignPublicIp": true,
+                "networkSecurityGroups": ["webserver"]
+            },
+            "tags": {
+                "tier": "web"
+            }
+        }
+    },
+    "scaleInConfig": {
+        "victimSelectionPolicy": "NEWEST_INSTANCE",
+        "instanceHourMargin": 0
+    },
+    "alerts": {
+        "duplicateSuppression": { "time": 5, "unit": "minutes" },
+        "smtp": [
+            {
+                "subject": "[elastisys] cloud pool alert for AzureLinuxVmPool",
+                "recipients": ["foo@bar.com"],
+                "sender": "noreply@foo.com",
+                "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
+                "smtpClientConfig": {
+                    "smtpHost": "my.smtp.server",
+                    "smtpPort": 465,
+                    "authentication": {
+                        "userName": "smtpclient", 
+                        "password": "password"
+                    },
+                    "useSsl": true
+                }
+            }
+        ]
+    },
+    "poolFetch": {
+        "retries": { 
+            "maxRetries": 3, 
+            "initialBackoffDelay": {"time": 3, "unit": "seconds"}
+        },
+        "refreshInterval": {"time": 30, "unit": "seconds"},
+        "reachabilityTimeout": {"time": 5, "unit": "minutes"}
+    },
+    "poolUpdate": {
+        "updateInterval": {"time": 60, "unit": "seconds"}
+    }
+}  

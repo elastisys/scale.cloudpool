@@ -15,7 +15,7 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.spot.metadata.InstancePairedSpotRequest;
@@ -46,7 +46,7 @@ public class TestInstancePairedSpotRequestToMachine {
         Machine machine = InstancePairedSpotRequestToMachine.convert(openRequest);
         assertThat(machine.getId(), is("sir-1"));
         assertThat(machine.getMachineState(), is(MachineState.REQUESTED));
-        assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+        assertThat(machine.getCloudProvider(), is(CloudProviders.AWS_SPOT));
         assertThat(machine.getRegion(), is("us-east-1"));
         assertThat(machine.getMachineSize(), is("m1.medium"));
         assertThat(machine.getMembershipStatus(), is(MembershipStatus.defaultStatus()));
@@ -66,7 +66,7 @@ public class TestInstancePairedSpotRequestToMachine {
         Machine machine = InstancePairedSpotRequestToMachine.convert(closedRequest);
         assertThat(machine.getId(), is("sir-1"));
         assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
-        assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+        assertThat(machine.getCloudProvider(), is(CloudProviders.AWS_SPOT));
         assertThat(machine.getRegion(), is("us-east-1"));
         assertThat(machine.getMachineSize(), is("m1.medium"));
         assertThat(machine.getMembershipStatus(), is(MembershipStatus.defaultStatus()));
@@ -87,7 +87,7 @@ public class TestInstancePairedSpotRequestToMachine {
         Machine machine = InstancePairedSpotRequestToMachine.convert(failedRequest);
         assertThat(machine.getId(), is("sir-1"));
         assertThat(machine.getMachineState(), is(MachineState.REJECTED));
-        assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+        assertThat(machine.getCloudProvider(), is(CloudProviders.AWS_SPOT));
         assertThat(machine.getRegion(), is("us-east-1"));
         assertThat(machine.getMachineSize(), is("m1.medium"));
         assertThat(machine.getMembershipStatus(), is(MembershipStatus.defaultStatus()));
@@ -107,7 +107,7 @@ public class TestInstancePairedSpotRequestToMachine {
         Machine machine = InstancePairedSpotRequestToMachine.convert(cancelledRequest);
         assertThat(machine.getId(), is("sir-1"));
         assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
-        assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+        assertThat(machine.getCloudProvider(), is(CloudProviders.AWS_SPOT));
         assertThat(machine.getRegion(), is("us-east-1"));
         assertThat(machine.getMachineSize(), is("m1.medium"));
         assertThat(machine.getMembershipStatus(), is(MembershipStatus.defaultStatus()));
@@ -131,7 +131,7 @@ public class TestInstancePairedSpotRequestToMachine {
         Machine machine = InstancePairedSpotRequestToMachine.convert(cancelledRequest);
         assertThat(machine.getId(), is("sir-1"));
         assertThat(machine.getMachineState(), is(MachineState.TERMINATED));
-        assertThat(machine.getCloudProvider(), is(PoolIdentifiers.AWS_SPOT));
+        assertThat(machine.getCloudProvider(), is(CloudProviders.AWS_SPOT));
         assertThat(machine.getRegion(), is("us-east-1"));
         assertThat(machine.getMachineSize(), is("m1.medium"));
         assertThat(machine.getMembershipStatus(), is(MembershipStatus.defaultStatus()));

@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.elastisys.scale.cloudpool.api.ApiVersion;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
-import com.elastisys.scale.cloudpool.api.types.PoolIdentifiers;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriver;
@@ -26,7 +26,7 @@ public class CityCloudPoolDriver extends OpenStackPoolDriver {
     /**
      * Cloud pool metadata for this implementation.
      */
-    private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(PoolIdentifiers.CITYCLOUD,
+    private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(CloudProviders.CITYCLOUD,
             supportedApiVersions);
 
     /**
