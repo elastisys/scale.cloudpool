@@ -7,10 +7,12 @@ import static java.lang.String.format;
 import java.util.List;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import com.google.gson.JsonObject;
 
 /**
  * The section of a {@link BaseCloudPoolConfig} that describes how to provision
@@ -42,7 +44,16 @@ public class ScaleOutConfig {
     private final String encodedUserData;
 
     /**
-     * Creates a new {@link ScaleOutConfig}.
+     * An extension element for cloud-specific functionality. A
+     * {@link CloudPoolDriver} may choose to parse this section of the
+     * provisioning template for cloud-specific behavior. May be
+     * <code>null</code>.
+     */
+    private final JsonObject extensions;
+
+    /**
+     * Creates a new {@link ScaleOutConfig} without cloud-specific
+     * {@link #extensions}.
      *
      * @param size
      *            The name of the server type to launch. For example, m1.medium.
@@ -63,12 +74,44 @@ public class ScaleOutConfig {
      */
     public ScaleOutConfig(String size, String image, String keyPair, List<String> securityGroups,
             String encodedUserData) {
+        this(size, image, keyPair, securityGroups, encodedUserData, null);
+    }
+
+    /**
+     * Creates a new {@link ScaleOutConfig} with (optional) cloud-specific
+     * {@link #extensions}.
+     *
+     * @param size
+     *            The name of the server type to launch. For example, m1.medium.
+     * @param image
+     *            The name of the machine image used to boot new servers.
+     * @param keyPair
+     *            The name of the key pair to use for new machine instances. May
+     *            be <code>null</code>.
+     * @param securityGroups
+     *            The security group(s) to use for new machine instances. May be
+     *            <code>null</code>.
+     * @param encodedUserData
+     *            A <a href="http://tools.ietf.org/html/rfc4648">base
+     *            64-encoded</a> blob of data used to pass custom data to
+     *            started machines. It is supported by many cloud providers and
+     *            is typically used to pass a boot-up shell script or cloud-init
+     *            parameters to launched machines. May be <code>null</code>.
+     * @param extensions
+     *            An extension element for cloud-specific functionality. A
+     *            {@link CloudPoolDriver} may choose to parse this section of
+     *            the provisioning template for cloud-specific behavior. May be
+     *            <code>null</code>.
+     */
+    public ScaleOutConfig(String size, String image, String keyPair, List<String> securityGroups,
+            String encodedUserData, JsonObject extensions) {
         this.size = size;
         this.image = image;
         this.keyPair = keyPair;
         List<String> emptyList = ImmutableList.of();
         this.securityGroups = Optional.fromNullable(securityGroups).or(emptyList);
         this.encodedUserData = encodedUserData;
+        this.extensions = extensions;
     }
 
     /**
@@ -122,6 +165,18 @@ public class ScaleOutConfig {
     }
 
     /**
+     * An extension element for cloud-specific functionality. A
+     * {@link CloudPoolDriver} may choose to parse this section of the
+     * provisioning template for cloud-specific behavior. May be
+     * <code>null</code>.
+     *
+     * @return
+     */
+    public JsonObject getExtensions() {
+        return this.extensions;
+    }
+
+    /**
      * Performs basic validation of this configuration.
      *
      * @throws CloudPoolException
@@ -137,7 +192,8 @@ public class ScaleOutConfig {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.size, this.image, this.keyPair, this.securityGroups, this.encodedUserData);
+        return Objects.hashCode(this.size, this.image, this.keyPair, this.securityGroups, this.encodedUserData,
+                this.extensions);
     }
 
     @Override
@@ -146,7 +202,7 @@ public class ScaleOutConfig {
             ScaleOutConfig that = (ScaleOutConfig) obj;
             return equal(this.size, that.size) && equal(this.image, that.image) && equal(this.keyPair, that.keyPair)
                     && equal(this.securityGroups, that.securityGroups)
-                    && equal(this.encodedUserData, that.encodedUserData);
+                    && equal(this.encodedUserData, that.encodedUserData) && equal(this.extensions, that.extensions);
         }
         return false;
     }

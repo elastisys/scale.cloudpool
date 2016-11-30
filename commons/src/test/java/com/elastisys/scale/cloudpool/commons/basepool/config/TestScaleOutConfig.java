@@ -1,15 +1,19 @@
 package com.elastisys.scale.cloudpool.commons.basepool.config;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
+import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
+import com.google.gson.JsonObject;
 
 /**
  * Exercise {@link ScaleOutConfig}.
@@ -30,7 +34,38 @@ public class TestScaleOutConfig {
         assertThat(config.getKeyPair(), is("mykeypair"));
         assertThat(config.getSecurityGroups(), is(securityGroups));
         assertThat(config.getEncodedUserData(), is(encodedUserData));
+        assertThat(config.getExtensions(), is(nullValue()));
+    }
 
+    /**
+     * Only size and image are mandatory.
+     */
+    @Test
+    public void onlyMandatoryArguments() {
+        ScaleOutConfig config = new ScaleOutConfig("m1.small", "ami-124567", null, null, null, null);
+        config.validate();
+
+        assertThat(config.getSize(), is("m1.small"));
+        assertThat(config.getImage(), is("ami-124567"));
+        assertThat(config.getKeyPair(), is(nullValue()));
+        assertThat(config.getSecurityGroups(), is(Collections.emptyList()));
+        assertThat(config.getEncodedUserData(), is(nullValue()));
+        assertThat(config.getExtensions(), is(nullValue()));
+    }
+
+    /**
+     * It should be possible to pass cloud-specific provisioning parameters via
+     * the {@code extensions} element.
+     */
+    @Test
+    public void withExtensions() {
+        JsonObject extensions = JsonUtils
+                .parseJsonString("{\"type\": \"vm\", \"network\": { \"vmnet-id\": 1, \"assign-public-ip\": true}}")
+                .getAsJsonObject();
+        ScaleOutConfig config = new ScaleOutConfig("m1.small", "ami-124567", null, null, null, extensions);
+        config.validate();
+
+        assertThat(config.getExtensions(), is(extensions));
     }
 
     @Test(expected = CloudPoolException.class)

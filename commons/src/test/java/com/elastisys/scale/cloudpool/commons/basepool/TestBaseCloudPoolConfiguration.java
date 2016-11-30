@@ -62,7 +62,7 @@ public class TestBaseCloudPoolConfiguration {
     }
 
     @Test
-    public void testConfigureWithValidConfig() throws CloudPoolException {
+    public void testConfigureWithMinimalConfig() throws CloudPoolException {
         String configFile = "config/valid-cloudpool-config-minimal.json";
         JsonObject validConfig = JsonUtils.parseJsonResource(configFile).getAsJsonObject();
         this.cloudPool.configure(validConfig);
@@ -80,6 +80,26 @@ public class TestBaseCloudPoolConfiguration {
         assertThat(conf.getAlerts(), is(nullValue()));
         assertThat(conf.getPoolFetch(), is(BaseCloudPoolConfig.DEFAULT_POOL_FETCH_CONFIG));
         assertThat(conf.getPoolUpdate(), is(BaseCloudPoolConfig.DEFAULT_POOL_UPDATE_CONFIG));
+    }
+
+    /**
+     * Cloud-specific extensions are supported in {@code cloudPool/driverConfig}
+     * and {@code scaleOutConfig/extensions}.
+     */
+    @Test
+    public void testConfigureWithExtensions() throws CloudPoolException {
+        String configFile = "config/valid-cloudpool-config-with-extensions.json";
+        JsonObject validConfig = JsonUtils.parseJsonResource(configFile).getAsJsonObject();
+        this.cloudPool.configure(validConfig);
+
+        Optional<JsonObject> config = this.cloudPool.getConfiguration();
+        assertTrue(config.isPresent());
+
+        assertThat(this.cloudPool.config().getCloudPool().getDriverConfig(),
+                is(validConfig.get("cloudPool").getAsJsonObject().get("driverConfig")));
+        assertThat(this.cloudPool.config().getScaleOutConfig().getExtensions(),
+                is(validConfig.get("scaleOutConfig").getAsJsonObject().get("extensions")));
+
     }
 
     /**

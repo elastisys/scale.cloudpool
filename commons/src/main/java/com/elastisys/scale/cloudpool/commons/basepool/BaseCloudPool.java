@@ -88,7 +88,10 @@ import com.google.gson.JsonObject;
  *     "image": "ami-018c9568",
  *     "keyPair": "instancekey",
  *     "securityGroups": ["webserver"],
- *     "encodedUserData": "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg=="
+ *     "encodedUserData": "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg==",
+ *     "extensions": {
+ *        ... cloud-provider specific provisioning parameters ...
+ *     }
  *   },
  *   "scaleInConfig": {
  *     "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
@@ -146,9 +149,10 @@ import com.google.gson.JsonObject;
  * {@link CloudPoolDriver#configure}. The parts of the configuration that are of
  * special interest to the {@link CloudPoolDriver}, such as cloud login details
  * and the logical pool name, are located under the {@code cloudPool} key. The
- * {@code cloudPool/driverConfig} configuration key holds
- * implementation-specific settings for the particular {@link CloudPoolDriver}
- * implementation. An example configuration is given above.
+ * {@code cloudPool/driverConfig} and {@code scaleOutConfig/extensions} (if set)
+ * configuration keys hold implementation-specific settings for the particular
+ * {@link CloudPoolDriver} implementation. An example configuration is given
+ * above.
  *
  * <h3>Identifying pool members:</h2>
  *
