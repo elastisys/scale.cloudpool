@@ -6,18 +6,19 @@ The ``scale.cloudpool`` project contains Java-based
 [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) implementations 
 for different cloud providers:
 
-  - ``cloudpool.openstack``: a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+  - [OpenStack](openstack/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages a group of [OpenStack](https://www.openstack.org/) servers.
-  - ``cloudpool.citycloud``: a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+  - [CityCloud](citycloud/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages a group of [OpenStack](https://www.openstack.org/) servers in City Cloud 
     (an OpenStack-based cloud provider that uses Keystone v3 authentication).
-  - ``cloudpool.aws.ec2``: a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+  - [AWS EC2](aws/ec2/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages a group of [AWS EC2](http://aws.amazon.com/ec2/) instances.
-  - ``cloudpool.aws.spot``: a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+  - [AWS Spot](aws/spot/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages a group of [AWS Spot](http://aws.amazon.com/ec2/spot/) instances.
-  - ``cloudpool.aws.autoscaling``: a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+  - [AWS Auto Scaling Group](aws/autoscaling/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages the size of an [AWS Auto Scaling Group](http://docs.aws.amazon.com/AutoScaling/latest/DeveloperGuide/WorkingWithASG.html).
-
+  - [Microsoft Azure](azure/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+    that manages a group of [Microsoft Azure](https://azure.microsoft.com/en-us/) VMs.
 
 The [cloudpool.commons](commons) module contains a generic `CloudPool` implementation
 (`BaseCloudPool`) intended to be used as a basis for building cloud-specific cloud pools.
