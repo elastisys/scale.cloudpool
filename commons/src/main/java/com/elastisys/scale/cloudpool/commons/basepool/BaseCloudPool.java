@@ -2,8 +2,6 @@ package com.elastisys.scale.cloudpool.commons.basepool;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.net.InetAddress;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -33,10 +31,8 @@ import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.net.alerter.Alerter;
 import com.elastisys.scale.commons.net.alerter.multiplexing.MultiplexingAlerter;
-import com.elastisys.scale.commons.net.host.HostUtils;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.Atomics;
@@ -450,11 +446,6 @@ public class BaseCloudPool implements CloudPool {
      */
     private Map<String, JsonElement> standardAlertMetadata() {
         Map<String, JsonElement> standardTags = Maps.newHashMap();
-        List<String> ipv4Addresses = Lists.newArrayList();
-        for (InetAddress inetAddr : HostUtils.hostIpv4Addresses()) {
-            ipv4Addresses.add(inetAddr.getHostAddress());
-        }
-        standardTags.put("cloudPoolEndpointIps", JsonUtils.toJson(ipv4Addresses));
         standardTags.put("cloudPoolName", JsonUtils.toJson(config().getCloudPool().getName()));
         return standardTags;
     }
