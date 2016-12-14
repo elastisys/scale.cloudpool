@@ -65,9 +65,7 @@ public class VmSpecValidator {
     public void validateVmSpec(VmSpec vmSpec) throws IllegalArgumentException {
         validateVmSize(vmSpec.getVmSize());
 
-        if (vmSpec.getStorageAccountName().isPresent()) {
-            validateStorageAccount(vmSpec.getStorageAccountName().get());
-        }
+        validateStorageAccount(vmSpec.getStorageAccountName());
 
         Network network = validateVirtualNetwork(vmSpec.getNetwork().getVirtualNetwork());
         validateSubnet(network, vmSpec.getNetwork().getSubnetName());

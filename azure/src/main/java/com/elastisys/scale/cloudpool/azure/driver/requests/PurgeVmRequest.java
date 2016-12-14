@@ -6,7 +6,8 @@ import com.microsoft.azure.management.compute.VirtualMachine;
 
 /**
  * An Azure request that, when called, deletes a VM together with its network
- * interface and any associated public IP address.
+ * interface, any associated public IP address, and storage account blobs (such
+ * as OS disk, which are assumed to be named with the VM name as prefix).
  */
 public class PurgeVmRequest extends AzureRequest<Void> {
     /**
@@ -34,6 +35,7 @@ public class PurgeVmRequest extends AzureRequest<Void> {
         // need to delete VM before its network interface
         new DeleteVmRequest(apiAccess(), this.vmId).call();
         new DeleteNetworkInterfaceRequest(apiAccess(), vm.primaryNetworkInterfaceId()).call();
+        new DeleteVmOsDiskRequest(apiAccess(), vm).call();
         LOG.debug("vm {} purged.", this.vmId);
         return null;
     }

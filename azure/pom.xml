@@ -28,6 +28,13 @@
       <artifactId>azure</artifactId>
       <version>1.0.0-beta3</version>
     </dependency>
+    <!-- Azure blob storage API: to be able to delete VM disks -->
+    <dependency>
+      <groupId>com.microsoft.azure</groupId>
+      <artifactId>azure-storage</artifactId>
+      <version>4.4.0</version>
+    </dependency>
+
 
     <!-- Common cloud pool API/server classes -->
     <dependency>

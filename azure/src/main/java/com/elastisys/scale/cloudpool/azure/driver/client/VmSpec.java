@@ -40,9 +40,8 @@ public class VmSpec {
     private final Optional<WindowsSettings> windowsSettings;
 
     /**
-     * An existing storage account used to store the OS and data disk VHD for
-     * the created VM. May be <code>null</code>, in which case a new storage
-     * account is created, named after the VM.
+     * An existing storage account used to store the OS disk VHD for the created
+     * VM.
      */
     private final String storageAccountName;
 
@@ -68,9 +67,8 @@ public class VmSpec {
      *            Settings for creating a Windows VM. May be <code>null</code>
      *            if {@link #linuxSettings} is given.
      * @param storageAccountName
-     *            An existing storage account used to store the OS and data disk
-     *            VHD for the created VM. May be <code>null</code>, in which
-     *            case a new storage account is created, named after the VM.
+     *            An existing storage account used to store the OS disk VHD for
+     *            the created VM.
      * @param network
      *            Network settings for the created VM.
      * @param tags
@@ -139,14 +137,13 @@ public class VmSpec {
     }
 
     /**
-     * An existing storage account used to store the OS and data disk VHD for
-     * the created VM. May be <code>null</code>, in which case a new storage
-     * account is created, named after the VM.
+     * An existing storage account used to store the OS disk VHD for the created
+     * VM.
      *
      * @return
      */
-    public Optional<String> getStorageAccountName() {
-        return Optional.ofNullable(this.storageAccountName);
+    public String getStorageAccountName() {
+        return this.storageAccountName;
     }
 
     /**
@@ -195,6 +192,7 @@ public class VmSpec {
                 "vmSpec: neither  linuxSettings nor windowsSettings given");
         checkArgument(this.linuxSettings.isPresent() ^ this.windowsSettings.isPresent(),
                 "vmSpec: may only specify one of linuxSettings and windowsSettings, not both");
+        checkArgument(this.storageAccountName != null, "vmSpec: missing storageAccountName");
         checkArgument(this.network != null, "vmSpec: no network given");
         checkArgument(this.tags != null, "vmSpec: tags cannot be null");
 

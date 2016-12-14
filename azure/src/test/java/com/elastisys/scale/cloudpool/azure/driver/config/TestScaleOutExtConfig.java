@@ -31,19 +31,19 @@ public class TestScaleOutExtConfig {
     private static final String STORAGE_ACCOUNT = "apache-disks";
 
     /**
-     * Only network and one of linuxSettings and windowsSettings is required
-     * input.
+     * Only storage account, network and one of linuxSettings and
+     * windowsSettings are required inputs.
      */
     @Test
     public void defaults() {
-        ScaleOutExtConfig conf = new ScaleOutExtConfig(null, validLinuxSettings(), null, null, validNetworkSettings(),
-                null);
+        ScaleOutExtConfig conf = new ScaleOutExtConfig(null, validLinuxSettings(), null, STORAGE_ACCOUNT,
+                validNetworkSettings(), null);
         conf.validate();
 
         assertThat(conf.getVmNamePrefix().isPresent(), is(false));
         assertThat(conf.getLinuxSettings().get(), is(validLinuxSettings()));
         assertThat(conf.getNetwork(), is(validNetworkSettings()));
-        assertThat(conf.getStorageAccountName().isPresent(), is(false));
+        assertThat(conf.getStorageAccountName(), is(STORAGE_ACCOUNT));
         assertThat(conf.getTags(), is(Collections.emptyMap()));
         assertThat(conf.getWindowsSettings().isPresent(), is(false));
     }
@@ -60,7 +60,7 @@ public class TestScaleOutExtConfig {
         assertThat(conf.getVmNamePrefix().get(), is(VM_NAME_PREFIX));
         assertThat(conf.getLinuxSettings().get(), is(validLinuxSettings()));
         assertThat(conf.getNetwork(), is(validNetworkSettings()));
-        assertThat(conf.getStorageAccountName().get(), is(STORAGE_ACCOUNT));
+        assertThat(conf.getStorageAccountName(), is(STORAGE_ACCOUNT));
         assertThat(conf.getTags(), is(validTags()));
 
         // no windows VM settings
@@ -79,7 +79,7 @@ public class TestScaleOutExtConfig {
         assertThat(conf.getVmNamePrefix().get(), is(VM_NAME_PREFIX));
         assertThat(conf.getWindowsSettings().get(), is(validWindowsSettings()));
         assertThat(conf.getNetwork(), is(validNetworkSettings()));
-        assertThat(conf.getStorageAccountName().get(), is(STORAGE_ACCOUNT));
+        assertThat(conf.getStorageAccountName(), is(STORAGE_ACCOUNT));
         assertThat(conf.getTags(), is(validTags()));
 
         // no linux VM settings
@@ -147,6 +147,22 @@ public class TestScaleOutExtConfig {
     }
 
     /**
+     * Network settings are mandatory.
+     */
+    @Test
+    public void missingNetworkSettings() {
+        try {
+            LinuxSettings linuxSettings = validLinuxSettings();
+            WindowsSettings windowsSettings = null;
+            new ScaleOutExtConfig(VM_NAME_PREFIX, linuxSettings, windowsSettings, STORAGE_ACCOUNT, null, validTags())
+                    .validate();
+            fail("expected to fail");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("network"));
+        }
+    }
+
+    /**
      * Validation should be recursively applied to fields to catch deep
      * validation errors.
      */
@@ -159,6 +175,22 @@ public class TestScaleOutExtConfig {
         } catch (IllegalArgumentException e) {
             System.out.println(e);
             assertTrue(e.getMessage().contains("network"));
+        }
+    }
+
+    /**
+     * Storage account is mandatory.
+     */
+    @Test
+    public void missingStorageAccount() {
+        try {
+            LinuxSettings linuxSettings = validLinuxSettings();
+            WindowsSettings windowsSettings = null;
+            new ScaleOutExtConfig(VM_NAME_PREFIX, linuxSettings, windowsSettings, null, validNetworkSettings(),
+                    validTags()).validate();
+            fail("expected to fail");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("storageAccountName"));
         }
     }
 

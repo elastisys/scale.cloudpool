@@ -6,32 +6,28 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.elastisys.scale.cloudpool.azure.driver.client.VmImage;
 import com.elastisys.scale.cloudpool.azure.driver.client.impl.ApiUtils;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
-import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.cloudpool.azure.driver.requests.CreateVmsRequest;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import com.microsoft.azure.CloudException;
 import com.microsoft.azure.management.Azure;
-import com.microsoft.azure.management.compute.AvailabilitySet;
 import com.microsoft.azure.management.compute.ImageReference;
 import com.microsoft.azure.management.compute.VirtualMachine;
-import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithCreate;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithLinuxCreate;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithOS;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithPublicIpAddress;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithRootUserName;
 import com.microsoft.azure.management.network.Network;
-import com.microsoft.azure.management.storage.StorageAccount;
+import com.microsoft.azure.management.resources.fluentcore.model.CreatedResources;
 
 import okhttp3.logging.HttpLoggingInterceptor;
 
@@ -58,13 +54,9 @@ public class CreateLinuxVirtualMachine extends BaseLabProgram {
         String subnetName = "default";
         boolean assignPublicIp = true;
         String imageRef = "Canonical:UbuntuServer:16.04.0-LTS:latest";
-        String imageUrl = null;
         String rootUserName = "ubuntu";
         String publicKey = Files.toString(new File(System.getenv("HOME"), ".ssh/id_rsa.pub"), Charsets.UTF_8);
         Map<String, String> tags = ImmutableMap.of("elastisys:cloudPool", "testpool");
-        // Disks for Azure VMs are created in storage accounts
-        String storageAccountName = "testpooldisks";
-        String availabilitySetName = null;
 
         List<String> linuxExtFileUris = Arrays.asList(); // don't set to null!
         String linuxExtCommandToExecute = "sh -c 'apt update -qy && apt install -qy apache2'";
@@ -81,9 +73,6 @@ public class CreateLinuxVirtualMachine extends BaseLabProgram {
                 .withPrimaryPrivateIpAddressDynamic();
         WithOS vmDefWithIp;
         if (assignPublicIp) {
-            // TODO: assign public ip address as a separate step after vm
-            // creation? (otherwise dangling IPs may be created)
-            // vm name used as sensible default for dns name
             String leafDnsLabel = vmName;
             vmDefWithIp = vmDef.withNewPrimaryPublicIpAddress(leafDnsLabel);
         } else {
@@ -91,59 +80,26 @@ public class CreateLinuxVirtualMachine extends BaseLabProgram {
         }
 
         WithRootUserName vmDefWithOs = null;
-        Preconditions.checkArgument(imageUrl != null ^ imageRef != null,
-                "specify exactly one of imageUrl and imageRef");
-        if (imageUrl != null) {
-            LOG.debug("using image URL: {}", imageUrl);
-            vmDefWithOs = vmDefWithIp.withStoredLinuxImage(imageUrl);
-        }
-        if (imageRef != null) {
-            ImageReference imageReference = parseImageReference(imageRef);
-            LOG.debug("using image reference: {}", JsonUtils.toJson(imageReference));
-            vmDefWithOs = vmDefWithIp.withSpecificLinuxImageVersion(imageReference);
-        }
+
+        ImageReference imageReference = new VmImage(imageRef).getImageReference();
+        vmDefWithOs = vmDefWithIp.withSpecificLinuxImageVersion(imageReference);
 
         WithLinuxCreate vmDefWithLinux = vmDefWithOs.withRootUserName(rootUserName).withSsh(publicKey);
         vmDefWithLinux.withSize(vmSize);
-        // TODO: availability set
-        // TODO: data disk
         vmDefWithLinux.withTags(tags);
-        if (storageAccountName != null) {
-            StorageAccount storageAccount = api.storageAccounts().getByGroup(resourceGroup, storageAccountName);
-            // TODO: re-raise with other exception type on error?
-            vmDefWithLinux.withExistingStorageAccount(storageAccount);
-        } else {
-            vmDefWithLinux.withNewStorageAccount(vmName + "-storageaccount");
-        }
-        if (availabilitySetName != null) {
-            AvailabilitySet availabilitySet = api.availabilitySets().getByGroup(resourceGroup, availabilitySetName);
-            vmDefWithLinux.withExistingAvailabilitySet(availabilitySet);
-        }
+        // Disks in Azure are created in storage accounts. Create a new storage
+        // account named after the VM. Note: remember to delete storage account
+        // when deleting VM.
+        vmDefWithLinux.withNewStorageAccount(vmName);
         vmDefWithLinux.defineNewExtension("CustomScript").withPublisher("Microsoft.Azure.Extensions")
                 .withType("CustomScript").withVersion("2.0").withPublicSetting("fileUris", linuxExtFileUris)
                 .withPublicSetting("commandToExecute", linuxExtCommandToExecute).attach();
 
         LOG.debug("creating VM ...");
-        WithCreate vmdef = vmDefWithLinux;
-        VirtualMachine createdVm = vmDefWithLinux.create();
+        CreatedResources<VirtualMachine> createdVms = new CreateVmsRequest(apiAccess, Arrays.asList(vmDefWithLinux))
+                .call();
         LOG.debug("VM created.");
-        LOG.debug("VM: {}", createdVm);
-    }
-
-    private static ImageReference parseImageReference(String imageRef) {
-        Pattern imageRefRegexp = Pattern.compile("([^:]+):([^:]+):([^:]+)(:([^:]+))?");
-        Matcher matcher = imageRefRegexp.matcher(imageRef);
-        if (!matcher.matches()) {
-            throw new IllegalArgumentException("illegal image reference: " + imageRef);
-        }
-        ImageReference image = new ImageReference().withPublisher(matcher.group(1)).withOffer(matcher.group(2))
-                .withSku(matcher.group(3));
-        if (matcher.groupCount() > 3) {
-            image.withVersion(matcher.group(5));
-        } else {
-            image.withVersion("latest");
-        }
-        return image;
+        LOG.debug("VM: {}", createdVms.get(0));
     }
 
 }

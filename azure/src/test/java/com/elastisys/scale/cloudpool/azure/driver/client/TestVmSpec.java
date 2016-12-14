@@ -37,7 +37,7 @@ public class TestVmSpec {
             "tier", "web");
 
     /**
-     * Specify all fields (mandatory and optional).
+     * Specify all fields.
      */
     @Test
     public void completeSpec() {
@@ -53,25 +53,9 @@ public class TestVmSpec {
         assertThat(vmSpec.getVmName(), is(VM_NAME));
         assertThat(vmSpec.getLinuxSettings(), is(linuxSettings));
         assertThat(vmSpec.getWindowsSettings().isPresent(), is(false));
-        assertThat(vmSpec.getStorageAccountName().get(), is(STORAGE_ACCOUNT));
+        assertThat(vmSpec.getStorageAccountName(), is(STORAGE_ACCOUNT));
         assertThat(vmSpec.getNetwork(), is(VM_NETWORK));
         assertThat(vmSpec.getTags(), is(VM_TAGS));
-    }
-
-    /**
-     * storeageAccountName is an optional field.
-     */
-    @Test
-    public void defaults() {
-        Optional<WindowsSettings> windowsSettings = Optional.empty();
-        Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
-
-        String storageAccount = null;
-        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, storageAccount,
-                VM_NETWORK, VM_TAGS);
-        vmSpec.validate();
-
-        assertThat(vmSpec.getStorageAccountName().isPresent(), is(false));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -144,6 +128,17 @@ public class TestVmSpec {
 
         VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
                 VM_NETWORK, VM_TAGS);
+        vmSpec.validate();
+
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void missingStorageAccount() {
+        Optional<WindowsSettings> windowsSettings = Optional.empty();
+        Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
+
+        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, null, VM_NETWORK,
+                VM_TAGS);
         vmSpec.validate();
 
     }

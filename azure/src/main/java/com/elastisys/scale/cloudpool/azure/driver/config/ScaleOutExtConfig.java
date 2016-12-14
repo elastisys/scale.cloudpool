@@ -41,9 +41,8 @@ public class ScaleOutExtConfig {
     private final WindowsSettings windowsSettings;
 
     /**
-     * An existing storage account used to store the OS and data disk VHD for
-     * created VMs. May be <code>null</code>, in which case a new storage
-     * account is created for the cloud pool (named after the cloud pool).
+     * An existing storage account used to store the OS data disk VHD for
+     * created VMs.
      */
     private final String storageAccountName;
 
@@ -73,10 +72,8 @@ public class ScaleOutExtConfig {
      *            Settings for creating Windows VMs. Optional if
      *            {@code linuxSettings} is given, otherwise required.
      * @param storageAccountName
-     *            An existing storage account used to store the OS and data disk
-     *            VHD for created VMs. May be <code>null</code>, in which case a
-     *            new storage account is created for the cloud pool (named after
-     *            the cloud pool).
+     *            An existing storage account used to store the OS disk VHD for
+     *            created VMs.
      * @param network
      *            Network settings for created VMs. Required.
      * @param tags
@@ -127,14 +124,13 @@ public class ScaleOutExtConfig {
     }
 
     /**
-     * An existing storage account used to store the OS and data disk VHD for
-     * created VMs. May be <code>null</code>, in which case a new storage
-     * account is created for the cloud pool (named after the cloud pool).
+     * An existing storage account used to store the OS disk VHD for created
+     * VMs.
      *
-     * @return the storageAccountName
+     * @return
      */
-    public Optional<String> getStorageAccountName() {
-        return Optional.ofNullable(this.storageAccountName);
+    public String getStorageAccountName() {
+        return this.storageAccountName;
     }
 
     /**
@@ -179,6 +175,7 @@ public class ScaleOutExtConfig {
                 "extensions: neither linuxSettings nor windowsSettings given");
         checkArgument(this.linuxSettings != null ^ this.windowsSettings != null,
                 "extensions: may only specify one of linuxSettings and windowsSettings, not both");
+        checkArgument(this.storageAccountName != null, "extensions no storageAccountName given");
         checkArgument(this.network != null, "extensions: no network given");
 
         try {

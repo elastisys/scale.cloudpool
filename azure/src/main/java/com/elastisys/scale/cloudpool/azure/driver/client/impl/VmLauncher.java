@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -151,15 +150,11 @@ public class VmLauncher {
         vmWithOs.withSize(vmSpec.getVmSize()) //
                 .withTags(vmSpec.getTags());
 
-        // set storage account (default: create a new account named after VM)
-        Optional<String> storageAccountName = vmSpec.getStorageAccountName();
-        if (storageAccountName.isPresent()) {
-            StorageAccount storageAccount = new GetStorageAccountRequest(this.apiAccess, storageAccountName.get(),
-                    this.resourceGroup).call();
-            vmWithOs.withExistingStorageAccount(storageAccount);
-        } else {
-            vmWithOs.withNewStorageAccount(vmSpec.getVmName());
-        }
+        // storage account where OS disk will be stored (the disk is deleted on
+        // scale-in)
+        StorageAccount storageAccount = new GetStorageAccountRequest(this.apiAccess, vmSpec.getStorageAccountName(),
+                this.resourceGroup).call();
+        vmWithOs.withExistingStorageAccount(storageAccount);
 
         // add custom boot script to be executed
         CustomScriptExtension customScript = linuxSettings.getCustomScript();
@@ -186,15 +181,11 @@ public class VmLauncher {
         vmWithOs.withSize(vmSpec.getVmSize()) //
                 .withTags(vmSpec.getTags());
 
-        // set storage account (default: create a new account named after VM)
-        Optional<String> storageAccountName = vmSpec.getStorageAccountName();
-        if (storageAccountName.isPresent()) {
-            StorageAccount storageAccount = new GetStorageAccountRequest(this.apiAccess, storageAccountName.get(),
-                    this.resourceGroup).call();
-            vmWithOs.withExistingStorageAccount(storageAccount);
-        } else {
-            vmWithOs.withNewStorageAccount(vmSpec.getVmName());
-        }
+        // storage account where OS disk will be stored (the disk is deleted on
+        // scale-in)
+        StorageAccount storageAccount = new GetStorageAccountRequest(this.apiAccess, vmSpec.getStorageAccountName(),
+                this.resourceGroup).call();
+        vmWithOs.withExistingStorageAccount(storageAccount);
 
         // add custom boot script to be executed
         CustomScriptExtension customScript = windowsSettings.getCustomScript();

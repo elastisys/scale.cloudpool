@@ -4,9 +4,10 @@ import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
 import com.microsoft.azure.management.Azure;
 
 /**
- * An Azure request that, when called, deletes a VM. Note: any network interface
- * and public IP address associated with the VM will not be removed by this
- * request. See {@link PurgeVmRequest}.
+ * An Azure request that, when called, deletes a VM. Note: any network
+ * interface, public IP address, and storage account blobs (such as OS disk)
+ * associated with the VM will not be removed by this request. See
+ * {@link PurgeVmRequest}.
  */
 public class DeleteVmRequest extends AzureRequest<Void> {
     /**

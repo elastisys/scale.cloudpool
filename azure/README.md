@@ -73,7 +73,10 @@ referenced by the cloud pool's VM provisioning template.
 	   2. Within the virtual network, create a [subnet](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview#subnets), from which the VM will have its private IP address assigned.
        3. You may want to create one or more [network security groups](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview#network-security-groups-nsg) 
 	      (firewall rules).
-   
+       4. Create a [storage account](https://docs.microsoft.com/en-us/azure/storage/storage-create-storage-account), which will be used to store the OS disk VHD
+	      of started VMs.  
+		  *Note: when the pool terminates a VM, it will take care of removing the OS 
+		  disk.*
 
 
 ## Configuration
@@ -214,7 +217,7 @@ The configuration keys have the following meaning:
 		- `customScript` (*optional*): a (set of) custom script(s) to run when a VM is booted.
 		  - `fileUris` (*optional*): A set of file URIs to download before executing the script.
 		  - `encodedCommand`: A base64-encoded command to execute. Such a command can, for example, be generated via a call similar to: `echo "powershell.exe -ExecutionPolicy Unrestricted -File install-webserver.ps1" | base64 -w 0`
-	  - `storageAccountName` (*optional*): An existing storage account used to store the OS and data disk VHD for created VMs. By default, a new storage account is created for the cloud pool (named after the cloud pool).
+	  - `storageAccountName`: An existing storage account used to store the OS disk VHD for created VMs.
 	  - `network`: Network settings for created VMs.
 	    - `virtualNetwork`: An existing virtual network that created VMs will be attached to (the VM's primary network interface will receive a private IP address from this network).
 	    - `subnetName`: The subnet within the virtual network, from which a (private) IP address will be assigned to created VMs.

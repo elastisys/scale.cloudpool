@@ -26,6 +26,7 @@ import com.elastisys.scale.cloudpool.azure.driver.client.VmSpec;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzurePoolDriverConfig;
 import com.elastisys.scale.cloudpool.azure.driver.config.ScaleOutExtConfig;
 import com.elastisys.scale.cloudpool.azure.driver.functions.VmToMachine;
+import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
@@ -39,9 +40,12 @@ import com.google.gson.JsonObject;
 import com.microsoft.azure.management.compute.VirtualMachine;
 
 /**
- * TODO: limitations only supports resource manager deployment model (not
- * classic), only linux
+ * The {@link AzurePoolDriver} is a management interface towards the Azure API.
+ * It supports provisioning VMs according to the <a href=
+ * "https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-manager-deployment-model">Resource
+ * Manager deployment model</a>.
  *
+ * @see BaseCloudPool
  */
 public class AzurePoolDriver implements CloudPoolDriver {
     private static final Logger LOG = LoggerFactory.getLogger(AzurePoolDriver.class);
@@ -144,7 +148,7 @@ public class AzurePoolDriver implements CloudPoolDriver {
         for (int i = 0; i < count; i++) {
             String vmName = String.format("%s-%d-%d", vmNamePrefix, timeMillis, i);
             VmSpec vmSpec = new VmSpec(vmSize, vmImage, vmName, vmTemplateAzureExt.getLinuxSettings(),
-                    vmTemplateAzureExt.getWindowsSettings(), vmTemplateAzureExt.getStorageAccountName().orElse(null),
+                    vmTemplateAzureExt.getWindowsSettings(), vmTemplateAzureExt.getStorageAccountName(),
                     vmTemplateAzureExt.getNetwork(), tags);
             vmSpecs.add(vmSpec);
         }

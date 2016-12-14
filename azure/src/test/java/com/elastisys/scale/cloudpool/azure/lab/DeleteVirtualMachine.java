@@ -7,11 +7,10 @@ import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.azure.driver.client.impl.ApiUtils;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
+import com.elastisys.scale.cloudpool.azure.driver.requests.PurgeVmRequest;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.VirtualMachine;
-import com.microsoft.azure.management.network.NetworkInterface;
-import com.microsoft.azure.management.network.PublicIpAddress;
 
 import okhttp3.logging.HttpLoggingInterceptor;
 
@@ -39,26 +38,8 @@ public class DeleteVirtualMachine extends BaseLabProgram {
         VirtualMachine vm = api.virtualMachines().getByGroup(resourceGroup, vmName);
         LOG.debug("found vm {}: {}", vm.name(), vm.id());
 
-        NetworkInterface nic = vm.getPrimaryNetworkInterface();
-        PublicIpAddress publicIp = nic.primaryIpConfiguration().getPublicIpAddress();
-        if (publicIp != null) {
-            LOG.debug("disassociating public ip {} ({}) from network interface {}", publicIp.name(),
-                    publicIp.ipAddress(), nic.name());
-            nic.update().withoutPrimaryPublicIpAddress().apply();
-            LOG.debug("deleting public ip {} ...", publicIp.id());
-            api.publicIpAddresses().delete(publicIp.id());
-        }
-
         LOG.debug("deleting vm {}", vm.id());
-        api.virtualMachines().delete(vm.id());
+        new PurgeVmRequest(apiAccess, vm.id()).call();
         LOG.debug("vm deleted.");
-
-        try {
-            LOG.debug("deleting network interface {} ...", nic.name());
-            api.networkInterfaces().delete(nic.id());
-            LOG.debug("network interface deleted.", nic.name());
-        } catch (Exception e) {
-            LOG.error("failed to delete primary network interface {}: {}", nic.name(), e);
-        }
     }
 }

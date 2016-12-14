@@ -29,7 +29,6 @@ public class ListVirtualMachines extends BaseLabProgram {
 
     public static void main(String[] args) {
 
-        String region = "northeurope";
         AzureApiAccess apiAccess = new AzureApiAccess(SUBSCRIPTION_ID, AZURE_AUTH,
                 new TimeInterval(10L, TimeUnit.SECONDS), new TimeInterval(10L, TimeUnit.SECONDS),
                 HttpLoggingInterceptor.Level.BASIC);
