@@ -62,83 +62,73 @@ The configuration document follows the same schema for all cloud pool
 implementations in this project. There are two parts of the configuration
 document that carries cloud provider-specific settings:
 
-- The `cloudPool/driverConfig` element typically declares credentials needed
-  to connect to the cloud provider API. The exact properties that each specific
-  cloud pool implementation. Refer to the `README.md` for a particular cloudpool
-  implementation for details.
-- The `scaleOutConfig/extensions` (if set) contains cloud provider-specific
-  server provisioning parameters.
+- `cloudPool/driverConfig`: typically declares API access credentials and settings.
+- `scaleOutConfig`: contains cloud provider-specific server provisioning parameters.
+  
+The exact properties that a particular cloud pool implementation supports can be
+found in its `README.md` file.
 
 Below is a sample configuration document for the ``cloudpool.aws.ec2``:
 
 ```javascript
-  {
+{
     "cloudPool": {
-      "name": "MyEc2InstanceScalingPool",
-      "driverConfig": {
-        "awsAccessKeyId": "AXZ31...Q",
-        "awsSecretAccessKey": "afAC/3Dd...s",
-        "region": "eu-west-1"
-      }
+        "name": "MyEc2InstanceScalingPool",
+        "driverConfig": {
+	        ... cloud provider-specific API access credentials and settings ...
+        }
     },
     "scaleOutConfig": {
-      "size": "m1.small",
-      "image": "ami-982bc6f0",
-      "keyPair": "instancekey",
-      "securityGroups": ["webserver"],
-      "encodedUserData": "<base-64 encoded data>",
-      "extensions": {
-         ... cloud-provider specific provisioning parameters ...
-      }
+            ... cloud provider-specific provisioning parameters ...
     },
     "scaleInConfig": {
-      "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
-      "instanceHourMargin": 300
+        "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
+        "instanceHourMargin": 300
     },
     "alerts": {
-      "duplicateSuppression": { "time": 5, "unit": "minutes" },
-      "smtp": [
-        {
-          "subject": "[elastisys:scale] cloud pool alert for MyScalingPool",
-          "recipients": ["receiver@destination.com"],
-          "sender": "noreply@elastisys.com",
-          "smtpClientConfig": {
-            "smtpHost": "mail.server.com",
-            "smtpPort": 465,
-            "authentication": {"userName": "john", "password": "secret"},
-            "useSsl": True
-          }
-        }
-      ],
-      "http": [
-        {
-          "destinationUrls": ["https://some.host1:443/"],
-          "severityFilter": "ERROR|FATAL",
-          "auth": {
-            "basicCredentials": { "username": "user1", "password": "secret1" }
-          }
-        },
-        {
-          "destinationUrls": ["https://some.host2:443/"],
-          "severityFilter": "INFO|WARN", 
-          "auth": {
-            "certificateCredentials": { "keystorePath": "src/test/resources/security/client_keystore.p12", "keystorePassword": "secret" }
-          }
-        }
-      ]
+        "duplicateSuppression": { "time": 5, "unit": "minutes" },
+        "smtp": [
+            {
+                "subject": "[elastisys:scale] cloud pool alert for MyScalingPool",
+                "recipients": ["receiver@destination.com"],
+                "sender": "noreply@elastisys.com",
+                "smtpClientConfig": {
+                    "smtpHost": "mail.server.com",
+                    "smtpPort": 465,
+                    "authentication": {"userName": "john", "password": "secret"},
+                    "useSsl": True
+                }
+            }
+        ],
+        "http": [
+            {
+                "destinationUrls": ["https://some.host1:443/"],
+                "severityFilter": "ERROR|FATAL",
+                "auth": {
+                    "basicCredentials": { "username": "user1", "password": "secret1" }
+                }
+            },
+            {
+                "destinationUrls": ["https://some.host2:443/"],
+                "severityFilter": "INFO|WARN", 
+                "auth": {
+                    "certificateCredentials": { "keystorePath": "src/test/resources/security/client_keystore.p12", "keystorePassword": "secret" }
+                }
+            }
+        ]
     },
     "poolFetch": {
-      "retries": { 
-         "maxRetries": 3, 
-         "initialBackoffDelay": {"time": 3, "unit": "seconds"}
-      },
-      "refreshInterval": {"time": 30, "unit": "seconds"},
-      "reachabilityTimeout": {"time": 5, "unit": "minutes"}
+        "retries": { 
+            "maxRetries": 3, 
+            "initialBackoffDelay": {"time": 3, "unit": "seconds"}
+        },
+        "refreshInterval": {"time": 30, "unit": "seconds"},
+        "reachabilityTimeout": {"time": 5, "unit": "minutes"}
     },
     "poolUpdate": {
-      "updateInterval": {"time": 1, "unit": "minutes"}
+        "updateInterval": {"time": 1, "unit": "minutes"}
     }
-  }
+}
 ```
 
 The configuration document declares how the cloud pool:
@@ -171,26 +161,9 @@ In a little more detail, the configuration keys have the following meaning:
       properties expected by a certain cloud pool implementation can be
       found in their JSON schema under ``src/main/resources``.
 
-  - ``scaleOutConfig`` (**required**): Describes how to provision additional servers (on scale-out).
-
-    - ``size`` (**required**): The name of the server type to launch. For example, ``m1.medium``. 
-	
-    - ``image`` (**required**): The name of the machine image used to boot new servers.
-
-    - ``keyPair`` (*optional*): The name of the key pair to use for new machines.
-
-    - ``securityGroups`` (*optional*): The security group(s) to use for new machines.
-
-    - ``encodedUserData`` (*optional*): A 
-	  [base64-encoded](http://tools.ietf.org/html/rfc4648)
-      blob of data used to pass custom data to started machines typically in
-      the form of a boot-up shell script or cloud-init parameters. Can, for
-      instance, be produced via `cat bootscript.sh | base64 -w 0`.
-      Refer to the [Amazon documentation](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html) for details.
-	  
-    - ``extensions`` (*optional*): An extension element for cloud-specific functionality. 
-	  A `CloudPoolDriver` may choose to parse this section of the provisioning template 
-	  for cloud-specific behavior.
+  - ``scaleOutConfig`` (**required**): Describes how to provision additional servers 
+    (on scale-out). The appearance of this document is cloud-specific.  
+	Refer to the cloud pool of interest for details.
 
   - ``scaleInConfig`` (**required**): Describes how to decommission servers (on scale-in).
 

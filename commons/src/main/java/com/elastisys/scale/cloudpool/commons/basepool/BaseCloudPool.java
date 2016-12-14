@@ -71,65 +71,63 @@ import com.google.gson.JsonObject;
  *
  * <pre>
  * {
- *   "cloudPool": {
- *     "name": "MyScalingPool",
- *     "driverConfig": {
- *       "awsAccessKeyId": "ABC...XYZ",
- *       "awsSecretAccessKey": "abc...xyz",
- *       "region": "us-east-1"
- *     }
- *   },
- *   "scaleOutConfig": {
- *     "size": "m1.small",
- *     "image": "ami-018c9568",
- *     "keyPair": "instancekey",
- *     "securityGroups": ["webserver"],
- *     "encodedUserData": "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg==",
- *     "extensions": {
- *        ... cloud-provider specific provisioning parameters ...
- *     }
- *   },
- *   "scaleInConfig": {
- *     "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
- *     "instanceHourMargin": 0
- *   },
- *   "alerts": {
- *     "duplicateSuppression": { "time": 5, "unit": "minutes" },
- *     "smtp": [
- *       {
- *         "subject": "[elastisys:scale] cloud pool alert for MyScalingPool",
- *         "recipients": ["receiver@destination.com"],
- *         "sender": "noreply@elastisys.com",
- *         "smtpClientConfig": {
- *           "smtpHost": "mail.server.com",
- *           "smtpPort": 465,
- *           "authentication": {"userName": "john", "password": "secret"},
- *           "useSsl": True
+ *     "cloudPool": {
+ *         "name": "MyEc2InstanceScalingPool",
+ *         "driverConfig": {
+ *             ... cloud provider-specific API access credentials and settings ...
  *         }
- *       }
- *     ],
- *     "http": [
- *       {
- *         "destinationUrls": ["https://some.host1:443/"],
- *         "severityFilter": "ERROR|FATAL",
- *         "auth": {
- *           "basicCredentials": { "username": "user1", "password": "secret1" }
- *         }
- *       }
- *     ]
- *   },
- *   "poolFetch": {
- *     "retries": {
- *       "maxRetries": 3,
- *       "initialBackoffDelay": {"time": 3, "unit": "seconds"}
  *     },
- *     "refreshInterval": {"time": 30, "unit": "seconds"},
- *     "reachabilityTimeout": {"time": 5, "unit": "minutes"}
- *   },
- *   "poolUpdate": {
- *     "updateInterval": {"time": 15, "unit": "seconds"}
- *   }
- * }
+ *     "scaleOutConfig": {
+ *             ... cloud provider-specific provisioning parameters ...
+ *     },
+ *     "scaleInConfig": {
+ *         "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
+ *         "instanceHourMargin": 300
+ *     },
+ *     "alerts": {
+ *         "duplicateSuppression": { "time": 5, "unit": "minutes" },
+ *         "smtp": [
+ *             {
+ *                 "subject": "[elastisys:scale] cloud pool alert for MyScalingPool",
+ *                 "recipients": ["receiver@destination.com"],
+ *                 "sender": "noreply@elastisys.com",
+ *                 "smtpClientConfig": {
+ *                     "smtpHost": "mail.server.com",
+ *                     "smtpPort": 465,
+ *                     "authentication": {"userName": "john", "password": "secret"},
+ *                     "useSsl": True
+ *                 }
+ *             }
+ *         ],
+ *         "http": [
+ *             {
+ *                 "destinationUrls": ["https://some.host1:443/"],
+ *                 "severityFilter": "ERROR|FATAL",
+ *                 "auth": {
+ *                     "basicCredentials": { "username": "user1", "password": "secret1" }
+ *                 }
+ *             },
+ *             {
+ *                 "destinationUrls": ["https://some.host2:443/"],
+ *                 "severityFilter": "INFO|WARN",
+ *                 "auth": {
+ *                     "certificateCredentials": { "keystorePath": "src/test/resources/security/client_keystore.p12", "keystorePassword": "secret" }
+ *                 }
+ *             }
+ *         ]
+ *     },
+ *     "poolFetch": {
+ *         "retries": {
+ *             "maxRetries": 3,
+ *             "initialBackoffDelay": {"time": 3, "unit": "seconds"}
+ *         },
+ *         "refreshInterval": {"time": 30, "unit": "seconds"},
+ *         "reachabilityTimeout": {"time": 5, "unit": "minutes"}
+ *     },
+ *     "poolUpdate": {
+ *         "updateInterval": {"time": 1, "unit": "minutes"}
+ *     }
+ *  }
  * </pre>
  *
  * The {@link BaseCloudPool} operates according to the {@link CloudPool}
@@ -139,21 +137,26 @@ import com.google.gson.JsonObject;
  * <h3>Configuration:</h2>
  *
  * When {@link #configure} is called, the {@link BaseCloudPool} expects a JSON
- * document that validates against its JSON Schema (as returned by
- * {@link #getConfigurationSchema()}). The entire configuration document is
+ * document with the above structure. The entire configuration document is
  * passed on to the {@link CloudPoolDriver} via a call to
  * {@link CloudPoolDriver#configure}. The parts of the configuration that are of
- * special interest to the {@link CloudPoolDriver}, such as cloud login details
- * and the logical pool name, are located under the {@code cloudPool} key. The
- * {@code cloudPool/driverConfig} and {@code scaleOutConfig/extensions} (if set)
- * configuration keys hold implementation-specific settings for the particular
- * {@link CloudPoolDriver} implementation. An example configuration is given
- * above.
+ * special interest to the {@link CloudPoolDriver} are:
+ * <ul>
+ * <li>{@code cloudPool}: holds cloud API access details ({@code driverConfig})
+ * and the cloud pool name ({@code name}), which may be used to identify pool
+ * members.</li>
+ * <li>{@code scaleOutConfig}: holds cloud-provider specific server provisioning
+ * parameters.
+ * </ul>
+ * The {@link CloudPoolDriver} should fail with an exception if the
+ * configuration does not satisfy its supported configuration schema.
  *
  * <h3>Identifying pool members:</h2>
  *
  * Pool members are identified via a call to
- * {@link CloudPoolDriver#listMachines()}.
+ * {@link CloudPoolDriver#listMachines()}. How to identify pool members are left
+ * to the implementation but could make use of tags (if supported by the cloud
+ * API).
  *
  * <h3>Handling resize requests:</h3>
  *

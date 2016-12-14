@@ -119,7 +119,7 @@ public interface CloudPoolDriver {
      *
      * @param count
      *            The number of {@link Machine}s to start.
-     * @param scaleUpConfig
+     * @param scaleOutConfig
      *            The details of how to provision the new machine. Note: this is
      *            the {@code scaleUpConfig} part of the {@link BaseCloudPool}
      *            configuration document.
@@ -128,7 +128,7 @@ public interface CloudPoolDriver {
      *             If the request failed to complete. The exception includes
      *             details on machines that were started (if any).
      */
-    public List<Machine> startMachines(int count, ScaleOutConfig scaleUpConfig) throws StartMachinesException;
+    public List<Machine> startMachines(int count, ScaleOutConfig scaleOutConfig) throws StartMachinesException;
 
     /**
      * Terminates a {@link Machine} in the cloud pool.
