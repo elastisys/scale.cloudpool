@@ -5,7 +5,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.util.Arrays;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,9 +17,9 @@ import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.NotStartedException;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.kubernetes.client.KubernetesClient;
@@ -30,7 +29,6 @@ import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.util.concurrent.RestartableScheduledExecutorService;
 import com.elastisys.scale.commons.util.concurrent.StandardRestartableScheduledExecutorService;
 import com.google.common.base.Optional;
-import com.google.common.util.concurrent.Atomics;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonObject;
 
@@ -64,7 +62,7 @@ public class KubernetesCloudPool implements CloudPool {
      * The currently set desired size. <code>null</code> means that no initial
      * size has been set and no initial size could be determined at startup.
      */
-    private AtomicReference<Integer> desiredSize = Atomics.newReference();
+    private Integer desiredSize = null;
 
     /** Periodical executor of {@link PoolUpdateTask}. */
     private final RestartableScheduledExecutorService executor;
@@ -146,7 +144,7 @@ public class KubernetesCloudPool implements CloudPool {
         ensureConfigured();
         try {
             LOG.info("determining initial desired size ...");
-            this.desiredSize.set(this.kubernetesClient.getPoolSize().getDesiredSize());
+            this.desiredSize = this.kubernetesClient.getPoolSize().getDesiredSize();
             LOG.info("initial desired size determined: {}", this.desiredSize);
         } catch (Exception e) {
             LOG.warn("failed to determine initial size: {}", e.getMessage(), e);
@@ -189,7 +187,7 @@ public class KubernetesCloudPool implements CloudPool {
             throws IllegalArgumentException, CloudPoolException, NotStartedException {
         ensureStarted();
         checkArgument(desiredSize >= 0, "desiredSize cannot be negative");
-        this.desiredSize.set(desiredSize);
+        this.desiredSize = desiredSize;
         this.kubernetesClient.setDesiredSize(desiredSize);
     }
 
@@ -275,9 +273,9 @@ public class KubernetesCloudPool implements CloudPool {
 
     private static class PoolUpdateTask implements Runnable {
         private final KubernetesClient apiClient;
-        private final AtomicReference<Integer> desiredSize;
+        private final Integer desiredSize;
 
-        public PoolUpdateTask(KubernetesClient apiClient, AtomicReference<Integer> desiredSize) {
+        public PoolUpdateTask(KubernetesClient apiClient, Integer desiredSize) {
             this.apiClient = apiClient;
             this.desiredSize = desiredSize;
         }
@@ -286,12 +284,11 @@ public class KubernetesCloudPool implements CloudPool {
         public void run() {
             try {
                 LOG.info("running pool update task ...");
-                Integer desiredSize = this.desiredSize.get();
-                if (desiredSize == null) {
+                if (this.desiredSize == null) {
                     LOG.info("pool update task: no desiredSize set. aborting.");
                 }
-                LOG.info("setting desired pool size to {}", desiredSize);
-                this.apiClient.setDesiredSize(desiredSize);
+                LOG.info("setting desired pool size to {}", this.desiredSize);
+                this.apiClient.setDesiredSize(this.desiredSize);
             } catch (Exception e) {
                 LOG.error("failed to update pool size: {}", e.getMessage(), e);
             }

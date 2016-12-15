@@ -9,17 +9,14 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import java.util.Arrays;
-
 import org.junit.Before;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
+import com.elastisys.scale.cloudpool.aws.ec2.driver.config.Ec2PoolDriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.util.base64.Base64Utils;
 
 /**
  * Verifies the behavior of the {@link Ec2PoolDriver} with respect to
@@ -69,11 +66,7 @@ public class TestEc2PoolDriverConfiguration {
 
     @Test(expected = IllegalStateException.class)
     public void invokeStartMachineBeforeBeingConfigured() throws CloudPoolException {
-        String encodedUserData = Base64Utils.toBase64("#!/bin/bash", "sudo apt-get update -qy",
-                "sudo apt-get install -qy apache2");
-        ScaleOutConfig scaleUpConfig = new ScaleOutConfig("size", "image", "keyPair", Arrays.asList("webserver"),
-                encodedUserData);
-        this.driver.startMachines(3, scaleUpConfig);
+        this.driver.startMachines(3);
     }
 
     @Test(expected = IllegalStateException.class)

@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,17 +37,17 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.ApiVersion;
-import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ScaleOutConfig;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
 import com.elastisys.scale.cloudpool.aws.spot.driver.alerts.AlertTopics;
 import com.elastisys.scale.cloudpool.aws.spot.functions.InstancePairedSpotRequestToMachine;
@@ -56,7 +55,6 @@ import com.elastisys.scale.cloudpool.aws.spot.metadata.InstancePairedSpotRequest
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
@@ -71,7 +69,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.EventBus;
-import com.google.common.util.concurrent.Atomics;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -178,11 +175,11 @@ public class SpotPoolDriver implements CloudPoolDriver {
     private static final int TASK_TERMINATION_GRACETIME = 30;
 
     /** Logical name of the managed machine pool. */
-    private final AtomicReference<String> poolName;
-    /** Full {@link CloudPool} configuration, including driver configuration. */
-    private final AtomicReference<BaseCloudPoolConfig> poolConfig;
+    private String poolName;
     /** Driver configuration. */
-    private final AtomicReference<SpotPoolDriverConfig> driverConfig;
+    private SpotPoolDriverConfig driverConfig;
+    /** Provisioning template to use when launching new pool machines. */
+    private Ec2ScaleOutConfig scaleOutConfig;
 
     /** Task executor. */
     private final RestartableScheduledExecutorService executor;
@@ -195,6 +192,9 @@ public class SpotPoolDriver implements CloudPoolDriver {
      * configured for the cloud pool (if any).
      */
     private final EventBus eventBus;
+
+    /** Lock to prevent concurrent access to critical sections. */
+    private final Object lock = new Object();
 
     /**
      * Supported API versions by this implementation.
@@ -219,9 +219,8 @@ public class SpotPoolDriver implements CloudPoolDriver {
         this.client = client;
         this.eventBus = eventBus;
 
-        this.poolName = Atomics.newReference();
-        this.poolConfig = Atomics.newReference();
-        this.driverConfig = Atomics.newReference();
+        this.poolName = null;
+        this.driverConfig = null;
         ThreadFactory threadFactory = new ThreadFactoryBuilder().setDaemon(true).setNameFormat("spotdriver-tasks-%d")
                 .build();
         this.executor = new StandardRestartableScheduledExecutorService(MAX_THREADS, threadFactory);
@@ -234,33 +233,49 @@ public class SpotPoolDriver implements CloudPoolDriver {
         JsonObject driverConfig = cloudPoolConfig.getDriverConfig();
         checkArgument(driverConfig != null, "missing driverConfig");
 
-        try {
+        synchronized (this.lock) {
             SpotPoolDriverConfig newDriverConfig = JsonUtils.toObject(driverConfig, SpotPoolDriverConfig.class);
             newDriverConfig.validate();
 
-            this.poolName.set(cloudPoolConfig.getName());
-            this.poolConfig.set(configuration);
-            this.driverConfig.set(newDriverConfig);
+            Ec2ScaleOutConfig scaleOutConf = parseAndValidateScaleOutConfig(configuration.getScaleOutConfig());
+
+            this.poolName = cloudPoolConfig.getName();
+            this.driverConfig = newDriverConfig;
+            this.scaleOutConfig = scaleOutConf;
             ClientConfiguration clientConfig = new ClientConfiguration()
                     .withConnectionTimeout(newDriverConfig.getConnectionTimeout())
                     .withSocketTimeout(newDriverConfig.getSocketTimeout());
             this.client.configure(newDriverConfig.getAwsAccessKeyId(), newDriverConfig.getAwsSecretAccessKey(),
                     newDriverConfig.getRegion(), clientConfig);
             start();
+        }
+    }
+
+    private Ec2ScaleOutConfig parseAndValidateScaleOutConfig(JsonObject scaleOutConfig)
+            throws IllegalArgumentException {
+        checkArgument(scaleOutConfig != null, "missing scaleOutConfig");
+
+        try {
+            Ec2ScaleOutConfig scaleOutTemplate = JsonUtils.toObject(scaleOutConfig, Ec2ScaleOutConfig.class);
+            scaleOutTemplate.validate();
+
+            return scaleOutTemplate;
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, IllegalArgumentException.class);
-            Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
-            throw new CloudPoolDriverException(String.format("failed to apply configuration: %s", e.getMessage()), e);
+            throw new IllegalArgumentException("failed to validate scaleOutConfig: " + e.getMessage(), e);
         }
     }
 
     /**
      * Starts periodical cleanup tasks.
      */
-    private void start() throws InterruptedException {
+    private void start() {
         if (this.executor.isStarted()) {
             // stop any already running tasks
-            this.executor.stop(TASK_TERMINATION_GRACETIME, TimeUnit.SECONDS);
+            try {
+                this.executor.stop(TASK_TERMINATION_GRACETIME, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                LOG.warn("interrupted while waiting for executor to stop: {}", e.getMessage());
+            }
         }
         this.executor.start();
         LOG.info("starting periodical execution of cleanup tasks");
@@ -286,13 +301,13 @@ public class SpotPoolDriver implements CloudPoolDriver {
     }
 
     @Override
-    public List<Machine> startMachines(int count, ScaleOutConfig scaleOutConfig) throws StartMachinesException {
+    public List<Machine> startMachines(int count) throws StartMachinesException {
         checkState(isConfigured(), "attempt to use unconfigured driver");
         List<Machine> startedMachines = Lists.newArrayList();
         try {
 
             List<SpotInstanceRequest> spotRequests = this.client.placeSpotRequests(driverConfig().getBidPrice(),
-                    scaleOutConfig, count, asList(poolMembershipTag()));
+                    this.scaleOutConfig, count, asList(poolMembershipTag()));
             List<String> spotIds = Lists.transform(spotRequests, AwsEc2Functions.toSpotRequestId());
             LOG.info("placed spot requests: {}", spotIds);
             for (SpotInstanceRequest spotRequest : spotRequests) {
@@ -398,7 +413,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
     @Override
     public String getPoolName() {
         checkState(isConfigured(), "attempt to use unconfigured driver");
-        return this.poolName.get();
+        return this.poolName;
     }
 
     @Override
@@ -407,7 +422,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
     }
 
     private boolean isConfigured() {
-        return this.poolConfig.get() != null;
+        return this.driverConfig != null;
     }
 
     /**
@@ -498,12 +513,8 @@ public class SpotPoolDriver implements CloudPoolDriver {
         return this.client;
     }
 
-    BaseCloudPoolConfig poolConfig() {
-        return this.poolConfig.get();
-    }
-
     SpotPoolDriverConfig driverConfig() {
-        return this.driverConfig.get();
+        return this.driverConfig;
     }
 
     /**

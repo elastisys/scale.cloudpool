@@ -8,13 +8,14 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.InstanceType;
 import com.amazonaws.services.ec2.model.Tag;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ScaleOutConfig;
+import com.elastisys.scale.cloudpool.aws.ec2.driver.config.Ec2PoolDriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.PoolFetchConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.PoolUpdateConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleInConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
@@ -33,8 +34,8 @@ public class TestUtils {
                 JsonUtils.toJson(awsApiConfig).getAsJsonObject());
         String encodedUserData = Base64Utils.toBase64("#!/bin/bash", "sudo apt-get update -qy",
                 "sudo apt-get install -qy apache2");
-        ScaleOutConfig scaleUpConfig = new ScaleOutConfig("m1.small", "", "instancekey", Arrays.asList("webserver"),
-                encodedUserData);
+        Ec2ScaleOutConfig scaleOutConfig = new Ec2ScaleOutConfig("m1.small", "", "instancekey",
+                Arrays.asList("webserver"), encodedUserData);
         ScaleInConfig scaleDownConfig = new ScaleInConfig(VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR, 300);
         SmtpAlerterConfig smtpAlerter = new SmtpAlerterConfig(Arrays.asList("receiver@destination.com"),
                 "noreply@elastisys.com", "cloud pool alert!", "INFO|WARN|ERROR|FATAL",
@@ -47,8 +48,8 @@ public class TestUtils {
         PoolFetchConfig poolFetch = new PoolFetchConfig(new RetriesConfig(3, new TimeInterval(2L, TimeUnit.SECONDS)),
                 refreshInterval, reachabilityTimeout);
         PoolUpdateConfig poolUpdate = new PoolUpdateConfig(new TimeInterval(60L, TimeUnit.SECONDS));
-        return new BaseCloudPoolConfig(scalingGroupConfig, scaleUpConfig, scaleDownConfig, alertSettings, poolFetch,
-                poolUpdate);
+        return new BaseCloudPoolConfig(scalingGroupConfig, JsonUtils.toJson(scaleOutConfig).getAsJsonObject(),
+                scaleDownConfig, alertSettings, poolFetch, poolUpdate);
     }
 
     public static List<Instance> ec2Instances(Instance... instances) {

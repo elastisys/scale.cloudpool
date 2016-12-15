@@ -83,26 +83,6 @@ public class TestBaseCloudPoolConfiguration {
     }
 
     /**
-     * Cloud-specific extensions are supported in {@code cloudPool/driverConfig}
-     * and {@code scaleOutConfig/extensions}.
-     */
-    @Test
-    public void testConfigureWithExtensions() throws CloudPoolException {
-        String configFile = "config/valid-cloudpool-config-with-extensions.json";
-        JsonObject validConfig = JsonUtils.parseJsonResource(configFile).getAsJsonObject();
-        this.cloudPool.configure(validConfig);
-
-        Optional<JsonObject> config = this.cloudPool.getConfiguration();
-        assertTrue(config.isPresent());
-
-        assertThat(this.cloudPool.config().getCloudPool().getDriverConfig(),
-                is(validConfig.get("cloudPool").getAsJsonObject().get("driverConfig")));
-        assertThat(this.cloudPool.config().getScaleOutConfig().getExtensions(),
-                is(validConfig.get("scaleOutConfig").getAsJsonObject().get("extensions")));
-
-    }
-
-    /**
      * Configure with a single {@link SmtpAlerter}.
      */
     @Test

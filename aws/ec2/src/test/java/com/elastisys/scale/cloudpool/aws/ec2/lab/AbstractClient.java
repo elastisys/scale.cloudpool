@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.ec2.lab;
 
-import com.elastisys.scale.cloudpool.aws.ec2.driver.Ec2PoolDriverConfig;
+import com.elastisys.scale.cloudpool.aws.ec2.driver.config.Ec2PoolDriverConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.gson.JsonObject;
 

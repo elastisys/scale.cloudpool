@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
@@ -24,7 +23,6 @@ import com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling.SetDesired
 import com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling.TerminateAutoScalingGroupInstance;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstance;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TagEc2Resources;
-import com.google.common.util.concurrent.Atomics;
 
 /**
  * Standard implementation of the {@link AutoScalingClient} interface.
@@ -33,16 +31,16 @@ import com.google.common.util.concurrent.Atomics;
  *
  */
 public class AwsAutoScalingClient implements AutoScalingClient {
-    private final AtomicReference<AwsAsPoolDriverConfig> config;
+    private AwsAsPoolDriverConfig config;
 
     public AwsAutoScalingClient() {
-        this.config = Atomics.newReference();
+        this.config = null;
     }
 
     @Override
     public void configure(AwsAsPoolDriverConfig configuration) {
         checkArgument(configuration != null, "null configuration");
-        this.config.set(configuration);
+        this.config = configuration;
     }
 
     @Override
@@ -124,11 +122,11 @@ public class AwsAutoScalingClient implements AutoScalingClient {
     }
 
     private boolean isConfigured() {
-        return this.config.get() != null;
+        return this.config != null;
     }
 
     private AwsAsPoolDriverConfig config() {
-        return this.config.get();
+        return this.config;
     }
 
     /**

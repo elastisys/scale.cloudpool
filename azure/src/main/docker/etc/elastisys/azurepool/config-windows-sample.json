@@ -19,27 +19,25 @@
         }	
     },
     "scaleOutConfig": {
-        "size": "Standard_DS1_v2",
-        "image": "MicrosoftWindowsServer:WindowsServer:2008-R2-SP1:2.0.20161109",
-        "extensions": {
-            "windowsSettings": {
-                "adminUserName": "adminuser",
-                "password": "XXXXXXXXXX",
-                "customScript": {
-                    "fileUris": ["https://gist.githubusercontent.com/elastisys/09be421f09ae3646f1aadf4542f6b8f2/raw/e42334045905f908d781e78e03bb9412bf325da7/win-server-install-webserver.ps1"],
-                    "encodedCommand": "cG93ZXJzaGVsbC5leGUgLUV4ZWN1dGlvblBvbGljeSBVbnJlc3RyaWN0ZWQgLUZpbGUgd2luLXNlcnZlci1pbnN0YWxsLXdlYnNlcnZlci5wczEK"
-                }
-            },            
-            "storageAccountName": "testpooldisks",
-            "network": {
-                "virtualNetwork": "testnet",
-                "subnetName": "default",
-                "assignPublicIp": true,
-                "networkSecurityGroups": ["webserver"]
-            },
-            "tags": {
-                "tier": "web"
+        "vmSize": "Standard_DS1_v2",
+        "vmImage": "MicrosoftWindowsServer:WindowsServer:2008-R2-SP1:2.0.20161109",
+        "windowsSettings": {
+            "adminUserName": "adminuser",
+            "password": "XXXXXXXXXX",
+            "customScript": {
+                "fileUris": ["https://gist.githubusercontent.com/elastisys/09be421f09ae3646f1aadf4542f6b8f2/raw/e42334045905f908d781e78e03bb9412bf325da7/win-server-install-webserver.ps1"],
+                "encodedCommand": "cG93ZXJzaGVsbC5leGUgLUV4ZWN1dGlvblBvbGljeSBVbnJlc3RyaWN0ZWQgLUZpbGUgd2luLXNlcnZlci1pbnN0YWxsLXdlYnNlcnZlci5wczEK"
             }
+        },            
+        "storageAccountName": "testpooldisks",
+        "network": {
+            "virtualNetwork": "testnet",
+            "subnetName": "default",
+            "assignPublicIp": true,
+            "networkSecurityGroups": ["webserver"]
+        },
+        "tags": {
+            "tier": "web"
         }
     },
     "scaleInConfig": {

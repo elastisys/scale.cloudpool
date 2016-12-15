@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.openstack4j.model.compute.Server;
 import org.slf4j.Logger;
@@ -18,26 +17,26 @@ import org.slf4j.LoggerFactory;
 import com.elastisys.scale.cloudpool.api.ApiVersion;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.openstack.driver.client.OpenstackClient;
 import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackScaleOutConfig;
 import com.elastisys.scale.cloudpool.openstack.functions.ServerToMachine;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Atomics;
+import com.google.gson.JsonObject;
 
 /**
  * A {@link CloudPoolDriver} implementation that operates against OpenStack.
@@ -48,12 +47,17 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
     private static Logger LOG = LoggerFactory.getLogger(OpenStackPoolDriver.class);
 
     /** OpenStack client API configuration. */
-    private final AtomicReference<OpenStackPoolDriverConfig> config;
+    private OpenStackPoolDriverConfig config;
+    /** Provisioning template to use when launching new pool machines. */
+    private OpenStackScaleOutConfig scaleOutConfig;
     /** Logical name of the managed machine pool. */
-    private final AtomicReference<String> poolName;
+    private String poolName;
 
     /** Client used to communicate with the OpenStack API. */
     private final OpenstackClient client;
+
+    /** Lock to prevent concurrent access to critical sections. */
+    private final Object lock = new Object();
 
     /**
      * Supported API versions by this implementation.
@@ -73,8 +77,9 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
      *            The client to be used to communicate with the OpenStack API.
      */
     public OpenStackPoolDriver(OpenstackClient client) {
-        this.config = Atomics.newReference();
-        this.poolName = Atomics.newReference();
+        this.config = null;
+        this.scaleOutConfig = null;
+        this.poolName = null;
         this.client = client;
     }
 
@@ -83,17 +88,33 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
         CloudPoolConfig cloudPoolConfig = configuration.getCloudPool();
         checkArgument(cloudPoolConfig != null, "missing cloudPool config");
 
-        try {
+        synchronized (this.lock) {
             // parse and validate cloud login configuration
             OpenStackPoolDriverConfig config = JsonUtils.toObject(cloudPoolConfig.getDriverConfig(),
                     OpenStackPoolDriverConfig.class);
             config.validate();
-            this.config.set(config);
-            this.poolName.set(cloudPoolConfig.getName());
+
+            OpenStackScaleOutConfig scaleOutConf = parseAndValidateScaleOutConfig(configuration.getScaleOutConfig());
+
+            this.config = config;
+            this.scaleOutConfig = scaleOutConf;
+            this.poolName = cloudPoolConfig.getName();
             this.client.configure(config);
+        }
+    }
+
+    private OpenStackScaleOutConfig parseAndValidateScaleOutConfig(JsonObject scaleOutConfig)
+            throws IllegalArgumentException {
+        checkArgument(scaleOutConfig != null, "missing scaleOutConfig");
+
+        try {
+            OpenStackScaleOutConfig scaleOutTemplate = JsonUtils.toObject(scaleOutConfig,
+                    OpenStackScaleOutConfig.class);
+            scaleOutTemplate.validate();
+
+            return scaleOutTemplate;
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
-            throw new CloudPoolDriverException(format("failed to apply driver configuration: %s", e.getMessage()), e);
+            throw new IllegalArgumentException("failed to validate scaleOutConfig: " + e.getMessage(), e);
         }
     }
 
@@ -111,7 +132,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
     }
 
     @Override
-    public List<Machine> startMachines(int count, ScaleOutConfig scaleUpConfig) throws StartMachinesException {
+    public List<Machine> startMachines(int count) throws StartMachinesException {
         checkState(isConfigured(), "attempt to use unconfigured driver");
 
         List<Machine> startedMachines = Lists.newArrayList();
@@ -119,7 +140,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
             for (int i = 0; i < count; i++) {
                 // tag new server with cloud pool membership
                 Map<String, String> tags = ImmutableMap.of(Constants.CLOUD_POOL_TAG, getPoolName());
-                Server newServer = this.client.launchServer(uniqueServerName(), scaleUpConfig, tags);
+                Server newServer = this.client.launchServer(uniqueServerName(), this.scaleOutConfig, tags);
                 startedMachines.add(serverToMachine().apply(newServer));
 
                 if (config().isAssignFloatingIp()) {
@@ -228,7 +249,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
     public String getPoolName() {
         checkState(isConfigured(), "attempt to use unconfigured driver");
 
-        return this.poolName.get();
+        return this.poolName;
     }
 
     @Override
@@ -283,6 +304,6 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
     }
 
     OpenStackPoolDriverConfig config() {
-        return this.config.get();
+        return this.config;
     }
 }

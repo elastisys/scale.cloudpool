@@ -9,7 +9,6 @@ import static java.lang.String.format;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,10 +20,10 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.ApiVersion;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AutoScalingClient;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
@@ -32,14 +31,12 @@ import com.elastisys.scale.cloudpool.aws.commons.functions.InstanceToMachine;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Atomics;
 
 /**
  * A {@link CloudPoolDriver} implementation that manages an AWS Auto Scaling
@@ -60,9 +57,9 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
     public static final String REQUESTED_ID_PREFIX = "i-requested";
 
     /** AWS AutoScaling client API configuration. */
-    private final AtomicReference<AwsAsPoolDriverConfig> config;
+    private AwsAsPoolDriverConfig config;
     /** Logical name of the managed machine pool. */
-    private final AtomicReference<String> poolName;
+    private String poolName;
 
     /** A client used to communicate with the AWS Auto Scaling API. */
     private final AutoScalingClient client;
@@ -84,8 +81,8 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
      *            A client used to communicate with the AWS Auto Scaling API.
      */
     public AwsAsPoolDriver(AutoScalingClient client) {
-        this.config = Atomics.newReference();
-        this.poolName = Atomics.newReference();
+        this.config = null;
+        this.poolName = null;
 
         this.client = client;
     }
@@ -101,8 +98,8 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
             AwsAsPoolDriverConfig config = JsonUtils.toObject(poolConfig.getDriverConfig(),
                     AwsAsPoolDriverConfig.class);
             config.validate();
-            this.config.set(config);
-            this.poolName.set(poolConfig.getName());
+            this.config = config;
+            this.poolName = poolConfig.getName();
             this.client.configure(config);
         } catch (Exception e) {
             Throwables.propagateIfInstanceOf(e, IllegalArgumentException.class);
@@ -204,7 +201,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
     }
 
     @Override
-    public List<Machine> startMachines(int count, ScaleOutConfig scaleUpConfig) throws StartMachinesException {
+    public List<Machine> startMachines(int count) throws StartMachinesException {
         checkState(isConfigured(), "attempt to use unconfigured driver");
 
         try {
@@ -345,7 +342,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
     public String getPoolName() {
         checkState(isConfigured(), "attempt to use unconfigured driver");
 
-        return this.poolName.get();
+        return this.poolName;
     }
 
     @Override
@@ -358,6 +355,6 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
     }
 
     AwsAsPoolDriverConfig config() {
-        return this.config.get();
+        return this.config;
     }
 }

@@ -19,21 +19,19 @@
         }
     },
     "scaleOutConfig": {
-        "size": "Standard_DS1_v2",
-        "image": "Canonical:UbuntuServer:16.04.0-LTS:latest",
-        "extensions": {
-            "__comment": "neither linuxSettings nor windowsSettings given",
+        "vmSize": "Standard_DS1_v2",
+        "vmImage": "Canonical:UbuntuServer:16.04.0-LTS:latest",
+        "__comment": "neither linuxSettings nor windowsSettings given",
 
-            "storageAccountName": "testpooldisks",
-            "network": {
-                "virtualNetwork": "testnet",
-                "subnetName": "default",
-                "assignPublicIp": true,
-                "networkSecurityGroups": ["webserver"]
-            },
-            "tags": {
-                "custom-tag": "value"
-            }
+        "storageAccountName": "testpooldisks",
+        "network": {
+            "virtualNetwork": "testnet",
+            "subnetName": "default",
+            "assignPublicIp": true,
+            "networkSecurityGroups": ["webserver"]
+        },
+        "tags": {
+            "custom-tag": "value"
         }
     },
     "scaleInConfig": {

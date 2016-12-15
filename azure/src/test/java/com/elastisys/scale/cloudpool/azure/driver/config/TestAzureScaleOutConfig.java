@@ -20,11 +20,16 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableMap;
 
 /**
- * Exercise {@link ScaleOutExtConfig}.
+ * Exercise {@link AzureScaleOutConfig}.
  *
  */
-public class TestScaleOutExtConfig {
+public class TestAzureScaleOutConfig {
 
+    /** Sample VM size. */
+    private static final String VM_SIZE = "Standard_DS1_v2";
+    /** Sample VM image. */
+    private static final String VM_IMAGE = "Canonical:UbuntuServer:16.04.0-LTS:latest";
+    private static final String WINDOWS_IMAGE = "MicrosoftWindowsServer:WindowsServer:2008-R2-SP1:2.0.20161109";
     /** Sample VM name prefix. */
     private static final String VM_NAME_PREFIX = "apache";
     /** Sample storage account name. */
@@ -36,10 +41,12 @@ public class TestScaleOutExtConfig {
      */
     @Test
     public void defaults() {
-        ScaleOutExtConfig conf = new ScaleOutExtConfig(null, validLinuxSettings(), null, STORAGE_ACCOUNT,
-                validNetworkSettings(), null);
+        AzureScaleOutConfig conf = new AzureScaleOutConfig(VM_SIZE, VM_IMAGE, null, validLinuxSettings(), null,
+                STORAGE_ACCOUNT, validNetworkSettings(), null);
         conf.validate();
 
+        assertThat(conf.getVmSize(), is(VM_SIZE));
+        assertThat(conf.getVmImage(), is(VM_IMAGE));
         assertThat(conf.getVmNamePrefix().isPresent(), is(false));
         assertThat(conf.getLinuxSettings().get(), is(validLinuxSettings()));
         assertThat(conf.getNetwork(), is(validNetworkSettings()));
@@ -53,10 +60,12 @@ public class TestScaleOutExtConfig {
      */
     @Test
     public void linuxVm() {
-        ScaleOutExtConfig conf = new ScaleOutExtConfig(VM_NAME_PREFIX, validLinuxSettings(), null, STORAGE_ACCOUNT,
-                validNetworkSettings(), validTags());
+        AzureScaleOutConfig conf = new AzureScaleOutConfig(VM_SIZE, VM_IMAGE, VM_NAME_PREFIX, validLinuxSettings(),
+                null, STORAGE_ACCOUNT, validNetworkSettings(), validTags());
         conf.validate();
 
+        assertThat(conf.getVmSize(), is(VM_SIZE));
+        assertThat(conf.getVmImage(), is(VM_IMAGE));
         assertThat(conf.getVmNamePrefix().get(), is(VM_NAME_PREFIX));
         assertThat(conf.getLinuxSettings().get(), is(validLinuxSettings()));
         assertThat(conf.getNetwork(), is(validNetworkSettings()));
@@ -72,9 +81,12 @@ public class TestScaleOutExtConfig {
      */
     @Test
     public void windowsVm() {
-        ScaleOutExtConfig conf = new ScaleOutExtConfig(VM_NAME_PREFIX, null, validWindowsSettings(), STORAGE_ACCOUNT,
-                validNetworkSettings(), validTags());
+        AzureScaleOutConfig conf = new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, null,
+                validWindowsSettings(), STORAGE_ACCOUNT, validNetworkSettings(), validTags());
         conf.validate();
+
+        assertThat(conf.getVmSize(), is(VM_SIZE));
+        assertThat(conf.getVmImage(), is(WINDOWS_IMAGE));
 
         assertThat(conf.getVmNamePrefix().get(), is(VM_NAME_PREFIX));
         assertThat(conf.getWindowsSettings().get(), is(validWindowsSettings()));
@@ -87,6 +99,38 @@ public class TestScaleOutExtConfig {
     }
 
     /**
+     * Must specify VM size.
+     */
+    @Test
+    public void missingVmSize() {
+        try {
+            LinuxSettings linuxSettings = validLinuxSettings();
+            WindowsSettings windowsSettings = null;
+            new AzureScaleOutConfig(null, VM_IMAGE, VM_NAME_PREFIX, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
+                    validNetworkSettings(), validTags()).validate();
+            fail("expected to fail");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("vmSize"));
+        }
+    }
+
+    /**
+     * Must specify VM image.
+     */
+    @Test
+    public void missingVmImage() {
+        try {
+            LinuxSettings linuxSettings = validLinuxSettings();
+            WindowsSettings windowsSettings = null;
+            new AzureScaleOutConfig(VM_SIZE, null, VM_NAME_PREFIX, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
+                    validNetworkSettings(), validTags()).validate();
+            fail("expected to fail");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("vmImage"));
+        }
+    }
+
+    /**
      * Must specify either Linux or Windows settings for VM.
      */
     @Test
@@ -94,8 +138,8 @@ public class TestScaleOutExtConfig {
         try {
             LinuxSettings linuxSettings = null;
             WindowsSettings windowsSettings = null;
-            new ScaleOutExtConfig(VM_NAME_PREFIX, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
-                    validNetworkSettings(), validTags()).validate();
+            new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, linuxSettings, windowsSettings,
+                    STORAGE_ACCOUNT, validNetworkSettings(), validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("neither linuxSettings nor windowsSettings given"));
@@ -108,8 +152,8 @@ public class TestScaleOutExtConfig {
     @Test
     public void onBothLinuxAndWindowsSettings() {
         try {
-            new ScaleOutExtConfig(VM_NAME_PREFIX, validLinuxSettings(), validWindowsSettings(), STORAGE_ACCOUNT,
-                    validNetworkSettings(), validTags()).validate();
+            new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, validLinuxSettings(),
+                    validWindowsSettings(), STORAGE_ACCOUNT, validNetworkSettings(), validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("may only specify one of linuxSettings and windowsSettings, not both"));
@@ -123,8 +167,8 @@ public class TestScaleOutExtConfig {
     @Test
     public void onIllegalLinuxSettings() {
         try {
-            new ScaleOutExtConfig(VM_NAME_PREFIX, invalidLinuxSettings(), null, STORAGE_ACCOUNT, validNetworkSettings(),
-                    validTags()).validate();
+            new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, invalidLinuxSettings(), null,
+                    STORAGE_ACCOUNT, validNetworkSettings(), validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("linuxSettings"));
@@ -138,8 +182,8 @@ public class TestScaleOutExtConfig {
     @Test
     public void onIllegalWindowsSettings() {
         try {
-            new ScaleOutExtConfig(VM_NAME_PREFIX, null, invalidWindowsSettings(), STORAGE_ACCOUNT,
-                    validNetworkSettings(), validTags()).validate();
+            new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, null, invalidWindowsSettings(),
+                    STORAGE_ACCOUNT, validNetworkSettings(), validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("windowsSettings"));
@@ -154,8 +198,8 @@ public class TestScaleOutExtConfig {
         try {
             LinuxSettings linuxSettings = validLinuxSettings();
             WindowsSettings windowsSettings = null;
-            new ScaleOutExtConfig(VM_NAME_PREFIX, linuxSettings, windowsSettings, STORAGE_ACCOUNT, null, validTags())
-                    .validate();
+            new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, linuxSettings, windowsSettings,
+                    STORAGE_ACCOUNT, null, validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("network"));
@@ -169,8 +213,8 @@ public class TestScaleOutExtConfig {
     @Test
     public void onIllegalNetworkSettings() {
         try {
-            new ScaleOutExtConfig(VM_NAME_PREFIX, null, validWindowsSettings(), STORAGE_ACCOUNT,
-                    invalidNetworkSettings(), validTags()).validate();
+            new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, null, validWindowsSettings(),
+                    STORAGE_ACCOUNT, invalidNetworkSettings(), validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             System.out.println(e);
@@ -186,8 +230,8 @@ public class TestScaleOutExtConfig {
         try {
             LinuxSettings linuxSettings = validLinuxSettings();
             WindowsSettings windowsSettings = null;
-            new ScaleOutExtConfig(VM_NAME_PREFIX, linuxSettings, windowsSettings, null, validNetworkSettings(),
-                    validTags()).validate();
+            new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, linuxSettings, windowsSettings, null,
+                    validNetworkSettings(), validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("storageAccountName"));
@@ -201,8 +245,8 @@ public class TestScaleOutExtConfig {
     public void onIllegalTags() {
         try {
             Map<String, String> invalidTags = ImmutableMap.of("illegal/key", "value");
-            new ScaleOutExtConfig(VM_NAME_PREFIX, null, validWindowsSettings(), STORAGE_ACCOUNT, validNetworkSettings(),
-                    invalidTags).validate();
+            new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, null, validWindowsSettings(),
+                    STORAGE_ACCOUNT, validNetworkSettings(), invalidTags).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("illegal tag key"));

@@ -23,8 +23,8 @@ import com.amazonaws.services.ec2.model.SpotInstanceState;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ScaleOutConfig;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.google.common.collect.Lists;
 
 /**
@@ -117,7 +117,7 @@ public class FakeSpotClient implements SpotClient {
     }
 
     @Override
-    public List<Instance> launchInstances(ScaleOutConfig provisioningDetails, int count, List<Tag> tags)
+    public List<Instance> launchInstances(Ec2ScaleOutConfig provisioningDetails, int count, List<Tag> tags)
             throws AmazonClientException {
 
         List<Instance> launchedInstances = Lists.newArrayList();
@@ -214,7 +214,7 @@ public class FakeSpotClient implements SpotClient {
     }
 
     @Override
-    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, ScaleOutConfig scaleOutConfig, int count,
+    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, Ec2ScaleOutConfig scaleOutConfig, int count,
             List<Tag> tags) throws AmazonClientException {
         List<SpotInstanceRequest> requests = Lists.newArrayList();
         for (int i = 0; i < count; i++) {

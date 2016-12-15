@@ -20,7 +20,6 @@ import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerterConfig;
 import com.elastisys.scale.commons.net.smtp.SmtpClientAuthentication;
 import com.elastisys.scale.commons.net.smtp.SmtpClientConfig;
 import com.elastisys.scale.commons.net.ssl.BasicCredentials;
-import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.gson.JsonObject;
 
 /**
@@ -104,12 +103,8 @@ public class TestBaseCloudPoolConfig {
                 .getAsJsonObject();
     }
 
-    private ScaleOutConfig scaleOutConfig() {
-        String encodedUserData = Base64Utils.toBase64("#!/bin/bash", "sudo apt-get update -qy",
-                "sudo apt-get install -qy apache2");
-        ScaleOutConfig scaleUpConfig = new ScaleOutConfig("size", "image", "keyPair", Arrays.asList("web"),
-                encodedUserData);
-        return scaleUpConfig;
+    private JsonObject scaleOutConfig() {
+        return JsonUtils.parseJsonString("{\"size\": \"t1.small\", \"image\": \"ami-12345678\"}").getAsJsonObject();
     }
 
     private ScaleInConfig scaleInConfig() {

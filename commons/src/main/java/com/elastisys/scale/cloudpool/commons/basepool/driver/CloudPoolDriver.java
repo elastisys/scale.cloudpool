@@ -10,8 +10,6 @@ import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 
 /**
  * A cloud pool management interface for a particular cloud provider.
@@ -44,18 +42,23 @@ public interface CloudPoolDriver {
      * the {@link BaseCloudPool}.
      * <p/>
      * The parts of the configuration that are of special interest to the
-     * {@link CloudPoolDriver}, such as cloud login details and cloud pool name,
-     * are located under the {@link BaseCloudPoolConfig#getCloudPool()} and the
-     * {@link CloudPoolConfig#getDriverConfig()} and
-     * {@link CloudPoolConfig#getName()} keys, respectively.
+     * {@link CloudPoolDriver} are:
+     * <ul>
+     * <li>{@code BaseCloudPoolConfig#getCloudPool()}: holds cloud API access
+     * details ({@code driverConfig}) and the cloud pool name ({@code name}),
+     * which may be used to identify pool members.</li>
+     * <li>{@code BaseCloudPoolConfig#getScaleOutConfig()}: holds cloud-provider
+     * specific server provisioning parameters.
+     * </ul>
      * <p/>
-     * The expected appearance of the {@link CloudPoolConfig#getDriverConfig()}
-     * configuration document depends on the {@link CloudPoolDriver}
-     * implementation but, at a minimum, should include details about how the
-     * {@link CloudPoolDriver} connects to its cloud provider. Before setting
-     * the configuration, the {@link CloudPoolDriver} should validate that all
-     * mandatory configuration keys have been provided. If this is not the case,
-     * a {@link CloudPoolDriverException} should be raised.
+     * The expected appearance of {@code driverConfig} and
+     * {@code scaleOutConfig} document depends on the {@link CloudPoolDriver}
+     * implementation but must, at a minimum, include details about how the
+     * {@link CloudPoolDriver} connects to its cloud provider and how it
+     * provisions new machines. Before setting the configuration, the
+     * {@link CloudPoolDriver} should validate that all mandatory configuration
+     * keys have been provided. If this is not the case, a
+     * {@link IllegalArgumentException} should be raised.
      * <p/>
      * The {@link CloudPoolDriver} must be configured before any other methods
      * are invoked.
@@ -72,15 +75,19 @@ public interface CloudPoolDriver {
     /**
      * Returns a list of the members of the cloud pool.
      * <p/>
-     * Note, that the response may include machines in any {@link MachineState},
-     * even machines that are in the process of terminating.
+     * The specific mechanism to identify pool members is left to the
+     * implementation but could, for example, make use of machine metadata tags
+     * (if supported by the cloud API).
+     * <p/>
+     * The response may include machines in any {@link MachineState}, even
+     * machines that are in the process of terminating.
      * <p/>
      * The {@link MembershipStatus} of a machine in an allocated/started machine
-     * state determines if it is to be considered an active member of the
-     * pool.The <i>active size</i> of the machine pool should be interpreted as
-     * the number of allocated machines (in any of the non-terminal machine
-     * states {@code REQUESTED}, {@code PENDING} or {@code RUNNING} that have
-     * not been marked with an inactive {@link MembershipStatus}. See
+     * state determines if it is to be considered an active member of the pool.
+     * The <i>active size</i> of the machine pool should be interpreted as the
+     * number of allocated machines (in any of the non-terminal machine states
+     * {@code REQUESTED}, {@code PENDING} or {@code RUNNING} that have not been
+     * marked with an inactive {@link MembershipStatus}. See
      * {@link Machine#isActiveMember()}.
      * <p/>
      * The service state should be set to UNKNOWN for all machine instances for
@@ -96,10 +103,14 @@ public interface CloudPoolDriver {
 
     /**
      * Requests that a number of new {@link Machine}s be started in this cloud
-     * pool. On success, the complete list of {@link Machine}s that were started
-     * is returned. On failure, a {@link StartMachinesException} is thrown with
-     * the cause of the failure and indicating which {@link Machine} s were
-     * started (if any) before the request failed.
+     * pool.
+     * <p/>
+     * The machines are to be provisioned according to the currently configured
+     * {@code scaleOutConfig}. On success, the complete list of {@link Machine}s
+     * that were started is returned. On failure, a
+     * {@link StartMachinesException} is thrown with the cause of the failure
+     * and indicating which {@link Machine} s were started (if any) before the
+     * request failed.
      * <p/>
      * Depending on the functionality offered by the cloud provider, it may not
      * be possible for the machine request to be immediately fulfilled (for
@@ -119,16 +130,12 @@ public interface CloudPoolDriver {
      *
      * @param count
      *            The number of {@link Machine}s to start.
-     * @param scaleOutConfig
-     *            The details of how to provision the new machine. Note: this is
-     *            the {@code scaleUpConfig} part of the {@link BaseCloudPool}
-     *            configuration document.
      * @return The {@link List} of launched {@link Machine}s.
      * @throws StartMachinesException
      *             If the request failed to complete. The exception includes
      *             details on machines that were started (if any).
      */
-    public List<Machine> startMachines(int count, ScaleOutConfig scaleOutConfig) throws StartMachinesException;
+    public List<Machine> startMachines(int count) throws StartMachinesException;
 
     /**
      * Terminates a {@link Machine} in the cloud pool.

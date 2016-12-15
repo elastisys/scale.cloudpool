@@ -7,12 +7,12 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.Tag;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ScaleOutConfig;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CancelSpotInstanceRequests;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetSpotInstanceRequest;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetSpotInstanceRequests;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.PlaceSpotInstanceRequests;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 
 public class AwsSpotClient extends AwsEc2Client implements SpotClient {
 
@@ -31,7 +31,7 @@ public class AwsSpotClient extends AwsEc2Client implements SpotClient {
     }
 
     @Override
-    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, ScaleOutConfig scaleOutConfig, int count,
+    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, Ec2ScaleOutConfig scaleOutConfig, int count,
             List<Tag> tags) {
         // no particular availability zone
         String availabilityZone = null;

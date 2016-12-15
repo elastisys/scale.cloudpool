@@ -4,10 +4,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.ClientConfiguration;
@@ -18,36 +14,36 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ScaleOutConfig;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CreateInstances;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstance;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstances;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TagEc2Resources;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TerminateInstances;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.UntagEc2Resource;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
-import com.google.common.util.concurrent.Atomics;
 
 /**
  * Standard {@link Ec2Client} implementation that operates against the EC2 API.
  */
 public class AwsEc2Client implements Ec2Client {
 
-    private static Logger LOG = LoggerFactory.getLogger(AwsEc2Client.class);
-
     /** The access key id part of the AWS credentials. */
-    private final AtomicReference<String> awsAccessKeyId;
+    private String awsAccessKeyId;
     /** The secret access key part of the AWS credentials. */
-    private final AtomicReference<String> awsSecretAccessKey;
+    private String awsSecretAccessKey;
     /** The AWS region to operate against. */
-    private final AtomicReference<String> region;
+    private String region;
     /** Client configuration options such as connection timeout, etc. */
-    private final AtomicReference<ClientConfiguration> clientConfig;
+    private ClientConfiguration clientConfig;
+
+    /** Lock to prevent concurrent access to critical sections. */
+    private Object lock = new Object();
 
     public AwsEc2Client() {
-        this.awsAccessKeyId = Atomics.newReference();
-        this.awsSecretAccessKey = Atomics.newReference();
-        this.region = Atomics.newReference();
-        this.clientConfig = Atomics.newReference();
+        this.awsAccessKeyId = null;
+        this.awsSecretAccessKey = null;
+        this.region = null;
+        this.clientConfig = null;
     }
 
     @Override
@@ -57,10 +53,14 @@ public class AwsEc2Client implements Ec2Client {
         checkArgument(awsSecretAccessKey != null, "no awsSecretAccessKey given");
         checkArgument(region != null, "no region given");
         checkArgument(clientConfig != null, "no clientConfig given");
-        this.awsAccessKeyId.set(awsAccessKeyId);
-        this.awsSecretAccessKey.set(awsSecretAccessKey);
-        this.region.set(region);
-        this.clientConfig.set(clientConfig);
+
+        // lock to prevent concurrent configurations from being interleaved
+        synchronized (this.lock) {
+            this.awsAccessKeyId = awsAccessKeyId;
+            this.awsSecretAccessKey = awsSecretAccessKey;
+            this.region = region;
+            this.clientConfig = clientConfig;
+        }
     }
 
     @Override
@@ -80,7 +80,7 @@ public class AwsEc2Client implements Ec2Client {
     }
 
     @Override
-    public List<Instance> launchInstances(ScaleOutConfig provisioningDetails, int count, List<Tag> tags)
+    public List<Instance> launchInstances(Ec2ScaleOutConfig provisioningDetails, int count, List<Tag> tags)
             throws AmazonClientException {
         checkArgument(isConfigured(), "can't use client before it's configured");
 
@@ -117,7 +117,8 @@ public class AwsEc2Client implements Ec2Client {
     }
 
     private boolean isConfigured() {
-        return this.awsAccessKeyId.get() != null && this.awsSecretAccessKey.get() != null && this.region != null;
+        return this.awsAccessKeyId != null && this.awsSecretAccessKey != null && this.region != null
+                && this.clientConfig != null;
     }
 
     /**
@@ -126,7 +127,7 @@ public class AwsEc2Client implements Ec2Client {
      * @return
      */
     protected AWSCredentials awsCredentials() {
-        return new BasicAWSCredentials(this.awsAccessKeyId.get(), this.awsSecretAccessKey.get());
+        return new BasicAWSCredentials(this.awsAccessKeyId, this.awsSecretAccessKey);
     }
 
     /**
@@ -135,7 +136,7 @@ public class AwsEc2Client implements Ec2Client {
      * @return
      */
     protected String region() {
-        return this.region.get();
+        return this.region;
     }
 
     /**
@@ -144,6 +145,6 @@ public class AwsEc2Client implements Ec2Client {
      * @return
      */
     protected ClientConfiguration clientConfig() {
-        return this.clientConfig.get();
+        return this.clientConfig;
     }
 }

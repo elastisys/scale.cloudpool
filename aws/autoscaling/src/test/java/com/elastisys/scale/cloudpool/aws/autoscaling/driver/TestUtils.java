@@ -18,7 +18,6 @@ import com.elastisys.scale.cloudpool.commons.basepool.config.PoolFetchConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.PoolUpdateConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleInConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
@@ -26,8 +25,8 @@ import com.elastisys.scale.commons.net.alerter.http.HttpAlerterConfig;
 import com.elastisys.scale.commons.net.alerter.multiplexing.AlertersConfig;
 import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerterConfig;
 import com.elastisys.scale.commons.net.smtp.SmtpClientConfig;
-import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.common.collect.Lists;
+import com.google.gson.JsonObject;
 
 public class TestUtils {
 
@@ -36,10 +35,7 @@ public class TestUtils {
                 "eu-west-1");
         CloudPoolConfig scalingGroupConfig = new CloudPoolConfig(scalingGroupName,
                 JsonUtils.toJson(awsApiConfig).getAsJsonObject());
-        String encodedUserData = Base64Utils.toBase64("#!/bin/bash", "sudo apt-get update -qy",
-                "sudo apt-get install -qy apache2");
-        ScaleOutConfig scaleUpConfig = new ScaleOutConfig("m1.small", "", "instancekey", Arrays.asList("webserver"),
-                encodedUserData);
+        JsonObject scaleOutConfig = new JsonObject();
         ScaleInConfig scaleDownConfig = new ScaleInConfig(VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR, 300);
 
         SmtpAlerterConfig smtpAlerter = new SmtpAlerterConfig(Arrays.asList("receiver@destination.com"),
@@ -53,7 +49,7 @@ public class TestUtils {
         PoolFetchConfig poolFetch = new PoolFetchConfig(new RetriesConfig(3, new TimeInterval(2L, TimeUnit.SECONDS)),
                 refreshInterval, reachabilityTimeout);
         PoolUpdateConfig poolUpdate = new PoolUpdateConfig(new TimeInterval(60L, TimeUnit.SECONDS));
-        return new BaseCloudPoolConfig(scalingGroupConfig, scaleUpConfig, scaleDownConfig, alertSettings, poolFetch,
+        return new BaseCloudPoolConfig(scalingGroupConfig, scaleOutConfig, scaleDownConfig, alertSettings, poolFetch,
                 poolUpdate);
     }
 

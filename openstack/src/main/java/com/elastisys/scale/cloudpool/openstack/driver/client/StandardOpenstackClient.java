@@ -4,13 +4,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackScaleOutConfig;
 import com.elastisys.scale.cloudpool.openstack.requests.AssignFloatingIpRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.CreateServerRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.DeleteServerMetadataRequest;
@@ -19,7 +18,6 @@ import com.elastisys.scale.cloudpool.openstack.requests.GetServerRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.ListServersWithTagRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.UpdateServerMetadataRequest;
 import com.elastisys.scale.commons.openstack.OSClientFactory;
-import com.google.common.util.concurrent.Atomics;
 
 /**
  * Standard implementation of the {@link OpenstackClient} interface.
@@ -30,20 +28,20 @@ public class StandardOpenstackClient implements OpenstackClient {
      * {@link OSClientFactory} configured to use the latest set
      * {@link OpenStackPoolDriverConfig}.
      */
-    private final AtomicReference<OSClientFactory> clientFactory;
+    private OSClientFactory clientFactory;
 
     /** The currently set configuration. */
     private OpenStackPoolDriverConfig config;
 
     public StandardOpenstackClient() {
-        this.clientFactory = Atomics.newReference();
+        this.clientFactory = null;
     }
 
     @Override
     public void configure(OpenStackPoolDriverConfig configuration) {
         checkArgument(configuration != null, "null configuration");
 
-        this.clientFactory.set(new OSClientFactory(configuration.toApiAccessConfig()));
+        this.clientFactory = new OSClientFactory(configuration.toApiAccessConfig());
 
         this.config = configuration;
     }
@@ -63,7 +61,8 @@ public class StandardOpenstackClient implements OpenstackClient {
     }
 
     @Override
-    public Server launchServer(String serverName, ScaleOutConfig provisioningDetails, Map<String, String> tags) {
+    public Server launchServer(String serverName, OpenStackScaleOutConfig provisioningDetails,
+            Map<String, String> tags) {
         checkArgument(isConfigured(), "can't use client before it's configured");
 
         CreateServerRequest request = new CreateServerRequest(clientFactory(), serverName,
@@ -104,7 +103,7 @@ public class StandardOpenstackClient implements OpenstackClient {
     }
 
     public OSClientFactory clientFactory() {
-        return this.clientFactory.get();
+        return this.clientFactory;
     }
 
     private OpenStackPoolDriverConfig config() {

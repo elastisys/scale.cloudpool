@@ -8,8 +8,6 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import java.util.Arrays;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -18,9 +16,7 @@ import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.common.eventbus.EventBus;
 
 /**
@@ -50,7 +46,7 @@ public class TestSpotPoolDriverConfiguration {
 
         BaseCloudPoolConfig config = loadCloudPoolConfig("config/complete-driver-config.json");
         this.driver.configure(config);
-        assertThat(this.driver.poolConfig(), is(config));
+        assertThat(this.driver.getPoolName(), is(config.getCloudPool().getName()));
 
         assertThat(this.driver.driverConfig().getAwsAccessKeyId(), is("ABC"));
         assertThat(this.driver.driverConfig().getAwsSecretAccessKey(), is("XYZ"));
@@ -133,12 +129,7 @@ public class TestSpotPoolDriverConfiguration {
 
     @Test(expected = IllegalStateException.class)
     public void invokeStartMachineBeforeBeingConfigured() throws CloudPoolException {
-        String encodedUserData = Base64Utils.toBase64("#!/bin/bash", "sudo apt-get update -qy",
-                "sudo apt-get install -qy apache2");
-
-        ScaleOutConfig scaleUpConfig = new ScaleOutConfig("size", "image", "keyPair", Arrays.asList("webserver"),
-                encodedUserData);
-        this.driver.startMachines(3, scaleUpConfig);
+        this.driver.startMachines(3);
     }
 
     @Test(expected = IllegalStateException.class)

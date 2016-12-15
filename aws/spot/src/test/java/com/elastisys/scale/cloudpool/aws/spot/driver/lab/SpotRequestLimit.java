@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.Tag;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ScaleOutConfig;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.impl.AwsSpotClient;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
@@ -37,12 +38,13 @@ public class SpotRequestLimit extends BaseClient {
         LOG.info("Testing spot request limit in region {}", region);
         BaseCloudPoolConfig config = JsonUtils.toObject(JsonUtils.parseJsonFile(new File("myconfig.json")),
                 BaseCloudPoolConfig.class);
-        LOG.info("config: {}", config.getScaleOutConfig());
+        Ec2ScaleOutConfig scaleOutConfig = JsonUtils.toObject(config.getScaleOutConfig(), Ec2ScaleOutConfig.class);
+        LOG.info("config: {}", scaleOutConfig);
         List<SpotInstanceRequest> placedRequests = Lists.newArrayList();
         int MAX = 200;
         try {
-            placedRequests.addAll(client.placeSpotRequests(0.001, config.getScaleOutConfig(), MAX,
-                    Arrays.asList(new Tag("key", "value"))));
+            placedRequests.addAll(
+                    client.placeSpotRequests(0.001, scaleOutConfig, MAX, Arrays.asList(new Tag("key", "value"))));
         } catch (Exception e) {
             LOG.error("failed: {}", e.getMessage(), e);
         } finally {

@@ -1,9 +1,11 @@
-package com.elastisys.scale.cloudpool.aws.ec2.driver;
+package com.elastisys.scale.cloudpool.aws.ec2.driver.config;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import org.junit.Test;
+
+import com.elastisys.scale.cloudpool.aws.ec2.driver.config.Ec2PoolDriverConfig;
 
 /**
  * Exercises the {@link Ec2PoolDriverConfig} class.

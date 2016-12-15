@@ -1,10 +1,8 @@
 package com.elastisys.scale.cloudpool.commons.basepool.config;
 
 import static com.google.common.base.Objects.equal;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.String.format;
+import static com.google.common.base.Preconditions.checkArgument;
 
-import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Objects;
@@ -77,15 +75,11 @@ public class CloudPoolConfig {
     /**
      * Performs basic validation of this configuration.
      *
-     * @throws CloudPoolException
+     * @throws IllegalArgumentException
      */
-    public void validate() throws CloudPoolException {
-        try {
-            checkNotNull(this.name, "missing name");
-            checkNotNull(this.driverConfig, "missing driverConfig");
-        } catch (Exception e) {
-            throw new CloudPoolException(format("failed to validate cloudPool configuration: %s", e.getMessage()), e);
-        }
+    public void validate() throws IllegalArgumentException {
+        checkArgument(this.name != null, "missing name");
+        checkArgument(this.driverConfig != null, "missing driverConfig");
     }
 
     @Override

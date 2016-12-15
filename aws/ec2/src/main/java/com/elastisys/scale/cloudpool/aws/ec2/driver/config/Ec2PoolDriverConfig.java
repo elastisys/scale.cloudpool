@@ -1,8 +1,9 @@
-package com.elastisys.scale.cloudpool.aws.ec2.driver;
+package com.elastisys.scale.cloudpool.aws.ec2.driver.config;
 
 import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.elastisys.scale.cloudpool.aws.ec2.driver.Ec2PoolDriver;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;

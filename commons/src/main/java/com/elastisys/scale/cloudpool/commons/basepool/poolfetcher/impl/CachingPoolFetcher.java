@@ -10,7 +10,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -31,7 +30,6 @@ import com.elastisys.scale.commons.net.alerter.AlertSeverity;
 import com.elastisys.scale.commons.net.alerter.Alerter;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.eventbus.EventBus;
-import com.google.common.util.concurrent.Atomics;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
@@ -48,7 +46,7 @@ public class CachingPoolFetcher implements PoolFetcher {
     /** Controls fetch behavior. */
     private final PoolFetchConfig fetchConfig;
     /** The last pool fetch error. */
-    private final AtomicReference<Throwable> lastFetchError;
+    private Throwable lastFetchError;
     /**
      * {@link CountDownLatch} that can be used to wait for the first fetch
      * attempt to complete (successful or not). See {@link #awaitFirstFetch()}.
@@ -89,7 +87,7 @@ public class CachingPoolFetcher implements PoolFetcher {
         } else {
             LOG.info("no previously stored machine pool found.");
         }
-        this.lastFetchError = Atomics.newReference();
+        this.lastFetchError = null;
         this.firstFetchComplete = new CountDownLatch(1);
 
         // start periodical cache update task
@@ -171,7 +169,7 @@ public class CachingPoolFetcher implements PoolFetcher {
     }
 
     private void poolUnreachableFailure() {
-        Throwable lastError = this.lastFetchError.get();
+        Throwable lastError = this.lastFetchError;
         if (lastError != null) {
             throw new PoolUnreachableException(String.format(
                     "Could not serve machine pool: no fetch attempt " + "has been successful yet. Latest error: %s",
@@ -225,7 +223,7 @@ public class CachingPoolFetcher implements PoolFetcher {
         try {
             this.cachedMachinePool.update(this.delegate.get(FetchOption.FORCE_REFRESH));
         } catch (Throwable e) {
-            this.lastFetchError.set(e);
+            this.lastFetchError = e;
             String message = format("machine pool refresh failed: %s", e.getMessage());
             Alert alert = AlertBuilder.create().topic(POOL_FETCH.name()).severity(AlertSeverity.WARN).message(message)
                     .build();

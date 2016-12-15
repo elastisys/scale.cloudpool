@@ -5,7 +5,6 @@ import static org.junit.Assert.assertThat;
 
 import org.junit.Test;
 
-import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.gson.JsonObject;
 
@@ -26,7 +25,7 @@ public class TestCloudPoolConfig {
     /**
      * Should fail validation on missing cloud pool name.
      */
-    @Test(expected = CloudPoolException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void missingPoolName() {
         JsonObject driverConfig = JsonUtils.parseJsonString("{'config': 'value'}").getAsJsonObject();
         CloudPoolConfig config = new CloudPoolConfig(null, driverConfig);
@@ -36,7 +35,7 @@ public class TestCloudPoolConfig {
     /**
      * Should fail validation on missing driver config.
      */
-    @Test(expected = CloudPoolException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void missingDriverConfig() {
         JsonObject driverConfig = null;
         CloudPoolConfig config = new CloudPoolConfig("poolName", driverConfig);

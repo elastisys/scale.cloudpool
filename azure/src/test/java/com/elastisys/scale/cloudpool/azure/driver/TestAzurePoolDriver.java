@@ -126,7 +126,7 @@ public class TestAzurePoolDriver {
 
     @Test(expected = IllegalStateException.class)
     public void startMachinesBeforeConfigured() {
-        this.driver.startMachines(1, validConfig().getScaleOutConfig());
+        this.driver.startMachines(1);
     }
 
     @Test(expected = IllegalStateException.class)

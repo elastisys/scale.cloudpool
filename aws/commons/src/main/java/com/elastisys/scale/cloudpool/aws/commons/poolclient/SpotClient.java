@@ -8,7 +8,6 @@ import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.Tag;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 
 /**
  * An AWS client interface that extends the {@link Ec2Client} with methods for
@@ -54,7 +53,7 @@ public interface SpotClient extends Ec2Client {
      * @return The placed {@link SpotInstanceRequest}s.
      * @throws AmazonClientException
      */
-    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, ScaleOutConfig scaleOutConfig, int count,
+    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, Ec2ScaleOutConfig scaleOutConfig, int count,
             List<Tag> tags) throws AmazonClientException;
 
     /**

@@ -24,11 +24,10 @@ import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.azure.driver.client.AzureClient;
 import com.elastisys.scale.cloudpool.azure.driver.client.VmSpec;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzurePoolDriverConfig;
-import com.elastisys.scale.cloudpool.azure.driver.config.ScaleOutExtConfig;
+import com.elastisys.scale.cloudpool.azure.driver.config.AzureScaleOutConfig;
 import com.elastisys.scale.cloudpool.azure.driver.functions.VmToMachine;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
@@ -59,8 +58,12 @@ public class AzurePoolDriver implements CloudPoolDriver {
     /** Logical name of the managed machine pool. */
     private String poolName;
 
+    /** Client for performing actions against the Azure REST API. */
     private final AzureClient client;
+    /** Azure API access settings. */
     private AzurePoolDriverConfig driverConfig;
+    /** Provisioning template to use when launching new pool machines. */
+    private AzureScaleOutConfig scaleOutConfig;
 
     /** Lock to prevent concurrent access to critical sections. */
     private final Object lock = new Object();
@@ -69,6 +72,7 @@ public class AzurePoolDriver implements CloudPoolDriver {
         this.poolName = null;
         this.client = client;
         this.driverConfig = null;
+        this.scaleOutConfig = null;
     }
 
     @Override
@@ -78,26 +82,29 @@ public class AzurePoolDriver implements CloudPoolDriver {
 
         synchronized (this.lock) {
             AzurePoolDriverConfig driverConfig = validateDriverConfig(config.getCloudPool().getDriverConfig());
+            driverConfig.validate();
 
-            // check azure-specific extensions
-            validateScaleOutAzureExtensions(config.getScaleOutConfig());
+            AzureScaleOutConfig scaleOutConf = parseAndValidateScaleOutConfig(config.getScaleOutConfig());
 
             this.poolName = config.getCloudPool().getName();
             this.client.configure(driverConfig);
             this.driverConfig = driverConfig;
+            this.scaleOutConfig = scaleOutConf;
+
         }
     }
 
-    private void validateScaleOutAzureExtensions(ScaleOutConfig scaleOutConfig) throws IllegalArgumentException {
-        JsonObject extensions = scaleOutConfig.getExtensions();
-        checkArgument(extensions != null, "scaleOutConfig: missing extensions field for Azure-specific functionality");
+    private AzureScaleOutConfig parseAndValidateScaleOutConfig(JsonObject scaleOutConfig)
+            throws IllegalArgumentException {
+        checkArgument(scaleOutConfig != null, "missing scaleOutConfig");
 
         try {
-            ScaleOutExtConfig azureExt = JsonUtils.toObject(extensions, ScaleOutExtConfig.class);
-            azureExt.validate();
+            AzureScaleOutConfig scaleOutTemplate = JsonUtils.toObject(scaleOutConfig, AzureScaleOutConfig.class);
+            scaleOutTemplate.validate();
+
+            return scaleOutTemplate;
         } catch (Exception e) {
-            throw new IllegalArgumentException(
-                    "failed to validate Azure-specific scaleOutConfig extensions: " + e.getMessage(), e);
+            throw new IllegalArgumentException("failed to validate scaleOutConfig: " + e.getMessage(), e);
         }
     }
 
@@ -127,29 +134,26 @@ public class AzurePoolDriver implements CloudPoolDriver {
     }
 
     @Override
-    public List<Machine> startMachines(int count, ScaleOutConfig vmTemplate) throws StartMachinesException {
+    public List<Machine> startMachines(int count) throws StartMachinesException {
         checkState(isConfigured(), "cannot use driver before being configured");
 
-        // azure-specific provisioning details located under extensions field
-        ScaleOutExtConfig vmTemplateAzureExt = JsonUtils.toObject(vmTemplate.getExtensions(), ScaleOutExtConfig.class);
-
-        String vmSize = vmTemplate.getSize();
-        String vmImage = vmTemplate.getImage();
-        Map<String, String> tags = vmTemplateAzureExt.getTags();
+        // add a cloud pool membership tag
+        Map<String, String> tags = this.scaleOutConfig.getTags();
         tags.put(Constants.CLOUD_POOL_TAG, this.poolName);
 
+        // generate unique name for each VM
         long timeMillis = System.currentTimeMillis();
         String vmNamePrefix = this.poolName;
-        if (vmTemplateAzureExt.getVmNamePrefix().isPresent()) {
-            vmNamePrefix = vmTemplateAzureExt.getVmNamePrefix().get();
+        if (this.scaleOutConfig.getVmNamePrefix().isPresent()) {
+            vmNamePrefix = this.scaleOutConfig.getVmNamePrefix().get();
         }
 
         List<VmSpec> vmSpecs = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             String vmName = String.format("%s-%d-%d", vmNamePrefix, timeMillis, i);
-            VmSpec vmSpec = new VmSpec(vmSize, vmImage, vmName, vmTemplateAzureExt.getLinuxSettings(),
-                    vmTemplateAzureExt.getWindowsSettings(), vmTemplateAzureExt.getStorageAccountName(),
-                    vmTemplateAzureExt.getNetwork(), tags);
+            VmSpec vmSpec = new VmSpec(this.scaleOutConfig.getVmSize(), this.scaleOutConfig.getVmImage(), vmName,
+                    this.scaleOutConfig.getLinuxSettings(), this.scaleOutConfig.getWindowsSettings(),
+                    this.scaleOutConfig.getStorageAccountName(), this.scaleOutConfig.getNetwork(), tags);
             vmSpecs.add(vmSpec);
         }
         LOG.info("launching VMs: {}", Joiner.on("\n").join(vmSpecs));

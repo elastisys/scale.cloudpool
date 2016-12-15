@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import org.joda.time.DateTime;
@@ -28,10 +29,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
-import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.commons.basepool.StateStorage;
 import com.elastisys.scale.cloudpool.commons.basepool.config.PoolFetchConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
@@ -41,6 +42,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.PoolFetcher;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.Alert;
+import com.elastisys.scale.commons.net.retryable.Retryers;
 import com.elastisys.scale.commons.util.file.FileUtils;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
@@ -76,11 +78,20 @@ public class TestCachingPoolFetcher {
             new RetriesConfig(3, new TimeInterval(10L, TimeUnit.MILLISECONDS)), REFRESH_INTERVAL, REACHABILITY_TIMEOUT);
 
     @Before
-    public void beforeTestMethod() throws IOException {
-        if (STATE_STORAGE_DIR.exists()) {
-            FileUtils.deleteRecursively(STATE_STORAGE_DIR);
-        }
+    public void beforeTestMethod() throws Exception {
+        deleteStateDir();
         FrozenTime.setFixed(UtcTime.parse("2015-11-16T12:00:00.000Z"));
+    }
+
+    private void deleteStateDir() throws Exception {
+        if (STATE_STORAGE_DIR.exists()) {
+            // make several attempts: appears to fail sometimes
+            Callable<Void> deleteDirTask = () -> {
+                FileUtils.deleteRecursively(STATE_STORAGE_DIR);
+                return null;
+            };
+            Retryers.fixedDelayRetryer("delete-test-dir", deleteDirTask, 1, TimeUnit.SECONDS, 3).call();
+        }
     }
 
     /**

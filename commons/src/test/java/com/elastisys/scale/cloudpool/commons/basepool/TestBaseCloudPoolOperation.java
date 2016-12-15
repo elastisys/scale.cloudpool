@@ -41,7 +41,6 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import org.joda.time.DateTime;
@@ -65,14 +64,12 @@ import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.PoolFetchConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleInConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
-import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.elastisys.scale.commons.util.file.FileUtils;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
@@ -284,7 +281,7 @@ public class TestBaseCloudPoolOperation {
         when(this.driverMock.listMachines()).thenReturn(machines(booting, active, requested, terminated));
         // when asked to start a machine, it will succeed
         Machine newMachine = machine("i-5", MachineState.PENDING);
-        when(this.driverMock.startMachines(1, scaleOutConfig())).thenReturn(machines(newMachine));
+        when(this.driverMock.startMachines(1)).thenReturn(machines(newMachine));
 
         // run test that requests one additional machine to be started
         this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
@@ -298,7 +295,7 @@ public class TestBaseCloudPoolOperation {
         this.cloudPool.updateMachinePool();
 
         // verify that cloud driver was asked to start one additional machine
-        verify(this.driverMock).startMachines(1, scaleOutConfig());
+        verify(this.driverMock).startMachines(1);
 
         // verify event posted on event bus
         verify(this.eventBusMock).post(argThat(IsStartAlert.isStartAlert("i-5")));
@@ -315,7 +312,7 @@ public class TestBaseCloudPoolOperation {
         // when asked to start two more machines, it will succeed
         Machine newMachine1 = machine("i-5", MachineState.PENDING);
         Machine newMachine2 = machine("i-6", MachineState.PENDING);
-        when(this.driverMock.startMachines(2, scaleOutConfig())).thenReturn(machines(newMachine1, newMachine2));
+        when(this.driverMock.startMachines(2)).thenReturn(machines(newMachine1, newMachine2));
 
         // run test that requests two additional machines to be started
         this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
@@ -330,7 +327,7 @@ public class TestBaseCloudPoolOperation {
         this.cloudPool.updateMachinePool();
 
         // verify that cloud driver was asked to start two additional machines
-        verify(this.driverMock).startMachines(2, scaleOutConfig());
+        verify(this.driverMock).startMachines(2);
 
         // verify event posted on event bus
         verify(this.eventBusMock).post(argThat(isStartAlert("i-5", "i-6")));
@@ -356,7 +353,7 @@ public class TestBaseCloudPoolOperation {
         // when asked to start two more machines, cloud pool will succeed but
         // return a machine in REQUESTED state
         Machine requestedMachine = machine("sir-5", MachineState.REQUESTED);
-        when(this.driverMock.startMachines(1, scaleOutConfig())).thenReturn(machines(requestedMachine));
+        when(this.driverMock.startMachines(1)).thenReturn(machines(requestedMachine));
 
         // run test that requests two additional machines to be started
         this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
@@ -371,7 +368,7 @@ public class TestBaseCloudPoolOperation {
         this.cloudPool.updateMachinePool();
 
         // verify that cloud driver was asked to start two additional machines
-        verify(this.driverMock).startMachines(1, scaleOutConfig());
+        verify(this.driverMock).startMachines(1);
 
         // verify event posted on event bus
         verify(this.eventBusMock).post(argThat(isStartAlert("sir-5")));
@@ -391,7 +388,7 @@ public class TestBaseCloudPoolOperation {
         when(this.driverMock.listMachines()).thenReturn(machines(booting, active1, active2, terminated));
         // when asked to start a machine, an error will be raised
         Throwable fault = new StartMachinesException(2, machines(), new Exception("failed to add machines"));
-        when(this.driverMock.startMachines(2, scaleOutConfig())).thenThrow(fault);
+        when(this.driverMock.startMachines(2)).thenThrow(fault);
 
         // run test that requests two additional machines to be started
         this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
@@ -412,7 +409,7 @@ public class TestBaseCloudPoolOperation {
         }
 
         // verify that cloud driver was asked to start two additional machines
-        verify(this.driverMock).startMachines(2, scaleOutConfig());
+        verify(this.driverMock).startMachines(2);
 
         // verify that an error event was posted on event bus
         verify(this.eventBusMock).post(argThat(isAlert(RESIZE.name(), WARN)));
@@ -438,7 +435,7 @@ public class TestBaseCloudPoolOperation {
         Machine newMachine = machine("i-5", MachineState.PENDING);
         Throwable partialFault = new StartMachinesException(2, machines(newMachine),
                 new Exception("failed to start second machine"));
-        when(this.driverMock.startMachines(2, scaleOutConfig())).thenThrow(partialFault);
+        when(this.driverMock.startMachines(2)).thenThrow(partialFault);
 
         // run test that requests two additional machines to be started
         this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
@@ -458,7 +455,7 @@ public class TestBaseCloudPoolOperation {
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(5));
 
         // verify that cloud driver was asked to start two additional machines
-        verify(this.driverMock).startMachines(2, scaleOutConfig());
+        verify(this.driverMock).startMachines(2);
 
         // verify event posted on event bus
         verify(this.eventBusMock).post(argThat(isStartAlert("i-5")));
@@ -799,13 +796,13 @@ public class TestBaseCloudPoolOperation {
         when(this.driverMock.listMachines()).thenReturn(machines(booting, active1, terminated));
         // when asked to start a machine, it will succeed
         Machine newMachine = machine("i-5", MachineState.PENDING);
-        when(this.driverMock.startMachines(1, scaleOutConfig())).thenReturn(machines(newMachine));
+        when(this.driverMock.startMachines(1)).thenReturn(machines(newMachine));
 
         // run pool update (to 3) => scale-out expected
         this.cloudPool.updateMachinePool();
 
         // verify that cloud driver was asked to start one additional machine
-        verify(this.driverMock).startMachines(1, scaleOutConfig());
+        verify(this.driverMock).startMachines(1);
         // verify event posted on event bus
         verify(this.eventBusMock).post(argThat(isStartAlert("i-5")));
 
@@ -949,14 +946,14 @@ public class TestBaseCloudPoolOperation {
 
         // when asked to start a machine, it will succeed
         Machine newMachine = machine("i-3", MachineState.PENDING);
-        when(this.driverMock.startMachines(1, scaleOutConfig())).thenReturn(machines(newMachine));
+        when(this.driverMock.startMachines(1)).thenReturn(machines(newMachine));
 
         // run pool update => expected to start a replacement instance for i-1
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(2));
         this.cloudPool.updateMachinePool();
 
         // verify that cloud driver was asked to start one additional machine
-        verify(this.driverMock).startMachines(1, scaleOutConfig());
+        verify(this.driverMock).startMachines(1);
         // verify event posted on event bus
         verify(this.eventBusMock).post(argThat(isStartAlert("i-3")));
     }
@@ -1424,7 +1421,7 @@ public class TestBaseCloudPoolOperation {
      */
     private JsonObject poolConfig(VictimSelectionPolicy victimSelectionPolicy, int instanceHourMargin) {
         CloudPoolConfig scalingGroupConfig = scalingGroupConfig();
-        ScaleOutConfig scaleUpConfig = scaleOutConfig();
+        JsonObject scaleUpConfig = scaleOutConfig();
         ScaleInConfig scaleDownConfig = new ScaleInConfig(victimSelectionPolicy, instanceHourMargin);
         PoolFetchConfig poolFetchConfig = new PoolFetchConfig(
                 new RetriesConfig(3, new TimeInterval(0L, TimeUnit.SECONDS)), new TimeInterval(20L, TimeUnit.SECONDS),
@@ -1444,12 +1441,8 @@ public class TestBaseCloudPoolOperation {
                 .getAsJsonObject();
     }
 
-    private ScaleOutConfig scaleOutConfig() {
-        String encodedUserData = Base64Utils.toBase64("#!/bin/bash", "sudo apt-get update -qy",
-                "sudo apt-get install -qy apache2");
-        ScaleOutConfig scaleUpConfig = new ScaleOutConfig("size", "image", "keyPair", Arrays.asList("web"),
-                encodedUserData);
-        return scaleUpConfig;
+    private JsonObject scaleOutConfig() {
+        return JsonUtils.parseJsonString("{\"size\": \"t1.small\", \"image\": \"ami-12345678\"}").getAsJsonObject();
     }
 
     private void save(MachinePool pool, File destination) throws IOException {

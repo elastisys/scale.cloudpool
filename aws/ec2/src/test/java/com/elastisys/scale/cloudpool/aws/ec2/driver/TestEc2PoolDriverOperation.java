@@ -24,8 +24,6 @@ import java.util.List;
 import org.eclipse.jetty.server.Server;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
@@ -39,8 +37,8 @@ import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
@@ -50,8 +48,6 @@ import com.elastisys.scale.commons.json.JsonUtils;
  * Verifies the operational behavior of the {@link Ec2PoolDriver}.
  */
 public class TestEc2PoolDriverOperation {
-
-    private static Logger LOG = LoggerFactory.getLogger(TestEc2PoolDriverOperation.class);
 
     private static final String POOL_NAME = "MyScalingPool";
 
@@ -114,14 +110,13 @@ public class TestEc2PoolDriverOperation {
     @Test
     public void startMachines() throws Exception {
         BaseCloudPoolConfig config = config(POOL_NAME);
-        ScaleOutConfig scaleUpConfig = config.getScaleOutConfig();
 
         // scale up from 0 -> 1
         List<Instance> instances = ec2Instances();
         FakeEc2Client fakeEc2Client = new FakeEc2Client(instances);
         this.driver = new Ec2PoolDriver(fakeEc2Client);
         this.driver.configure(config);
-        List<Machine> startedMachines = this.driver.startMachines(1, scaleUpConfig);
+        List<Machine> startedMachines = this.driver.startMachines(1);
         assertThat(startedMachines, is(machines("i-1")));
         // verify that pool/name tag was set on instance
         assertThat(membershipTag(fakeEc2Client.getInstanceMetadata("i-1")), is(POOL_NAME));
@@ -131,7 +126,7 @@ public class TestEc2PoolDriverOperation {
         fakeEc2Client = new FakeEc2Client(instances);
         this.driver = new Ec2PoolDriver(fakeEc2Client);
         this.driver.configure(config);
-        startedMachines = this.driver.startMachines(1, scaleUpConfig);
+        startedMachines = this.driver.startMachines(1);
         assertThat(startedMachines, is(machines("i-2")));
         // verify that pool/name tag was set on instance
         assertThat(membershipTag(fakeEc2Client.getInstanceMetadata("i-2")), is(POOL_NAME));
@@ -141,7 +136,7 @@ public class TestEc2PoolDriverOperation {
         fakeEc2Client = new FakeEc2Client(instances);
         this.driver = new Ec2PoolDriver(fakeEc2Client);
         this.driver.configure(config);
-        startedMachines = this.driver.startMachines(2, scaleUpConfig);
+        startedMachines = this.driver.startMachines(2);
         assertThat(startedMachines, is(machines("i-3", "i-4")));
         // verify that pool/name tag was set on instance
         assertThat(membershipTag(fakeEc2Client.getInstanceMetadata("i-3")), is(POOL_NAME));
@@ -153,16 +148,17 @@ public class TestEc2PoolDriverOperation {
      */
     @Test
     public void startMachinesOnFailure() throws StartMachinesException {
-        ScaleOutConfig scaleUpConfig = config(POOL_NAME).getScaleOutConfig();
+        Ec2ScaleOutConfig scaleOutConfig = JsonUtils.toObject(config(POOL_NAME).getScaleOutConfig(),
+                Ec2ScaleOutConfig.class);
 
         // set up mock to throw an error whenever asked to launch an instance
         setUpMockedScalingGroup(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
-        doThrow(new AmazonClientException("API unreachable")).when(this.mockClient).launchInstances(scaleUpConfig, 1,
+        doThrow(new AmazonClientException("API unreachable")).when(this.mockClient).launchInstances(scaleOutConfig, 1,
                 Arrays.asList(new Tag(CLOUD_POOL_TAG, POOL_NAME)));
 
         // should raise an exception
         try {
-            this.driver.startMachines(1, scaleUpConfig);
+            this.driver.startMachines(1);
             fail("startMachines expected to fail");
         } catch (StartMachinesException e) {
             assertThat(e.getRequestedMachines(), is(1));

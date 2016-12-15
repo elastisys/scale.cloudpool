@@ -9,17 +9,20 @@ import java.util.Optional;
 
 import com.elastisys.scale.cloudpool.azure.driver.Constants;
 import com.elastisys.scale.cloudpool.azure.driver.util.TagValidator;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
 
 /**
- * Azure-specific extensions to a {@link ScaleOutConfig}.
+ * Azure-specific VM provisioning template.
  *
- * @see ScaleOutConfig#getExtensions
- *
+ * @see BaseCloudPoolConfig#getScaleOutConfig()
  */
-public class ScaleOutExtConfig {
+public class AzureScaleOutConfig {
 
+    /** VM size to use for VM. */
+    private final String vmSize;
+    /** Image used to boot VM. */
+    private final String vmImage;
     /**
      * Name prefix to assign to created VMs. The cloudpool will add a VM-unique
      * suffix to the prefix to produce the final VM name:
@@ -57,8 +60,10 @@ public class ScaleOutExtConfig {
     private final Map<String, String> tags;
 
     /**
-     * Creates a {@link ScaleOutExtConfig}.
+     * Creates a {@link AzureScaleOutConfig}.
      *
+     * @param vmSize
+     * @param vmImage
      * @param vmNamePrefix
      *            Name prefix to assign to created VMs. The cloudpool will add a
      *            VM-unique suffix to the prefix to produce the final VM name:
@@ -81,14 +86,35 @@ public class ScaleOutExtConfig {
      *            Note: the {@link Constants#CLOUD_POOL_TAG} will automatically
      *            be set and should not be overridden.
      */
-    public ScaleOutExtConfig(String vmNamePrefix, LinuxSettings linuxSettings, WindowsSettings windowsSettings,
-            String storageAccountName, NetworkSettings network, Map<String, String> tags) {
+    public AzureScaleOutConfig(String vmSize, String vmImage, String vmNamePrefix, LinuxSettings linuxSettings,
+            WindowsSettings windowsSettings, String storageAccountName, NetworkSettings network,
+            Map<String, String> tags) {
+        this.vmSize = vmSize;
+        this.vmImage = vmImage;
         this.vmNamePrefix = vmNamePrefix;
         this.linuxSettings = linuxSettings;
         this.windowsSettings = windowsSettings;
         this.storageAccountName = storageAccountName;
         this.network = network;
         this.tags = tags;
+    }
+
+    /**
+     * VM size to use for VM.
+     *
+     * @return
+     */
+    public String getVmSize() {
+        return this.vmSize;
+    }
+
+    /**
+     * Image used to boot VM.
+     *
+     * @return
+     */
+    public String getVmImage() {
+        return this.vmImage;
     }
 
     /**
@@ -155,14 +181,17 @@ public class ScaleOutExtConfig {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.vmNamePrefix, this.linuxSettings, this.storageAccountName, this.network, this.tags);
+        return Objects.hash(this.vmSize, this.vmImage, this.vmNamePrefix, this.linuxSettings, this.storageAccountName,
+                this.network, this.tags);
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof ScaleOutExtConfig) {
-            ScaleOutExtConfig that = (ScaleOutExtConfig) obj;
-            return Objects.equals(this.vmNamePrefix, that.vmNamePrefix)
+        if (obj instanceof AzureScaleOutConfig) {
+            AzureScaleOutConfig that = (AzureScaleOutConfig) obj;
+            return Objects.equals(this.vmSize, that.vmSize) //
+                    && Objects.equals(this.vmImage, that.vmImage) //
+                    && Objects.equals(this.vmNamePrefix, that.vmNamePrefix)
                     && Objects.equals(this.linuxSettings, that.linuxSettings)
                     && Objects.equals(this.storageAccountName, that.storageAccountName)
                     && Objects.equals(this.network, that.network) && Objects.equals(this.tags, that.tags);
@@ -171,12 +200,14 @@ public class ScaleOutExtConfig {
     }
 
     public void validate() throws IllegalArgumentException {
+        checkArgument(this.vmSize != null, "scaleOutConfig: no vmSize given");
+        checkArgument(this.vmImage != null, "scaleOutConfig: no vmImage given");
         checkArgument(this.linuxSettings != null || this.windowsSettings != null,
-                "extensions: neither linuxSettings nor windowsSettings given");
+                "scaleOutConfig: neither linuxSettings nor windowsSettings given");
         checkArgument(this.linuxSettings != null ^ this.windowsSettings != null,
-                "extensions: may only specify one of linuxSettings and windowsSettings, not both");
+                "scaleOutConfig: may only specify one of linuxSettings and windowsSettings, not both");
         checkArgument(this.storageAccountName != null, "extensions no storageAccountName given");
-        checkArgument(this.network != null, "extensions: no network given");
+        checkArgument(this.network != null, "scaleOutConfig: no network given");
 
         try {
             if (this.linuxSettings != null) {
@@ -186,7 +217,7 @@ public class ScaleOutExtConfig {
                 this.windowsSettings.validate();
             }
         } catch (Exception e) {
-            throw new IllegalArgumentException("extensions: " + e.getMessage(), e);
+            throw new IllegalArgumentException("scaleOutConfig: " + e.getMessage(), e);
         }
 
         this.network.validate();

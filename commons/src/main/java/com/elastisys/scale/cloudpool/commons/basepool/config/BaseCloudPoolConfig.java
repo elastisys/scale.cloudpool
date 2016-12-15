@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.commons.basepool.config;
 
 import static com.google.common.base.Objects.equal;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.String.format;
 
 import java.util.concurrent.TimeUnit;
@@ -20,6 +20,7 @@ import com.elastisys.scale.commons.net.smtp.SmtpClientConfig;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
+import com.google.gson.JsonObject;
 
 /**
  * Represents a configuration for a {@link BaseCloudPool}.
@@ -42,11 +43,18 @@ public class BaseCloudPoolConfig {
     public static final PoolUpdateConfig DEFAULT_POOL_UPDATE_CONFIG = new PoolUpdateConfig(
             new TimeInterval(60L, TimeUnit.SECONDS));
 
-    /** Configuration for the {@link CloudPoolDriver}. */
+    /**
+     * Cloud-specific settings intended for the {@link CloudPoolDriver}.
+     * Typically declares API access credentials and settings.
+     */
     private final CloudPoolConfig cloudPool;
 
-    /** Configuration that describes how to grow the cloud pool. */
-    private final ScaleOutConfig scaleOutConfig;
+    /**
+     * Cloud-specific settings intended for the {@link CloudPoolDriver}, which
+     * describes how to provision new machines when the cloud pool needs to
+     * grow.
+     */
+    private final JsonObject scaleOutConfig;
 
     /** Configuration that describes how to shrink the cloud pool. */
     private final ScaleInConfig scaleInConfig;
@@ -71,9 +79,13 @@ public class BaseCloudPoolConfig {
 
     /**
      * @param cloudPoolConfig
-     *            Configuration for the {@link CloudPoolDriver}.
+     *            Cloud-specific settings intended for the
+     *            {@link CloudPoolDriver}. Typically declares API access
+     *            credentials and settings.
      * @param scaleOutConfig
-     *            Configuration that describes how to grow the cloud pool.
+     *            Cloud-specific settings intended for the
+     *            {@link CloudPoolDriver}, which describes how to provision new
+     *            machines when the cloud pool needs to grow.
      * @param scaleInConfig
      *            Configuration that describes how to shrink the cloud pool.
      * @param alertSettings
@@ -90,9 +102,8 @@ public class BaseCloudPoolConfig {
      *            The time interval (in seconds) between periodical pool size
      *            updates. May be <code>null</code>. Default: 60 seconds.
      */
-    public BaseCloudPoolConfig(CloudPoolConfig cloudPoolConfig, ScaleOutConfig scaleOutConfig,
-            ScaleInConfig scaleInConfig, AlertersConfig alertSettings, PoolFetchConfig poolFetchConfig,
-            PoolUpdateConfig poolUpdatePeriodConfig) {
+    public BaseCloudPoolConfig(CloudPoolConfig cloudPoolConfig, JsonObject scaleOutConfig, ScaleInConfig scaleInConfig,
+            AlertersConfig alertSettings, PoolFetchConfig poolFetchConfig, PoolUpdateConfig poolUpdatePeriodConfig) {
         this.cloudPool = cloudPoolConfig;
         this.scaleOutConfig = scaleOutConfig;
         this.scaleInConfig = scaleInConfig;
@@ -102,7 +113,8 @@ public class BaseCloudPoolConfig {
     }
 
     /**
-     * Configuration for the {@link CloudPoolDriver}.
+     * Cloud-specific settings intended for the {@link CloudPoolDriver}.
+     * Typically declares API access credentials and settings.
      *
      * @return
      */
@@ -111,11 +123,13 @@ public class BaseCloudPoolConfig {
     }
 
     /**
-     * Configuration that describes how to grow the cloud pool.
+     * Cloud-specific settings intended for the {@link CloudPoolDriver}, which
+     * describes how to provision new machines when the cloud pool needs to
+     * grow.
      *
      * @return
      */
-    public ScaleOutConfig getScaleOutConfig() {
+    public JsonObject getScaleOutConfig() {
         return this.scaleOutConfig;
     }
 
@@ -165,12 +179,11 @@ public class BaseCloudPoolConfig {
      */
     public void validate() throws IllegalArgumentException {
         try {
-            checkNotNull(this.cloudPool, "missing cloudPool config");
-            checkNotNull(this.scaleOutConfig, "missing scaleOutConfig");
-            checkNotNull(this.scaleInConfig, "missing scaleInConfig");
+            checkArgument(this.cloudPool != null, "missing cloudPool config");
+            checkArgument(this.scaleOutConfig != null, "missing scaleOutConfig");
+            checkArgument(this.scaleInConfig != null, "missing scaleInConfig");
 
             this.cloudPool.validate();
-            this.scaleOutConfig.validate();
             this.scaleInConfig.validate();
             if (this.alerts != null) {
                 this.alerts.validate();
@@ -196,8 +209,7 @@ public class BaseCloudPoolConfig {
             BaseCloudPoolConfig that = (BaseCloudPoolConfig) obj;
             return equal(this.cloudPool, that.cloudPool) && equal(this.scaleOutConfig, that.scaleOutConfig)
                     && equal(this.scaleInConfig, that.scaleInConfig) && equal(this.alerts, that.alerts)
-                    && equal(this.getPoolFetch(), that.getPoolFetch())
-                    && equal(this.getPoolUpdate(), that.getPoolUpdate());
+                    && equal(getPoolFetch(), that.getPoolFetch()) && equal(getPoolUpdate(), that.getPoolUpdate());
         }
         return false;
     }
@@ -276,9 +288,8 @@ public class BaseCloudPoolConfig {
         public boolean equals(Object obj) {
             if (obj instanceof MailServerSettings) {
                 MailServerSettings that = (MailServerSettings) obj;
-                return equal(this.getSmtpHost(), that.getSmtpHost()) && equal(this.getSmtpPort(), that.getSmtpPort())
-                        && equal(this.getAuthentication(), that.getAuthentication())
-                        && equal(this.isUseSsl(), that.isUseSsl());
+                return equal(getSmtpHost(), that.getSmtpHost()) && equal(getSmtpPort(), that.getSmtpPort())
+                        && equal(getAuthentication(), that.getAuthentication()) && equal(isUseSsl(), that.isUseSsl());
             }
             return false;
         }

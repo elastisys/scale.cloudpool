@@ -26,7 +26,6 @@ import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertTopics;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.FetchOption;
@@ -324,7 +323,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 
         ResizePlan resizePlan = resizePlanner.calculateResizePlan(targetSize);
         if (resizePlan.hasScaleOutActions()) {
-            scaleOut(resizePlan, config.getScaleOutConfig());
+            scaleOut(resizePlan);
         }
         if (resizePlan.hasScaleInActions()) {
             List<ScheduledTermination> terminations = resizePlan.getToTerminate();
@@ -343,13 +342,13 @@ public class StandardPoolUpdater implements PoolUpdater {
         terminateOverdueMachines();
     }
 
-    private List<Machine> scaleOut(ResizePlan resizePlan, ScaleOutConfig scaleOutConfig) throws StartMachinesException {
+    private List<Machine> scaleOut(ResizePlan resizePlan) throws StartMachinesException {
         LOG.info("sparing {} machine(s) from termination, " + "placing {} new request(s)", resizePlan.getToSpare(),
                 resizePlan.getToRequest());
         this.terminationQueue.spare(resizePlan.getToSpare());
 
         try {
-            List<Machine> startedMachines = this.cloudDriver.startMachines(resizePlan.getToRequest(), scaleOutConfig);
+            List<Machine> startedMachines = this.cloudDriver.startMachines(resizePlan.getToRequest());
             startAlert(startedMachines);
             return startedMachines;
         } catch (StartMachinesException e) {

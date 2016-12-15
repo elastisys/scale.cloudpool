@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
+import org.mockito.Matchers;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.ec2.model.Filter;
@@ -40,6 +40,7 @@ import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ScaleOutConfig;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
@@ -47,7 +48,6 @@ import com.elastisys.scale.cloudpool.commons.basepool.config.PoolFetchConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.PoolUpdateConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleInConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
@@ -98,8 +98,8 @@ public class TestSpotPoolDriverOperation {
         ScaleInConfig scaleInConfig = new ScaleInConfig(VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR, 300);
         String encodedUserData = Base64Utils.toBase64("#!/bin/bash", "sudo apt-get update -qy",
                 "sudo apt-get install -qy apache2");
-        ScaleOutConfig scaleOutConfig = new ScaleOutConfig("m1.small", "ami-123", "instancekey", asList("webserver"),
-                encodedUserData);
+        Ec2ScaleOutConfig scaleOutConfig = new Ec2ScaleOutConfig("m1.small", "ami-123", "instancekey",
+                asList("webserver"), encodedUserData);
         SpotPoolDriverConfig driverConfig = new SpotPoolDriverConfig("ABC", "XYZ", "us-east-1", 0.0070, 30L, 30L);
 
         TimeInterval refreshInterval = new TimeInterval(30L, TimeUnit.SECONDS);
@@ -108,7 +108,7 @@ public class TestSpotPoolDriverOperation {
                 refreshInterval, reachabilityTimeout);
         PoolUpdateConfig poolUpdate = new PoolUpdateConfig(new TimeInterval(30L, TimeUnit.SECONDS));
         return new BaseCloudPoolConfig(new CloudPoolConfig(POOL_NAME, JsonUtils.toJson(driverConfig).getAsJsonObject()),
-                scaleOutConfig, scaleInConfig, null, poolFetch, poolUpdate);
+                JsonUtils.toJson(scaleOutConfig).getAsJsonObject(), scaleInConfig, null, poolFetch, poolUpdate);
     }
 
     /**
@@ -175,7 +175,7 @@ public class TestSpotPoolDriverOperation {
         this.driver.configure(config());
 
         doThrow(new AmazonServiceException("something went wrong")).when(this.mockClient)
-                .getSpotInstanceRequests(Mockito.anyCollection());
+                .getSpotInstanceRequests(Matchers.anyCollection());
 
         this.driver.listMachines();
     }
@@ -190,7 +190,7 @@ public class TestSpotPoolDriverOperation {
         this.driver.configure(config());
 
         assertThat(this.driver.listMachines().size(), is(0));
-        List<Machine> started = this.driver.startMachines(1, config().getScaleOutConfig());
+        List<Machine> started = this.driver.startMachines(1);
         assertThat(started.size(), is(1));
         SpotInstanceRequest placedSpotRequest = this.fakeClient.getSpotInstanceRequest(started.get(0).getId());
         assertTrue(placedSpotRequest.getTags().contains(new Tag(CLOUD_POOL_TAG, POOL_NAME)));
@@ -206,9 +206,10 @@ public class TestSpotPoolDriverOperation {
         this.driver.configure(config());
 
         doThrow(new AmazonServiceException("something went wrong")).when(this.mockClient).placeSpotRequests(
-                Mockito.anyDouble(), Mockito.any(ScaleOutConfig.class), Mockito.anyInt(), Mockito.anyListOf(Tag.class));
+                Matchers.anyDouble(), Matchers.any(Ec2ScaleOutConfig.class), Matchers.anyInt(),
+                Matchers.anyListOf(Tag.class));
 
-        this.driver.startMachines(1, config().getScaleOutConfig());
+        this.driver.startMachines(1);
     }
 
     /**
@@ -404,7 +405,7 @@ public class TestSpotPoolDriverOperation {
         this.driver.configure(config());
 
         List<SpotInstanceRequest> poolMembers = asList(spotRequest("sir-1", "open", null, POOL1_TAG));
-        when(this.mockClient.getSpotInstanceRequests(Mockito.anyCollection())).thenReturn(poolMembers);
+        when(this.mockClient.getSpotInstanceRequests(Matchers.anyCollection())).thenReturn(poolMembers);
         Tag poolTag = new Tag(CLOUD_POOL_TAG, POOL_NAME);
         doThrow(new AmazonServiceException("something went wrong")).when(this.mockClient).untagResource("sir-1",
                 asList(poolTag));
@@ -460,7 +461,7 @@ public class TestSpotPoolDriverOperation {
         this.driver.configure(config());
 
         List<SpotInstanceRequest> poolMembers = asList(spotRequest("sir-1", "open", null, POOL1_TAG));
-        when(this.mockClient.getSpotInstanceRequests(Mockito.anyCollection())).thenReturn(poolMembers);
+        when(this.mockClient.getSpotInstanceRequests(Matchers.anyCollection())).thenReturn(poolMembers);
         Tag poolTag = new Tag(CLOUD_POOL_TAG, POOL_NAME);
         doThrow(new AmazonServiceException("something went wrong")).when(this.mockClient).tagResource("sir-1",
                 asList(poolTag));
@@ -513,7 +514,7 @@ public class TestSpotPoolDriverOperation {
         this.driver.configure(config());
 
         List<SpotInstanceRequest> poolMembers = asList(spotRequest("sir-1", "open", null, POOL1_TAG));
-        when(this.mockClient.getSpotInstanceRequests(Mockito.anyCollection())).thenReturn(poolMembers);
+        when(this.mockClient.getSpotInstanceRequests(Matchers.anyCollection())).thenReturn(poolMembers);
         Tag stateTag = new Tag(ScalingTags.SERVICE_STATE_TAG, "BOOTING");
         doThrow(new AmazonServiceException("something went wrong")).when(this.mockClient).tagResource("sir-1",
                 asList(stateTag));
@@ -566,7 +567,7 @@ public class TestSpotPoolDriverOperation {
         this.driver.configure(config());
 
         List<SpotInstanceRequest> poolMembers = asList(spotRequest("sir-1", "open", null, POOL1_TAG));
-        when(this.mockClient.getSpotInstanceRequests(Mockito.anyCollection())).thenReturn(poolMembers);
+        when(this.mockClient.getSpotInstanceRequests(Matchers.anyCollection())).thenReturn(poolMembers);
         Tag statusTag = new Tag(ScalingTags.MEMBERSHIP_STATUS_TAG, MembershipStatus.blessed().toString());
         doThrow(new AmazonServiceException("something went wrong")).when(this.mockClient).tagResource("sir-1",
                 asList(statusTag));

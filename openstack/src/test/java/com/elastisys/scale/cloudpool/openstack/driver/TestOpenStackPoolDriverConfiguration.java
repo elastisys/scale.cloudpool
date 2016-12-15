@@ -16,8 +16,6 @@ import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.openstack.driver.client.OpenstackClient;
 import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
@@ -25,7 +23,6 @@ import com.elastisys.scale.commons.openstack.AuthConfig;
 import com.elastisys.scale.commons.openstack.AuthV2Credentials;
 import com.elastisys.scale.commons.openstack.AuthV3Credentials;
 import com.elastisys.scale.commons.openstack.Scope;
-import com.elastisys.scale.commons.util.base64.Base64Utils;
 
 /**
  * Verifies the behavior of the {@link OpenStackPoolDriver} with respect to
@@ -127,11 +124,7 @@ public class TestOpenStackPoolDriverConfiguration {
 
     @Test(expected = IllegalStateException.class)
     public void invokeStartMachineBeforeBeingConfigured() throws CloudPoolException {
-        String encodedUserData = Base64Utils.toBase64("#!/bin/bash", "sudo apt-get update -qy",
-                "sudo apt-get install -qy apache2");
-        ScaleOutConfig scaleUpConfig = new ScaleOutConfig("size", "image", "keyPair", Arrays.asList("web"),
-                encodedUserData);
-        this.driver.startMachines(2, scaleUpConfig);
+        this.driver.startMachines(2);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -169,67 +162,67 @@ public class TestOpenStackPoolDriverConfiguration {
         this.driver.getPoolName();
     }
 
-    @Test(expected = CloudPoolDriverException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void configureMissingAuth() {
         BaseCloudPoolConfig config = loadCloudPoolConfig("config/config-missing-auth.json");
         this.driver.configure(config);
     }
 
-    @Test(expected = CloudPoolDriverException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void configureWithAuthV2Credentials() {
         BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv2-missing-v2credentials.json");
         this.driver.configure(config);
     }
 
-    @Test(expected = CloudPoolDriverException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void configureWithAuthV2MissingKeystoneUrl() {
         BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv2-missing-keystone.json");
         this.driver.configure(config);
     }
 
-    @Test(expected = CloudPoolDriverException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void configureWithAuthV2MissingUser() {
         BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv2-missing-user.json");
         this.driver.configure(config);
     }
 
-    @Test(expected = CloudPoolDriverException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void configureWithAuthV2MissingTenant() {
         BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv2-missing-tenant.json");
         this.driver.configure(config);
     }
 
-    @Test(expected = CloudPoolDriverException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void configureWithAuthV2MissingPassword() {
         BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv2-missing-password.json");
         this.driver.configure(config);
     }
 
-    @Test(expected = CloudPoolDriverException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void configureWithAuthV3MissingKeystoneUrl() {
         BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv3-missing-keystone.json");
         this.driver.configure(config);
     }
 
-    @Test(expected = CloudPoolDriverException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void configureWithAuthV3MissingPassword() {
         BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv3-missing-password.json");
         this.driver.configure(config);
     }
 
-    @Test(expected = CloudPoolDriverException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void configureWithAuthV3MissingScopeSpecifier() {
         BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv3-missing-scope-specifier.json");
         this.driver.configure(config);
     }
 
-    @Test(expected = CloudPoolDriverException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void configureWithAuthV3MissingScope() {
         BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv3-missing-scope.json");
         this.driver.configure(config);
     }
 
-    @Test(expected = CloudPoolDriverException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void configureWithAuthV3MissingUser() {
         BaseCloudPoolConfig config = loadCloudPoolConfig("config/authv3-missing-user.json");
         this.driver.configure(config);

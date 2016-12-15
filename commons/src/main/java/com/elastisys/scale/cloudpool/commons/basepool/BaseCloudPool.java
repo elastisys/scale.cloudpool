@@ -3,8 +3,6 @@ package com.elastisys.scale.cloudpool.commons.basepool;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +33,6 @@ import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.EventBus;
-import com.google.common.util.concurrent.Atomics;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -208,9 +205,9 @@ public class BaseCloudPool implements CloudPool {
     private final EventBus eventBus;
 
     /** The currently set configuration. */
-    private final AtomicReference<BaseCloudPoolConfig> config;
+    private BaseCloudPoolConfig config;
     /** <code>true</code> if pool has been started. */
-    private final AtomicBoolean started;
+    private boolean started;
 
     /**
      * Dispatches {@link Alert}s sent on the {@link EventBus} to configured
@@ -261,8 +258,8 @@ public class BaseCloudPool implements CloudPool {
         this.alerter = new MultiplexingAlerter();
         this.eventBus.register(this.alerter);
 
-        this.config = Atomics.newReference();
-        this.started = new AtomicBoolean(false);
+        this.config = null;
+        this.started = false;
     }
 
     @Override
@@ -276,9 +273,11 @@ public class BaseCloudPool implements CloudPool {
             }
 
             LOG.debug("setting new configuration: {}", JsonUtils.toPrettyString(jsonConfig));
-            this.config.set(configuration);
             // re-configure driver
             this.cloudDriver.configure(configuration);
+            // set configuration only it it was successfully set on driver
+            this.config = configuration;
+
             // alerters may have changed
             this.alerter.unregisterAlerters();
             this.alerter.registerAlerters(config().getAlerts(), standardAlertMetadata());
@@ -302,11 +301,10 @@ public class BaseCloudPool implements CloudPool {
 
     @Override
     public Optional<JsonObject> getConfiguration() {
-        BaseCloudPoolConfig currentConfig = this.config.get();
-        if (currentConfig == null) {
+        if (this.config == null) {
             return Optional.absent();
         }
-        return Optional.of(JsonUtils.toJson(currentConfig).getAsJsonObject());
+        return Optional.of(JsonUtils.toJson(this.config).getAsJsonObject());
     }
 
     @Override
@@ -326,7 +324,7 @@ public class BaseCloudPool implements CloudPool {
         this.poolFetcher.awaitFirstFetch();
         this.poolUpdater = new StandardPoolUpdater(this.cloudDriver, this.poolFetcher, this.eventBus, config());
 
-        this.started.set(true);
+        this.started = true;
         LOG.info(getClass().getSimpleName() + " started.");
     }
 
@@ -337,7 +335,7 @@ public class BaseCloudPool implements CloudPool {
             // cancel tasks (allow any running tasks to finish)
             this.poolFetcher.close();
             this.poolUpdater.close();
-            this.started.set(false);
+            this.started = false;
         }
         LOG.info(getClass().getSimpleName() + " stopped.");
     }
@@ -362,7 +360,7 @@ public class BaseCloudPool implements CloudPool {
     }
 
     boolean isStarted() {
-        return this.started.get();
+        return this.started;
     }
 
     @Override
@@ -454,7 +452,7 @@ public class BaseCloudPool implements CloudPool {
     }
 
     BaseCloudPoolConfig config() {
-        return this.config.get();
+        return this.config;
     }
 
     void updateMachinePool() {

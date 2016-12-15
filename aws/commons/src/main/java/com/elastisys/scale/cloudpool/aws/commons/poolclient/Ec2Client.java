@@ -8,7 +8,6 @@ import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 
 /**
@@ -74,7 +73,7 @@ public interface Ec2Client {
      * @throws AmazonClientException
      *             if the request failed
      */
-    List<Instance> launchInstances(ScaleOutConfig provisioningDetails, int count, List<Tag> tags)
+    List<Instance> launchInstances(Ec2ScaleOutConfig provisioningDetails, int count, List<Tag> tags)
             throws AmazonClientException;
 
     /**

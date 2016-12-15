@@ -2,10 +2,7 @@ package com.elastisys.scale.cloudpool.commons.basepool.config;
 
 import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.String.format;
 
-import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Objects;
@@ -70,15 +67,10 @@ public class ScaleInConfig {
         return this.instanceHourMargin;
     }
 
-    public void validate() throws CloudPoolException {
-        try {
-            checkNotNull(this.victimSelectionPolicy, "victim selection policy cannot be null");
-            checkArgument(Range.closedOpen(0, 3600).contains(this.instanceHourMargin),
-                    "instance hour margin must be in interval [0, 3600)");
-
-        } catch (Exception e) {
-            throw new CloudPoolException(format("failed to validate scaleDownConfig: %s", e.getMessage()), e);
-        }
+    public void validate() throws IllegalArgumentException {
+        checkArgument(this.victimSelectionPolicy != null, "victim selection policy cannot be null");
+        checkArgument(Range.closedOpen(0, 3600).contains(this.instanceHourMargin),
+                "instance hour margin must be in interval [0, 3600)");
     }
 
     @Override

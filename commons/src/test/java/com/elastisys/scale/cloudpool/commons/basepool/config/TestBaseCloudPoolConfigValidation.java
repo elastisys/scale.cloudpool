@@ -18,7 +18,6 @@ import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerterConfig;
 import com.elastisys.scale.commons.net.smtp.SmtpClientAuthentication;
 import com.elastisys.scale.commons.net.smtp.SmtpClientConfig;
 import com.elastisys.scale.commons.net.ssl.BasicCredentials;
-import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.gson.JsonObject;
 
 /**
@@ -77,51 +76,6 @@ public class TestBaseCloudPoolConfigValidation {
     @Test(expected = IllegalArgumentException.class)
     public void missingScaleOutConfig() throws CloudPoolException {
         new BaseCloudPoolConfig(cloudPoolConfig(), null, scaleInConfig(), alertsConfig(), null, null).validate();
-    }
-
-    // illegal config: missing /scaleOutConfig/size
-    @Test(expected = IllegalArgumentException.class)
-    public void missingScaleOutConfigSize() throws CloudPoolException {
-        ScaleOutConfig scaleOutConfig = scaleOutConfig();
-        setPrivateField(scaleOutConfig, "size", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig, scaleInConfig(), alertsConfig(), null, null)
-                .validate();
-    }
-
-    // illegal config: missing /scaleOutConfig/image
-    @Test(expected = IllegalArgumentException.class)
-    public void missingScaleOutConfigImage() throws CloudPoolException {
-        ScaleOutConfig scaleOutConfig = scaleOutConfig();
-        setPrivateField(scaleOutConfig, "image", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig, scaleInConfig(), alertsConfig(), null, null)
-                .validate();
-    }
-
-    // it is okay for config to miss /scaleOutConfig/keyPair
-    @Test
-    public void missingScaleOutConfigKeyPair() throws CloudPoolException {
-        ScaleOutConfig scaleOutConfig = scaleOutConfig();
-        setPrivateField(scaleOutConfig, "keyPair", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig, scaleInConfig(), alertsConfig(), null, null)
-                .validate();
-    }
-
-    // it is okay for config to miss /scaleOutConfig/securityGroups
-    @Test
-    public void missingScaleOutConfigSecurityGroups() throws CloudPoolException {
-        ScaleOutConfig scaleOutConfig = scaleOutConfig();
-        setPrivateField(scaleOutConfig, "securityGroups", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig, scaleInConfig(), alertsConfig(), null, null)
-                .validate();
-    }
-
-    // it is okay for config to miss /scaleOutConfig/encodedUserData
-    @Test
-    public void missingScaleOutConfigEncodedUserData() throws CloudPoolException {
-        ScaleOutConfig scaleOutConfig = scaleOutConfig();
-        setPrivateField(scaleOutConfig, "encodedUserData", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig, scaleInConfig(), alertsConfig(), null, null)
-                .validate();
     }
 
     // illegal config: missing /alerts/smtp[0]/subject
@@ -277,10 +231,8 @@ public class TestBaseCloudPoolConfigValidation {
         return new CloudPoolConfig("MyScalingGroup", cloudCredentialsConfig());
     }
 
-    private ScaleOutConfig scaleOutConfig() {
-        List<String> bootScript = Arrays.asList("#!/bin/bash", "apt-get update -qy && apt-get isntall apache2 -qy");
-        String encodedUserData = Base64Utils.toBase64(bootScript);
-        return new ScaleOutConfig("size", "image", "keyPair", Arrays.asList("securityGroup"), encodedUserData);
+    private JsonObject scaleOutConfig() {
+        return JsonUtils.parseJsonString("{\"size\": \"t1.small\", \"image\": \"ami-12345678\"}").getAsJsonObject();
     }
 
     private ScaleInConfig scaleInConfig() {

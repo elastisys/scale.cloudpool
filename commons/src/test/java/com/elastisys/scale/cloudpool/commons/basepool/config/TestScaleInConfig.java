@@ -5,7 +5,6 @@ import static org.junit.Assert.assertThat;
 
 import org.junit.Test;
 
-import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 
 /**
@@ -30,13 +29,13 @@ public class TestScaleInConfig {
         assertThat(config.getVictimSelectionPolicy(), is(VictimSelectionPolicy.OLDEST_INSTANCE));
     }
 
-    @Test(expected = CloudPoolException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void negativeInstanceHourMargin() {
         ScaleInConfig config = new ScaleInConfig(VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR, -1);
         config.validate();
     }
 
-    @Test(expected = CloudPoolException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void tooHighInstanceHourMargin() {
         ScaleInConfig config = new ScaleInConfig(VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR, 3600);
         config.validate();

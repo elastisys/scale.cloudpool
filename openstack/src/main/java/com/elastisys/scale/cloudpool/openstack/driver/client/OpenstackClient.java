@@ -6,9 +6,9 @@ import java.util.Map;
 import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleOutConfig;
 import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriver;
 import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackScaleOutConfig;
 
 /**
  * A simplified client interface towards the OpenStack API, which only provides
@@ -63,7 +63,7 @@ public interface OpenstackClient {
      *            Meta data tags to set on the launched server.
      * @return The launched {@link Server}.
      */
-    Server launchServer(String name, ScaleOutConfig provisioningDetails, Map<String, String> tags);
+    Server launchServer(String name, OpenStackScaleOutConfig provisioningDetails, Map<String, String> tags);
 
     /**
      * Allocate a floating IP address and associate it with a given server.

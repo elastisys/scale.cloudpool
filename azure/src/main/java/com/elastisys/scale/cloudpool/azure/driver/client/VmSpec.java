@@ -174,7 +174,9 @@ public class VmSpec {
     public boolean equals(Object obj) {
         if (obj instanceof VmSpec) {
             VmSpec that = (VmSpec) obj;
-            return Objects.equals(this.vmName, that.vmName) //
+            return Objects.equals(this.vmSize, that.vmSize) //
+                    && Objects.equals(this.vmImage, that.vmImage) //
+                    && Objects.equals(this.vmName, that.vmName) //
                     && Objects.equals(this.linuxSettings, that.linuxSettings)
                     && Objects.equals(this.windowsSettings, that.windowsSettings)
                     && Objects.equals(this.storageAccountName, that.storageAccountName)
