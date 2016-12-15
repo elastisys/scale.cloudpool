@@ -72,7 +72,7 @@ fi
 # Java system properties
 #
 
-JVM_OPTS=${JVM_OPTS:-Xmx128m}
+JVM_OPTS=${JVM_OPTS:--Xmx128m}
 JAVA_OPTS="-Djava.net.preferIPv4Stack=true -Djava.util.logging.config.file=${JUL_CONFIG} -Dlogback.configurationFile=${LOG_CONFIG}"
 # On SIGQUIT: make sure a thread dump written to ${LOG_DIR}/jvm.log
 JAVA_OPTS="${JAVA_OPTS} -XX:+UnlockDiagnosticVMOptions -XX:+LogVMOutput -XX:LogFile=${LOG_DIR}/jvm.log -XX:-PrintConcurrentLocks"
