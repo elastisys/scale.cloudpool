@@ -7,6 +7,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -23,6 +24,8 @@ import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig
 import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
+import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.http.HttpAlerterConfig;
@@ -72,14 +75,29 @@ public class TestBaseCloudPoolConfiguration {
         assertEquals(validConfig, config.get());
 
         BaseCloudPoolConfig actualConfig = JsonUtils.toObject(validConfig, BaseCloudPoolConfig.class);
-        // ensure that the Login config is passed through to the ScalingGroup
-        verify(this.driverMock).configure(actualConfig);
+        // verify that a correct DriverConfig gets passed to driver
+        verify(this.driverMock).configure(new DriverConfig(actualConfig.getName(), actualConfig.getCloudApiSettings(),
+                actualConfig.getProvisioningTemplate()));
 
         // check defaults
         BaseCloudPoolConfig conf = this.cloudPool.config();
+        assertThat(conf.getScaleInConfig(), is(BaseCloudPoolConfig.DEFAULT_SCALE_IN_CONFIG));
         assertThat(conf.getAlerts(), is(nullValue()));
         assertThat(conf.getPoolFetch(), is(BaseCloudPoolConfig.DEFAULT_POOL_FETCH_CONFIG));
         assertThat(conf.getPoolUpdate(), is(BaseCloudPoolConfig.DEFAULT_POOL_UPDATE_CONFIG));
+    }
+
+    @Test
+    public void testConfigureWithScaleInConfig() throws CloudPoolException {
+        String configFile = "config/valid-cloudpool-config-with-scale-in.json";
+        JsonObject loadedConfig = JsonUtils.parseJsonResource(configFile).getAsJsonObject();
+        this.cloudPool.configure(loadedConfig);
+
+        assertEquals(this.cloudPool.getConfiguration().get(), loadedConfig);
+
+        assertThat(this.cloudPool.config().getScaleInConfig().getVictimSelectionPolicy(),
+                is(VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR));
+        assertThat(this.cloudPool.config().getScaleInConfig().getInstanceHourMargin(), is(300));
     }
 
     /**
@@ -343,54 +361,55 @@ public class TestBaseCloudPoolConfiguration {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testConfigureWithEmptyConfig() throws CloudPoolException {
+    public void setEmptyConfig() throws CloudPoolException {
         JsonObject emptyConfig = new JsonObject();
         this.cloudPool.configure(emptyConfig);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testConfigureWithIllegalConfig() throws CloudPoolException {
-        JsonObject illegalConfig = JsonUtils.parseJsonResource("config/invalid-cloudpool-config-missing-cloudpool.json")
+    /**
+     * Validation of configuration missing required element should fail.
+     */
+    @Test
+    public void setIllegalConfigMissingName() throws CloudPoolException {
+        JsonObject illegalConfig = JsonUtils.parseJsonResource("config/invalid-cloudpool-config-missing-name.json")
                 .getAsJsonObject();
-        this.cloudPool.configure(illegalConfig);
+
+        try {
+            this.cloudPool.configure(illegalConfig);
+            fail("expected to fail");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("name"));
+        }
+    }
+
+    @Test
+    public void setIllegalConfigMissingCloudApiSettings() throws CloudPoolException {
+        JsonObject illegalConfig = JsonUtils
+                .parseJsonResource("config/invalid-cloudpool-config-missing-cloud-api-settings.json").getAsJsonObject();
+
+        try {
+            this.cloudPool.configure(illegalConfig);
+            fail("expected to fail");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("cloudApiSettings"));
+        }
     }
 
     /**
      * Validation of configuration missing required element should fail.
      */
-    @Test(expected = IllegalArgumentException.class)
-    public void parseIllegalConfigMissingScaleOutConfig() throws CloudPoolException {
-        String jsonConf = "config/invalid-cloudpool-config-missing-scaleoutconfig.json";
+    @Test
+    public void setIllegalConfigMissingProvisioningTemplate() throws CloudPoolException {
+        JsonObject illegalConfig = JsonUtils
+                .parseJsonResource("config/invalid-cloudpool-config-missing-provisioning-template.json")
+                .getAsJsonObject();
 
-        BaseCloudPoolConfig config = JsonUtils.toObject(JsonUtils.parseJsonResource(jsonConf),
-                BaseCloudPoolConfig.class);
-
-        config.validate();
+        try {
+            this.cloudPool.configure(illegalConfig);
+            fail("expected to fail");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("provisioningTemplate"));
+        }
     }
 
-    /**
-     * Validation of configuration missing required element should fail.
-     */
-    @Test(expected = IllegalArgumentException.class)
-    public void parseIllegalConfigMissingScalingGroup() throws CloudPoolException {
-        String jsonConf = "config/invalid-cloudpool-config-missing-cloudpool.json";
-
-        BaseCloudPoolConfig config = JsonUtils.toObject(JsonUtils.parseJsonResource(jsonConf),
-                BaseCloudPoolConfig.class);
-
-        config.validate();
-    }
-
-    /**
-     * Validation of configuration missing required element should fail.
-     */
-    @Test(expected = IllegalArgumentException.class)
-    public void parseIllegalConfigMissingScaleInConfig() throws CloudPoolException {
-        String jsonConf = "config/invalid-cloudpool-config-missing-scaleinconfig.json";
-
-        BaseCloudPoolConfig config = JsonUtils.toObject(JsonUtils.parseJsonResource(jsonConf),
-                BaseCloudPoolConfig.class);
-
-        config.validate();
-    }
 }

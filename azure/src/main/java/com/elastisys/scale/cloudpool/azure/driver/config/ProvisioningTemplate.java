@@ -15,9 +15,9 @@ import com.elastisys.scale.commons.json.JsonUtils;
 /**
  * Azure-specific VM provisioning template.
  *
- * @see BaseCloudPoolConfig#getScaleOutConfig()
+ * @see BaseCloudPoolConfig#getProvisioningTemplate()
  */
-public class AzureScaleOutConfig {
+public class ProvisioningTemplate {
 
     /** VM size to use for VM. */
     private final String vmSize;
@@ -60,7 +60,7 @@ public class AzureScaleOutConfig {
     private final Map<String, String> tags;
 
     /**
-     * Creates a {@link AzureScaleOutConfig}.
+     * Creates a {@link ProvisioningTemplate}.
      *
      * @param vmSize
      * @param vmImage
@@ -86,7 +86,7 @@ public class AzureScaleOutConfig {
      *            Note: the {@link Constants#CLOUD_POOL_TAG} will automatically
      *            be set and should not be overridden.
      */
-    public AzureScaleOutConfig(String vmSize, String vmImage, String vmNamePrefix, LinuxSettings linuxSettings,
+    public ProvisioningTemplate(String vmSize, String vmImage, String vmNamePrefix, LinuxSettings linuxSettings,
             WindowsSettings windowsSettings, String storageAccountName, NetworkSettings network,
             Map<String, String> tags) {
         this.vmSize = vmSize;
@@ -187,8 +187,8 @@ public class AzureScaleOutConfig {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof AzureScaleOutConfig) {
-            AzureScaleOutConfig that = (AzureScaleOutConfig) obj;
+        if (obj instanceof ProvisioningTemplate) {
+            ProvisioningTemplate that = (ProvisioningTemplate) obj;
             return Objects.equals(this.vmSize, that.vmSize) //
                     && Objects.equals(this.vmImage, that.vmImage) //
                     && Objects.equals(this.vmNamePrefix, that.vmNamePrefix)
@@ -200,14 +200,14 @@ public class AzureScaleOutConfig {
     }
 
     public void validate() throws IllegalArgumentException {
-        checkArgument(this.vmSize != null, "scaleOutConfig: no vmSize given");
-        checkArgument(this.vmImage != null, "scaleOutConfig: no vmImage given");
+        checkArgument(this.vmSize != null, "provisioningTemplate: no vmSize given");
+        checkArgument(this.vmImage != null, "provisioningTemplate: no vmImage given");
         checkArgument(this.linuxSettings != null || this.windowsSettings != null,
-                "scaleOutConfig: neither linuxSettings nor windowsSettings given");
+                "provisioningTemplate: neither linuxSettings nor windowsSettings given");
         checkArgument(this.linuxSettings != null ^ this.windowsSettings != null,
-                "scaleOutConfig: may only specify one of linuxSettings and windowsSettings, not both");
-        checkArgument(this.storageAccountName != null, "extensions no storageAccountName given");
-        checkArgument(this.network != null, "scaleOutConfig: no network given");
+                "provisioningTemplate: may only specify one of linuxSettings and windowsSettings, not both");
+        checkArgument(this.storageAccountName != null, "provisioningTemplate: no storageAccountName given");
+        checkArgument(this.network != null, "provisioningTemplate: no network given");
 
         try {
             if (this.linuxSettings != null) {
@@ -217,7 +217,7 @@ public class AzureScaleOutConfig {
                 this.windowsSettings.validate();
             }
         } catch (Exception e) {
-            throw new IllegalArgumentException("scaleOutConfig: " + e.getMessage(), e);
+            throw new IllegalArgumentException("provisioningTemplate: " + e.getMessage(), e);
         }
 
         this.network.validate();

@@ -21,9 +21,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -40,20 +40,14 @@ import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions;
-import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ScaleOutConfig;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTemplate;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
-import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.PoolFetchConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.PoolUpdateConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleInConfig;
+import com.elastisys.scale.cloudpool.aws.spot.driver.config.CloudApiSettings;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
-import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.common.collect.Lists;
@@ -77,6 +71,28 @@ public class TestSpotPoolDriverOperation {
     /** Tag that is set on spot request that are members of a different pool. */
     private static final Tag POOL2_TAG = new Tag().withKey(ScalingTags.CLOUD_POOL_TAG).withValue("pool2");
 
+    /** Sample AWS access key id. */
+    private static final String ACCESS_KEY_ID = "awsAccessKeyId";
+    /** Sample AWS secret access key. */
+    private static final String SECRET_ACCESS_KEY = "awsSecretAccessKey";
+    /** Sample region */
+    private static final String REGION = "us-east-1";
+    private static final long DANGLING_INSTANCE_CLEANUP_PERIOD = 30L;
+    private static final long BID_REPLACEMENT_PERIOD = 30L;
+    private static final double BID_PRICE = 0.0070;
+
+    /** Sample instance type. */
+    private static final String INSTANCE_TYPE = "m1.small";
+    /** Sample image. */
+    private static final String AMI = "ami-12345678";
+    /** Sample keypair. */
+    private static final String KEYPAIR = "ssh-loginkey";
+    /** Sample security groups. */
+    private static final List<String> SECURITY_GROUPS = Arrays.asList("webserver");
+    /** Sample base64-encoded user data. */
+    private static final String USER_DATA = Base64Utils
+            .toBase64(Arrays.asList("#!/bin/bash", "apt-get update -qy && apt-get isntall apache2 -qy"));
+
     /** Fake stubbed {@link SpotClient}. */
     private FakeSpotClient fakeClient;
     /** Mock {@link SpotClient}. */
@@ -91,24 +107,13 @@ public class TestSpotPoolDriverOperation {
         this.fakeClient = new FakeSpotClient();
     }
 
-    /**
-     * @return config to use for the {@link SpotPoolDriver} under test.
-     */
-    private BaseCloudPoolConfig config() {
-        ScaleInConfig scaleInConfig = new ScaleInConfig(VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR, 300);
-        String encodedUserData = Base64Utils.toBase64("#!/bin/bash", "sudo apt-get update -qy",
-                "sudo apt-get install -qy apache2");
-        Ec2ScaleOutConfig scaleOutConfig = new Ec2ScaleOutConfig("m1.small", "ami-123", "instancekey",
-                asList("webserver"), encodedUserData);
-        SpotPoolDriverConfig driverConfig = new SpotPoolDriverConfig("ABC", "XYZ", "us-east-1", 0.0070, 30L, 30L);
-
-        TimeInterval refreshInterval = new TimeInterval(30L, TimeUnit.SECONDS);
-        TimeInterval reachabilityTimeout = new TimeInterval(5L, TimeUnit.MINUTES);
-        PoolFetchConfig poolFetch = new PoolFetchConfig(new RetriesConfig(3, new TimeInterval(2L, TimeUnit.SECONDS)),
-                refreshInterval, reachabilityTimeout);
-        PoolUpdateConfig poolUpdate = new PoolUpdateConfig(new TimeInterval(30L, TimeUnit.SECONDS));
-        return new BaseCloudPoolConfig(new CloudPoolConfig(POOL_NAME, JsonUtils.toJson(driverConfig).getAsJsonObject()),
-                JsonUtils.toJson(scaleOutConfig).getAsJsonObject(), scaleInConfig, null, poolFetch, poolUpdate);
+    private DriverConfig config() {
+        CloudApiSettings cloudApiSettings = new CloudApiSettings(ACCESS_KEY_ID, SECRET_ACCESS_KEY, REGION, BID_PRICE,
+                BID_REPLACEMENT_PERIOD, DANGLING_INSTANCE_CLEANUP_PERIOD);
+        Ec2ProvisioningTemplate provisioningTemplate = new Ec2ProvisioningTemplate(INSTANCE_TYPE, AMI, KEYPAIR,
+                SECURITY_GROUPS, USER_DATA);
+        return new DriverConfig(POOL_NAME, JsonUtils.toJson(cloudApiSettings).getAsJsonObject(),
+                JsonUtils.toJson(provisioningTemplate).getAsJsonObject());
     }
 
     /**
@@ -206,7 +211,7 @@ public class TestSpotPoolDriverOperation {
         this.driver.configure(config());
 
         doThrow(new AmazonServiceException("something went wrong")).when(this.mockClient).placeSpotRequests(
-                Matchers.anyDouble(), Matchers.any(Ec2ScaleOutConfig.class), Matchers.anyInt(),
+                Matchers.anyDouble(), Matchers.any(Ec2ProvisioningTemplate.class), Matchers.anyInt(),
                 Matchers.anyListOf(Tag.class));
 
         this.driver.startMachines(1);
@@ -284,7 +289,7 @@ public class TestSpotPoolDriverOperation {
     public void testCancelWrongPricedRequests() {
         this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
         this.driver.configure(config());
-        double currentBidPrice = this.driver.driverConfig().getBidPrice();
+        double currentBidPrice = this.driver.cloudApiSettings().getBidPrice();
 
         // unfulfilled, wrong bid price => should be replaced
         SpotInstanceRequest spot1 = spotRequest("sir-1", "open", null, POOL1_TAG);
@@ -319,7 +324,7 @@ public class TestSpotPoolDriverOperation {
     public void cancellationOfWrongPricedRequestsWhenAllRequestsHaveCorrectPrice() {
         this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
         this.driver.configure(config());
-        double currentBidPrice = this.driver.driverConfig().getBidPrice();
+        double currentBidPrice = this.driver.cloudApiSettings().getBidPrice();
 
         // unfulfilled, right bid price => should not be replaced
         SpotInstanceRequest spot1 = spotRequest("sir-1", "open", null, POOL1_TAG);

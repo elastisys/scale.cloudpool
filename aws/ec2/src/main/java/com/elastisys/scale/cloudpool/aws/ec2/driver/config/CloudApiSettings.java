@@ -11,7 +11,7 @@ import com.google.common.base.Optional;
 /**
  * Configuration object for an {@link Ec2PoolDriver}.
  */
-public class Ec2PoolDriverConfig {
+public class CloudApiSettings {
     /**
      * The default timeout in milliseconds until a connection is established.
      */
@@ -43,7 +43,7 @@ public class Ec2PoolDriverConfig {
     private final Integer socketTimeout;
 
     /**
-     * Creates a new {@link Ec2PoolDriverConfig}.
+     * Creates a new {@link CloudApiSettings}.
      *
      * @param awsAccessKeyId
      *            The access key id of the AWS account.
@@ -53,12 +53,12 @@ public class Ec2PoolDriverConfig {
      *            The particular AWS region to connect to. For example,
      *            {@code us-east-1}.
      */
-    public Ec2PoolDriverConfig(String awsAccessKeyId, String awsSecretAccessKey, String region) {
+    public CloudApiSettings(String awsAccessKeyId, String awsSecretAccessKey, String region) {
         this(awsAccessKeyId, awsSecretAccessKey, region, null, null);
     }
 
     /**
-     * Creates a new {@link Ec2PoolDriverConfig}.
+     * Creates a new {@link CloudApiSettings}.
      *
      * @param awsAccessKeyId
      *            The access key id of the AWS account.
@@ -78,7 +78,7 @@ public class Ec2PoolDriverConfig {
      *            packets. May be <code>null</code>. Default:
      *            {@value #DEFAULT_SOCKET_TIMEOUT} ms.
      */
-    public Ec2PoolDriverConfig(String awsAccessKeyId, String awsSecretAccessKey, String region,
+    public CloudApiSettings(String awsAccessKeyId, String awsSecretAccessKey, String region,
             Integer connectionTimeout, Integer socketTimeout) {
         this.awsAccessKeyId = awsAccessKeyId;
         this.awsSecretAccessKey = awsSecretAccessKey;
@@ -155,8 +155,8 @@ public class Ec2PoolDriverConfig {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof Ec2PoolDriverConfig) {
-            Ec2PoolDriverConfig that = (Ec2PoolDriverConfig) obj;
+        if (obj instanceof CloudApiSettings) {
+            CloudApiSettings that = (CloudApiSettings) obj;
             return equal(this.awsAccessKeyId, that.awsAccessKeyId)
                     && equal(this.awsSecretAccessKey, that.awsSecretAccessKey) && equal(this.region, that.region)
                     && equal(this.getConnectionTimeout(), that.getConnectionTimeout())

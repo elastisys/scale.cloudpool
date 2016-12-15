@@ -5,7 +5,7 @@ import static com.elastisys.scale.cloudpool.api.types.ServiceState.IN_SERVICE;
 import static com.elastisys.scale.cloudpool.aws.commons.ScalingTags.CLOUD_POOL_TAG;
 import static com.elastisys.scale.cloudpool.aws.commons.ScalingTags.SERVICE_STATE_TAG;
 import static com.elastisys.scale.cloudpool.aws.ec2.driver.MachinesMatcher.machines;
-import static com.elastisys.scale.cloudpool.aws.ec2.driver.TestUtils.config;
+import static com.elastisys.scale.cloudpool.aws.ec2.driver.TestUtils.driverConfig;
 import static com.elastisys.scale.cloudpool.aws.ec2.driver.TestUtils.ec2Instances;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
@@ -37,10 +37,9 @@ import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
-import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ScaleOutConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 
@@ -61,7 +60,7 @@ public class TestEc2PoolDriverOperation {
     @Before
     public void onSetup() throws CloudPoolDriverException {
         this.driver = new Ec2PoolDriver(this.mockClient);
-        this.driver.configure(config(POOL_NAME));
+        this.driver.configure(driverConfig(POOL_NAME));
     }
 
     /**
@@ -109,7 +108,7 @@ public class TestEc2PoolDriverOperation {
      */
     @Test
     public void startMachines() throws Exception {
-        BaseCloudPoolConfig config = config(POOL_NAME);
+        DriverConfig config = driverConfig(POOL_NAME);
 
         // scale up from 0 -> 1
         List<Instance> instances = ec2Instances();
@@ -148,13 +147,10 @@ public class TestEc2PoolDriverOperation {
      */
     @Test
     public void startMachinesOnFailure() throws StartMachinesException {
-        Ec2ScaleOutConfig scaleOutConfig = JsonUtils.toObject(config(POOL_NAME).getScaleOutConfig(),
-                Ec2ScaleOutConfig.class);
-
         // set up mock to throw an error whenever asked to launch an instance
         setUpMockedScalingGroup(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
-        doThrow(new AmazonClientException("API unreachable")).when(this.mockClient).launchInstances(scaleOutConfig, 1,
-                Arrays.asList(new Tag(CLOUD_POOL_TAG, POOL_NAME)));
+        doThrow(new AmazonClientException("API unreachable")).when(this.mockClient).launchInstances(
+                this.driver.provisioningTemplate(), 1, Arrays.asList(new Tag(CLOUD_POOL_TAG, POOL_NAME)));
 
         // should raise an exception
         try {
@@ -171,7 +167,7 @@ public class TestEc2PoolDriverOperation {
      */
     @Test
     public void terminate() throws Exception {
-        BaseCloudPoolConfig config = config(POOL_NAME);
+        DriverConfig config = driverConfig(POOL_NAME);
 
         this.driver = new Ec2PoolDriver(
                 new FakeEc2Client(ec2Instances(memberInstance("i-1", "running"), memberInstance("i-2", "pending"))));
@@ -214,7 +210,7 @@ public class TestEc2PoolDriverOperation {
     public void detach() {
         FakeEc2Client fakeClient = new FakeEc2Client(ec2Instances(memberInstance("i-1", "running")));
         this.driver = new Ec2PoolDriver(fakeClient);
-        this.driver.configure(config(POOL_NAME));
+        this.driver.configure(driverConfig(POOL_NAME));
         assertThat(membershipTag(fakeClient.getInstanceMetadata("i-1")), is(POOL_NAME));
 
         this.driver.detachMachine("i-1");
@@ -254,7 +250,7 @@ public class TestEc2PoolDriverOperation {
     public void attach() {
         FakeEc2Client fakeClient = new FakeEc2Client(ec2Instances(nonMemberInstance("i-1", "running")));
         this.driver = new Ec2PoolDriver(fakeClient);
-        this.driver.configure(config(POOL_NAME));
+        this.driver.configure(driverConfig(POOL_NAME));
         assertThat(membershipTag(fakeClient.getInstanceMetadata("i-1")), is(nullValue()));
 
         this.driver.attachMachine("i-1");
@@ -270,7 +266,7 @@ public class TestEc2PoolDriverOperation {
         FakeEc2Client fakeClient = new FakeEc2Client(ec2Instances(nonMemberInstance("i-1", "running")));
 
         this.driver = new Ec2PoolDriver(fakeClient);
-        this.driver.configure(config(POOL_NAME));
+        this.driver.configure(driverConfig(POOL_NAME));
 
         this.driver.attachMachine("i-2");
     }
@@ -297,7 +293,7 @@ public class TestEc2PoolDriverOperation {
     public void setServiceState() {
         FakeEc2Client fakeClient = new FakeEc2Client(ec2Instances(memberInstance("i-1", "running")));
         this.driver = new Ec2PoolDriver(fakeClient);
-        this.driver.configure(config(POOL_NAME));
+        this.driver.configure(driverConfig(POOL_NAME));
         assertThat(serviceStateTag(fakeClient.getInstanceMetadata("i-1")), is(nullValue()));
 
         this.driver.setServiceState("i-1", BOOTING);
@@ -341,7 +337,7 @@ public class TestEc2PoolDriverOperation {
     public void setMembershipStatus() {
         FakeEc2Client fakeClient = new FakeEc2Client(ec2Instances(memberInstance("i-1", "running")));
         this.driver = new Ec2PoolDriver(fakeClient);
-        this.driver.configure(config(POOL_NAME));
+        this.driver.configure(driverConfig(POOL_NAME));
         assertThat(membershipStatusTag(fakeClient.getInstanceMetadata("i-1")), is(nullValue()));
 
         MembershipStatus status = MembershipStatus.awaitingService();

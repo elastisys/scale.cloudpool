@@ -80,30 +80,33 @@ referenced by the cloud pool's VM provisioning template.
 
 
 ## Configuration
-The `azurepool` is configured with a JSON document such as the following:
+The `azurepool` is configured with a JSON document which follows the general
+structure described in the [root-level README.md](../README.md).
+
+For the cloud-specific parts of the configuration (`cloudApiSettings` 
+and `provisioningTemplate`), the `azurepool` requires input similar
+to the following:
 
 ```javascript
-{
-    "cloudPool": {
-        "name": "AzureLinuxVmPool",
-        "driverConfig": {
-            "apiAccess": {
-                "subscriptionId": "12345678-9abc-def0-1234-56789abcdef0",
-                "auth": {
-                    "clientId": "12345678-9abc-def0-1234-56789abcdef0",
-                    "domain": "12345678-9abc-def0-1234-56789abcdef0",
-                    "secret": "12345678-9abc-def0-1234-56789abcdef0",
-                    "environment": "AZURE"
-                },
-                "connectionTimeout": { "time": 10, "unit": "seconds" },
-                "readTimeout": { "time": 10, "unit": "seconds" },
-                "azureSdkLogLevel": "NONE"
+    ...	
+    "cloudApiSettings": {
+        "apiAccess": {
+            "subscriptionId": "12345678-9abc-def0-1234-56789abcdef0",
+            "auth": {
+                "clientId": "12345678-9abc-def0-1234-56789abcdef0",
+                "domain": "12345678-9abc-def0-1234-56789abcdef0",
+                "secret": "12345678-9abc-def0-1234-56789abcdef0",
+                "environment": "AZURE"
             },
-            "resourceGroup": "testpool",
-            "region": "northeurope"
-        }	
+            "connectionTimeout": { "time": 10, "unit": "seconds" },
+            "readTimeout": { "time": 10, "unit": "seconds" },
+            "azureSdkLogLevel": "NONE"
+        },
+        "resourceGroup": "testpool",
+        "region": "northeurope"
     },
-    "scaleOutConfig": {
+	
+    "provisioningTemplate": {
         "size": "Standard_DS1_v2",
         "image": "Canonical:UbuntuServer:16.04.0-LTS:latest",
         "extensions": {
@@ -126,68 +129,14 @@ The `azurepool` is configured with a JSON document such as the following:
             }
         }
     },
-    "scaleInConfig": {
-        "victimSelectionPolicy": "NEWEST_INSTANCE",
-        "instanceHourMargin": 0
-    },
-    "alerts": {
-        "duplicateSuppression": { "time": 5, "unit": "minutes" },
-        "smtp": [
-            {
-                "subject": "[elastisys] cloud pool alert for AzureLinuxVmPool",
-                "recipients": ["foo@bar.com"],
-                "sender": "noreply@foo.com",
-                "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
-                "smtpClientConfig": {
-                    "smtpHost": "my.smtp.server",
-                    "smtpPort": 465,
-                    "authentication": {
-                        "userName": "smtpclient", 
-                        "password": "password"
-                    },
-                    "useSsl": true
-                }
-            }
-        ],
-	    "http": [
-            {
-                "destinationUrls": ["https://some.host1:443/"],
-                "severityFilter": "ERROR|FATAL",
-                "auth": {
-                    "basicCredentials": { "username": "user1", "password": "secret1" }
-                }
-            },
-            {
-                "destinationUrls": ["https://some.host2:443/"],
-                "severityFilter": "INFO|WARN", 
-                "auth": {
-                "certificateCredentials": { "keystorePath": "src/test/resources/security/client_keystore.p12", "keystorePassword": "secret" }
-            }
-        ]
-    },
-    "poolFetch": {
-        "retries": { 
-            "maxRetries": 3, 
-            "initialBackoffDelay": {"time": 3, "unit": "seconds"}
-        },
-        "refreshInterval": {"time": 30, "unit": "seconds"},
-        "reachabilityTimeout": {"time": 5, "unit": "minutes"}
-    },
-    "poolUpdate": {
-        "updateInterval": {"time": 60, "unit": "seconds"}
-    }
-}
+...
 ```
 
 
 The configuration keys have the following meaning:
 
-  - `cloudPool`: Describes how to identify/manage pool members 
-    and connect to the cloud provider.
-    - `name`: The logical name of the managed machine pool. All servers with this 
-      tag are to be considered members of the pool.
-    - `driverConfig`: describes how to communicate with the Azure API.
-      - `apiAccess`: Azure [service principal](https://github.com/Azure/azure-sdk-for-java/blob/master/AUTH.md) access credentials and settings:
+- `cloudApiSettings`: API access credentials and settings.
+    - `apiAccess`: Azure [service principal](https://github.com/Azure/azure-sdk-for-java/blob/master/AUTH.md) access credentials and settings:
         - `subscriptionId`: The Azure account subscription that will be billed allocated resources. Format: `XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`.
         - `auth`: Azure API authentication credentials.
 		  - `clientId`: The active directory client id for this application. May also be referred to as `appId`. Format: `XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`.
@@ -197,9 +146,10 @@ The configuration keys have the following meaning:
         - `connectionTimeout` (*optional*): The timeout until a connection is established. Default: `10 seconds`.
         - `socketTimeout` (*optional*): The socket timeout (`SO_TIMEOUT`), which is the timeout for waiting for data or, put differently, a maximum period inactivity between two consecutive data packets. Default: `10 seconds`.
 		- `azureSdkLogLevel` (*optional*): The log level to see REST API requests made to the Azure API. One of `NONE`, `BASIC`, `HEADERS`, and `BODY`. Default: `NONE`.
-      - `resourceGroup`: The name of the [resource group](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-overview) that contains referenced resources (VMs, networks, security groups, etc). *Note: this asset must have been created in advance.*
-      - `region`: The region where pool VMs and referenced assets (networks, security groups, images, etc) are located in. For example, `northeurope`.
-  - `scaleOutConfig`: Describes how to provision additional servers (on scale-out).
+    - `resourceGroup`: The name of the [resource group](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-overview) that contains referenced resources (VMs, networks, security groups, etc). *Note: this asset must have been created in advance.*
+    - `region`: The region where pool VMs and referenced assets (networks, security groups, images, etc) are located in. For example, `northeurope`.
+
+- `provisioningTemplate`: Describes how to provision additional servers (on scale-out).
     - `size`: The name of the server type to launch. For example, `Standard_DS1_v2`.
     - `image`: The name of the machine image used to boot new servers. For example, `Canonical:UbuntuServer:16.04.0-LTS:latest`.
     - `extensions`: Azure-specific VM provisioning settings
@@ -225,64 +175,6 @@ The configuration keys have the following meaning:
 	    - `networkSecurityGroups` (*optional*): A set of existing network security groups to associate with created VMs. May be {@code null}, which means that no security groups get associated with the primary network interface of created VMs. The default behavior is to allow all inbound traffic from inside the VM's virtual network and to allow all outbound traffic from a VM.
 	  - `tags` (*optional*): Tags to associate with created VMs. *Note: a `elastisys-CloudPool` tag will automatically be set on each pool VM and should not be overridden*.
 	  
-  - `scaleInConfig`: Describes how to decommission servers (on scale-down).
-    - `victimSelectionPolicy`: Policy for selecting which server to 
-      terminate. Allowed values: `NEWEST_INSTANCE`, `OLDEST_INSTANCE`, 
-      `CLOSEST_TO_INSTANCE_HOUR`.
-    - `instanceHourMargin`: How many seconds prior to the next instance hour 
-      an acquired machine instance should be scheduled for termination. Since
-	  Azure uses per-minute VM billing, this can safely be set to `0`.
-  - `alerts`: Configuration that describes how to send alerts via email or HTTP(S) webhooks.
-    - `duplicateSuppression` (optional): Duration of time to suppress
-      duplicate alerts from being re-sent. Two alerts are considered equal if
-      they share topic, message and metadata tags.
-    - `smtp`: a list of email alert senders
-      - `subject`: The subject line to use in sent mails (Subject).
-      - `recipients`: The receiver list (a list of recipient email addresses).
-      - `sender`: The sender email address to use in sent mails (From).
-      - `severityFilter`: A regular expression used to filter alerts. Alerts 
-        with a severity (one of `DEBUG`, `INFO`, `NOTICE`, `WARN`, 
-        `ERROR`, `FATAL`) that doesn't match the filter expression are 
-        suppressed and not sent. Default: `.*`.
-        - `smtpClientConfig`: Connection settings for the SMTP client.
-          - `smtpHost`: SMTP server host name/IP address.
-          - `smtpPort`: SMTP server port. Default is 25.
-          - `authentication`: Optional username/password to authenticate with SMTP
-            server. If left out, authentication is disabled.
-          - `useSsl`: Enables/disables the use of SSL for SMTP connections. Default 
-            is false (disabled).
-    - `http`: a list of HTTP(S) webhook alert senders, which will `POST` alerts
-       to the specified endpoint using the (optional) configured authentication 
-       credentials.
-      - `destinationUrls`: The list of destination endpoint URLs.
-      - `severityFilter`: A regular expression used to filter alerts. Alerts 
-        with a severity (one of `DEBUG`, `INFO`, `NOTICE`, `WARN`, 
-        `ERROR`, `FATAL`) that doesn't match the filter expression are 
-        suppressed and not sent. Default: `.*`.
-      - `auth`: Authentication credentials. Can specify either `basicCredentials`
-        or `certificateCredentials` or both.
-        - `basicCredentials`: `username` and `password` to use for BASIC-style
-          authentication.
-        - `certificateCredentials`: `keystorePath` and `keystorePassword`
-          for client certificate-based authentication.
-  - `poolFetch` (optional): Controls how often to refresh the cloud 
-    pool member list and for how long to mask cloud API errors.
-    Default: `retries`: 3 retries with 3 second initial exponential back-off delay,
-    `refreshInterval`: 30 seconds, `reachabilityTimeout`: 5 minutes.
-    - `retries`: Retry handling when fetching pool members from the cloud API fails.
-      - `maxRetries`: Maximum number of retries to make on each attempt to fetch pool 
-        members.
-      - `initialBackoffDelay`: Initial delay to use in exponential back-off on retries. 
-        May be zero, which results in no delay between retries.        
-    - `refreshInterval`: How often to refresh the cloud pool's view of the machine 
-      pool members.
-    - `reachabilityTimeout`: How long to respond with cached machine pool observations
-      before responding with a cloud reachability error. In other words, for how long should
-      failures to fetch the machine pool be masked.              
-  - `poolUpdate` (optional): Controls the behavior with respect to how often to 
-    attempt to update the size of the machine pool to match the desired size.
-    - `updateInterval`: The time interval between  periodical pool size updates. 
-      Default: 60 seconds.
 
 
 
@@ -290,7 +182,7 @@ The configuration keys have the following meaning:
 
 The example above illustrated how to configure the pool to boot Linux VMs. 
 To set up a pool of Windows VMs, replace the `linuxSettings` element in the
-`scaleOutConfig` with a `windowsSettings` similar to the following:
+`provisioningTemplate` with a `windowsSettings` similar to the following:
 
 ```javascript
 

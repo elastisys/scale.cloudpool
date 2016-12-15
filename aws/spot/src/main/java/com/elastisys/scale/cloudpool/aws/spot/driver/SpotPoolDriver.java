@@ -13,7 +13,6 @@ import static com.elastisys.scale.cloudpool.aws.commons.ScalingFilters.SPOT_REQU
 import static com.elastisys.scale.cloudpool.aws.commons.ScalingTags.MEMBERSHIP_STATUS_TAG;
 import static com.elastisys.scale.cloudpool.aws.commons.ScalingTags.SERVICE_STATE_TAG;
 import static com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions.toSpotRequestId;
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Lists.transform;
 import static java.lang.String.format;
@@ -47,16 +46,16 @@ import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions;
-import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ScaleOutConfig;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTemplate;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
 import com.elastisys.scale.cloudpool.aws.spot.driver.alerts.AlertTopics;
+import com.elastisys.scale.cloudpool.aws.spot.driver.config.CloudApiSettings;
 import com.elastisys.scale.cloudpool.aws.spot.functions.InstancePairedSpotRequestToMachine;
 import com.elastisys.scale.cloudpool.aws.spot.metadata.InstancePairedSpotRequest;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
-import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.alerter.Alert;
@@ -71,7 +70,6 @@ import com.google.common.collect.Lists;
 import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 
 /**
  * A {@link CloudPoolDriver} that provides a management interface towards a pool
@@ -82,34 +80,6 @@ import com.google.gson.JsonObject;
  * The {@link SpotPoolDriver} operates according to the {@link CloudPoolDriver}
  * contract. Some details on how the {@link SpotPoolDriver} satisfies the
  * contract are summarized below.
- *
- * <h3>Configuration</h3>
- *
- * When {@link #configure(BaseCloudPoolConfig)} is called, the
- * {@link SpotPoolDriver} expects a {@link BaseCloudPoolConfig} that contains a
- * {@code driverConfig} that contains a {@link SpotPoolDriverConfig}. Refer to
- * the {@link #CONFIG_SCHEMA} for a description of the driver's configuration
- * parameters.
- * <p/>
- *
- * <pre>
- *         {
- *             "cloudPool": {
- *                 "name": "MyScalingPool",
- *                 "driverConfig": {
- *                     "awsAccessKeyId": "ABC...XYZ",
- *                     "awsSecretAccessKey": "abc...123",
- *                     "region": "us-east-1",
- *                     "bidPrice": 0.007,
- *                     "bidReplacementPeriod": 120,
- *                     "danglingInstanceCleanupPeriod": 120,
- *                     "connectionTimeout": 10000,
- *                     "socketTimeout": 10000
- *                 }
- *             },
- *             ... rest of BaseCloudPool configuration
- *         }
- * </pre>
  *
  * <h3>Identifying pool members</h3> The {@link SpotPoolDriver} tracks members
  * of the spot pool via a {@link ScalingTags#CLOUD_POOL_TAG} tag. All spot
@@ -174,12 +144,8 @@ public class SpotPoolDriver implements CloudPoolDriver {
     /** Task grace time (in seconds) when the {@link #executor} is restarted. */
     private static final int TASK_TERMINATION_GRACETIME = 30;
 
-    /** Logical name of the managed machine pool. */
-    private String poolName;
-    /** Driver configuration. */
-    private SpotPoolDriverConfig driverConfig;
-    /** Provisioning template to use when launching new pool machines. */
-    private Ec2ScaleOutConfig scaleOutConfig;
+    /** The current driver configuration. */
+    private DriverConfig config;
 
     /** Task executor. */
     private final RestartableScheduledExecutorService executor;
@@ -219,49 +185,30 @@ public class SpotPoolDriver implements CloudPoolDriver {
         this.client = client;
         this.eventBus = eventBus;
 
-        this.poolName = null;
-        this.driverConfig = null;
         ThreadFactory threadFactory = new ThreadFactoryBuilder().setDaemon(true).setNameFormat("spotdriver-tasks-%d")
                 .build();
         this.executor = new StandardRestartableScheduledExecutorService(MAX_THREADS, threadFactory);
     }
 
     @Override
-    public void configure(BaseCloudPoolConfig configuration) throws IllegalArgumentException, CloudPoolDriverException {
-        CloudPoolConfig cloudPoolConfig = configuration.getCloudPool();
-        checkArgument(cloudPoolConfig != null, "missing cloudPool config");
-        JsonObject driverConfig = cloudPoolConfig.getDriverConfig();
-        checkArgument(driverConfig != null, "missing driverConfig");
-
+    public void configure(DriverConfig configuration) throws IllegalArgumentException, CloudPoolDriverException {
         synchronized (this.lock) {
-            SpotPoolDriverConfig newDriverConfig = JsonUtils.toObject(driverConfig, SpotPoolDriverConfig.class);
-            newDriverConfig.validate();
+            // parse and validate openstack-specific cloudApiSettings
+            CloudApiSettings cloudApiSettings = configuration.parseCloudApiSettings(CloudApiSettings.class);
+            cloudApiSettings.validate();
 
-            Ec2ScaleOutConfig scaleOutConf = parseAndValidateScaleOutConfig(configuration.getScaleOutConfig());
+            // parse and validate openstack-specific provisioningTemplate
+            Ec2ProvisioningTemplate provisioningTemplate = configuration
+                    .parseProvisioningTemplate(Ec2ProvisioningTemplate.class);
+            provisioningTemplate.validate();
 
-            this.poolName = cloudPoolConfig.getName();
-            this.driverConfig = newDriverConfig;
-            this.scaleOutConfig = scaleOutConf;
+            this.config = configuration;
             ClientConfiguration clientConfig = new ClientConfiguration()
-                    .withConnectionTimeout(newDriverConfig.getConnectionTimeout())
-                    .withSocketTimeout(newDriverConfig.getSocketTimeout());
-            this.client.configure(newDriverConfig.getAwsAccessKeyId(), newDriverConfig.getAwsSecretAccessKey(),
-                    newDriverConfig.getRegion(), clientConfig);
+                    .withConnectionTimeout(cloudApiSettings.getConnectionTimeout())
+                    .withSocketTimeout(cloudApiSettings.getSocketTimeout());
+            this.client.configure(cloudApiSettings.getAwsAccessKeyId(), cloudApiSettings.getAwsSecretAccessKey(),
+                    cloudApiSettings.getRegion(), clientConfig);
             start();
-        }
-    }
-
-    private Ec2ScaleOutConfig parseAndValidateScaleOutConfig(JsonObject scaleOutConfig)
-            throws IllegalArgumentException {
-        checkArgument(scaleOutConfig != null, "missing scaleOutConfig");
-
-        try {
-            Ec2ScaleOutConfig scaleOutTemplate = JsonUtils.toObject(scaleOutConfig, Ec2ScaleOutConfig.class);
-            scaleOutTemplate.validate();
-
-            return scaleOutTemplate;
-        } catch (Exception e) {
-            throw new IllegalArgumentException("failed to validate scaleOutConfig: " + e.getMessage(), e);
         }
     }
 
@@ -279,10 +226,10 @@ public class SpotPoolDriver implements CloudPoolDriver {
         }
         this.executor.start();
         LOG.info("starting periodical execution of cleanup tasks");
-        long period = driverConfig().getDanglingInstanceCleanupPeriod();
+        long period = cloudApiSettings().getDanglingInstanceCleanupPeriod();
         this.executor.scheduleWithFixedDelay(new DanglingInstanceCleaner(), period, period, TimeUnit.SECONDS);
 
-        long bidReplacePeriod = driverConfig().getBidReplacementPeriod();
+        long bidReplacePeriod = cloudApiSettings().getBidReplacementPeriod();
         this.executor.scheduleWithFixedDelay(new WrongPricedRequestCanceller(), bidReplacePeriod, bidReplacePeriod,
                 TimeUnit.SECONDS);
     }
@@ -306,8 +253,8 @@ public class SpotPoolDriver implements CloudPoolDriver {
         List<Machine> startedMachines = Lists.newArrayList();
         try {
 
-            List<SpotInstanceRequest> spotRequests = this.client.placeSpotRequests(driverConfig().getBidPrice(),
-                    this.scaleOutConfig, count, asList(poolMembershipTag()));
+            List<SpotInstanceRequest> spotRequests = this.client.placeSpotRequests(cloudApiSettings().getBidPrice(),
+                    provisioningTemplate(), count, asList(poolMembershipTag()));
             List<String> spotIds = Lists.transform(spotRequests, AwsEc2Functions.toSpotRequestId());
             LOG.info("placed spot requests: {}", spotIds);
             for (SpotInstanceRequest spotRequest : spotRequests) {
@@ -413,7 +360,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
     @Override
     public String getPoolName() {
         checkState(isConfigured(), "attempt to use unconfigured driver");
-        return this.poolName;
+        return config().getPoolName();
     }
 
     @Override
@@ -422,7 +369,23 @@ public class SpotPoolDriver implements CloudPoolDriver {
     }
 
     private boolean isConfigured() {
-        return this.driverConfig != null;
+        return this.config != null;
+    }
+
+    DriverConfig config() {
+        return this.config;
+    }
+
+    SpotClient client() {
+        return this.client;
+    }
+
+    CloudApiSettings cloudApiSettings() {
+        return config().parseCloudApiSettings(CloudApiSettings.class);
+    }
+
+    Ec2ProvisioningTemplate provisioningTemplate() {
+        return config().parseProvisioningTemplate(Ec2ProvisioningTemplate.class);
     }
 
     /**
@@ -509,14 +472,6 @@ public class SpotPoolDriver implements CloudPoolDriver {
         return new Tag().withKey(ScalingTags.CLOUD_POOL_TAG).withValue(getPoolName());
     }
 
-    SpotClient client() {
-        return this.client;
-    }
-
-    SpotPoolDriverConfig driverConfig() {
-        return this.driverConfig;
-    }
-
     /**
      * Verifies that a particular {@link SpotInstanceRequest} exists and is a
      * member of the pool. If it is not tagged with the pool membership tag a
@@ -600,7 +555,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
      *         were cancelled.
      */
     List<String> cancelWrongPricedRequests() {
-        double currentBidPrice = driverConfig().getBidPrice();
+        double currentBidPrice = cloudApiSettings().getBidPrice();
         LOG.info("cancelling unfulfilled spot requests with bidprice " + "other than {} ...", currentBidPrice);
         List<InstancePairedSpotRequest> unfulfilledRequests = getPoolSpotRequests(asList(Open.toString()));
         List<String> wrongPricedSpotIds = new ArrayList<>();

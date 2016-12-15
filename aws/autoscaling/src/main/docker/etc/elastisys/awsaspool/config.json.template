@@ -1,31 +1,28 @@
 {
-    "cloudPool": {
-        "name": "${CLOUD_POOL_NAME}",
-        "driverConfig": {
+    "name": "${CLOUD_POOL_NAME}",
+
+    "cloudApiSettings": {
             "awsAccessKeyId": "${AWS_ACCESS_KEY_ID}",
             "awsSecretAccessKey": "${AWS_SECRET_ACCESS_KEY}",
             "region": "${AWS_REGION}",
             "connectionTimeout": 10000,
             "socketTimeout": 10000
-        }
     },
-    "scaleOutConfig": {
-        "_comment": "These properties are specified in an AWS Launch Configuration for the Auto Scaling Group.",
-        "size": "N/A",
-        "image": "N/A",
-        "keyPair": "N/A",
-        "securityGroups": [],
-        "encodedUserData": "N/A"
+
+    "provisioningTemplate": {
+        "autoScalingGroup": "${AUTO_SCALING_GROUP_NAME}"
     },
+
     "scaleInConfig": {
         "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
         "instanceHourMargin": 300
     },
+
     "alerts": {
         "duplicateSuppression": { "time": 5, "unit": "minutes" },
         "smtp": [
             {
-                "subject": "[elastisys:scale] cloud pool alert for ${CLOUD_POOL_NAME}",    
+                "subject": "[elastisys:scale] cloud pool alert for ${CLOUD_POOL_NAME}",
                 "recipients": ["${EMAIL_ADDRESS}"],
                 "sender": "noreply@elastisys.com",
                 "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
@@ -33,7 +30,7 @@
                     "smtpHost": "${EMAIL_SERVER}",
                     "smtpPort": 465,
                     "authentication": {
-                        "userName": "${EMAIL_USER}", 
+                        "userName": "${EMAIL_USER}",
                         "password": "${EMAIL_PASSWORD}"
                     },
                     "useSsl": true
@@ -43,22 +40,24 @@
         "http": [
             {
                 "destinationUrls": ["${WEBHOOK_URL}"],
-                "severityFilter": "INFO|WARN|ERROR|FATAL", 
+                "severityFilter": "INFO|WARN|ERROR|FATAL",
                 "auth": {
                     "basicCredentials": { "username": "${USERNAME}", "password": "${PASSWORD}" }
-                }      
-            }    
+                }
+            }
         ]
     },
+
     "poolFetch": {
-        "retries": { 
-            "maxRetries": 3, 
+        "retries": {
+            "maxRetries": 3,
             "initialBackoffDelay": {"time": 3, "unit": "seconds"}
         },
         "refreshInterval": {"time": 30, "unit": "seconds"},
         "reachabilityTimeout": {"time": 5, "unit": "minutes"}
     },
+
     "poolUpdate": {
         "updateInterval": {"time": 60, "unit": "seconds"}
     }
-}  
+}

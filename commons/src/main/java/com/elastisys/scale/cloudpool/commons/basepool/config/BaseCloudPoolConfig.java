@@ -1,9 +1,10 @@
 package com.elastisys.scale.cloudpool.commons.basepool.config;
 
-import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.String.format;
 
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
@@ -11,15 +12,13 @@ import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
+import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.net.alerter.multiplexing.AlertersConfig;
 import com.elastisys.scale.commons.net.smtp.SmtpClientAuthentication;
 import com.elastisys.scale.commons.net.smtp.SmtpClientConfig;
-import com.google.common.base.Objects;
-import com.google.common.base.Optional;
-import com.google.common.base.Throwables;
 import com.google.gson.JsonObject;
 
 /**
@@ -43,20 +42,37 @@ public class BaseCloudPoolConfig {
     public static final PoolUpdateConfig DEFAULT_POOL_UPDATE_CONFIG = new PoolUpdateConfig(
             new TimeInterval(60L, TimeUnit.SECONDS));
 
-    /**
-     * Cloud-specific settings intended for the {@link CloudPoolDriver}.
-     * Typically declares API access credentials and settings.
-     */
-    private final CloudPoolConfig cloudPool;
+    /** Default scale-in policy is to immediately terminate newest instance. */
+    public static final ScaleInConfig DEFAULT_SCALE_IN_CONFIG = new ScaleInConfig(VictimSelectionPolicy.NEWEST_INSTANCE,
+            0);
 
     /**
-     * Cloud-specific settings intended for the {@link CloudPoolDriver}, which
-     * describes how to provision new machines when the cloud pool needs to
-     * grow.
+     * The logical name of the managed group of machines. The exact way of
+     * identifying pool members may differ between {@link CloudPoolDriver}s, but
+     * machine tags could, for example, be used to mark pool membership.
+     * Required.
      */
-    private final JsonObject scaleOutConfig;
+    private final String name;
 
-    /** Configuration that describes how to shrink the cloud pool. */
+    /**
+     * API access credentials and settings required to communicate with the
+     * targeted cloud. The structure of this document is cloud-specific. This
+     * document is passed as-is to the {@link CloudPoolDriver}. Required.
+     */
+    private final JsonObject cloudApiSettings;
+
+    /**
+     * Describes how to provision additional servers (on scale-out). The
+     * appearance of this document is cloud-specific. This document is passed
+     * as-is to the {@link CloudPoolDriver}. Requried.
+     */
+    private final JsonObject provisioningTemplate;
+
+    /**
+     * Configuration that describes how to shrink the cloud pool. May be
+     * <code>null</code>. Default scale-in policy is to immediately terminate
+     * newest instance.
+     */
     private final ScaleInConfig scaleInConfig;
 
     /**
@@ -78,16 +94,27 @@ public class BaseCloudPoolConfig {
     private final PoolUpdateConfig poolUpdate;
 
     /**
-     * @param cloudPoolConfig
-     *            Cloud-specific settings intended for the
-     *            {@link CloudPoolDriver}. Typically declares API access
-     *            credentials and settings.
-     * @param scaleOutConfig
-     *            Cloud-specific settings intended for the
-     *            {@link CloudPoolDriver}, which describes how to provision new
-     *            machines when the cloud pool needs to grow.
+     * Creates a {@link BaseCloudPoolConfig}.
+     *
+     * @param name
+     *            The logical name of the managed group of machines. The exact
+     *            way of identifying pool members may differ between
+     *            {@link CloudPoolDriver}s, but machine tags could, for example,
+     *            be used to mark pool membership. Required.
+     * @param cloudApiSettings
+     *            API access credentials and settings required to communicate
+     *            with the targeted cloud. The structure of this document is
+     *            cloud-specific. This document is passed as-is to the
+     *            {@link CloudPoolDriver}. Required.
+     * @param provisioningTemplate
+     *            Describes how to provision additional servers (on scale-out).
+     *            The appearance of this document is cloud-specific. This
+     *            document is passed as-is to the {@link CloudPoolDriver}.
+     *            Required.
      * @param scaleInConfig
-     *            Configuration that describes how to shrink the cloud pool.
+     *            Configuration that describes how to shrink the cloud pool. May
+     *            be <code>null</code>. Default scale-in policy is to
+     *            immediately terminate newest instance.
      * @param alertSettings
      *            Configuration that describes how to send alerts. May be
      *            <code>null</code>.
@@ -102,10 +129,12 @@ public class BaseCloudPoolConfig {
      *            The time interval (in seconds) between periodical pool size
      *            updates. May be <code>null</code>. Default: 60 seconds.
      */
-    public BaseCloudPoolConfig(CloudPoolConfig cloudPoolConfig, JsonObject scaleOutConfig, ScaleInConfig scaleInConfig,
-            AlertersConfig alertSettings, PoolFetchConfig poolFetchConfig, PoolUpdateConfig poolUpdatePeriodConfig) {
-        this.cloudPool = cloudPoolConfig;
-        this.scaleOutConfig = scaleOutConfig;
+    public BaseCloudPoolConfig(String name, JsonObject cloudApiSettings, JsonObject provisioningTemplate,
+            ScaleInConfig scaleInConfig, AlertersConfig alertSettings, PoolFetchConfig poolFetchConfig,
+            PoolUpdateConfig poolUpdatePeriodConfig) {
+        this.name = name;
+        this.cloudApiSettings = cloudApiSettings;
+        this.provisioningTemplate = provisioningTemplate;
         this.scaleInConfig = scaleInConfig;
         this.alerts = alertSettings;
         this.poolFetch = poolFetchConfig;
@@ -113,24 +142,36 @@ public class BaseCloudPoolConfig {
     }
 
     /**
-     * Cloud-specific settings intended for the {@link CloudPoolDriver}.
-     * Typically declares API access credentials and settings.
+     * The logical name of the managed group of machines. The exact way of
+     * identifying pool members may differ between {@link CloudPoolDriver}s, but
+     * machine tags could, for example, be used to mark pool membership.
      *
      * @return
      */
-    public CloudPoolConfig getCloudPool() {
-        return this.cloudPool;
+    public String getName() {
+        return this.name;
     }
 
     /**
-     * Cloud-specific settings intended for the {@link CloudPoolDriver}, which
-     * describes how to provision new machines when the cloud pool needs to
-     * grow.
+     * API access credentials and settings required to communicate with the
+     * targeted cloud. The structure of this document is cloud-specific. This
+     * document is passed as-is to the {@link CloudPoolDriver}.
      *
      * @return
      */
-    public JsonObject getScaleOutConfig() {
-        return this.scaleOutConfig;
+    public JsonObject getCloudApiSettings() {
+        return this.cloudApiSettings;
+    }
+
+    /**
+     * Describes how to provision additional servers (on scale-out). The
+     * appearance of this document is cloud-specific. This document is passed
+     * as-is to the {@link CloudPoolDriver}.
+     *
+     * @return
+     */
+    public JsonObject getProvisioningTemplate() {
+        return this.provisioningTemplate;
     }
 
     /**
@@ -139,7 +180,7 @@ public class BaseCloudPoolConfig {
      * @return
      */
     public ScaleInConfig getScaleInConfig() {
-        return this.scaleInConfig;
+        return Optional.ofNullable(this.scaleInConfig).orElse(DEFAULT_SCALE_IN_CONFIG);
     }
 
     /**
@@ -160,7 +201,7 @@ public class BaseCloudPoolConfig {
      * @return
      */
     public PoolFetchConfig getPoolFetch() {
-        return Optional.fromNullable(this.poolFetch).or(DEFAULT_POOL_FETCH_CONFIG);
+        return Optional.ofNullable(this.poolFetch).orElse(DEFAULT_POOL_FETCH_CONFIG);
     }
 
     /**
@@ -169,7 +210,7 @@ public class BaseCloudPoolConfig {
      * @return
      */
     public PoolUpdateConfig getPoolUpdate() {
-        return Optional.fromNullable(this.poolUpdate).or(DEFAULT_POOL_UPDATE_CONFIG);
+        return Optional.ofNullable(this.poolUpdate).orElse(DEFAULT_POOL_UPDATE_CONFIG);
     }
 
     /**
@@ -179,37 +220,41 @@ public class BaseCloudPoolConfig {
      */
     public void validate() throws IllegalArgumentException {
         try {
-            checkArgument(this.cloudPool != null, "missing cloudPool config");
-            checkArgument(this.scaleOutConfig != null, "missing scaleOutConfig");
-            checkArgument(this.scaleInConfig != null, "missing scaleInConfig");
+            checkArgument(this.name != null, "missing name");
+            checkArgument(this.cloudApiSettings != null, "missing cloudApiSettings");
+            checkArgument(this.provisioningTemplate != null, "missing provisioningTemplate");
 
-            this.cloudPool.validate();
-            this.scaleInConfig.validate();
+            if (this.scaleInConfig != null) {
+                this.scaleInConfig.validate();
+            }
             if (this.alerts != null) {
                 this.alerts.validate();
             }
             getPoolFetch().validate();
             getPoolUpdate().validate();
         } catch (Exception e) {
-            // no need to wrap further if already a config exception
-            Throwables.propagateIfInstanceOf(e, IllegalArgumentException.class);
-            throw new IllegalArgumentException(format("failed to validate configuration: %s", e.getMessage()), e);
+            throw new IllegalArgumentException(format("failed to validate cloudpool configuration: %s", e.getMessage()),
+                    e);
         }
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.cloudPool, this.scaleOutConfig, this.scaleInConfig, this.alerts, getPoolFetch(),
-                getPoolUpdate());
+        return Objects.hash(this.name, this.cloudApiSettings, this.provisioningTemplate, getScaleInConfig(),
+                this.alerts, getPoolFetch(), getPoolUpdate());
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof BaseCloudPoolConfig) {
             BaseCloudPoolConfig that = (BaseCloudPoolConfig) obj;
-            return equal(this.cloudPool, that.cloudPool) && equal(this.scaleOutConfig, that.scaleOutConfig)
-                    && equal(this.scaleInConfig, that.scaleInConfig) && equal(this.alerts, that.alerts)
-                    && equal(getPoolFetch(), that.getPoolFetch()) && equal(getPoolUpdate(), that.getPoolUpdate());
+            return Objects.equals(this.name, that.name) //
+                    && Objects.equals(this.cloudApiSettings, that.cloudApiSettings) //
+                    && Objects.equals(this.provisioningTemplate, that.provisioningTemplate) //
+                    && Objects.equals(getScaleInConfig(), that.getScaleInConfig()) //
+                    && Objects.equals(this.alerts, that.alerts) //
+                    && Objects.equals(getPoolFetch(), that.getPoolFetch()) //
+                    && Objects.equals(getPoolUpdate(), that.getPoolUpdate());
         }
         return false;
     }
@@ -253,7 +298,7 @@ public class BaseCloudPoolConfig {
         }
 
         public Integer getSmtpPort() {
-            return Optional.fromNullable(this.smtpPort).or(DEFAULT_SMTP_PORT);
+            return Optional.ofNullable(this.smtpPort).orElse(DEFAULT_SMTP_PORT);
         }
 
         public SmtpClientAuthentication getAuthentication() {
@@ -261,7 +306,7 @@ public class BaseCloudPoolConfig {
         }
 
         public boolean isUseSsl() {
-            return Optional.fromNullable(this.useSsl).or(false);
+            return Optional.ofNullable(this.useSsl).orElse(false);
         }
 
         /**
@@ -281,15 +326,17 @@ public class BaseCloudPoolConfig {
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(getSmtpHost(), getSmtpPort(), getAuthentication(), isUseSsl());
+            return Objects.hash(getSmtpHost(), getSmtpPort(), getAuthentication(), isUseSsl());
         }
 
         @Override
         public boolean equals(Object obj) {
             if (obj instanceof MailServerSettings) {
                 MailServerSettings that = (MailServerSettings) obj;
-                return equal(getSmtpHost(), that.getSmtpHost()) && equal(getSmtpPort(), that.getSmtpPort())
-                        && equal(getAuthentication(), that.getAuthentication()) && equal(isUseSsl(), that.isUseSsl());
+                return Objects.equals(getSmtpHost(), that.getSmtpHost())
+                        && Objects.equals(getSmtpPort(), that.getSmtpPort())
+                        && Objects.equals(getAuthentication(), that.getAuthentication())
+                        && Objects.equals(isUseSsl(), that.isUseSsl());
             }
             return false;
         }

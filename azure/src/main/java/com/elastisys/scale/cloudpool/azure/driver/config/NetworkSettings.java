@@ -13,7 +13,7 @@ import com.elastisys.scale.commons.json.JsonUtils;
  * Network settings template for an Azure VM. These settings define how to set
  * up the VM's primary network interface.
  *
- * @see AzureScaleOutConfig
+ * @see ProvisioningTemplate
  */
 public class NetworkSettings {
     /** Default value for {@link #assignPublicIp}. */

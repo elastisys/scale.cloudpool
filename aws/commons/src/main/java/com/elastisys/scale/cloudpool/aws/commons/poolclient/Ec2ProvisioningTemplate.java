@@ -14,9 +14,9 @@ import com.google.common.collect.ImmutableList;
 /**
  * EC2-specific server provisioning template.
  *
- * @see BaseCloudPoolConfig#getScaleOutConfig()
+ * @see BaseCloudPoolConfig#getProvisioningTemplate()
  */
-public class Ec2ScaleOutConfig {
+public class Ec2ProvisioningTemplate {
     /** The name of the instance type to launch. For example, m1.medium. */
     private final String size;
     /** The name of the machine image used to boot new servers. */
@@ -40,7 +40,7 @@ public class Ec2ScaleOutConfig {
     private final String encodedUserData;
 
     /**
-     * Creates a new {@link Ec2ScaleOutConfig} without cloud-specific
+     * Creates a new {@link Ec2ProvisioningTemplate} without cloud-specific
      * {@link #extensions}.
      *
      * @param size
@@ -60,7 +60,7 @@ public class Ec2ScaleOutConfig {
      *            is typically used to pass a boot-up shell script or cloud-init
      *            parameters to launched machines. May be <code>null</code>.
      */
-    public Ec2ScaleOutConfig(String size, String image, String keyPair, List<String> securityGroups,
+    public Ec2ProvisioningTemplate(String size, String image, String keyPair, List<String> securityGroups,
             String encodedUserData) {
         this.size = size;
         this.image = image;
@@ -126,8 +126,8 @@ public class Ec2ScaleOutConfig {
      * @throws IllegalArgumentException
      */
     public void validate() throws IllegalArgumentException {
-        checkArgument(this.size != null, "scaleOutConfig: missing size");
-        checkArgument(this.image != null, "scaleOutConfig: missing image");
+        checkArgument(this.size != null, "provisioningTemplate: missing size");
+        checkArgument(this.image != null, "provisioningTemplate: missing image");
     }
 
     @Override
@@ -137,8 +137,8 @@ public class Ec2ScaleOutConfig {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof Ec2ScaleOutConfig) {
-            Ec2ScaleOutConfig that = (Ec2ScaleOutConfig) obj;
+        if (obj instanceof Ec2ProvisioningTemplate) {
+            Ec2ProvisioningTemplate that = (Ec2ProvisioningTemplate) obj;
             return equal(this.size, that.size) && equal(this.image, that.image) && equal(this.keyPair, that.keyPair)
                     && equal(this.securityGroups, that.securityGroups)
                     && equal(this.encodedUserData, that.encodedUserData);

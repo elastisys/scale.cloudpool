@@ -1,4 +1,4 @@
-package com.elastisys.scale.cloudpool.aws.autoscaling.driver;
+package com.elastisys.scale.cloudpool.aws.autoscaling.driver.config;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -6,10 +6,10 @@ import static org.junit.Assert.assertThat;
 import org.junit.Test;
 
 /**
- * Exercises the {@link AwsAsPoolDriverConfig} class.
+ * Exercises the {@link CloudApiSettings} class.
  *
  */
-public class TestAwsAsPoolDriverConfig {
+public class TestCloudApiSettings {
 
     /**
      * Creation that sets all config parameters.
@@ -18,7 +18,7 @@ public class TestAwsAsPoolDriverConfig {
     public void fullConfig() {
         int connectionTimeout = 7000;
         int socketTimeout = 5000;
-        AwsAsPoolDriverConfig config = new AwsAsPoolDriverConfig("awsAccessKeyId", "awsSecretAccessKey", "us-east-1",
+        CloudApiSettings config = new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", "us-east-1",
                 connectionTimeout, socketTimeout);
         config.validate();
 
@@ -35,37 +35,37 @@ public class TestAwsAsPoolDriverConfig {
      */
     @Test
     public void withDefaults() {
-        AwsAsPoolDriverConfig config = new AwsAsPoolDriverConfig("awsAccessKeyId", "awsSecretAccessKey", "us-east-1");
+        CloudApiSettings config = new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", "us-east-1");
         config.validate();
 
         // verify default values
-        assertThat(config.getConnectionTimeout(), is(AwsAsPoolDriverConfig.DEFAULT_CONNECTION_TIMEOUT));
-        assertThat(config.getSocketTimeout(), is(AwsAsPoolDriverConfig.DEFAULT_SOCKET_TIMEOUT));
+        assertThat(config.getConnectionTimeout(), is(CloudApiSettings.DEFAULT_CONNECTION_TIMEOUT));
+        assertThat(config.getSocketTimeout(), is(CloudApiSettings.DEFAULT_SOCKET_TIMEOUT));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void missingAwsAccessKeyId() {
-        new AwsAsPoolDriverConfig(null, "awsSecretAccessKey", "us-east-1").validate();
+        new CloudApiSettings(null, "awsSecretAccessKey", "us-east-1").validate();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void missingAwsSecretAccessKey() {
-        new AwsAsPoolDriverConfig("awsAccessKeyId", null, "us-east-1").validate();
+        new CloudApiSettings("awsAccessKeyId", null, "us-east-1").validate();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void missingRegion() {
-        new AwsAsPoolDriverConfig("awsAccessKeyId", "awsSecretAccessKey", null).validate();
+        new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", null).validate();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void illegalConnectionTimeout() {
-        new AwsAsPoolDriverConfig("awsAccessKeyId", "awsSecretAccessKey", "us-east-1", 0, 5000).validate();
+        new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", "us-east-1", 0, 5000).validate();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void illegalSocketTimeout() {
-        new AwsAsPoolDriverConfig("awsAccessKeyId", "awsSecretAccessKey", "us-east-1", 5000, 0).validate();
+        new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", "us-east-1", 5000, 0).validate();
     }
 
 }

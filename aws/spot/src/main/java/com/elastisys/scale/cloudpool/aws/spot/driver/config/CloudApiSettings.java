@@ -1,8 +1,9 @@
-package com.elastisys.scale.cloudpool.aws.spot.driver;
+package com.elastisys.scale.cloudpool.aws.spot.driver.config;
 
 import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.elastisys.scale.cloudpool.aws.spot.driver.SpotPoolDriver;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
@@ -10,7 +11,7 @@ import com.google.common.base.Optional;
 /**
  * Configuration for a {@link SpotPoolDriver}.
  */
-public class SpotPoolDriverConfig {
+public class CloudApiSettings {
     /**
      * Number of decimals in Amazon bid prices. For example, a bid price of
      * $0.0123456789 gets rounded off to $0.012346 by Amazon (note the
@@ -68,7 +69,7 @@ public class SpotPoolDriverConfig {
     private final Integer socketTimeout;
 
     /**
-     * Creates a new {@link SpotPoolDriverConfig}.
+     * Creates a new {@link CloudApiSettings}.
      *
      * @param awsAccessKeyId
      *            The access key id of the AWS account.
@@ -91,14 +92,14 @@ public class SpotPoolDriverConfig {
      *            requests were canceled. May be <code>null</code>. Default:
      *            {@value #DEFAULT_DANGLING_INSTANCE_CLEANUP_PERIOD}.
      */
-    public SpotPoolDriverConfig(String awsAccessKeyId, String awsSecretAccessKey, String region, double bidPrice,
+    public CloudApiSettings(String awsAccessKeyId, String awsSecretAccessKey, String region, double bidPrice,
             Long bidReplacementPeriod, Long danglingInstanceCleanupPeriod) {
         this(awsAccessKeyId, awsSecretAccessKey, region, bidPrice, bidReplacementPeriod, danglingInstanceCleanupPeriod,
                 null, null);
     }
 
     /**
-     * Creates a new {@link SpotPoolDriverConfig}.
+     * Creates a new {@link CloudApiSettings}.
      *
      * @param awsAccessKeyId
      *            The access key id of the AWS account.
@@ -131,7 +132,7 @@ public class SpotPoolDriverConfig {
      *            packets. May be <code>null</code>. Default:
      *            {@value #DEFAULT_SOCKET_TIMEOUT} ms.
      */
-    public SpotPoolDriverConfig(String awsAccessKeyId, String awsSecretAccessKey, String region, double bidPrice,
+    public CloudApiSettings(String awsAccessKeyId, String awsSecretAccessKey, String region, double bidPrice,
             Long bidReplacementPeriod, Long danglingInstanceCleanupPeriod, Integer connectionTimeout,
             Integer socketTimeout) {
         this.awsAccessKeyId = awsAccessKeyId;
@@ -199,7 +200,7 @@ public class SpotPoolDriverConfig {
     /**
      * The delay (in seconds) between two successive runs of replacing spot
      * requests with an out-dated bid price.
-     * 
+     *
      * @return
      */
     public Long getBidReplacementPeriod() {
@@ -238,15 +239,15 @@ public class SpotPoolDriverConfig {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof SpotPoolDriverConfig) {
-            SpotPoolDriverConfig that = (SpotPoolDriverConfig) obj;
+        if (obj instanceof CloudApiSettings) {
+            CloudApiSettings that = (CloudApiSettings) obj;
             return Objects.equal(this.awsAccessKeyId, that.awsAccessKeyId)
                     && Objects.equal(this.awsSecretAccessKey, that.awsSecretAccessKey)
                     && Objects.equal(this.region, that.region) && Objects.equal(this.bidPrice, that.bidPrice)
-                    && Objects.equal(this.getBidReplacementPeriod(), that.getBidReplacementPeriod())
-                    && Objects.equal(this.getDanglingInstanceCleanupPeriod(), that.getDanglingInstanceCleanupPeriod())
-                    && equal(this.getConnectionTimeout(), that.getConnectionTimeout())
-                    && equal(this.getSocketTimeout(), that.getSocketTimeout());
+                    && Objects.equal(getBidReplacementPeriod(), that.getBidReplacementPeriod())
+                    && Objects.equal(getDanglingInstanceCleanupPeriod(), that.getDanglingInstanceCleanupPeriod())
+                    && equal(getConnectionTimeout(), that.getConnectionTimeout())
+                    && equal(getSocketTimeout(), that.getSocketTimeout());
         }
         return false;
     }
@@ -254,7 +255,7 @@ public class SpotPoolDriverConfig {
     @Override
     public int hashCode() {
         return Objects.hashCode(this.awsAccessKeyId, this.awsSecretAccessKey, this.region, this.bidPrice,
-                this.getBidReplacementPeriod(), this.getDanglingInstanceCleanupPeriod(), getConnectionTimeout(),
+                getBidReplacementPeriod(), getDanglingInstanceCleanupPeriod(), getConnectionTimeout(),
                 getSocketTimeout());
     }
 
@@ -264,14 +265,14 @@ public class SpotPoolDriverConfig {
     }
 
     public void validate() throws IllegalArgumentException {
-        checkArgument(this.awsAccessKeyId != null, "SpotPoolDriver config missing awsAccessKeyId");
-        checkArgument(this.awsSecretAccessKey != null, "SpotPoolDriver config missing awsSecretAccessKey");
-        checkArgument(this.region != null, "SpotPoolDriver config missing region");
-        checkArgument(this.getBidPrice() > 0, "SpotPoolDriver config bidPrice must be > 0, set to %s", getBidPrice());
-        checkArgument(getBidReplacementPeriod() > 0, "SpotPoolDriver config bidReplacementPeriod must be > 0");
+        checkArgument(this.awsAccessKeyId != null, "cloudApiSettings: missing awsAccessKeyId");
+        checkArgument(this.awsSecretAccessKey != null, "cloudApiSettings: missing awsSecretAccessKey");
+        checkArgument(this.region != null, "cloudApiSettings: missing region");
+        checkArgument(getBidPrice() > 0, "cloudApiSettings: bidPrice must be > 0, set to %s", getBidPrice());
+        checkArgument(getBidReplacementPeriod() > 0, "cloudApiSettings: bidReplacementPeriod must be > 0");
         checkArgument(getDanglingInstanceCleanupPeriod() > 0,
-                "SpotPoolDriver config danglingInstanceCleanupPeriod must be > 0");
-        checkArgument(getConnectionTimeout() > 0, "connectionTimeout must be positive");
-        checkArgument(getSocketTimeout() > 0, "socketTimeout must be positive");
+                "cloudApiSettings: danglingInstanceCleanupPeriod must be > 0");
+        checkArgument(getConnectionTimeout() > 0, "cloudApiSettings: connectionTimeout must be positive");
+        checkArgument(getSocketTimeout() > 0, "cloudApiSettings: socketTimeout must be positive");
     }
 }

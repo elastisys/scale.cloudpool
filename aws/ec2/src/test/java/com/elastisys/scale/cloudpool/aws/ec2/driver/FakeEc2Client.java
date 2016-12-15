@@ -12,7 +12,7 @@ import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
-import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ScaleOutConfig;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTemplate;
 import com.google.common.collect.Lists;
 
 /**
@@ -49,7 +49,7 @@ public class FakeEc2Client implements Ec2Client {
     }
 
     @Override
-    public List<Instance> launchInstances(Ec2ScaleOutConfig provisioningDetails, int count, List<Tag> tags)
+    public List<Instance> launchInstances(Ec2ProvisioningTemplate provisioningDetails, int count, List<Tag> tags)
             throws AmazonClientException {
         List<Instance> launchedInstances = Lists.newArrayList();
         for (int i = 0; i < count; i++) {

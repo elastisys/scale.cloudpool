@@ -6,7 +6,7 @@ import java.util.Map;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.azure.driver.AzurePoolDriver;
-import com.elastisys.scale.cloudpool.azure.driver.config.AzurePoolDriverConfig;
+import com.elastisys.scale.cloudpool.azure.driver.config.CloudApiSettings;
 import com.microsoft.azure.CloudException;
 import com.microsoft.azure.management.compute.VirtualMachine;
 
@@ -25,7 +25,7 @@ public interface AzureClient {
      *            with the Azure API and what resource group and region contains
      *            pool assets.
      */
-    void configure(AzurePoolDriverConfig driverConfig);
+    void configure(CloudApiSettings driverConfig);
 
     /**
      * Launches a number of VMs, each with a given provisioning template.

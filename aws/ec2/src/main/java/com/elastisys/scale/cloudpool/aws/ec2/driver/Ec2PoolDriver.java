@@ -1,7 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.ec2.driver;
 
 import static com.elastisys.scale.commons.json.JsonUtils.toJson;
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -27,18 +26,16 @@ import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.commons.functions.InstanceToMachine;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
-import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ScaleOutConfig;
-import com.elastisys.scale.cloudpool.aws.ec2.driver.config.Ec2PoolDriverConfig;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTemplate;
+import com.elastisys.scale.cloudpool.aws.ec2.driver.config.CloudApiSettings;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
-import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.gson.JsonObject;
 
 /**
  * A {@link CloudPoolDriver} implementation that operates against the AWS EC2
@@ -50,12 +47,8 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 
     static Logger LOG = LoggerFactory.getLogger(Ec2PoolDriver.class);
 
-    /** {@link Ec2PoolDriver} configuration. */
-    private Ec2PoolDriverConfig config;
-    /** Provisioning template to use when launching new pool machines. */
-    private Ec2ScaleOutConfig scaleOutConfig;
-    /** Logical name of the managed machine pool. */
-    private String poolName;
+    /** The current driver configuration. */
+    private DriverConfig config;
 
     /** A client used to communicate with the AWS EC2 API. */
     private final Ec2Client client;
@@ -83,43 +76,27 @@ public class Ec2PoolDriver implements CloudPoolDriver {
      */
     public Ec2PoolDriver(Ec2Client client) {
         this.config = null;
-        this.poolName = null;
         this.client = client;
     }
 
     @Override
-    public void configure(BaseCloudPoolConfig configuration) throws IllegalArgumentException, CloudPoolDriverException {
-        CloudPoolConfig poolConfig = configuration.getCloudPool();
-        checkArgument(poolConfig != null, "missing cloudPool config");
+    public void configure(DriverConfig configuration) throws IllegalArgumentException, CloudPoolDriverException {
 
         synchronized (this.lock) {
-            // parse and validate cloud API settings
-            Ec2PoolDriverConfig config = JsonUtils.toObject(poolConfig.getDriverConfig(), Ec2PoolDriverConfig.class);
-            config.validate();
+            CloudApiSettings cloudApiSettings = configuration.parseCloudApiSettings(CloudApiSettings.class);
+            cloudApiSettings.validate();
 
-            Ec2ScaleOutConfig scaleOutConf = parseAndValidateScaleOutConfig(configuration.getScaleOutConfig());
+            // parse and validate openstack-specific provisioningTemplate
+            Ec2ProvisioningTemplate provisioningTemplate = configuration
+                    .parseProvisioningTemplate(Ec2ProvisioningTemplate.class);
+            provisioningTemplate.validate();
 
-            this.config = config;
-            this.scaleOutConfig = scaleOutConf;
-            this.poolName = poolConfig.getName();
+            this.config = configuration;
             ClientConfiguration clientConfig = new ClientConfiguration()
-                    .withConnectionTimeout(config.getConnectionTimeout()).withSocketTimeout(config.getSocketTimeout());
-            this.client.configure(config.getAwsAccessKeyId(), config.getAwsSecretAccessKey(), config.getRegion(),
-                    clientConfig);
-        }
-    }
-
-    private Ec2ScaleOutConfig parseAndValidateScaleOutConfig(JsonObject scaleOutConfig)
-            throws IllegalArgumentException {
-        checkArgument(scaleOutConfig != null, "missing scaleOutConfig");
-
-        try {
-            Ec2ScaleOutConfig scaleOutTemplate = JsonUtils.toObject(scaleOutConfig, Ec2ScaleOutConfig.class);
-            scaleOutTemplate.validate();
-
-            return scaleOutTemplate;
-        } catch (Exception e) {
-            throw new IllegalArgumentException("failed to validate scaleOutConfig: " + e.getMessage(), e);
+                    .withConnectionTimeout(cloudApiSettings.getConnectionTimeout())
+                    .withSocketTimeout(cloudApiSettings.getSocketTimeout());
+            this.client.configure(cloudApiSettings.getAwsAccessKeyId(), cloudApiSettings.getAwsSecretAccessKey(),
+                    cloudApiSettings.getRegion(), clientConfig);
         }
     }
 
@@ -146,7 +123,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
         try {
             // launch instances and set cloud pool tag to make sure machines are
             // recognized as pool members
-            List<Instance> newInstances = this.client.launchInstances(this.scaleOutConfig, count,
+            List<Instance> newInstances = this.client.launchInstances(provisioningTemplate(), count,
                     asList(cloudPoolTag()));
             startedMachines = Lists.transform(newInstances, new InstanceToMachine());
 
@@ -250,20 +227,12 @@ public class Ec2PoolDriver implements CloudPoolDriver {
     @Override
     public String getPoolName() {
         checkState(isConfigured(), "attempt to use unconfigured Ec2PoolDriver");
-        return this.poolName;
+        return config().getPoolName();
     }
 
     @Override
     public CloudPoolMetadata getMetadata() {
         return cloudPoolMetadata;
-    }
-
-    boolean isConfigured() {
-        return config() != null;
-    }
-
-    Ec2PoolDriverConfig config() {
-        return this.config;
     }
 
     /**
@@ -316,6 +285,22 @@ public class Ec2PoolDriver implements CloudPoolDriver {
     private Instance tagInstance(String instanceId, Tag... tags) throws NotFoundException, CloudPoolDriverException {
         this.client.tagResource(instanceId, Arrays.asList(tags));
         return this.client.getInstanceMetadata(instanceId);
+    }
+
+    boolean isConfigured() {
+        return config() != null;
+    }
+
+    DriverConfig config() {
+        return this.config;
+    }
+
+    CloudApiSettings cloudApiSettings() {
+        return config().parseCloudApiSettings(CloudApiSettings.class);
+    }
+
+    Ec2ProvisioningTemplate provisioningTemplate() {
+        return config().parseProvisioningTemplate(Ec2ProvisioningTemplate.class);
     }
 
 }

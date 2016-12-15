@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.ec2.lab;
 
-import com.elastisys.scale.cloudpool.aws.ec2.driver.config.Ec2PoolDriverConfig;
+import com.elastisys.scale.cloudpool.aws.ec2.driver.config.CloudApiSettings;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.gson.JsonObject;
 
@@ -12,7 +12,7 @@ public class AbstractClient {
     protected static final String region = "us-east-1";
 
     protected static JsonObject ec2ClientConfig() {
-        Ec2PoolDriverConfig config = new Ec2PoolDriverConfig(awsAccessKeyId, awsSecretAccessKey, region);
+        CloudApiSettings config = new CloudApiSettings(awsAccessKeyId, awsSecretAccessKey, region);
         return JsonUtils.toJson(config).getAsJsonObject();
     }
 }

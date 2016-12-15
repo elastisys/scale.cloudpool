@@ -10,7 +10,7 @@ import com.google.common.base.Objects;
 /**
  * Settings specific to launching Linux VMs.
  *
- * @see AzureScaleOutConfig
+ * @see ProvisioningTemplate
  */
 public class LinuxSettings {
     public static final String ALLOWED_USERNAME_REGEXP = "^[a-z_][a-z0-9_-]*$";

@@ -7,8 +7,8 @@ import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.openstack.driver.OpenStackPoolDriver;
-import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
-import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackScaleOutConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.config.CloudApiSettings;
+import com.elastisys.scale.cloudpool.openstack.driver.config.ProvisioningTemplate;
 
 /**
  * A simplified client interface towards the OpenStack API, which only provides
@@ -20,13 +20,13 @@ import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackScaleOutCo
 public interface OpenstackClient {
 
     /**
-     * Configures this {@link OpenstackClient} with credentials to allow it to
-     * access the OpenStack API.
+     * Configures this {@link OpenstackClient} with cloud API access credentials
+     * and settings.
      *
-     * @param configuration
-     *            A client configuration.
+     * @param config
+     *            API access credentials and settings.
      */
-    void configure(OpenStackPoolDriverConfig configuration);
+    void configure(CloudApiSettings config);
 
     /**
      * Retrieves all servers that match a given tag.
@@ -63,7 +63,7 @@ public interface OpenstackClient {
      *            Meta data tags to set on the launched server.
      * @return The launched {@link Server}.
      */
-    Server launchServer(String name, OpenStackScaleOutConfig provisioningDetails, Map<String, String> tags);
+    Server launchServer(String name, ProvisioningTemplate provisioningDetails, Map<String, String> tags);
 
     /**
      * Allocate a floating IP address and associate it with a given server.

@@ -8,7 +8,7 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.AwsAsPoolDriver;
-import com.elastisys.scale.cloudpool.aws.autoscaling.driver.AwsAsPoolDriverConfig;
+import com.elastisys.scale.cloudpool.aws.autoscaling.driver.config.CloudApiSettings;
 
 /**
  * A simplified client interface towards the AWS Auto Scaling API that only
@@ -23,13 +23,13 @@ import com.elastisys.scale.cloudpool.aws.autoscaling.driver.AwsAsPoolDriverConfi
 public interface AutoScalingClient {
 
     /**
-     * Configures this {@link AutoScalingClient} with credentials to allow it to
-     * access the AWS Auto Scaling API.
+     * Configures this {@link AutoScalingClient} with API access credentials and
+     * settings to allow it to access the AWS Auto Scaling API.
      *
      * @param configuration
-     *            A client configuration.
+     *            API access credentials and settings.
      */
-    void configure(AwsAsPoolDriverConfig configuration);
+    void configure(CloudApiSettings configuration);
 
     /**
      * Retrieves a particular {@link AutoScalingGroup}.

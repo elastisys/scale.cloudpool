@@ -142,8 +142,7 @@ public class StandardPoolUpdater implements PoolUpdater {
         try {
             updateMachinePool(config);
         } catch (Throwable e) {
-            String message = format("failed to resize machine pool %s: %s", config.getCloudPool().getName(),
-                    e.getMessage());
+            String message = format("failed to resize machine pool %s: %s", config.getName(), e.getMessage());
             Alert alert = AlertBuilder.create().topic(RESIZE.name()).severity(AlertSeverity.WARN).message(message)
                     .build();
             this.eventBus.post(alert);

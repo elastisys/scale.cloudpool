@@ -3,10 +3,41 @@
 The [elastisys](http://elastisys.com/) CityCloud 
 [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest/)
 manages a pool of [CityCloud](https://www.citycloud.com/) servers. 
+
 As it makes use of CityCloud's OpenStack API, it is implemented as a 
-very thin wrapper over the 
-[OpenStack cloudpool](https://github.com/elastisys/scale.cloudpool/tree/master/openstack).
+very thin wrapper over the [OpenStack cloudpool](../openstack/README.md).
 Refer to it for more detailed documentation.
+
+Also **note** that CityCloud makes use of Keystone version 3 for 
+authentication, so the `cloudApiSettings` part of the configuration needs to look
+something like:
+
+```javascript
+    "cloudApiSettings": {
+        "auth": {
+            "keystoneUrl": "https://identity1.citycloud.com:5000/v3/",
+            "v3Credentials": {
+                "scope": {
+                    "projectId": "<project-id>"
+                },
+                "userId": "<user-id>",
+                "password": "<password>"
+            }
+        },
+        "region": "Kna1",
+        "connectionTimeout": 10000,
+        "socketTimeout": 10000
+    },
+```
+
+Here, 
+
+- `projectId`: The id of the project to which the user account belongs. 
+  Project ids can be found in the [manage projects dashboard](https://citycontrolpanel.com/openstack#manage_projects).
+- `userId`: The id of a user associated with the given project. 
+  User ids can be found in the [API access dashboard](https://citycontrolpanel.com/openstack#openstack_api_access)
+- `region`: One of the available CityCloud zones to run against. At the time of writing, one of `Kna1` (Karlskrona/Sweden), `Sto2` (Stockholm/Sweden), `Lon1` (London/UK), `La1` (Los Angeles/USA), `Buf1` (Buffalo/USA), `Fra1` (Paris/France).
+
 
 
 ## Running the cloud pool in a Docker container
@@ -128,41 +159,31 @@ below can be replaced with:
     --key-type pem --key credentials/client_private.pem \
     --cert-type pem --cert credentials/client_certificate.pem
 
-Here are some examples illustrating basic interactions with the cloud pool:
+Here are some examples illustrating basic interactions with the cloud pool
+(these assume that the server was started on a HTTP port):
 
 
- 1. Retrieve the currently set configuration document:
+1. Retrieve the currently set configuration document:
 
-    ```
-    curl -v --insecure <authparams> -X GET https://localhost:8443/config
-    ```
+        curl -X GET http://localhost:8080/config
+    
 
  2. Set configuration:
 
-    ```
-    curl -v --insecure <authparams> \
-         -X POST -d @tests/config.json  --header "Content-Type:application/json" \
-         https://localhost:8443/config
-    ```
+        curl --header "Content-Type:application/json" \
+                    -X POST -d @myconfig.json http://localhost:8080/config
+
 
  3. Start:
 
-    ```
-    curl -v --insecure <authparams> -X POST https://localhost:8443/start
-    ```
+        curl -X POST http://localhost:8080/start
 
 
  4. Retrieve the current machine pool:
 
-    ```
-    curl -v --insecure <authparams> -X GET https://localhost:8443/pool
-    ```
+        curl -X POST http://localhost:8080/pool
 
  5. Request the machine pool to be resized to size ``4``:
 
-    ```
-    curl -v --insecure <authparams> \
-         -X POST -d '{"desiredCapacity": 4}' --header "Content-Type:application/json" \
-         https://localhost:8443/pool
-    ```
-
+        curl --header "Content-Type:application/json" \
+                    -X POST -d '{"desiredCapacity": 4}' http://localhost:8080/config

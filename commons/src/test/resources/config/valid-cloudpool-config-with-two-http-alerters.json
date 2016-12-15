@@ -1,41 +1,39 @@
 {
-    "cloudPool": {
-      "name": "my-cloud-pool",
-      "driverConfig": { 
+    "name": "my-cloud-pool",
+    "cloudApiSettings": {
         "keystoneEndpoint": "http://openstack.nova.com:5000/v2.0",
         "region": "RegionOne",
         "tenantName": "tenant",
         "userName": "clouduser",
         "password": "cloudpass"
-      }      
     },
-    "scaleOutConfig": {
-      "size": "m1.small", 
-      "image": "Ubuntu Server 12.04",
-      "keyPair": "openstack_p11",
-      "securityGroups": ["web"],
-      "encodedUserData": "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg=="
+    "provisioningTemplate": {
+        "size": "m1.small", 
+        "image": "Ubuntu Server 12.04",
+        "keyPair": "openstack_p11",
+        "securityGroups": ["web"],
+        "encodedUserData": "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg=="
     },
     "scaleInConfig": {
-      "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
-      "instanceHourMargin": 0
+        "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
+        "instanceHourMargin": 0
     },
     "alerts": {
         "http": [
-          {       
-            "destinationUrls": ["https://some.host1:443/"],
-            "severityFilter": "ERROR|FATAL", 
-            "auth": {
-              "basicCredentials": { "username": "user1", "password": "secret1" }
-            }
-          },
-          {       
-            "destinationUrls": ["https://some.host2:443/"],
-            "severityFilter": "INFO|WARN", 
-            "auth": {
-              "certificateCredentials": { "keystorePath": "src/test/resources/security/client_keystore.p12", "keystorePassword": "secret", "keyPassword": "secret"  }
-            }
-          }          
+            {       
+                "destinationUrls": ["https://some.host1:443/"],
+                "severityFilter": "ERROR|FATAL", 
+                "auth": {
+                    "basicCredentials": { "username": "user1", "password": "secret1" }
+                }
+            },
+            {       
+                "destinationUrls": ["https://some.host2:443/"],
+                "severityFilter": "INFO|WARN", 
+                "auth": {
+                    "certificateCredentials": { "keystorePath": "src/test/resources/security/client_keystore.p12", "keystorePassword": "secret", "keyPassword": "secret"  }
+                }
+            }          
         ]        
     }            
 }  

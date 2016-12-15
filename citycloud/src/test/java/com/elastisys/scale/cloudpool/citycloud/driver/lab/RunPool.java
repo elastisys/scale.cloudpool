@@ -32,7 +32,7 @@ public class RunPool {
      * {@link OpenStackPoolDriver}. Relative paths are relative to base
      * directory of enclosing Maven project.
      */
-    private static final Path cloudPoolConfig = Paths.get(".", "mycitycloud-config.json");
+    private static final Path cloudPoolConfig = Paths.get(".", "myconfig.json");
 
     private static final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(10);
 

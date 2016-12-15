@@ -8,8 +8,8 @@ import java.util.Map;
 import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
-import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackScaleOutConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.config.CloudApiSettings;
+import com.elastisys.scale.cloudpool.openstack.driver.config.ProvisioningTemplate;
 import com.elastisys.scale.cloudpool.openstack.requests.AssignFloatingIpRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.CreateServerRequest;
 import com.elastisys.scale.cloudpool.openstack.requests.DeleteServerMetadataRequest;
@@ -26,19 +26,19 @@ public class StandardOpenstackClient implements OpenstackClient {
 
     /**
      * {@link OSClientFactory} configured to use the latest set
-     * {@link OpenStackPoolDriverConfig}.
+     * {@link CloudApiSettings}.
      */
     private OSClientFactory clientFactory;
 
     /** The currently set configuration. */
-    private OpenStackPoolDriverConfig config;
+    private CloudApiSettings config;
 
     public StandardOpenstackClient() {
         this.clientFactory = null;
     }
 
     @Override
-    public void configure(OpenStackPoolDriverConfig configuration) {
+    public void configure(CloudApiSettings configuration) {
         checkArgument(configuration != null, "null configuration");
 
         this.clientFactory = new OSClientFactory(configuration.toApiAccessConfig());
@@ -61,13 +61,12 @@ public class StandardOpenstackClient implements OpenstackClient {
     }
 
     @Override
-    public Server launchServer(String serverName, OpenStackScaleOutConfig provisioningDetails,
-            Map<String, String> tags) {
+    public Server launchServer(String serverName, ProvisioningTemplate provisioningDetails, Map<String, String> tags) {
         checkArgument(isConfigured(), "can't use client before it's configured");
 
         CreateServerRequest request = new CreateServerRequest(clientFactory(), serverName,
                 provisioningDetails.getSize(), provisioningDetails.getImage(), provisioningDetails.getKeyPair(),
-                provisioningDetails.getSecurityGroups(), config().getNetworks(),
+                provisioningDetails.getSecurityGroups(), provisioningDetails.getNetworks(),
                 provisioningDetails.getEncodedUserData(), tags);
         return request.call();
     }
@@ -106,7 +105,7 @@ public class StandardOpenstackClient implements OpenstackClient {
         return this.clientFactory;
     }
 
-    private OpenStackPoolDriverConfig config() {
+    private CloudApiSettings config() {
         return this.config;
     }
 

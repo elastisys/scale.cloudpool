@@ -5,8 +5,10 @@ import static org.junit.Assert.assertThat;
 
 import org.junit.Test;
 
+import com.elastisys.scale.cloudpool.aws.spot.driver.config.CloudApiSettings;
+
 /**
- * Exercises the {@link SpotPoolDriverConfig} class.
+ * Exercises the {@link CloudApiSettings} class.
  */
 public class TestSpotPoolDriverConfig {
 
@@ -21,7 +23,7 @@ public class TestSpotPoolDriverConfig {
         long danglingInstanceCleanupPeriod = 60L;
         int connectionTimeout = 7000;
         int socketTimeout = 5000;
-        SpotPoolDriverConfig config = new SpotPoolDriverConfig("awsAccessKeyId", "awsSecretAccessKey", "us-east-1",
+        CloudApiSettings config = new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", "us-east-1",
                 bidPrice, bidReplacementPeriod, danglingInstanceCleanupPeriod, connectionTimeout, socketTimeout);
         config.validate();
 
@@ -40,15 +42,15 @@ public class TestSpotPoolDriverConfig {
      */
     @Test
     public void withDefaults() {
-        SpotPoolDriverConfig config = new SpotPoolDriverConfig("awsAccessKeyId", "awsSecretAccessKey", "us-east-1",
+        CloudApiSettings config = new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", "us-east-1",
                 0.0050, null, null);
         config.validate();
 
-        assertThat(config.getBidReplacementPeriod(), is(SpotPoolDriverConfig.DEFAULT_BID_REPLACEMENT_PERIOD));
+        assertThat(config.getBidReplacementPeriod(), is(CloudApiSettings.DEFAULT_BID_REPLACEMENT_PERIOD));
         assertThat(config.getDanglingInstanceCleanupPeriod(),
-                is(SpotPoolDriverConfig.DEFAULT_DANGLING_INSTANCE_CLEANUP_PERIOD));
-        assertThat(config.getConnectionTimeout(), is(SpotPoolDriverConfig.DEFAULT_CONNECTION_TIMEOUT));
-        assertThat(config.getSocketTimeout(), is(SpotPoolDriverConfig.DEFAULT_SOCKET_TIMEOUT));
+                is(CloudApiSettings.DEFAULT_DANGLING_INSTANCE_CLEANUP_PERIOD));
+        assertThat(config.getConnectionTimeout(), is(CloudApiSettings.DEFAULT_CONNECTION_TIMEOUT));
+        assertThat(config.getSocketTimeout(), is(CloudApiSettings.DEFAULT_SOCKET_TIMEOUT));
     }
 
     /**
@@ -64,17 +66,17 @@ public class TestSpotPoolDriverConfig {
 
     @Test(expected = IllegalArgumentException.class)
     public void missingAwsAccessKeyId() {
-        new SpotPoolDriverConfig(null, "awsSecretAccessKey", "us-east-1", 0.0070, null, null).validate();
+        new CloudApiSettings(null, "awsSecretAccessKey", "us-east-1", 0.0070, null, null).validate();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void missingAwsSecretAccessKey() {
-        new SpotPoolDriverConfig("awsAccessKeyId", null, "us-east-1", 0.0070, null, null).validate();
+        new CloudApiSettings("awsAccessKeyId", null, "us-east-1", 0.0070, null, null).validate();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void missingRegion() {
-        new SpotPoolDriverConfig("awsAccessKeyId", "awsSecretAccessKey", null, 0.0070, null, null).validate();
+        new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", null, 0.0070, null, null).validate();
     }
 
     /**
@@ -88,18 +90,18 @@ public class TestSpotPoolDriverConfig {
 
     @Test(expected = IllegalArgumentException.class)
     public void illegalConnectionTimeout() {
-        new SpotPoolDriverConfig("awsAccessKeyId", "awsSecretAccessKey", "us-east-1", 0.0070, null, null, 0, 5000)
+        new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", "us-east-1", 0.0070, null, null, 0, 5000)
                 .validate();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void illegalSocketTimeout() {
-        new SpotPoolDriverConfig("awsAccessKeyId", "awsSecretAccessKey", "us-east-1", 0.0070, null, null, 5000, 0)
+        new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", "us-east-1", 0.0070, null, null, 5000, 0)
                 .validate();
     }
 
-    private SpotPoolDriverConfig configWithPrice(double bidPrice) {
-        return new SpotPoolDriverConfig("awsAccessKeyId", "awsSecretAccessKey", "us-east-1", bidPrice, 120L, 60L);
+    private CloudApiSettings configWithPrice(double bidPrice) {
+        return new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", "us-east-1", bidPrice, 120L, 60L);
 
     }
 }

@@ -20,7 +20,7 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableMap;
 
 /**
- * Exercise {@link AzureScaleOutConfig}.
+ * Exercise {@link ProvisioningTemplate}.
  *
  */
 public class TestAzureScaleOutConfig {
@@ -41,7 +41,7 @@ public class TestAzureScaleOutConfig {
      */
     @Test
     public void defaults() {
-        AzureScaleOutConfig conf = new AzureScaleOutConfig(VM_SIZE, VM_IMAGE, null, validLinuxSettings(), null,
+        ProvisioningTemplate conf = new ProvisioningTemplate(VM_SIZE, VM_IMAGE, null, validLinuxSettings(), null,
                 STORAGE_ACCOUNT, validNetworkSettings(), null);
         conf.validate();
 
@@ -60,7 +60,7 @@ public class TestAzureScaleOutConfig {
      */
     @Test
     public void linuxVm() {
-        AzureScaleOutConfig conf = new AzureScaleOutConfig(VM_SIZE, VM_IMAGE, VM_NAME_PREFIX, validLinuxSettings(),
+        ProvisioningTemplate conf = new ProvisioningTemplate(VM_SIZE, VM_IMAGE, VM_NAME_PREFIX, validLinuxSettings(),
                 null, STORAGE_ACCOUNT, validNetworkSettings(), validTags());
         conf.validate();
 
@@ -81,7 +81,7 @@ public class TestAzureScaleOutConfig {
      */
     @Test
     public void windowsVm() {
-        AzureScaleOutConfig conf = new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, null,
+        ProvisioningTemplate conf = new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, null,
                 validWindowsSettings(), STORAGE_ACCOUNT, validNetworkSettings(), validTags());
         conf.validate();
 
@@ -106,7 +106,7 @@ public class TestAzureScaleOutConfig {
         try {
             LinuxSettings linuxSettings = validLinuxSettings();
             WindowsSettings windowsSettings = null;
-            new AzureScaleOutConfig(null, VM_IMAGE, VM_NAME_PREFIX, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
+            new ProvisioningTemplate(null, VM_IMAGE, VM_NAME_PREFIX, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
                     validNetworkSettings(), validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
@@ -122,7 +122,7 @@ public class TestAzureScaleOutConfig {
         try {
             LinuxSettings linuxSettings = validLinuxSettings();
             WindowsSettings windowsSettings = null;
-            new AzureScaleOutConfig(VM_SIZE, null, VM_NAME_PREFIX, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
+            new ProvisioningTemplate(VM_SIZE, null, VM_NAME_PREFIX, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
                     validNetworkSettings(), validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
@@ -138,7 +138,7 @@ public class TestAzureScaleOutConfig {
         try {
             LinuxSettings linuxSettings = null;
             WindowsSettings windowsSettings = null;
-            new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, linuxSettings, windowsSettings,
+            new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, linuxSettings, windowsSettings,
                     STORAGE_ACCOUNT, validNetworkSettings(), validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
@@ -152,7 +152,7 @@ public class TestAzureScaleOutConfig {
     @Test
     public void onBothLinuxAndWindowsSettings() {
         try {
-            new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, validLinuxSettings(),
+            new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, validLinuxSettings(),
                     validWindowsSettings(), STORAGE_ACCOUNT, validNetworkSettings(), validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
@@ -167,7 +167,7 @@ public class TestAzureScaleOutConfig {
     @Test
     public void onIllegalLinuxSettings() {
         try {
-            new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, invalidLinuxSettings(), null,
+            new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, invalidLinuxSettings(), null,
                     STORAGE_ACCOUNT, validNetworkSettings(), validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
@@ -182,7 +182,7 @@ public class TestAzureScaleOutConfig {
     @Test
     public void onIllegalWindowsSettings() {
         try {
-            new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, null, invalidWindowsSettings(),
+            new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, null, invalidWindowsSettings(),
                     STORAGE_ACCOUNT, validNetworkSettings(), validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
@@ -198,7 +198,7 @@ public class TestAzureScaleOutConfig {
         try {
             LinuxSettings linuxSettings = validLinuxSettings();
             WindowsSettings windowsSettings = null;
-            new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, linuxSettings, windowsSettings,
+            new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, linuxSettings, windowsSettings,
                     STORAGE_ACCOUNT, null, validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
@@ -213,7 +213,7 @@ public class TestAzureScaleOutConfig {
     @Test
     public void onIllegalNetworkSettings() {
         try {
-            new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, null, validWindowsSettings(),
+            new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, null, validWindowsSettings(),
                     STORAGE_ACCOUNT, invalidNetworkSettings(), validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
@@ -230,7 +230,7 @@ public class TestAzureScaleOutConfig {
         try {
             LinuxSettings linuxSettings = validLinuxSettings();
             WindowsSettings windowsSettings = null;
-            new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, linuxSettings, windowsSettings, null,
+            new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, linuxSettings, windowsSettings, null,
                     validNetworkSettings(), validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
@@ -245,7 +245,7 @@ public class TestAzureScaleOutConfig {
     public void onIllegalTags() {
         try {
             Map<String, String> invalidTags = ImmutableMap.of("illegal/key", "value");
-            new AzureScaleOutConfig(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, null, validWindowsSettings(),
+            new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, null, validWindowsSettings(),
                     STORAGE_ACCOUNT, validNetworkSettings(), invalidTags).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {

@@ -10,7 +10,7 @@ import com.google.common.base.Objects;
 /**
  * Settings specific to launching Windows VMs.
  *
- * @see AzureScaleOutConfig
+ * @see ProvisioningTemplate
  */
 public class WindowsSettings {
     /**

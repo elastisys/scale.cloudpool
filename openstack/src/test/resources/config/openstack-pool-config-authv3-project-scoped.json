@@ -1,34 +1,32 @@
 {
-    "cloudPool": {
-      "name": "my-scaling-pool3",
-      "driverConfig": {
+    "name": "my-scaling-pool3",
+
+    "cloudApiSettings": {
         "auth": {  
-          "keystoneUrl": "http://nova.host.com:5000/v3",  
-          "v3Credentials": {
-            "scope": {
-               "projectId": "project_id"
-            },
-            "userId": "user_id",
-            "password": "secret"
-          }            
+            "keystoneUrl": "http://nova.host.com:5000/v3",  
+            "v3Credentials": {
+                "scope": {
+                    "projectId": "project_id"
+                },
+                "userId": "user_id",
+                "password": "secret"
+            }            
         },    
-        "region": "RegionTwo", 
-        "assignFloatingIp": false
-      }
+        "region": "RegionTwo"
     },
-    "scaleOutConfig": {
-      "size": "m1.small", 
-      "image": "Ubuntu Server 12.04",
-      "keyPair": "openstack_p11",
-      "securityGroups": ["web"],               
-      "bootScript": [
-        "#!/bin/bash",
-        "sudo apt-get update",
-        "sudo apt-get install -y --force-yes apache2"
-      ]
+    
+    "provisioningTemplate": {
+        "size": "m1.small", 
+        "image": "Ubuntu Server 16.04",
+        "keyPair": "login-key",
+        "securityGroups": ["web"],               
+        "encodedUserData": "YXB0LWdldCB1cGRhdGUgLXF5ICYmIGFwdC1nZXQgaW5zdGFsbCBhcGFjaGUyCg==",
+        "networks": ["private-net"],
+        "assignFloatingIp": true
     },
+    
     "scaleInConfig": {
-      "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
-      "instanceHourMargin": 0
+        "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
+        "instanceHourMargin": 0
     }
 }  

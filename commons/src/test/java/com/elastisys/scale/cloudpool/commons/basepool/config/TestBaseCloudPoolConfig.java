@@ -3,6 +3,8 @@ package com.elastisys.scale.cloudpool.commons.basepool.config;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.List;
@@ -27,13 +29,17 @@ import com.google.gson.JsonObject;
  */
 public class TestBaseCloudPoolConfig {
 
+    /**
+     * Make sure all fields can be assigned explicit values.
+     */
     @Test
     public void basicSanity() {
-        BaseCloudPoolConfig config = new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(),
-                alertSettings(), poolFetch(), poolUpdate());
+        BaseCloudPoolConfig config = new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(),
+                scaleInConfig(), alertSettings(), poolFetch(), poolUpdate());
         config.validate();
-        assertThat(config.getCloudPool(), is(cloudPoolConfig()));
-        assertThat(config.getScaleOutConfig(), is(scaleOutConfig()));
+        assertThat(config.getName(), is(name()));
+        assertThat(config.getCloudApiSettings(), is(cloudApiSettings()));
+        assertThat(config.getProvisioningTemplate(), is(provisioningTemplate()));
         assertThat(config.getScaleInConfig(), is(scaleInConfig()));
         assertThat(config.getAlerts(), is(alertSettings()));
         assertThat(config.getPoolFetch(), is(poolFetch()));
@@ -41,12 +47,24 @@ public class TestBaseCloudPoolConfig {
     }
 
     /**
+     * It is okay to not specify scaleInConfig.
+     */
+    @Test
+    public void missingScaleInConfig() {
+        BaseCloudPoolConfig config = new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), null,
+                alertSettings(), poolFetch(), poolUpdate());
+        config.validate();
+
+        assertThat(config.getScaleInConfig(), is(BaseCloudPoolConfig.DEFAULT_SCALE_IN_CONFIG));
+    }
+
+    /**
      * It is okay to not specify alerts.
      */
     @Test
     public void missingAlertSettings() {
-        BaseCloudPoolConfig config = new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), null,
-                poolFetch(), poolUpdate());
+        BaseCloudPoolConfig config = new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(),
+                scaleInConfig(), null, poolFetch(), poolUpdate());
         config.validate();
         assertThat(config.getAlerts(), is(nullValue()));
     }
@@ -56,8 +74,8 @@ public class TestBaseCloudPoolConfig {
      */
     @Test
     public void missingPoolFetch() {
-        BaseCloudPoolConfig config = new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(),
-                alertSettings(), null, poolUpdate());
+        BaseCloudPoolConfig config = new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(),
+                scaleInConfig(), alertSettings(), null, poolUpdate());
         config.validate();
         assertThat(config.getPoolFetch(), is(BaseCloudPoolConfig.DEFAULT_POOL_FETCH_CONFIG));
     }
@@ -67,44 +85,82 @@ public class TestBaseCloudPoolConfig {
      */
     @Test
     public void missingPoolUpdate() {
-        BaseCloudPoolConfig config = new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(),
-                alertSettings(), poolFetch(), null);
+        BaseCloudPoolConfig config = new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(),
+                scaleInConfig(), alertSettings(), poolFetch(), null);
         config.validate();
         assertThat(config.getPoolUpdate(), is(BaseCloudPoolConfig.DEFAULT_POOL_UPDATE_CONFIG));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void missingCloudPool() {
-        BaseCloudPoolConfig config = new BaseCloudPoolConfig(null, scaleOutConfig(), scaleInConfig(), alertSettings(),
-                poolFetch(), poolUpdate());
-        config.validate();
+    /**
+     * name of pool is required.
+     */
+    @Test
+    public void missingName() {
+        try {
+            BaseCloudPoolConfig config = new BaseCloudPoolConfig(null, cloudApiSettings(), provisioningTemplate(),
+                    scaleInConfig(), alertSettings(), poolFetch(), poolUpdate());
+            config.validate();
+            fail("expected to fail");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("name"));
+        }
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void missingScaleOutConfig() {
-        BaseCloudPoolConfig config = new BaseCloudPoolConfig(cloudPoolConfig(), null, scaleInConfig(), alertSettings(),
-                poolFetch(), poolUpdate());
-        config.validate();
+    /**
+     * cloudApiSettings is required.
+     */
+    @Test
+    public void missingCloudApiSettings() {
+        try {
+            BaseCloudPoolConfig config = new BaseCloudPoolConfig(name(), null, provisioningTemplate(), scaleInConfig(),
+                    alertSettings(), poolFetch(), poolUpdate());
+            config.validate();
+            fail("expected to fail");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("cloudApiSettings"));
+        }
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void missingScaleInConfig() {
-        BaseCloudPoolConfig config = new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), null, alertSettings(),
-                poolFetch(), poolUpdate());
-        config.validate();
+    /**
+     * provisioningTemplate is required.
+     */
+    @Test
+    public void missingProvisioningTemplate() {
+        try {
+            BaseCloudPoolConfig config = new BaseCloudPoolConfig(name(), cloudApiSettings(), null, scaleInConfig(),
+                    alertSettings(), poolFetch(), poolUpdate());
+            config.validate();
+            fail("expected to fail");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("provisioningTemplate"));
+        }
     }
 
-    private CloudPoolConfig cloudPoolConfig() {
-        return new CloudPoolConfig("MyScalingGroup", cloudCredentialsConfig());
+    /**
+     * Sample pool name.
+     *
+     * @return
+     */
+    private String name() {
+        return "webserver-pool";
     }
 
-    private JsonObject cloudCredentialsConfig() {
-        return JsonUtils.parseJsonString("{\"userName\": \"johndoe\", " + "\"region\": \"us-east-1\"}")
-                .getAsJsonObject();
+    /**
+     * Sample {@link BaseCloudPoolConfig#getCloudApiSettings()}.
+     *
+     * @return
+     */
+    private JsonObject cloudApiSettings() {
+        return JsonUtils.parseJsonString("{\"apiUser\": \"foo\", " + "\"apiPassword\": \"secret\"}").getAsJsonObject();
     }
 
-    private JsonObject scaleOutConfig() {
-        return JsonUtils.parseJsonString("{\"size\": \"t1.small\", \"image\": \"ami-12345678\"}").getAsJsonObject();
+    /**
+     * Sample {@link BaseCloudPoolConfig#getCloudApiSettings()}.
+     *
+     * @return
+     */
+    private JsonObject provisioningTemplate() {
+        return JsonUtils.parseJsonString("{\"size\": \"medium\", " + "\"image\": \"ubuntu-16.04\"}").getAsJsonObject();
     }
 
     private ScaleInConfig scaleInConfig() {

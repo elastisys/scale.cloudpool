@@ -16,7 +16,7 @@ import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.azure.driver.client.AzureClient;
 import com.elastisys.scale.cloudpool.azure.driver.client.VmSpec;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
-import com.elastisys.scale.cloudpool.azure.driver.config.AzurePoolDriverConfig;
+import com.elastisys.scale.cloudpool.azure.driver.config.CloudApiSettings;
 import com.elastisys.scale.cloudpool.azure.driver.requests.GetVmRequest;
 import com.elastisys.scale.cloudpool.azure.driver.requests.PurgeVmRequest;
 import com.elastisys.scale.cloudpool.azure.driver.requests.TagVmRequest;
@@ -38,10 +38,10 @@ public class StandardAzureClient implements AzureClient {
     }
 
     /** Azure API credentials. */
-    private AzurePoolDriverConfig config;
+    private CloudApiSettings config;
 
     @Override
-    public void configure(AzurePoolDriverConfig config) {
+    public void configure(CloudApiSettings config) {
         checkArgument(config != null, "azure client config cannot be null");
         this.config = config;
     }

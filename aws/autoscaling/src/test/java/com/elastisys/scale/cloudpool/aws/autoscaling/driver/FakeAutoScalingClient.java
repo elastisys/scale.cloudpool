@@ -17,6 +17,7 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AutoScalingClient;
+import com.elastisys.scale.cloudpool.aws.autoscaling.driver.config.CloudApiSettings;
 import com.google.common.collect.Lists;
 
 /**
@@ -75,7 +76,7 @@ public class FakeAutoScalingClient implements AutoScalingClient {
     }
 
     @Override
-    public void configure(AwsAsPoolDriverConfig configuration) {
+    public void configure(CloudApiSettings configuration) {
     }
 
     @Override

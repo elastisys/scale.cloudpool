@@ -1,9 +1,7 @@
 package com.elastisys.scale.cloudpool.aws.autoscaling.driver;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
 import com.amazonaws.services.autoscaling.model.Instance;
@@ -12,45 +10,28 @@ import com.amazonaws.services.autoscaling.model.LifecycleState;
 import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.InstanceType;
 import com.elastisys.scale.cloudpool.api.types.Machine;
-import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.PoolFetchConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.PoolUpdateConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleInConfig;
-import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
+import com.elastisys.scale.cloudpool.aws.autoscaling.driver.config.CloudApiSettings;
+import com.elastisys.scale.cloudpool.aws.autoscaling.driver.config.ProvisioningTemplate;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.json.types.TimeInterval;
-import com.elastisys.scale.commons.net.alerter.http.HttpAlerterConfig;
-import com.elastisys.scale.commons.net.alerter.multiplexing.AlertersConfig;
-import com.elastisys.scale.commons.net.alerter.smtp.SmtpAlerterConfig;
-import com.elastisys.scale.commons.net.smtp.SmtpClientConfig;
 import com.google.common.collect.Lists;
-import com.google.gson.JsonObject;
 
 public class TestUtils {
 
-    public static BaseCloudPoolConfig config(String scalingGroupName) {
-        AwsAsPoolDriverConfig awsApiConfig = new AwsAsPoolDriverConfig("awsAccessKeyId", "awsSecretAccessKey",
-                "eu-west-1");
-        CloudPoolConfig scalingGroupConfig = new CloudPoolConfig(scalingGroupName,
-                JsonUtils.toJson(awsApiConfig).getAsJsonObject());
-        JsonObject scaleOutConfig = new JsonObject();
-        ScaleInConfig scaleDownConfig = new ScaleInConfig(VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR, 300);
-
-        SmtpAlerterConfig smtpAlerter = new SmtpAlerterConfig(Arrays.asList("receiver@destination.com"),
-                "noreply@elastisys.com", "cloud pool alert!", "INFO|WARN|ERROR|FATAL",
-                new SmtpClientConfig("smtp.host.com", 25, null, false));
-        List<HttpAlerterConfig> httpAlerters = Arrays.asList();
-        AlertersConfig alertSettings = new AlertersConfig(Arrays.asList(smtpAlerter), httpAlerters);
-
-        TimeInterval refreshInterval = new TimeInterval(30L, TimeUnit.SECONDS);
-        TimeInterval reachabilityTimeout = new TimeInterval(5L, TimeUnit.MINUTES);
-        PoolFetchConfig poolFetch = new PoolFetchConfig(new RetriesConfig(3, new TimeInterval(2L, TimeUnit.SECONDS)),
-                refreshInterval, reachabilityTimeout);
-        PoolUpdateConfig poolUpdate = new PoolUpdateConfig(new TimeInterval(60L, TimeUnit.SECONDS));
-        return new BaseCloudPoolConfig(scalingGroupConfig, scaleOutConfig, scaleDownConfig, alertSettings, poolFetch,
-                poolUpdate);
+    /**
+     * Create a sample {@link DriverConfig}.
+     *
+     * @param managedAutoScalingGroupName
+     *            The managed Auto Scaling Group name to set in template. Mau be
+     *            null, in which case the {@link DriverConfig#getPoolName()}
+     *            will be used.
+     * @return
+     */
+    public static DriverConfig driverConfig(String managedAutoScalingGroupName) {
+        ProvisioningTemplate provisioningTemplate = new ProvisioningTemplate(managedAutoScalingGroupName);
+        CloudApiSettings cloudApiSettings = new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", "eu-west-1");
+        return new DriverConfig("my-cloud-pool", JsonUtils.toJson(cloudApiSettings).getAsJsonObject(),
+                JsonUtils.toJson(provisioningTemplate).getAsJsonObject());
     }
 
     public static AutoScalingGroup group(String name, LaunchConfiguration launchConfig, int desiredCapacity,

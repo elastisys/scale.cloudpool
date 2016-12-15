@@ -1,8 +1,7 @@
 {
+    "name": "${CLOUD_POOL_NAME}",
 
-    "cloudPool": {
-        "name": "${CLOUD_POOL_NAME}",
-        "driverConfig": {
+    "cloudApiSettings": {
             "auth": {  
                 "keystoneUrl": "http://${KEYSTONE_HOST}:5000/v2.0",  
                 "v2Credentials": {
@@ -12,22 +11,24 @@
                 }
             },    
             "region": "${OS_REGION}",
-            "assignFloatingIp": true,
             "connectionTimeout": 10000,
             "socketTimeout": 10000
-        }
     },
-    "scaleOutConfig": {
+    
+    "provisioningTemplate": {
         "size": "${INSTANCE_TYPE}",
         "image": "${IMAGE_NAME}",
         "keyPair": "${INSTANCE_KEY_PAIR}",
         "securityGroups": ["${SECURITY_GROUP}"],
-        "encodedUserData": "<base-64 encoded data>"
+        "encodedUserData": "<base-64 encoded data>",
+        "assignFloatingIp": true,
     },
+    
     "scaleInConfig": {
         "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
         "instanceHourMargin": 300
     },
+    
     "alerts": {
         "duplicateSuppression": { "time": 5, "unit": "minutes" },
         "smtp": [
@@ -57,6 +58,7 @@
             }    
         ]
     },
+    
     "poolFetch": {
         "retries": { 
             "maxRetries": 3, 
@@ -65,6 +67,7 @@
         "refreshInterval": {"time": 30, "unit": "seconds"},
         "reachabilityTimeout": {"time": 5, "unit": "minutes"}
     },
+    
     "poolUpdate": {
         "updateInterval": {"time": 60, "unit": "seconds"}
     }

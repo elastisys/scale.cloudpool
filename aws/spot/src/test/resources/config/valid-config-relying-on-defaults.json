@@ -1,27 +1,18 @@
 {
-    "cloudPool": {
-      "name": "spot-cluster",
-      "driverConfig": {
+    "name": "spot-cluster",
+
+    "cloudApiSettings": {
         "awsAccessKeyId": "ABC",
         "awsSecretAccessKey": "XYZ",
         "region": "us-west-1",
         "bidPrice": 0.0070
-      }
     },
-    "scaleOutConfig": {
-      "size": "m1.small",
-      "image": "ami-018c9568",
-      "keyPair": "instancekey",
-      "securityGroups": ["webserver"],
-      "bootScript": [
-        "#!/bin/bash",
-        "sudo apt-get update -qy",
-        "sudo apt-get install -qy apache2"
-      ]
-    },
-    "scaleInConfig": {
-      "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
-      "instanceHourMargin": 0
-    },
-    "poolUpdatePeriod": 60            
-}  
+
+    "provisioningTemplate": {
+        "size": "m1.small",
+        "image": "ami-018c9568",
+        "keyPair": "instancekey",
+        "securityGroups": ["webserver"],
+        "encodedUserData": "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg=="
+    }
+}

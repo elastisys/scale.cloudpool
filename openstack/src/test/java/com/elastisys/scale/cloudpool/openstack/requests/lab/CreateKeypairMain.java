@@ -10,7 +10,7 @@ import org.openstack4j.model.compute.Keypair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.elastisys.scale.cloudpool.openstack.driver.config.OpenStackPoolDriverConfig;
+import com.elastisys.scale.cloudpool.openstack.driver.config.CloudApiSettings;
 import com.elastisys.scale.commons.openstack.OSClientFactory;
 import com.google.common.io.Files;
 
@@ -27,7 +27,7 @@ public class CreateKeypairMain {
 
     public static void main(String[] args) throws Exception {
         HttpLoggingFilter.toggleLogging(false);
-        OpenStackPoolDriverConfig driverConfig = DriverConfigLoader.loadDefault();
+        CloudApiSettings driverConfig = DriverConfigLoader.loadDefault();
 
         OSClient client = new OSClientFactory(driverConfig.toApiAccessConfig()).authenticatedClient();
         KeypairService keyApi = client.compute().keypairs();

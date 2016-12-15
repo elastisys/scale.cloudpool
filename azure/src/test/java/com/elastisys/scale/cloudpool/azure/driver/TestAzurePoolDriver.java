@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.azure.driver;
 
-import static com.elastisys.scale.cloudpool.azure.driver.AzureTestUtils.invalidConfig;
-import static com.elastisys.scale.cloudpool.azure.driver.AzureTestUtils.validConfig;
+import static com.elastisys.scale.cloudpool.azure.driver.AzureTestUtils.driverConfig;
+import static com.elastisys.scale.cloudpool.azure.driver.AzureTestUtils.loadPoolConfig;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
@@ -21,7 +21,9 @@ import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.azure.driver.client.AzureClient;
-import com.elastisys.scale.cloudpool.azure.driver.config.AzurePoolDriverConfig;
+import com.elastisys.scale.cloudpool.azure.driver.config.CloudApiSettings;
+import com.elastisys.scale.cloudpool.azure.driver.config.ProvisioningTemplate;
+import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
 
 /**
@@ -57,15 +59,20 @@ public class TestAzurePoolDriver {
         verifyZeroInteractions(this.clientMock);
         assertThat(this.driver.config(), is(nullValue()));
 
-        this.driver.configure(validConfig());
+        BaseCloudPoolConfig poolConfig = loadPoolConfig("config/valid-config.json");
+        this.driver.configure(driverConfig(poolConfig));
 
-        AzurePoolDriverConfig expectedDriverConfig = JsonUtils.toObject(validConfig().getCloudPool().getDriverConfig(),
-                AzurePoolDriverConfig.class);
+        CloudApiSettings expectedCloudApiSettings = JsonUtils.toObject(poolConfig.getCloudApiSettings(),
+                CloudApiSettings.class);
+        ProvisioningTemplate expectedProvisioningTemplate = JsonUtils.toObject(poolConfig.getProvisioningTemplate(),
+                ProvisioningTemplate.class);
 
         // verify that config was set on driver
-        assertThat(this.driver.config(), is(expectedDriverConfig));
-        // verify that the pool driver config was passed along to the client
-        verify(this.clientMock).configure(expectedDriverConfig);
+        assertThat(this.driver.cloudApiSettings(), is(expectedCloudApiSettings));
+        assertThat(this.driver.provisioningTemplate(), is(expectedProvisioningTemplate));
+
+        // verify that the cloud api settings were passed along to the client
+        verify(this.clientMock).configure(expectedCloudApiSettings);
     }
 
     /**
@@ -75,7 +82,7 @@ public class TestAzurePoolDriver {
     @Test
     public void onIllegalConfig() {
         try {
-            this.driver.configure(invalidConfig());
+            this.driver.configure(driverConfig(loadPoolConfig("config/invalid-config.json")));
             fail("expected to fail config validation");
         } catch (IllegalArgumentException e) {
             // expected

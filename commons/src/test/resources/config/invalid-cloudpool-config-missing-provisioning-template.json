@@ -1,0 +1,12 @@
+{
+    "name": "my-scaling-group",
+
+    "cloudApiSettings": {
+        "keystoneEndpoint": "http://openstack.nova.com:5000/v2.0",
+        "region": "RegionOne",
+        "tenantName": "tenant",
+        "userName": "clouduser",
+        "password": "cloudpass"
+    }
+
+}  

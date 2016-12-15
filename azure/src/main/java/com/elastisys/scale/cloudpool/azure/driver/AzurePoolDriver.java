@@ -1,7 +1,6 @@
 package com.elastisys.scale.cloudpool.azure.driver;
 
 import static com.elastisys.scale.commons.json.JsonUtils.toJson;
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
@@ -23,19 +22,18 @@ import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.azure.driver.client.AzureClient;
 import com.elastisys.scale.cloudpool.azure.driver.client.VmSpec;
-import com.elastisys.scale.cloudpool.azure.driver.config.AzurePoolDriverConfig;
-import com.elastisys.scale.cloudpool.azure.driver.config.AzureScaleOutConfig;
+import com.elastisys.scale.cloudpool.azure.driver.config.CloudApiSettings;
+import com.elastisys.scale.cloudpool.azure.driver.config.ProvisioningTemplate;
 import com.elastisys.scale.cloudpool.azure.driver.functions.VmToMachine;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
-import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.JsonObject;
 import com.microsoft.azure.management.compute.VirtualMachine;
 
 /**
@@ -55,66 +53,34 @@ public class AzurePoolDriver implements CloudPoolDriver {
     private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(CloudProviders.AZURE,
             supportedApiVersions);
 
-    /** Logical name of the managed machine pool. */
-    private String poolName;
-
     /** Client for performing actions against the Azure REST API. */
     private final AzureClient client;
-    /** Azure API access settings. */
-    private AzurePoolDriverConfig driverConfig;
-    /** Provisioning template to use when launching new pool machines. */
-    private AzureScaleOutConfig scaleOutConfig;
+
+    /** The current driver configuration. */
+    private DriverConfig config;
 
     /** Lock to prevent concurrent access to critical sections. */
     private final Object lock = new Object();
 
     public AzurePoolDriver(AzureClient client) {
-        this.poolName = null;
         this.client = client;
-        this.driverConfig = null;
-        this.scaleOutConfig = null;
+        this.config = null;
     }
 
     @Override
-    public void configure(BaseCloudPoolConfig config) throws IllegalArgumentException, CloudPoolDriverException {
-        checkArgument(config != null, "null configuration received");
-        config.validate();
-
+    public void configure(DriverConfig configuration) throws IllegalArgumentException, CloudPoolDriverException {
         synchronized (this.lock) {
-            AzurePoolDriverConfig driverConfig = validateDriverConfig(config.getCloudPool().getDriverConfig());
-            driverConfig.validate();
+            // parse and validate openstack-specific cloudApiSettings
+            CloudApiSettings cloudApiSettings = configuration.parseCloudApiSettings(CloudApiSettings.class);
+            cloudApiSettings.validate();
 
-            AzureScaleOutConfig scaleOutConf = parseAndValidateScaleOutConfig(config.getScaleOutConfig());
+            // parse and validate openstack-specific provisioningTemplate
+            ProvisioningTemplate provisioningTemplate = configuration
+                    .parseProvisioningTemplate(ProvisioningTemplate.class);
+            provisioningTemplate.validate();
 
-            this.poolName = config.getCloudPool().getName();
-            this.client.configure(driverConfig);
-            this.driverConfig = driverConfig;
-            this.scaleOutConfig = scaleOutConf;
-
-        }
-    }
-
-    private AzureScaleOutConfig parseAndValidateScaleOutConfig(JsonObject scaleOutConfig)
-            throws IllegalArgumentException {
-        checkArgument(scaleOutConfig != null, "missing scaleOutConfig");
-
-        try {
-            AzureScaleOutConfig scaleOutTemplate = JsonUtils.toObject(scaleOutConfig, AzureScaleOutConfig.class);
-            scaleOutTemplate.validate();
-
-            return scaleOutTemplate;
-        } catch (Exception e) {
-            throw new IllegalArgumentException("failed to validate scaleOutConfig: " + e.getMessage(), e);
-        }
-    }
-
-    private AzurePoolDriverConfig validateDriverConfig(JsonObject rawDriverConfig) {
-        try {
-            AzurePoolDriverConfig driverConfig = JsonUtils.toObject(rawDriverConfig, AzurePoolDriverConfig.class);
-            driverConfig.validate();
-            return driverConfig;
-        } catch (Exception e) {
-            throw new IllegalArgumentException("failed to apply driver configuration: " + e.getMessage(), e);
+            this.config = configuration;
+            this.client.configure(cloudApiSettings);
         }
     }
 
@@ -137,23 +103,24 @@ public class AzurePoolDriver implements CloudPoolDriver {
     public List<Machine> startMachines(int count) throws StartMachinesException {
         checkState(isConfigured(), "cannot use driver before being configured");
 
+        ProvisioningTemplate provisioningTemplate = provisioningTemplate();
         // add a cloud pool membership tag
-        Map<String, String> tags = this.scaleOutConfig.getTags();
-        tags.put(Constants.CLOUD_POOL_TAG, this.poolName);
+        Map<String, String> tags = provisioningTemplate.getTags();
+        tags.put(Constants.CLOUD_POOL_TAG, getPoolName());
 
         // generate unique name for each VM
         long timeMillis = System.currentTimeMillis();
-        String vmNamePrefix = this.poolName;
-        if (this.scaleOutConfig.getVmNamePrefix().isPresent()) {
-            vmNamePrefix = this.scaleOutConfig.getVmNamePrefix().get();
+        String vmNamePrefix = getPoolName();
+        if (provisioningTemplate.getVmNamePrefix().isPresent()) {
+            vmNamePrefix = provisioningTemplate.getVmNamePrefix().get();
         }
 
         List<VmSpec> vmSpecs = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             String vmName = String.format("%s-%d-%d", vmNamePrefix, timeMillis, i);
-            VmSpec vmSpec = new VmSpec(this.scaleOutConfig.getVmSize(), this.scaleOutConfig.getVmImage(), vmName,
-                    this.scaleOutConfig.getLinuxSettings(), this.scaleOutConfig.getWindowsSettings(),
-                    this.scaleOutConfig.getStorageAccountName(), this.scaleOutConfig.getNetwork(), tags);
+            VmSpec vmSpec = new VmSpec(provisioningTemplate.getVmSize(), provisioningTemplate.getVmImage(), vmName,
+                    provisioningTemplate.getLinuxSettings(), provisioningTemplate.getWindowsSettings(),
+                    provisioningTemplate.getStorageAccountName(), provisioningTemplate.getNetwork(), tags);
             vmSpecs.add(vmSpec);
         }
         LOG.info("launching VMs: {}", Joiner.on("\n").join(vmSpecs));
@@ -265,7 +232,7 @@ public class AzurePoolDriver implements CloudPoolDriver {
     public String getPoolName() {
         checkState(isConfigured(), "cannot use driver before being configured");
 
-        return this.poolName;
+        return this.config.getPoolName();
 
     }
 
@@ -282,12 +249,8 @@ public class AzurePoolDriver implements CloudPoolDriver {
         }
     }
 
-    private boolean isConfigured() {
-        return this.driverConfig != null;
-    }
-
     private Map<String, String> cloudPoolTag() {
-        return ImmutableMap.of(Constants.CLOUD_POOL_TAG, this.poolName);
+        return ImmutableMap.of(Constants.CLOUD_POOL_TAG, getPoolName());
     }
 
     /**
@@ -299,12 +262,12 @@ public class AzurePoolDriver implements CloudPoolDriver {
      * @throws NotFoundException
      */
     private void ensureRightRegionAndResouceGroup(VirtualMachine vm) throws NotFoundException {
-        String cloudpoolRegion = this.driverConfig.getRegion();
+        String cloudpoolRegion = cloudApiSettings().getRegion();
         if (!vm.regionName().equalsIgnoreCase(cloudpoolRegion)) {
             throw new NotFoundException(String.format("the specified vm is located region %s, cloudpool uses region %s",
                     vm.regionName(), cloudpoolRegion));
         }
-        String cloudpoolResourceGroup = this.driverConfig.getResourceGroup();
+        String cloudpoolResourceGroup = cloudApiSettings().getResourceGroup();
         if (!vm.resourceGroupName().equalsIgnoreCase(cloudpoolResourceGroup)) {
             throw new NotFoundException(
                     String.format("the specified vm is in resource group %s, cloudpool uses resource group %s",
@@ -312,14 +275,20 @@ public class AzurePoolDriver implements CloudPoolDriver {
         }
     }
 
-    /**
-     * Returns the currently set config, if any. Otherwise, <code>null</code> is
-     * returned.
-     *
-     * @return
-     */
-    AzurePoolDriverConfig config() {
-        return this.driverConfig;
+    CloudApiSettings cloudApiSettings() {
+        return config().parseCloudApiSettings(CloudApiSettings.class);
+    }
+
+    ProvisioningTemplate provisioningTemplate() {
+        return config().parseProvisioningTemplate(ProvisioningTemplate.class);
+    }
+
+    DriverConfig config() {
+        return this.config;
+    }
+
+    private boolean isConfigured() {
+        return config() != null;
     }
 
 }

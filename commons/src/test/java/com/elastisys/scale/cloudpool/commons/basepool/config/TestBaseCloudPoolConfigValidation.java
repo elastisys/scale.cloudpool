@@ -29,53 +29,46 @@ public class TestBaseCloudPoolConfigValidation {
 
     @Test
     public void minimalConfig() throws CloudPoolException {
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), null, null, null).validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), null, null, null, null).validate();
     }
 
     @Test
     public void withAlertConfig() throws CloudPoolException {
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), alertsConfig(), null, null)
-                .validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), scaleInConfig(), alertsConfig(),
+                null, null).validate();
     }
 
     @Test
     public void withPoolUpdate() throws CloudPoolException {
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), alertsConfig(), null,
-                poolUpdate()).validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), scaleInConfig(), alertsConfig(),
+                null, poolUpdate()).validate();
     }
 
     @Test
     public void withPoolFetch() throws CloudPoolException {
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), alertsConfig(), poolFetch(),
-                poolUpdate()).validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), scaleInConfig(), alertsConfig(),
+                poolFetch(), poolUpdate()).validate();
     }
 
-    // illegal config: missing /cloudPool
-    @Test(expected = IllegalArgumentException.class)
-    public void missingCloudPool() throws CloudPoolException {
-        new BaseCloudPoolConfig(null, scaleOutConfig(), scaleInConfig(), alertsConfig(), null, null).validate();
-    }
-
-    // illegal config: missing /cloudPool/name
+    // illegal config: missing /name
     @Test(expected = IllegalArgumentException.class)
     public void missingCloudPoolName() throws CloudPoolException {
-        CloudPoolConfig cloudPoolConfig = cloudPoolConfig();
-        setPrivateField(cloudPoolConfig, "name", null);
-        new BaseCloudPoolConfig(cloudPoolConfig, scaleOutConfig(), scaleInConfig(), null, null, null).validate();
+        new BaseCloudPoolConfig(null, cloudApiSettings(), provisioningTemplate(), scaleInConfig(), null, null, null)
+                .validate();
     }
 
-    // illegal config: missing /cloudPool/driverConfig
+    // illegal config: missing /cloudApiSettings
     @Test(expected = IllegalArgumentException.class)
-    public void missingCloudPoolDriverConfig() throws CloudPoolException {
-        CloudPoolConfig cloudPoolConfig = cloudPoolConfig();
-        setPrivateField(cloudPoolConfig, "driverConfig", null);
-        new BaseCloudPoolConfig(cloudPoolConfig, scaleOutConfig(), scaleInConfig(), null, null, null).validate();
+    public void missingCloudApiSettingsCloudPool() throws CloudPoolException {
+        new BaseCloudPoolConfig(name(), null, provisioningTemplate(), scaleInConfig(), alertsConfig(), null, null)
+                .validate();
     }
 
-    // illegal config: missing /scaleOutConfig
+    // illegal config: missing /provisioningTemplate
     @Test(expected = IllegalArgumentException.class)
-    public void missingScaleOutConfig() throws CloudPoolException {
-        new BaseCloudPoolConfig(cloudPoolConfig(), null, scaleInConfig(), alertsConfig(), null, null).validate();
+    public void missingProvisioningTemplate() throws CloudPoolException {
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), null, scaleInConfig(), alertsConfig(), null, null)
+                .validate();
     }
 
     // illegal config: missing /alerts/smtp[0]/subject
@@ -83,7 +76,8 @@ public class TestBaseCloudPoolConfigValidation {
     public void missingSmtpSubject() throws CloudPoolException {
         AlertersConfig alerts = alertsConfig();
         setPrivateField(alerts.getSmtpAlerters().get(0), "subject", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), alerts, null, null).validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), scaleInConfig(), alerts, null, null)
+                .validate();
     }
 
     // illegal config: missing /alerts/smtp[0]/recipients
@@ -91,7 +85,8 @@ public class TestBaseCloudPoolConfigValidation {
     public void missingSmtpRecipients() throws CloudPoolException {
         AlertersConfig alerts = alertsConfig();
         setPrivateField(alerts.getSmtpAlerters().get(0), "recipients", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), alerts, null, null).validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), scaleInConfig(), alerts, null, null)
+                .validate();
     }
 
     // illegal config: missing /alerts/smtp[0]/sender
@@ -99,7 +94,8 @@ public class TestBaseCloudPoolConfigValidation {
     public void missingSmtpSender() throws CloudPoolException {
         AlertersConfig alerts = alertsConfig();
         setPrivateField(alerts.getSmtpAlerters().get(0), "sender", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), alerts, null, null).validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), scaleInConfig(), alerts, null, null)
+                .validate();
     }
 
     // illegal config: missing /alerts/smtp[0]/smtpClientConfig
@@ -107,7 +103,8 @@ public class TestBaseCloudPoolConfigValidation {
     public void missingSmtpClientConfig() throws CloudPoolException {
         AlertersConfig alerts = alertsConfig();
         setPrivateField(alerts.getSmtpAlerters().get(0), "smtpClientConfig", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), alerts, null, null).validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), scaleInConfig(), alerts, null, null)
+                .validate();
     }
 
     // illegal config: missing /alerts/smtp[0]/smtpClientConfig/smtpHost
@@ -115,7 +112,8 @@ public class TestBaseCloudPoolConfigValidation {
     public void missingSmtpHost() throws CloudPoolException {
         AlertersConfig alerts = alertsConfig();
         setPrivateField(alerts.getSmtpAlerters().get(0).getSmtpClientConfig(), "smtpHost", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), alerts, null, null).validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), scaleInConfig(), alerts, null, null)
+                .validate();
     }
 
     // illegal config: missing
@@ -126,7 +124,8 @@ public class TestBaseCloudPoolConfigValidation {
         SmtpClientAuthentication authentication = alerts.getSmtpAlerters().get(0).getSmtpClientConfig()
                 .getAuthentication();
         setPrivateField(authentication, "username", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), alerts, null, null).validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), scaleInConfig(), alerts, null, null)
+                .validate();
     }
 
     // illegal config: missing
@@ -137,7 +136,8 @@ public class TestBaseCloudPoolConfigValidation {
         SmtpClientAuthentication authentication = alerts.getSmtpAlerters().get(0).getSmtpClientConfig()
                 .getAuthentication();
         setPrivateField(authentication, "password", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), alerts, null, null).validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), scaleInConfig(), alerts, null, null)
+                .validate();
     }
 
     // illegal config: missing /alerts/http[0]/destinationUrls
@@ -146,7 +146,8 @@ public class TestBaseCloudPoolConfigValidation {
         AlertersConfig alerts = alertsConfig();
         HttpAlerterConfig httpAlerter = alerts.getHttpAlerters().get(0);
         setPrivateField(httpAlerter, "destinationUrls", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), alerts, null, null).validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), scaleInConfig(), alerts, null, null)
+                .validate();
     }
 
     // illegal config: missing /alerts/http[0]/auth/basicCredentials/username
@@ -155,7 +156,8 @@ public class TestBaseCloudPoolConfigValidation {
         AlertersConfig alerts = alertsConfig();
         HttpAlerterConfig httpAlerter = alerts.getHttpAlerters().get(0);
         setPrivateField(httpAlerter.getAuth().getBasicCredentials().get(), "username", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), alerts, null, null).validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), scaleInConfig(), alerts, null, null)
+                .validate();
     }
 
     // illegal config: missing /alerts/http[0]/auth/basicCredentials/password
@@ -164,7 +166,8 @@ public class TestBaseCloudPoolConfigValidation {
         AlertersConfig alerts = alertsConfig();
         HttpAlerterConfig httpAlerter = alerts.getHttpAlerters().get(0);
         setPrivateField(httpAlerter.getAuth().getBasicCredentials().get(), "password", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), alerts, null, null).validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), scaleInConfig(), alerts, null, null)
+                .validate();
     }
 
     // illegal config: missing /poolFetch/retries
@@ -172,8 +175,8 @@ public class TestBaseCloudPoolConfigValidation {
     public void missingPoolFetchRetries() {
         PoolFetchConfig poolFetch = poolFetch();
         setPrivateField(poolFetch, "retries", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), alertsConfig(), poolFetch, null)
-                .validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), scaleInConfig(), alertsConfig(),
+                poolFetch, null).validate();
     }
 
     // illegal config: missing /poolFetch/refreshInterval
@@ -181,8 +184,8 @@ public class TestBaseCloudPoolConfigValidation {
     public void missingPoolFetchRefreshInterval() {
         PoolFetchConfig poolFetch = poolFetch();
         setPrivateField(poolFetch, "refreshInterval", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), alertsConfig(), poolFetch, null)
-                .validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), scaleInConfig(), alertsConfig(),
+                poolFetch, null).validate();
     }
 
     // illegal config: missing /poolFetch/reachabilityTimeout
@@ -190,8 +193,8 @@ public class TestBaseCloudPoolConfigValidation {
     public void missingPoolFetchReachabilityTimeout() {
         PoolFetchConfig poolFetch = poolFetch();
         setPrivateField(poolFetch, "reachabilityTimeout", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), alertsConfig(), poolFetch, null)
-                .validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), scaleInConfig(), alertsConfig(),
+                poolFetch, null).validate();
     }
 
     // illegal config: missing /poolUpdate/updateInterval
@@ -199,8 +202,8 @@ public class TestBaseCloudPoolConfigValidation {
     public void missingPoolUpdateInterval() {
         PoolUpdateConfig poolUpdate = poolUpdate();
         setPrivateField(poolUpdate, "updateInterval", null);
-        new BaseCloudPoolConfig(cloudPoolConfig(), scaleOutConfig(), scaleInConfig(), alertsConfig(), null, poolUpdate)
-                .validate();
+        new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(), scaleInConfig(), alertsConfig(),
+                null, poolUpdate).validate();
     }
 
     private AlertersConfig alertsConfig() {
@@ -227,12 +230,31 @@ public class TestBaseCloudPoolConfigValidation {
         return new SmtpClientAuthentication("userName", "password");
     }
 
-    private CloudPoolConfig cloudPoolConfig() {
-        return new CloudPoolConfig("MyScalingGroup", cloudCredentialsConfig());
+    /**
+     * Sample pool name.
+     *
+     * @return
+     */
+    private String name() {
+        return "webserver-pool";
     }
 
-    private JsonObject scaleOutConfig() {
-        return JsonUtils.parseJsonString("{\"size\": \"t1.small\", \"image\": \"ami-12345678\"}").getAsJsonObject();
+    /**
+     * Sample {@link BaseCloudPoolConfig#getCloudApiSettings()}.
+     *
+     * @return
+     */
+    private JsonObject cloudApiSettings() {
+        return JsonUtils.parseJsonString("{\"apiUser\": \"foo\", " + "\"apiPassword\": \"secret\"}").getAsJsonObject();
+    }
+
+    /**
+     * Sample {@link BaseCloudPoolConfig#getCloudApiSettings()}.
+     *
+     * @return
+     */
+    private JsonObject provisioningTemplate() {
+        return JsonUtils.parseJsonString("{\"size\": \"medium\", " + "\"image\": \"ubuntu-16.04\"}").getAsJsonObject();
     }
 
     private ScaleInConfig scaleInConfig() {

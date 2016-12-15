@@ -13,7 +13,7 @@ import com.amazonaws.services.autoscaling.model.LaunchConfiguration;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.aws.autoscaling.driver.AwsAsPoolDriverConfig;
+import com.elastisys.scale.cloudpool.aws.autoscaling.driver.config.CloudApiSettings;
 import com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling.AttachAutoScalingGroupInstance;
 import com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling.DetachAutoScalingGroupInstance;
 import com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling.GetAutoScalingGroup;
@@ -31,14 +31,14 @@ import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.TagEc2Resources;
  *
  */
 public class AwsAutoScalingClient implements AutoScalingClient {
-    private AwsAsPoolDriverConfig config;
+    private CloudApiSettings config;
 
     public AwsAutoScalingClient() {
         this.config = null;
     }
 
     @Override
-    public void configure(AwsAsPoolDriverConfig configuration) {
+    public void configure(CloudApiSettings configuration) {
         checkArgument(configuration != null, "null configuration");
         this.config = configuration;
     }
@@ -125,7 +125,7 @@ public class AwsAutoScalingClient implements AutoScalingClient {
         return this.config != null;
     }
 
-    private AwsAsPoolDriverConfig config() {
+    private CloudApiSettings config() {
         return this.config;
     }
 

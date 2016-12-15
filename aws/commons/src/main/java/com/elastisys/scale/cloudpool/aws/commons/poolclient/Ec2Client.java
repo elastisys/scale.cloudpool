@@ -73,7 +73,7 @@ public interface Ec2Client {
      * @throws AmazonClientException
      *             if the request failed
      */
-    List<Instance> launchInstances(Ec2ScaleOutConfig provisioningDetails, int count, List<Tag> tags)
+    List<Instance> launchInstances(Ec2ProvisioningTemplate provisioningDetails, int count, List<Tag> tags)
             throws AmazonClientException;
 
     /**

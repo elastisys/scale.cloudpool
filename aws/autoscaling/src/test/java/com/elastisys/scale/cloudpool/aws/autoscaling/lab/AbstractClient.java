@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.autoscaling.lab;
 
-import com.elastisys.scale.cloudpool.aws.autoscaling.driver.AwsAsPoolDriverConfig;
+import com.elastisys.scale.cloudpool.aws.autoscaling.driver.config.CloudApiSettings;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.gson.JsonObject;
 
@@ -12,7 +12,7 @@ public class AbstractClient {
     protected static final String region = "us-east-1";
 
     protected static JsonObject awsClientConfig() {
-        AwsAsPoolDriverConfig config = new AwsAsPoolDriverConfig(awsAccessKeyId, awsSecretAccessKey, region);
+        CloudApiSettings config = new CloudApiSettings(awsAccessKeyId, awsSecretAccessKey, region);
         return JsonUtils.toJson(config).getAsJsonObject();
     }
 }

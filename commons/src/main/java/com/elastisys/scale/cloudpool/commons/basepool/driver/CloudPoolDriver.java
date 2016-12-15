@@ -9,7 +9,6 @@ import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
-import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 
 /**
  * A cloud pool management interface for a particular cloud provider.
@@ -38,27 +37,12 @@ public interface CloudPoolDriver {
     /**
      * Configures this {@link CloudPoolDriver} to start managing a pool of
      * servers. This method is called by the {@link BaseCloudPool} whenever a
-     * new configuration has been set, and includes the full configuration of
-     * the {@link BaseCloudPool}.
+     * new configuration has been set.
      * <p/>
-     * The parts of the configuration that are of special interest to the
-     * {@link CloudPoolDriver} are:
-     * <ul>
-     * <li>{@code BaseCloudPoolConfig#getCloudPool()}: holds cloud API access
-     * details ({@code driverConfig}) and the cloud pool name ({@code name}),
-     * which may be used to identify pool members.</li>
-     * <li>{@code BaseCloudPoolConfig#getScaleOutConfig()}: holds cloud-provider
-     * specific server provisioning parameters.
-     * </ul>
-     * <p/>
-     * The expected appearance of {@code driverConfig} and
-     * {@code scaleOutConfig} document depends on the {@link CloudPoolDriver}
-     * implementation but must, at a minimum, include details about how the
-     * {@link CloudPoolDriver} connects to its cloud provider and how it
-     * provisions new machines. Before setting the configuration, the
-     * {@link CloudPoolDriver} should validate that all mandatory configuration
-     * keys have been provided. If this is not the case, a
-     * {@link IllegalArgumentException} should be raised.
+     * The {@link DriverConfig} contains cloud-specific parameters which must be
+     * validated by the {@link CloudPoolDriver} before the configuration is
+     * applied. Failure to validate the configuration should result in an
+     * {@link IllegalArgumentException}.
      * <p/>
      * The {@link CloudPoolDriver} must be configured before any other methods
      * are invoked.
@@ -70,7 +54,7 @@ public interface CloudPoolDriver {
      * @throws CloudPoolDriverException
      *             If the configuration could not be applied.
      */
-    public void configure(BaseCloudPoolConfig configuration) throws IllegalArgumentException, CloudPoolDriverException;
+    public void configure(DriverConfig configuration) throws IllegalArgumentException, CloudPoolDriverException;
 
     /**
      * Returns a list of the members of the cloud pool.
@@ -96,21 +80,23 @@ public interface CloudPoolDriver {
      *
      * @return The current members of the cloud pool.
      *
+     * @throws IllegalStateException
+     *             If the {@link CloudPoolDriver} has not been configured.
      * @throws CloudPoolDriverException
      *             If the operation could not be completed.
      */
-    public List<Machine> listMachines() throws CloudPoolDriverException;
+    public List<Machine> listMachines() throws IllegalStateException, CloudPoolDriverException;
 
     /**
      * Requests that a number of new {@link Machine}s be started in this cloud
      * pool.
      * <p/>
-     * The machines are to be provisioned according to the currently configured
-     * {@code scaleOutConfig}. On success, the complete list of {@link Machine}s
-     * that were started is returned. On failure, a
-     * {@link StartMachinesException} is thrown with the cause of the failure
-     * and indicating which {@link Machine} s were started (if any) before the
-     * request failed.
+     * The machines are to be provisioned according to the provisioning template
+     * of the currently configured {@link DriverConfig}. On success, the
+     * complete list of {@link Machine}s that were started is returned. On
+     * failure, a {@link StartMachinesException} is thrown with the cause of the
+     * failure and indicating which {@link Machine} s were started (if any)
+     * before the request failed.
      * <p/>
      * Depending on the functionality offered by the cloud provider, it may not
      * be possible for the machine request to be immediately fulfilled (for
@@ -131,35 +117,43 @@ public interface CloudPoolDriver {
      * @param count
      *            The number of {@link Machine}s to start.
      * @return The {@link List} of launched {@link Machine}s.
+     *
+     * @throws IllegalStateException
+     *             If the {@link CloudPoolDriver} has not been configured.
      * @throws StartMachinesException
      *             If the request failed to complete. The exception includes
      *             details on machines that were started (if any).
      */
-    public List<Machine> startMachines(int count) throws StartMachinesException;
+    public List<Machine> startMachines(int count) throws IllegalStateException, StartMachinesException;
 
     /**
      * Terminates a {@link Machine} in the cloud pool.
      *
      * @param machineId
      *            The identifier of the {@link Machine}.
+     * @throws IllegalStateException
+     *             If the {@link CloudPoolDriver} has not been configured.
      * @throws NotFoundException
      *             If the machine is not a member of the pool.
      * @throws CloudPoolDriverException
      *             If anything went wrong.
      */
-    public void terminateMachine(String machineId) throws NotFoundException, CloudPoolDriverException;
+    public void terminateMachine(String machineId)
+            throws IllegalStateException, NotFoundException, CloudPoolDriverException;
 
     /**
      * Attaches an already running machine instance to the cloud pool.
      *
      * @param machineId
      *            The identifier of the machine to attach to the cloud pool.
+     * @throws IllegalStateException
+     *             If the {@link CloudPoolDriver} has not been configured.
      * @throws NotFoundException
      *             If the machine does not exist.
      * @throws CloudPoolDriverException
      *             If the operation could not be completed.
      */
-    void attachMachine(String machineId) throws NotFoundException, CloudPoolDriverException;
+    void attachMachine(String machineId) throws IllegalStateException, NotFoundException, CloudPoolDriverException;
 
     /**
      * Removes a member from the cloud pool without terminating it. The machine
@@ -168,12 +162,14 @@ public interface CloudPoolDriver {
      *
      * @param machineId
      *            The identifier of the machine to detach from the cloud pool.
+     * @throws IllegalStateException
+     *             If the {@link CloudPoolDriver} has not been configured.
      * @throws NotFoundException
      *             If the machine is not a member of the cloud pool.
      * @throws CloudPoolDriverException
      *             If the operation could not be completed.
      */
-    void detachMachine(String machineId) throws NotFoundException, CloudPoolDriverException;
+    void detachMachine(String machineId) throws IllegalStateException, NotFoundException, CloudPoolDriverException;
 
     /**
      * Sets the service state of a given machine pool member. Setting the
@@ -190,13 +186,15 @@ public interface CloudPoolDriver {
      *            The id of the machine whose service state is to be updated.
      * @param serviceState
      *            The {@link ServiceState} to assign to the machine.
+     * @throws IllegalStateException
+     *             If the {@link CloudPoolDriver} has not been configured.
      * @throws NotFoundException
      *             If the machine is not a member of the cloud pool.
      * @throws CloudPoolDriverException
      *             If the operation could not be completed.
      */
     public void setServiceState(String machineId, ServiceState serviceState)
-            throws NotFoundException, CloudPoolDriverException;
+            throws IllegalStateException, NotFoundException, CloudPoolDriverException;
 
     /**
      * Sets the membership status of a given pool member.
@@ -214,20 +212,24 @@ public interface CloudPoolDriver {
      *            The id of the machine whose status is to be updated.
      * @param membershipStatus
      *            The {@link MembershipStatus} to set.
+     * @throws IllegalStateException
+     *             If the {@link CloudPoolDriver} has not been configured.
      * @throws NotFoundException
      *             If the machine is not a member of the cloud pool.
      * @throws CloudPoolDriverException
      *             If the operation could not be completed.
      */
     public void setMembershipStatus(String machineId, MembershipStatus membershipStatus)
-            throws NotFoundException, CloudPoolDriverException;
+            throws IllegalStateException, NotFoundException, CloudPoolDriverException;
 
     /**
      * Returns the logical name of the managed machine pool.
      *
      * @return The logical name of the managed machine pool.
+     * @throws IllegalStateException
+     *             If the {@link CloudPoolDriver} has not been configured.
      */
-    public String getPoolName();
+    public String getPoolName() throws IllegalStateException;
 
     /**
      * Returns description of static properties about the cloud pool itself and

@@ -43,7 +43,7 @@ public interface SpotClient extends Ec2Client {
      *
      * @param bidPrice
      *            The bid price to set for the {@link SpotInstanceRequest}.
-     * @param scaleOutConfig
+     * @param instanceTemplate
      *            A description of the desired spot {@link Instance}.
      * @param count
      *            The number of spot instances to request.
@@ -53,7 +53,7 @@ public interface SpotClient extends Ec2Client {
      * @return The placed {@link SpotInstanceRequest}s.
      * @throws AmazonClientException
      */
-    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, Ec2ScaleOutConfig scaleOutConfig, int count,
+    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, Ec2ProvisioningTemplate instanceTemplate, int count,
             List<Tag> tags) throws AmazonClientException;
 
     /**

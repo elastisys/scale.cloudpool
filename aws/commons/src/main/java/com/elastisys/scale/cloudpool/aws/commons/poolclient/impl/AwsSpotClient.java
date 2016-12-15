@@ -7,7 +7,7 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.Tag;
-import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ScaleOutConfig;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTemplate;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CancelSpotInstanceRequests;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetSpotInstanceRequest;
@@ -31,13 +31,13 @@ public class AwsSpotClient extends AwsEc2Client implements SpotClient {
     }
 
     @Override
-    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, Ec2ScaleOutConfig scaleOutConfig, int count,
+    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, Ec2ProvisioningTemplate instanceTemplate, int count,
             List<Tag> tags) {
         // no particular availability zone
         String availabilityZone = null;
         PlaceSpotInstanceRequests request = new PlaceSpotInstanceRequests(awsCredentials(), region(), clientConfig(),
-                bidPrice, availabilityZone, scaleOutConfig.getSecurityGroups(), scaleOutConfig.getKeyPair(),
-                scaleOutConfig.getSize(), scaleOutConfig.getImage(), scaleOutConfig.getEncodedUserData(), count, tags);
+                bidPrice, availabilityZone, instanceTemplate.getSecurityGroups(), instanceTemplate.getKeyPair(),
+                instanceTemplate.getSize(), instanceTemplate.getImage(), instanceTemplate.getEncodedUserData(), count, tags);
         return request.call();
     }
 

@@ -21,6 +21,7 @@ import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.impl.CachingPoolFetcher;
 import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.impl.RetryingPoolFetcher;
 import com.elastisys.scale.cloudpool.commons.basepool.poolupdater.PoolUpdater;
@@ -51,36 +52,41 @@ import com.google.gson.JsonObject;
  * {@link CloudPoolDriver}, which implements the management primitives according
  * to the API of the targeted cloud.
  * <p/>
- * The configuration ({@link BaseCloudPoolConfig}) specifies how the
- * {@link BaseCloudPool}:
+ * Before use, a {@link BaseCloudPool} needs to be configured with a
+ * {@link BaseCloudPoolConfig}, which specifies how the {@link BaseCloudPool}:
  * <ul>
+ * <li>should configure its {@link CloudPoolDriver} to identify pool members
+ * (the {@code name} key). As an example, the {@link CloudPoolDriver} may choose
+ * to assign a metadata tag with the pool name to each started machine.</li>
  * <li>should configure its {@link CloudPoolDriver} to allow it to communicate
- * with its cloud API (the {@code driverConfig} key).</li>
- * <li>provisions new instances when the pool needs to grow (the
- * {@code scaleOutConfig} key).</li>
+ * with its cloud API (the {@code cloudApiSettings} key).</li>
+ * <li>should configure its {@link CloudPoolDriver} to provision new instances
+ * when the pool needs to grow (the {@code provisioningTemplate} key).</li>
  * <li>decommissions instances when the pool needs to shrink (the
  * {@code scaleInConfig} key).</li>
  * <li>alerts system administrators (via email) or other systems (via webhooks)
  * of interesting events: resize operations, error conditions, etc (the
  * {@code alerts} key).</li>
  * </ul>
- * A configuration document may look as follows:
+ * A configuration document has the following structure:
  *
  * <pre>
  * {
- *     "cloudPool": {
- *         "name": "MyEc2InstanceScalingPool",
- *         "driverConfig": {
- *             ... cloud provider-specific API access credentials and settings ...
- *         }
+ *     "name": "webserver-pool",
+ *
+ * 	   "cloudApiSettings": {
+ *         ... cloud provider-specific API access credentials and settings ...
  *     },
- *     "scaleOutConfig": {
- *             ... cloud provider-specific provisioning parameters ...
+ *
+ *     "provisioningTemplate": {
+ *         ... cloud provider-specific provisioning parameters ...
  *     },
+ *
  *     "scaleInConfig": {
  *         "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
  *         "instanceHourMargin": 300
  *     },
+ *
  *     "alerts": {
  *         "duplicateSuppression": { "time": 5, "unit": "minutes" },
  *         "smtp": [
@@ -113,6 +119,7 @@ import com.google.gson.JsonObject;
  *             }
  *         ]
  *     },
+ *
  *     "poolFetch": {
  *         "retries": {
  *             "maxRetries": 3,
@@ -121,10 +128,11 @@ import com.google.gson.JsonObject;
  *         "refreshInterval": {"time": 30, "unit": "seconds"},
  *         "reachabilityTimeout": {"time": 5, "unit": "minutes"}
  *     },
+ *
  *     "poolUpdate": {
  *         "updateInterval": {"time": 1, "unit": "minutes"}
  *     }
- *  }
+ * }
  * </pre>
  *
  * The {@link BaseCloudPool} operates according to the {@link CloudPool}
@@ -134,26 +142,16 @@ import com.google.gson.JsonObject;
  * <h3>Configuration:</h2>
  *
  * When {@link #configure} is called, the {@link BaseCloudPool} expects a JSON
- * document with the above structure. The entire configuration document is
- * passed on to the {@link CloudPoolDriver} via a call to
- * {@link CloudPoolDriver#configure}. The parts of the configuration that are of
- * special interest to the {@link CloudPoolDriver} are:
- * <ul>
- * <li>{@code cloudPool}: holds cloud API access details ({@code driverConfig})
- * and the cloud pool name ({@code name}), which may be used to identify pool
- * members.</li>
- * <li>{@code scaleOutConfig}: holds cloud-provider specific server provisioning
- * parameters.
- * </ul>
- * The {@link CloudPoolDriver} should fail with an exception if the
- * configuration does not satisfy its supported configuration schema.
+ * document with the above structure. From this document a {@link DriverConfig}
+ * is constructed and passed on to the {@link CloudPoolDriver} via a call to
+ * {@link CloudPoolDriver#configure}.
  *
  * <h3>Identifying pool members:</h2>
  *
  * Pool members are identified via a call to
  * {@link CloudPoolDriver#listMachines()}. How to identify pool members are left
- * to the implementation but could make use of tags (if supported by the cloud
- * API).
+ * to the {@link CloudPoolDriver} implementation but could make use of tags (if
+ * supported by the cloud API).
  *
  * <h3>Handling resize requests:</h3>
  *
@@ -169,8 +167,7 @@ import com.google.gson.JsonObject;
  * <li><i>scale out</i>: start by sparing machines from termination if the
  * termination queue is non-empty. For any remaining instances: request them to
  * be started by the {@link CloudPoolDriver} via
- * {@link CloudPoolDriver#startMachines}. The {@code scaleOutConfig} is passed
- * to the {@link CloudPoolDriver}.</li>
+ * {@link CloudPoolDriver#startMachines}.</li>
  * <li><i>scale in</i>: start by terminating any machines in
  * {@link MachineState#REQUESTED} state, since these are likely to not yet incur
  * cost. Any such machines are terminated immediately. If additional capacity is
@@ -274,7 +271,9 @@ public class BaseCloudPool implements CloudPool {
 
             LOG.debug("setting new configuration: {}", JsonUtils.toPrettyString(jsonConfig));
             // re-configure driver
-            this.cloudDriver.configure(configuration);
+            DriverConfig driverConfig = new DriverConfig(configuration.getName(), configuration.getCloudApiSettings(),
+                    configuration.getProvisioningTemplate());
+            this.cloudDriver.configure(driverConfig);
             // set configuration only it it was successfully set on driver
             this.config = configuration;
 
@@ -447,7 +446,7 @@ public class BaseCloudPool implements CloudPool {
      */
     private Map<String, JsonElement> standardAlertMetadata() {
         Map<String, JsonElement> standardTags = Maps.newHashMap();
-        standardTags.put("cloudPoolName", JsonUtils.toJson(config().getCloudPool().getName()));
+        standardTags.put("cloudPoolName", JsonUtils.toJson(config().getName()));
         return standardTags;
     }
 

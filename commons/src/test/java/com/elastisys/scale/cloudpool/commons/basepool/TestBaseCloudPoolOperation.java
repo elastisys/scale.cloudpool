@@ -60,7 +60,6 @@ import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.PoolFetchConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleInConfig;
@@ -1420,29 +1419,41 @@ public class TestBaseCloudPoolOperation {
      * @return
      */
     private JsonObject poolConfig(VictimSelectionPolicy victimSelectionPolicy, int instanceHourMargin) {
-        CloudPoolConfig scalingGroupConfig = scalingGroupConfig();
-        JsonObject scaleUpConfig = scaleOutConfig();
-        ScaleInConfig scaleDownConfig = new ScaleInConfig(victimSelectionPolicy, instanceHourMargin);
+        ScaleInConfig scaleInConfig = new ScaleInConfig(victimSelectionPolicy, instanceHourMargin);
         PoolFetchConfig poolFetchConfig = new PoolFetchConfig(
                 new RetriesConfig(3, new TimeInterval(0L, TimeUnit.SECONDS)), new TimeInterval(20L, TimeUnit.SECONDS),
                 new TimeInterval(5L, TimeUnit.MINUTES));
-        BaseCloudPoolConfig poolConfig = new BaseCloudPoolConfig(scalingGroupConfig, scaleUpConfig, scaleDownConfig,
-                null, poolFetchConfig, null);
+        BaseCloudPoolConfig poolConfig = new BaseCloudPoolConfig(name(), cloudApiSettings(), provisioningTemplate(),
+                scaleInConfig, null, poolFetchConfig, null);
 
         return JsonUtils.toJson(poolConfig).getAsJsonObject();
     }
 
-    private CloudPoolConfig scalingGroupConfig() {
-        return new CloudPoolConfig("MyScalingGroup", cloudCredentialsConfig());
+    /**
+     * Sample pool name.
+     *
+     * @return
+     */
+    private String name() {
+        return "webserver-pool";
     }
 
-    private JsonObject cloudCredentialsConfig() {
-        return JsonUtils.parseJsonString("{\"userName\": \"johndoe\", " + "\"region\": \"us-east-1\"}")
-                .getAsJsonObject();
+    /**
+     * Sample {@link BaseCloudPoolConfig#getCloudApiSettings()}.
+     *
+     * @return
+     */
+    private JsonObject cloudApiSettings() {
+        return JsonUtils.parseJsonString("{\"apiUser\": \"foo\", " + "\"apiPassword\": \"secret\"}").getAsJsonObject();
     }
 
-    private JsonObject scaleOutConfig() {
-        return JsonUtils.parseJsonString("{\"size\": \"t1.small\", \"image\": \"ami-12345678\"}").getAsJsonObject();
+    /**
+     * Sample {@link BaseCloudPoolConfig#getCloudApiSettings()}.
+     *
+     * @return
+     */
+    private JsonObject provisioningTemplate() {
+        return JsonUtils.parseJsonString("{\"size\": \"medium\", " + "\"image\": \"ubuntu-16.04\"}").getAsJsonObject();
     }
 
     private void save(MachinePool pool, File destination) throws IOException {

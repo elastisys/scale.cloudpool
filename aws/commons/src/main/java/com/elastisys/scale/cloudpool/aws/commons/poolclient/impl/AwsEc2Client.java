@@ -14,7 +14,7 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
-import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ScaleOutConfig;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTemplate;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CreateInstances;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstance;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstances;
@@ -80,7 +80,7 @@ public class AwsEc2Client implements Ec2Client {
     }
 
     @Override
-    public List<Instance> launchInstances(Ec2ScaleOutConfig provisioningDetails, int count, List<Tag> tags)
+    public List<Instance> launchInstances(Ec2ProvisioningTemplate provisioningDetails, int count, List<Tag> tags)
             throws AmazonClientException {
         checkArgument(isConfigured(), "can't use client before it's configured");
 

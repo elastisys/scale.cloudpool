@@ -2,7 +2,7 @@ package com.elastisys.scale.cloudpool.aws.autoscaling.driver;
 
 import static com.elastisys.scale.cloudpool.api.types.ServiceState.IN_SERVICE;
 import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.AwsAsPoolDriver.REQUESTED_ID_PREFIX;
-import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.TestUtils.config;
+import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.TestUtils.driverConfig;
 import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.TestUtils.ec2Instance;
 import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.TestUtils.ec2Instances;
 import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.TestUtils.group;
@@ -41,12 +41,13 @@ import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AutoScalingClient;
+import com.elastisys.scale.cloudpool.aws.autoscaling.driver.config.ProvisioningTemplate;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.commons.functions.AwsAutoScalingFunctions;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
-import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.collect.Lists;
@@ -76,7 +77,7 @@ public class TestAwsAsDriverOperation {
     @Before
     public void onSetup() throws CloudPoolDriverException {
         this.driver = new AwsAsPoolDriver(this.mockAwsClient);
-        this.driver.configure(TestUtils.config(GROUP_NAME));
+        this.driver.configure(TestUtils.driverConfig(GROUP_NAME));
     }
 
     /**
@@ -218,7 +219,7 @@ public class TestAwsAsDriverOperation {
      */
     @Test
     public void startMachines() throws Exception {
-        BaseCloudPoolConfig config = config(GROUP_NAME);
+        DriverConfig config = driverConfig(GROUP_NAME);
 
         // scale up from 0 -> 1
         int desiredCapacity = 0;
@@ -272,7 +273,7 @@ public class TestAwsAsDriverOperation {
      */
     @Test
     public void terminate() throws Exception {
-        BaseCloudPoolConfig config = config(GROUP_NAME);
+        DriverConfig config = driverConfig(GROUP_NAME);
 
         int desiredCapacity = 2;
         this.driver = new AwsAsPoolDriver(new FakeAutoScalingClient(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, desiredCapacity,
@@ -292,7 +293,7 @@ public class TestAwsAsDriverOperation {
      */
     @Test
     public void terminateRequestedInstance() {
-        BaseCloudPoolConfig config = config(GROUP_NAME);
+        DriverConfig config = driverConfig(GROUP_NAME);
         int desiredCapacity = 2;
         FakeAutoScalingClient client = new FakeAutoScalingClient(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, desiredCapacity,
                 ec2Instances(ec2Instance("i-1", "running"), ec2Instance("i-2", "pending")));
@@ -343,7 +344,7 @@ public class TestAwsAsDriverOperation {
         List<Instance> nonMembers = ec2Instances(ec2Instance("i-2", "running"));
         this.driver = new AwsAsPoolDriver(
                 new FakeAutoScalingClient(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, desiredCapacity, members, nonMembers));
-        this.driver.configure(TestUtils.config(GROUP_NAME));
+        this.driver.configure(TestUtils.driverConfig(GROUP_NAME));
 
         this.driver.terminateMachine("i-2");
     }
@@ -359,7 +360,7 @@ public class TestAwsAsDriverOperation {
         List<Instance> nonMembers = ec2Instances();
         this.driver = new AwsAsPoolDriver(
                 new FakeAutoScalingClient(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, desiredCapacity, members, nonMembers));
-        this.driver.configure(TestUtils.config(GROUP_NAME));
+        this.driver.configure(TestUtils.driverConfig(GROUP_NAME));
 
         this.driver.detachMachine("i-1");
         List<String> emptyList = asList();
@@ -377,7 +378,7 @@ public class TestAwsAsDriverOperation {
         List<Instance> nonMembers = ec2Instances(ec2Instance("i-2", "running"));
         this.driver = new AwsAsPoolDriver(
                 new FakeAutoScalingClient(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, desiredCapacity, members, nonMembers));
-        this.driver.configure(TestUtils.config(GROUP_NAME));
+        this.driver.configure(TestUtils.driverConfig(GROUP_NAME));
 
         this.driver.detachMachine("i-2");
     }
@@ -408,7 +409,7 @@ public class TestAwsAsDriverOperation {
         List<Instance> nonMembers = ec2Instances(ec2Instance("i-2", "running"));
         this.driver = new AwsAsPoolDriver(
                 new FakeAutoScalingClient(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, desiredCapacity, members, nonMembers));
-        this.driver.configure(TestUtils.config(GROUP_NAME));
+        this.driver.configure(TestUtils.driverConfig(GROUP_NAME));
 
         assertThat(groupIds(this.driver), is(Arrays.asList("i-1")));
         this.driver.attachMachine("i-2");
@@ -424,7 +425,7 @@ public class TestAwsAsDriverOperation {
         int desiredCapacity = 0;
         this.driver = new AwsAsPoolDriver(new FakeAutoScalingClient(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, desiredCapacity,
                 ec2Instances(), ec2Instances()));
-        this.driver.configure(TestUtils.config(GROUP_NAME));
+        this.driver.configure(TestUtils.driverConfig(GROUP_NAME));
 
         this.driver.attachMachine("i-3");
     }
@@ -544,6 +545,31 @@ public class TestAwsAsDriverOperation {
         this.driver.setMembershipStatus("i-1", status);
 
         this.driver.setServiceState("i-1", IN_SERVICE);
+    }
+
+    /**
+     * When the {@link ProvisioningTemplate} does not specify an Auto Scaling
+     * Group name, the default is to use the {@link DriverConfig#getPoolName()}
+     * as the name of the managed Auto Scaling Group.
+     */
+    @Test
+    public void withDefaultAutoScalingGroupName() {
+        // create driver config without explicity Auto Scaling Group name
+        String autoScalingGroupName = null;
+        DriverConfig driverConfig = TestUtils.driverConfig(autoScalingGroupName);
+        String defaultPoolName = driverConfig.getPoolName();
+        this.driver.configure(driverConfig);
+
+        setUpMockedAutoScalingGroup(defaultPoolName, ONDEMAND_LAUNCH_CONFIG, 0, ec2Instances());
+
+        // verify that call to list machines asks for the correct Auto Scaling
+        // Group
+        this.driver.listMachines();
+        verify(this.mockAwsClient).getAutoScalingGroup(defaultPoolName);
+        verify(this.mockAwsClient).getAutoScalingGroupMembers(defaultPoolName);
+
+        this.driver.startMachines(1);
+        verify(this.mockAwsClient).setDesiredSize(defaultPoolName, 1);
     }
 
     /**

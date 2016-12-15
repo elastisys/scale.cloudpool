@@ -1,8 +1,9 @@
-package com.elastisys.scale.cloudpool.aws.autoscaling.driver;
+package com.elastisys.scale.cloudpool.aws.autoscaling.driver.config;
 
 import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.elastisys.scale.cloudpool.aws.autoscaling.driver.AwsAsPoolDriver;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
@@ -10,7 +11,7 @@ import com.google.common.base.Optional;
 /**
  * Configuration object for an {@link AwsAsPoolDriver}.
  */
-public class AwsAsPoolDriverConfig {
+public class CloudApiSettings {
 
     /**
      * The default timeout in milliseconds until a connection is established.
@@ -43,7 +44,7 @@ public class AwsAsPoolDriverConfig {
     private final Integer socketTimeout;
 
     /**
-     * Creates a new {@link AwsAsPoolDriverConfig}.
+     * Creates a new {@link CloudApiSettings}.
      *
      * @param awsAccessKeyId
      *            The access key id of the AWS account.
@@ -53,12 +54,12 @@ public class AwsAsPoolDriverConfig {
      *            The particular AWS region to connect to. For example,
      *            {@code us-east-1}.
      */
-    public AwsAsPoolDriverConfig(String awsAccessKeyId, String awsSecretAccessKey, String region) {
+    public CloudApiSettings(String awsAccessKeyId, String awsSecretAccessKey, String region) {
         this(awsAccessKeyId, awsSecretAccessKey, region, null, null);
     }
 
     /**
-     * Creates a new {@link AwsAsPoolDriverConfig}.
+     * Creates a new {@link CloudApiSettings}.
      *
      * @param awsAccessKeyId
      *            The access key id of the AWS account.
@@ -78,7 +79,7 @@ public class AwsAsPoolDriverConfig {
      *            packets. May be <code>null</code>. Default:
      *            {@value #DEFAULT_SOCKET_TIMEOUT} ms.
      */
-    public AwsAsPoolDriverConfig(String awsAccessKeyId, String awsSecretAccessKey, String region,
+    public CloudApiSettings(String awsAccessKeyId, String awsSecretAccessKey, String region,
             Integer connectionTimeout, Integer socketTimeout) {
         this.awsAccessKeyId = awsAccessKeyId;
         this.awsSecretAccessKey = awsSecretAccessKey;
@@ -155,8 +156,8 @@ public class AwsAsPoolDriverConfig {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof AwsAsPoolDriverConfig) {
-            AwsAsPoolDriverConfig that = (AwsAsPoolDriverConfig) obj;
+        if (obj instanceof CloudApiSettings) {
+            CloudApiSettings that = (CloudApiSettings) obj;
             return equal(this.awsAccessKeyId, that.awsAccessKeyId)
                     && equal(this.awsSecretAccessKey, that.awsSecretAccessKey) && equal(this.region, that.region)
                     && equal(this.getConnectionTimeout(), that.getConnectionTimeout())

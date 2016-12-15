@@ -14,7 +14,7 @@
   </description>
 
   <properties>
-    <aws.sdk.version>1.10.34</aws.sdk.version>
+    <aws.sdk.version>1.11.67</aws.sdk.version>
   </properties>
 
   <dependencies>

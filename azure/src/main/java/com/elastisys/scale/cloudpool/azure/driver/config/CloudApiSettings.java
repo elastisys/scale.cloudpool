@@ -5,20 +5,19 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.util.Objects;
 
 import com.elastisys.scale.cloudpool.azure.driver.AzurePoolDriver;
+import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
 
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 
 /**
- * Configuration object for an {@link AzurePoolDriver}, which declares how to
- * authenticate with the Azure API and what resource group and region pool
- * assets are located in.
- * <p/>
- * Configuration for this Azure client.
+ * Cloud API settings for an {@link AzurePoolDriver}.
+ *
+ * @see BaseCloudPoolConfig#getCloudApiSettings()
  *
  */
-public class AzurePoolDriverConfig {
+public class CloudApiSettings {
     static HttpLoggingInterceptor.Level DEFAULT_AZURE_SDK_LOG_LEVEL = Level.NONE;
 
     /** Azure API access credentials and settings. */
@@ -41,7 +40,7 @@ public class AzurePoolDriverConfig {
     private final String region;
 
     /**
-     * Creates a new {@link AzurePoolDriverConfig}.
+     * Creates a new {@link CloudApiSettings}.
      *
      * @param apiAccess
      *            Azure API access credentials and settings.
@@ -56,7 +55,7 @@ public class AzurePoolDriverConfig {
      *            The region where pool VMs and referenced assets (networks,
      *            security groups, images, etc) are located in.
      */
-    public AzurePoolDriverConfig(AzureApiAccess apiAccess, String resourceGroup, String region) {
+    public CloudApiSettings(AzureApiAccess apiAccess, String resourceGroup, String region) {
         this.apiAccess = apiAccess;
         this.resourceGroup = resourceGroup;
         this.region = region;
@@ -100,8 +99,8 @@ public class AzurePoolDriverConfig {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof AzurePoolDriverConfig) {
-            AzurePoolDriverConfig that = (AzurePoolDriverConfig) obj;
+        if (obj instanceof CloudApiSettings) {
+            CloudApiSettings that = (CloudApiSettings) obj;
             return Objects.equals(this.apiAccess, that.apiAccess)
                     && Objects.equals(this.resourceGroup, that.resourceGroup)
                     && Objects.equals(this.region, that.region);

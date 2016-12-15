@@ -14,7 +14,7 @@ import okhttp3.logging.HttpLoggingInterceptor.Level;
 /**
  * Azure API access credentials and settings
  *
- * @see AzurePoolDriverConfig
+ * @see CloudApiSettings
  */
 public class AzureApiAccess {
     static HttpLoggingInterceptor.Level DEFAULT_AZURE_SDK_LOG_LEVEL = Level.NONE;
@@ -51,7 +51,7 @@ public class AzureApiAccess {
     private final HttpLoggingInterceptor.Level azureSdkLogLevel;
 
     /**
-     * Creates a new {@link AzurePoolDriverConfig}.
+     * Creates a new {@link CloudApiSettings}.
      *
      * @param subscriptionId
      *            The Azure account subscription that will be billed for
@@ -65,7 +65,7 @@ public class AzureApiAccess {
     }
 
     /**
-     * Creates a new {@link AzurePoolDriverConfig}.
+     * Creates a new {@link CloudApiSettings}.
      *
      * @param subscriptionId
      *            The Azure account subscription that will be billed for

@@ -1,0 +1,20 @@
+{
+
+    
+    "cloudApiSettings": {
+        "keystoneEndpoint": "http://openstack.nova.com:5000/v2.0",
+        "region": "RegionOne",
+        "tenantName": "tenant",
+        "userName": "clouduser",
+        "password": "cloudpass"
+    },
+    
+    "provisioningTemplate": {
+        "size": "m1.small", 
+        "image": "Ubuntu Server 12.04",
+        "keyPair": "openstack_p11",
+        "securityGroups": ["web"],
+        "encodedUserData": "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg=="              
+    }
+
+}  

@@ -10,7 +10,7 @@ import static org.junit.Assert.fail;
 import org.junit.Test;
 
 /**
- * Exercise {@link AzurePoolDriverConfig}.
+ * Exercise {@link CloudApiSettings}.
  */
 public class TestAzurePoolDriverConfig {
 
@@ -25,7 +25,7 @@ public class TestAzurePoolDriverConfig {
      */
     @Test
     public void onValidConfig() {
-        AzurePoolDriverConfig driverConfig = new AzurePoolDriverConfig(validApiAccess(), resourceGroup, region);
+        CloudApiSettings driverConfig = new CloudApiSettings(validApiAccess(), resourceGroup, region);
         driverConfig.validate();
 
         assertThat(driverConfig.getApiAccess(), is(validApiAccess()));
@@ -39,7 +39,7 @@ public class TestAzurePoolDriverConfig {
     @Test
     public void onMissingApiAccess() {
         try {
-            new AzurePoolDriverConfig(null, resourceGroup, region).validate();
+            new CloudApiSettings(null, resourceGroup, region).validate();
             fail("should fail");
         } catch (IllegalArgumentException e) {
             System.out.println(e);
@@ -53,7 +53,7 @@ public class TestAzurePoolDriverConfig {
     @Test
     public void onMissingResourceGroup() {
         try {
-            new AzurePoolDriverConfig(validApiAccess(), null, region).validate();
+            new CloudApiSettings(validApiAccess(), null, region).validate();
             fail("should fail");
         } catch (IllegalArgumentException e) {
             System.out.println(e);
@@ -67,7 +67,7 @@ public class TestAzurePoolDriverConfig {
     @Test
     public void onMissingRegion() {
         try {
-            new AzurePoolDriverConfig(validApiAccess(), resourceGroup, null).validate();
+            new CloudApiSettings(validApiAccess(), resourceGroup, null).validate();
             fail("should fail");
         } catch (IllegalArgumentException e) {
             System.out.println(e);
@@ -82,7 +82,7 @@ public class TestAzurePoolDriverConfig {
     @Test
     public void onInvalidApiAccess() {
         try {
-            new AzurePoolDriverConfig(invalidApiAccess(), resourceGroup, region).validate();
+            new CloudApiSettings(invalidApiAccess(), resourceGroup, region).validate();
             fail("should fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("apiAccess"));

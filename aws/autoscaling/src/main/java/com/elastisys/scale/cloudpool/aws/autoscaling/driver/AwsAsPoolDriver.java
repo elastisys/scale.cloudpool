@@ -1,7 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.autoscaling.driver;
 
 import static com.elastisys.scale.commons.json.JsonUtils.toJson;
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Lists.transform;
 import static java.lang.String.format;
@@ -26,13 +25,14 @@ import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AutoScalingClient;
+import com.elastisys.scale.cloudpool.aws.autoscaling.driver.config.CloudApiSettings;
+import com.elastisys.scale.cloudpool.aws.autoscaling.driver.config.ProvisioningTemplate;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.commons.functions.InstanceToMachine;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
-import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
-import com.elastisys.scale.cloudpool.commons.basepool.config.CloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Throwables;
@@ -56,13 +56,14 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 
     public static final String REQUESTED_ID_PREFIX = "i-requested";
 
-    /** AWS AutoScaling client API configuration. */
-    private AwsAsPoolDriverConfig config;
-    /** Logical name of the managed machine pool. */
-    private String poolName;
+    /** The current driver configuration. */
+    private DriverConfig config;
 
     /** A client used to communicate with the AWS Auto Scaling API. */
     private final AutoScalingClient client;
+
+    /** Prevent concurrent access to critical sections. */
+    private final Object lock = new Object();
 
     /**
      * Supported API versions by this implementation.
@@ -82,29 +83,24 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
      */
     public AwsAsPoolDriver(AutoScalingClient client) {
         this.config = null;
-        this.poolName = null;
 
         this.client = client;
     }
 
     @Override
-    public void configure(BaseCloudPoolConfig configuration) throws IllegalArgumentException, CloudPoolDriverException {
-        checkArgument(configuration != null, "config cannot be null");
-        CloudPoolConfig poolConfig = configuration.getCloudPool();
-        checkArgument(poolConfig != null, "missing cloudPool config");
+    public void configure(DriverConfig configuration) throws IllegalArgumentException, CloudPoolDriverException {
+        synchronized (this.lock) {
+            // parse and validate openstack-specific cloudApiSettings
+            CloudApiSettings cloudApiSettings = configuration.parseCloudApiSettings(CloudApiSettings.class);
+            cloudApiSettings.validate();
 
-        try {
-            // parse and validate cloud login configuration
-            AwsAsPoolDriverConfig config = JsonUtils.toObject(poolConfig.getDriverConfig(),
-                    AwsAsPoolDriverConfig.class);
-            config.validate();
-            this.config = config;
-            this.poolName = poolConfig.getName();
-            this.client.configure(config);
-        } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, IllegalArgumentException.class);
-            Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
-            throw new CloudPoolDriverException(String.format("failed to apply configuration: %s", e.getMessage()), e);
+            // parse and validate openstack-specific provisioningTemplate
+            ProvisioningTemplate provisioningTemplate = configuration
+                    .parseProvisioningTemplate(ProvisioningTemplate.class);
+            provisioningTemplate.validate();
+
+            this.config = configuration;
+            this.client.configure(cloudApiSettings);
         }
     }
 
@@ -133,11 +129,11 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
         checkState(isConfigured(), "attempt to use unconfigured driver");
 
         try {
-            AutoScalingGroup group = this.client.getAutoScalingGroup(getPoolName());
+            AutoScalingGroup group = this.client.getAutoScalingGroup(scalingGroupName());
             int desiredCapacity = group.getDesiredCapacity();
 
             // fetch actual scaling group members
-            List<Instance> groupInstances = this.client.getAutoScalingGroupMembers(getPoolName());
+            List<Instance> groupInstances = this.client.getAutoScalingGroupMembers(scalingGroupName());
             List<Machine> acquiredMachines = Lists.newArrayList(transform(groupInstances, new InstanceToMachine()));
             int actualCapacity = acquiredMachines.size();
 
@@ -152,7 +148,9 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
             return pool;
         } catch (Exception e) {
             throw new CloudPoolDriverException(
-                    format("failed to retrieve machines in cloud pool \"%s\": %s", getPoolName(), e.getMessage()), e);
+                    format("failed to retrieve machines in cloud pool \"%s\", Auto Scaling Group \"%s\": %s",
+                            getPoolName(), scalingGroupName(), e.getMessage()),
+                    e);
         }
     }
 
@@ -197,7 +195,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
         String cloudProvider = launchConfig.getSpotPrice() != null ? CloudProviders.AWS_SPOT : CloudProviders.AWS_EC2;
         String instanceType = launchConfig.getInstanceType();
         return Machine.builder().id(pseudoId).machineState(MachineState.REQUESTED).cloudProvider(cloudProvider)
-                .region(config().getRegion()).machineSize(instanceType).build();
+                .region(cloudApiSettings().getRegion()).machineSize(instanceType).build();
     }
 
     @Override
@@ -211,12 +209,12 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
             // size request has taken effect. Waiting for the group size to
             // reach the desired size is problematic, since the desired size may
             // be set to some other value while we are waiting.
-            AutoScalingGroup group = this.client.getAutoScalingGroup(getPoolName());
+            AutoScalingGroup group = this.client.getAutoScalingGroup(scalingGroupName());
             LaunchConfiguration launchConfig = this.client.getLaunchConfiguration(group.getLaunchConfigurationName());
             int newDesiredSize = group.getDesiredCapacity() + count;
             LOG.info("starting {} new instance(s) in scaling group '{}': " + "changing desired capacity from {} to {}",
-                    count, getPoolName(), group.getDesiredCapacity(), newDesiredSize);
-            this.client.setDesiredSize(getPoolName(), newDesiredSize);
+                    count, scalingGroupName(), group.getDesiredCapacity(), newDesiredSize);
+            this.client.setDesiredSize(scalingGroupName(), newDesiredSize);
             return pseudoMachines(count, launchConfig);
         } catch (Exception e) {
             List<Machine> empty = Collections.emptyList();
@@ -233,18 +231,18 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
                 // we were asked to terminate a placeholder instance (a
                 // requested, but not yet assigned, instance). just decrement
                 // desiredCapacity of the group.
-                AutoScalingGroup group = this.client.getAutoScalingGroup(getPoolName());
+                AutoScalingGroup group = this.client.getAutoScalingGroup(scalingGroupName());
                 int desiredSize = group.getDesiredCapacity();
                 int newSize = desiredSize - 1;
                 LOG.debug(
                         "termination request for placeholder instance {}, " + "reducing desiredCapacity from {} to {}",
                         machineId, desiredSize, newSize);
-                this.client.setDesiredSize(getPoolName(), newSize);
+                this.client.setDesiredSize(scalingGroupName(), newSize);
             } else {
                 // verify that machine exists in group
                 getMachineOrFail(machineId);
                 LOG.info("terminating instance {}", machineId);
-                this.client.terminateInstance(getPoolName(), machineId);
+                this.client.terminateInstance(scalingGroupName(), machineId);
             }
         } catch (Exception e) {
             Throwables.propagateIfInstanceOf(e, NotFoundException.class);
@@ -258,7 +256,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
         checkState(isConfigured(), "attempt to use unconfigured driver");
 
         try {
-            this.client.attachInstance(getPoolName(), machineId);
+            this.client.attachInstance(scalingGroupName(), machineId);
         } catch (Exception e) {
             Throwables.propagateIfInstanceOf(e, NotFoundException.class);
             String message = format("failed to attach instance \"%s\": %s", machineId, e.getMessage());
@@ -274,7 +272,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
         getMachineOrFail(machineId);
 
         try {
-            this.client.detachInstance(getPoolName(), machineId);
+            this.client.detachInstance(scalingGroupName(), machineId);
         } catch (Exception e) {
             String message = format("failed to detach instance \"%s\": %s", machineId, e.getMessage());
             throw new CloudPoolDriverException(message, e);
@@ -342,7 +340,18 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
     public String getPoolName() {
         checkState(isConfigured(), "attempt to use unconfigured driver");
 
-        return this.poolName;
+        return config().getPoolName();
+    }
+
+    /**
+     * Returns the name of the managed Auto Scaling Group. If specified in
+     * {@link ProvisioningTemplate}, use that name. Otherwise, default to pool
+     * name.
+     *
+     * @return
+     */
+    String scalingGroupName() {
+        return provisioningTemplate().getAutoScalingGroup().orElse(getPoolName());
     }
 
     @Override
@@ -354,7 +363,15 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
         return config() != null;
     }
 
-    AwsAsPoolDriverConfig config() {
+    DriverConfig config() {
         return this.config;
+    }
+
+    CloudApiSettings cloudApiSettings() {
+        return this.config.parseCloudApiSettings(CloudApiSettings.class);
+    }
+
+    ProvisioningTemplate provisioningTemplate() {
+        return this.config.parseProvisioningTemplate(ProvisioningTemplate.class);
     }
 }
