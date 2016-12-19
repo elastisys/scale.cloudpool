@@ -10,7 +10,7 @@
   <packaging>jar</packaging>
   <name>elastisys:scale :: cloudpool :: azure</name>
   <description>
-    A cloud pool capable of managing a pool of Linux servers in Microsoft Azure.
+    A cloud pool capable of managing a pool of VMs in Microsoft Azure.
     
     This build module produces an all-in-one "server and application" executable
     jar file. When executed, it starts an embedded web server that publishes 
