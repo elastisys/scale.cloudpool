@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.elastisys.scale</groupId>
     <artifactId>cloudpool.aws</artifactId>
-    <version>4.2.0</version>
+    <version>4.2.1-SNAPSHOT</version>
   </parent>
   <artifactId>cloudpool.aws.ec2</artifactId>
   <packaging>jar</packaging>
