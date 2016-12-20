@@ -1,0 +1,63 @@
+{
+    "name": "GoogleComputeEnginePool",
+
+    "cloudApiSettings": {
+        "serviceAccountKey": {
+            "type": "service_account",
+            "project_id": "sample-project",
+            "private_key_id": "abcdefabcdefabcdefabcdefabcdefabcdefabcd",
+            "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDS9h5R2t5XNkon\nXwulveitQE/CHR3IY1wrrIuAtjhr6F+OtBngP8AJjAWz3z2hCVRw1puJr25y+7MD\nncp90tiPlx+e2kPj74+QYWYw/C613PWhmKqZbQDB8uEFuvj4rllujstM18Fr6Xtu\noEpp5UNqsBK/9zIwPKjRf7TG26oexi8ptB1AdvgsyMRiMFqp7DZ+USY/N1OfazIY\nOcd0TYE73k+gczK/LZTCZZLFBsk6OL11fKPcO5iDDaZHPj0HaI3hw1Z7gi6oRAsU\nmIMn7Owbs4AIXD3wIR67zjH81R5bbiQFdRLLqgEJCkx+8Xg2ZxmOSIV6Tki/4a93\n3FK7RmK/AgMBAAECggEBAMqVGiyUtyqcsbz5IqA4rDWjKnRHrY//CkXOXfBuC+Rj\ns0/AV5Dm5yzDz74ZRH9eDD6Hd7lSRAga+J8iaY9GaDwLbYwIIWXDaOPHBHFJ2jk+\nRIq3pivLZwzYhYoRMIDuPGdUrJnQHqfYAHYNayghxwmup3K8mO+FcMAtmJXV35nI\nC8XpixoI+2Do472viiK1iNdWzqVe0iVHxEmkacf6YnbpghXUyXPc6u6pXNZKMuvU\n/qeAWlj83nFieTclMh6AhMgBfxu8fAueq7wgJ/E1XXbMPW7husn+PbrOpzUPP5im\nWlruOXwwJSKwkbdr23Ri03cCRIalRsHp+hg3UdtAnRECgYEA984+1LIQ9kyLeABA\ngSOujx1NxR841/HP1wM4O5GbXslQ2DByob1CA5hyOXJ3OBL3P0yjUx6zUGqjcSSX\nzlnOyBCcmpX/cU1X8MtainVPnWLVt/q4roF51mjorAHQltYci5AviclRev0rnE+5\n+/iM7FwnyR1nFgRk0+nlL5Ut290CgYEA2e/5f2AAVxyxfK5EZQXdJvsXzsZNYhub\nfvAJEvlaQMV4RP3uQ7OGYew1gkcu40oPU8mvCz3MyO+1jmInexHaGE8UZm+nPIdr\nq4jBpPYmb9dTridE563g3/k5t7jh3pRJzDHXmTBi2a8iaiduy4mTj5qEAdQKUD4/\nKoJE1tfzzUsCgYAQWI92ckSCKqxsfv/CRPtHv3QY06VpQS8njLPR4hnwl7D4gcGd\n/6DyIcUvGujYTw/2IfUID5deb5pWZUaKOwxT0By0ab6O1748SP2w8moNBK76UtSJ\n1kqWJRdr+TasLHV3k0w/d4MjbL3Kssue3ldVZALP1lutbR7Fh8ExcVK0FQKBgDUJ\ndpFt/oc0n2j1TAW9yJUs9B1JGxnuGAhrR/oLHtC2fc9kcLCfJuv7vQXoZtu/cT11\nzpiQwJ6B35A4CN2leYsC67cGIw/S8Pv8uwt3L+F16JJwUg+DvD8lestgPe+Z7N+5\nnXtVUCkjut9Um10DLRr8gnWjcaMXku24aCJUyatDAoGBALt3MiHqo54A5qZfRInz\np34C5/jQursCJ3Bf90eG9GVSYgxtayLrhfsxymSC8tL7ZqYi5N74AiyJ8Aw8TauY\n8kIUL7PRcnMrT6sEgVBhL3GRq5mk2GUioNBwhIV1oTo/L5OWJvEodh14sNaAhvzs\neuKxO+IIk9ZDYkPlikFQYPma\n-----END PRIVATE KEY-----\n",
+            "client_email": "bot@esample-project.iam.gserviceaccount.com",
+            "client_id": "123456789012345678901",
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://accounts.google.com/o/oauth2/token",
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+            "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/bot%40sample-project.iam.gserviceaccount.com"
+        }
+    },
+
+    "provisioningTemplate": {
+        "instanceGroup": "webservers",
+        "project": "my-project",
+        "zone": "europe-west1-d"
+    },
+
+    "scaleInConfig": {
+        "victimSelectionPolicy": "NEWEST_INSTANCE",
+        "instanceHourMargin": 0
+    },
+
+    "alerts": {
+        "duplicateSuppression": { "time": 5, "unit": "minutes" },
+        "smtp": [
+            {
+                "subject": "[elastisys] cloud pool alert for GoogleComputeEnginePool",
+                "recipients": ["foo@bar.com"],
+                "sender": "noreply@foo.com",
+                "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
+                "smtpClientConfig": {
+                    "smtpHost": "my.smtp.server",
+                    "smtpPort": 465,
+                    "authentication": {
+                        "userName": "smtpclient",
+                        "password": "password"
+                    },
+                    "useSsl": true
+                }
+            }
+        ]
+    },
+
+    "poolFetch": {
+        "retries": {
+            "maxRetries": 3,
+            "initialBackoffDelay": {"time": 3, "unit": "seconds"}
+        },
+        "refreshInterval": {"time": 30, "unit": "seconds"},
+        "reachabilityTimeout": {"time": 5, "unit": "minutes"}
+    },
+
+    "poolUpdate": {
+        "updateInterval": {"time": 60, "unit": "seconds"}
+    }
+}

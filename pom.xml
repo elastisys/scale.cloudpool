@@ -37,6 +37,7 @@
     <module>citycloud</module>
     <module>kubernetes</module>
     <module>azure</module>
+    <module>gce</module>
   </modules>
 
   <!-- Location of Git repository. Used to tag releases. -->

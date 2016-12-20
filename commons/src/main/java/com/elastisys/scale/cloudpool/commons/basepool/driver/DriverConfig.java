@@ -97,9 +97,15 @@ public class DriverConfig {
      *
      * @param provisioningTemplateType
      * @return
+     * @throws IllegalArgumentException
+     *             on parse failure
      */
-    public <T> T parseCloudApiSettings(Class<T> cloudApiSettingsType) {
-        return JsonUtils.toObject(getCloudApiSettings(), cloudApiSettingsType);
+    public <T> T parseCloudApiSettings(Class<T> cloudApiSettingsType) throws IllegalArgumentException {
+        try {
+            return JsonUtils.toObject(getCloudApiSettings(), cloudApiSettingsType);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("failed to parse provisioningTemplate: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -120,9 +126,16 @@ public class DriverConfig {
      *
      * @param provisioningTemplateType
      * @return
+     * @throws IllegalArgumentException
+     *             on parse failure
+     *
      */
-    public <T> T parseProvisioningTemplate(Class<T> provisioningTemplateType) {
-        return JsonUtils.toObject(getProvisioningTemplate(), provisioningTemplateType);
+    public <T> T parseProvisioningTemplate(Class<T> provisioningTemplateType) throws IllegalArgumentException {
+        try {
+            return JsonUtils.toObject(getProvisioningTemplate(), provisioningTemplateType);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("failed to parse provisioningTemplate: " + e.getMessage(), e);
+        }
     }
 
     /**

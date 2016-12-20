@@ -1,0 +1,52 @@
+{
+    "name": "GoogleComputeEnginePool",
+
+    "cloudApiSettings": {
+        "serviceAccountKeyPath": "/home/foo/foobar-account-key.json"
+    },
+
+    "provisioningTemplate": {
+        "instanceGroup": "webservers",
+        "project": "my-project",
+        "region": "europe-west1"
+    },
+
+    "scaleInConfig": {
+        "victimSelectionPolicy": "NEWEST_INSTANCE",
+        "instanceHourMargin": 0
+    },
+
+    "alerts": {
+        "duplicateSuppression": { "time": 5, "unit": "minutes" },
+        "smtp": [
+            {
+                "subject": "[elastisys] cloud pool alert for GoogleComputeEnginePool",
+                "recipients": ["foo@bar.com"],
+                "sender": "noreply@foo.com",
+                "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
+                "smtpClientConfig": {
+                    "smtpHost": "my.smtp.server",
+                    "smtpPort": 465,
+                    "authentication": {
+                        "userName": "smtpclient",
+                        "password": "password"
+                    },
+                    "useSsl": true
+                }
+            }
+        ]
+    },
+
+    "poolFetch": {
+        "retries": {
+            "maxRetries": 3,
+            "initialBackoffDelay": {"time": 3, "unit": "seconds"}
+        },
+        "refreshInterval": {"time": 30, "unit": "seconds"},
+        "reachabilityTimeout": {"time": 5, "unit": "minutes"}
+    },
+
+    "poolUpdate": {
+        "updateInterval": {"time": 60, "unit": "seconds"}
+    }
+}

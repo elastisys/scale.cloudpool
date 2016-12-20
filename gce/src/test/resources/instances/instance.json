@@ -1,0 +1,65 @@
+{
+  "canIpForward" : false,
+  "cpuPlatform" : "Intel Haswell",
+  "creationTimestamp" : "2017-01-01T12:15:00.330-08:00",
+  "disks" : [ {
+    "autoDelete" : true,
+    "boot" : true,
+    "deviceName" : "webserver-template",
+    "index" : 0,
+    "interface" : "SCSI",
+    "kind" : "compute#attachedDisk",
+    "licenses" : [ "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-1604-xenial" ],
+    "mode" : "READ_WRITE",
+    "source" : "https://www.googleapis.com/compute/v1/projects/my-project/zones/europe-west1-d/disks/webserver-instance-group-s4s0",
+    "type" : "PERSISTENT"
+  } ],
+  "id" : "7241894842817480148",
+  "kind" : "compute#instance",
+  "machineType" : "https://www.googleapis.com/compute/v1/projects/my-project/zones/europe-west1-d/machineTypes/n1-standard-1",
+  "metadata" : {
+    "fingerprint" : "Z-nUqUWbL1c=",
+    "items" : [ {
+      "key" : "startup-script",
+      "value" : "#!/bin/bash\napt update -qy && apt install -qy apache2"
+    }, {
+      "key" : "ssh-keys",
+      "value" : "foo:ssh-rsa XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX foo@bar"
+    }, {
+      "key" : "instance-template",
+      "value" : "projects/123456789012/global/instanceTemplates/webserver-template"
+    }, {
+      "key" : "created-by",
+      "value" : "projects/123456789012/regions/europe-west1/instanceGroupManagers/webserver-instance-group"
+    } ],
+    "kind" : "compute#metadata"
+  },
+  "name" : "webserver-instance-group-s4s0",
+  "networkInterfaces" : [ {
+    "accessConfigs" : [ {
+      "kind" : "compute#accessConfig",
+      "name" : "External NAT",
+      "natIP" : "104.199.73.8",
+      "type" : "ONE_TO_ONE_NAT"
+    } ],
+    "name" : "nic0",
+    "network" : "https://www.googleapis.com/compute/v1/projects/my-project/global/networks/testnet",
+    "networkIP" : "10.0.0.2",
+    "subnetwork" : "https://www.googleapis.com/compute/v1/projects/my-project/regions/europe-west1/subnetworks/testsubnet"
+  } ],
+  "scheduling" : {
+    "automaticRestart" : true,
+    "onHostMaintenance" : "MIGRATE",
+    "preemptible" : false
+  },
+  "selfLink" : "https://www.googleapis.com/compute/v1/projects/my-project/zones/europe-west1-d/instances/webserver-instance-group-s4s0",
+  "serviceAccounts" : [ {
+    "email" : "foobot@my-project.iam.gserviceaccount.com",
+    "scopes" : [ "https://www.googleapis.com/auth/cloud-platform" ]
+  } ],
+  "status" : "RUNNING",
+  "tags" : {
+    "fingerprint" : "42WmSpB8rSM="
+  },
+  "zone" : "https://www.googleapis.com/compute/v1/projects/my-project/zones/europe-west1-d"
+}
