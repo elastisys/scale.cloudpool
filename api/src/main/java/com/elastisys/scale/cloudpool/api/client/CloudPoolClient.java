@@ -21,7 +21,6 @@ import com.elastisys.scale.cloudpool.api.restapi.types.SetDesiredSizeRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetMembershipStatusRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetServiceStateRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.TerminateMachineRequest;
-import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
@@ -317,18 +316,6 @@ public class CloudPoolClient implements CloudPool {
             throw new CloudPoolException(
                     format("failed to detach " + "machine %s from cloud pool %s: %s", machineId, url, e.getMessage()),
                     e);
-        }
-    }
-
-    @Override
-    public CloudPoolMetadata getMetadata() {
-        String url = fullUrl("/pool/metadata");
-        try {
-            HttpGet request = new HttpGet(url);
-            HttpRequestResponse response = this.httpClient.execute(request);
-            return responseToObject(response, CloudPoolMetadata.class);
-        } catch (Exception e) {
-            throw new CloudPoolException(format("failed to get cloud pool metadata: %s: %s", url, e.getMessage()), e);
         }
     }
 

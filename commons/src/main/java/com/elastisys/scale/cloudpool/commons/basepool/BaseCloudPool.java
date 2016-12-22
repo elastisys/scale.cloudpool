@@ -12,7 +12,6 @@ import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotConfiguredException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.NotStartedException;
-import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
@@ -431,11 +430,6 @@ public class BaseCloudPool implements CloudPool {
         ensureStarted();
 
         this.poolUpdater.setMembershipStatus(machineId, membershipStatus);
-    }
-
-    @Override
-    public CloudPoolMetadata getMetadata() {
-        return this.cloudDriver.getMetadata();
     }
 
     /**

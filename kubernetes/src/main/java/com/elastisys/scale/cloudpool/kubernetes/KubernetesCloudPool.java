@@ -2,22 +2,18 @@ package com.elastisys.scale.cloudpool.kubernetes;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.Arrays;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.elastisys.scale.cloudpool.api.ApiVersion;
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotConfiguredException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.NotStartedException;
-import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
-import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
@@ -43,8 +39,6 @@ import com.google.gson.JsonObject;
  */
 public class KubernetesCloudPool implements CloudPool {
     private static final Logger LOG = LoggerFactory.getLogger(KubernetesCloudPool.class);
-    private static final CloudPoolMetadata METADATA = new CloudPoolMetadata(CloudProviders.KUBERNETES,
-            Arrays.asList(ApiVersion.LATEST));
     private static final int MAX_THREADS = 5;
 
     public static final String DESCRIPTION = "Kubernetes ReplicationController Cloudpool";
@@ -218,11 +212,6 @@ public class KubernetesCloudPool implements CloudPool {
     public void detachMachine(String machineId, boolean decrementDesiredSize)
             throws NotFoundException, CloudPoolException, NotStartedException {
         throwUnsupportedOperation();
-    }
-
-    @Override
-    public CloudPoolMetadata getMetadata() {
-        return METADATA;
     }
 
     /**

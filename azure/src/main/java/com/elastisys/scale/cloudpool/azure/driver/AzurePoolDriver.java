@@ -13,10 +13,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.elastisys.scale.cloudpool.api.ApiVersion;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
-import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
@@ -46,12 +43,6 @@ import com.microsoft.azure.management.compute.VirtualMachine;
  */
 public class AzurePoolDriver implements CloudPoolDriver {
     private static final Logger LOG = LoggerFactory.getLogger(AzurePoolDriver.class);
-
-    /** Supported API versions by this implementation. */
-    private final static List<String> supportedApiVersions = Arrays.asList(ApiVersion.LATEST);
-    /** Cloud pool metadata for this implementation. */
-    private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(CloudProviders.AZURE,
-            supportedApiVersions);
 
     /** Client for performing actions against the Azure REST API. */
     private final AzureClient client;
@@ -234,11 +225,6 @@ public class AzurePoolDriver implements CloudPoolDriver {
 
         return this.config.getPoolName();
 
-    }
-
-    @Override
-    public CloudPoolMetadata getMetadata() {
-        return cloudPoolMetadata;
     }
 
     private void ensurePoolMember(VirtualMachine vm) throws NotFoundException {

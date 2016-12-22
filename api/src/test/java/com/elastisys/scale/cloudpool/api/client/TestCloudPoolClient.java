@@ -10,7 +10,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.jetty.server.Server;
@@ -20,13 +19,11 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.elastisys.scale.cloudpool.api.ApiVersion;
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.NotConfiguredException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.server.CloudPoolOptions;
 import com.elastisys.scale.cloudpool.api.server.CloudPoolServer;
-import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
@@ -275,11 +272,4 @@ public class TestCloudPoolClient {
         client.detachMachine("i-X", false);
     }
 
-    @Test
-    public void getMetadata() {
-        CloudPoolMetadata metadata = new CloudPoolMetadata("AWS/EC2", Arrays.asList(ApiVersion.LATEST));
-        when(cloudPool.getMetadata()).thenReturn(metadata);
-
-        assertThat(client.getMetadata(), is(metadata));
-    }
 }

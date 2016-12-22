@@ -3,7 +3,6 @@ package com.elastisys.scale.cloudpool.api.server;
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
@@ -88,11 +87,6 @@ class ConfigurableCloudPoolStub implements CloudPool {
     @Override
     public void detachMachine(String machineId, boolean decrementDesiredSize)
             throws NotFoundException, CloudPoolException {
-        throw new UnsupportedOperationException("not implemented");
-    }
-
-    @Override
-    public CloudPoolMetadata getMetadata() {
         throw new UnsupportedOperationException("not implemented");
     }
 }

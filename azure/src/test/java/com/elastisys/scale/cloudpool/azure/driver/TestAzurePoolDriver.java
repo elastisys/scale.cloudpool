@@ -10,14 +10,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
-import java.util.Arrays;
-
 import org.junit.Before;
 import org.junit.Test;
 
-import com.elastisys.scale.cloudpool.api.ApiVersion;
-import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
-import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.azure.driver.client.AzureClient;
@@ -39,15 +34,6 @@ public class TestAzurePoolDriver {
     @Before
     public void beforeTestMethod() {
         this.driver = new AzurePoolDriver(this.clientMock);
-    }
-
-    /**
-     * The pool driver should be able to provide some metadata about itself.
-     */
-    @Test
-    public void metadata() {
-        assertThat(this.driver.getMetadata(),
-                is(new CloudPoolMetadata(CloudProviders.AZURE, Arrays.asList(ApiVersion.LATEST))));
     }
 
     /**

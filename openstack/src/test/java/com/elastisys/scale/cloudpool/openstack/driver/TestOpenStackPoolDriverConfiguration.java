@@ -14,6 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
@@ -39,7 +40,7 @@ public class TestOpenStackPoolDriverConfiguration {
 
     @Before
     public void onSetup() {
-        this.driver = new OpenStackPoolDriver(this.mockClient);
+        this.driver = new OpenStackPoolDriver(this.mockClient, CloudProviders.OPENSTACK);
     }
 
     /**

@@ -35,10 +35,7 @@ import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.Tag;
-import com.elastisys.scale.cloudpool.api.ApiVersion;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
-import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
@@ -161,16 +158,6 @@ public class SpotPoolDriver implements CloudPoolDriver {
 
     /** Lock to prevent concurrent access to critical sections. */
     private final Object lock = new Object();
-
-    /**
-     * Supported API versions by this implementation.
-     */
-    private final static List<String> supportedApiVersions = Arrays.asList(ApiVersion.LATEST);
-    /**
-     * Cloud pool metadata for this implementation.
-     */
-    private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(CloudProviders.AWS_SPOT,
-            supportedApiVersions);
 
     /**
      * Creates a new {@link SpotPoolDriver}.
@@ -361,11 +348,6 @@ public class SpotPoolDriver implements CloudPoolDriver {
     public String getPoolName() {
         checkState(isConfigured(), "attempt to use unconfigured driver");
         return config().getPoolName();
-    }
-
-    @Override
-    public CloudPoolMetadata getMetadata() {
-        return cloudPoolMetadata;
     }
 
     private boolean isConfigured() {

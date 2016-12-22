@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
-import com.elastisys.scale.cloudpool.citycloud.driver.CityCloudPoolDriver;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.StateStorage;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
@@ -38,7 +38,8 @@ public class RunPool {
 
     public static void main(String[] args) throws Exception {
         StateStorage stateStorage = StateStorage.builder(new File("target/state")).build();
-        CloudPoolDriver cityCloudDriver = new CityCloudPoolDriver(new StandardOpenstackClient());
+        CloudPoolDriver cityCloudDriver = new OpenStackPoolDriver(new StandardOpenstackClient(),
+                CloudProviders.CITYCLOUD);
         CloudPool pool = new BaseCloudPool(stateStorage, cityCloudDriver);
 
         JsonObject config = JsonUtils.parseJsonFile(cloudPoolConfig.toFile()).getAsJsonObject();

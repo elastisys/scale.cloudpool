@@ -29,20 +29,17 @@ import com.elastisys.scale.cloudpool.api.restapi.types.SetDesiredSizeRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetMembershipStatusRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetServiceStateRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.TerminateMachineRequest;
-import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.api.types.TestUtils;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.ErrorType;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 
 /**
@@ -229,39 +226,6 @@ public class TestCloudPoolHandlerDispatch {
 
         // call rest endpoint and verify proper dispatching to mock
         Response response = this.restEndpoint.getPoolSize();
-        assertEquals(response.getStatus(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertThat(response.getEntity(), instanceOf(ErrorType.class));
-    }
-
-    /**
-     * Verify proper delegation of {@code getMetadata} to backing
-     * {@link CloudPool}.
-     */
-    @Test
-    public void testGetMetadataDispatch() throws Exception {
-        // set up mock response
-        CloudPoolMetadata metadata = new CloudPoolMetadata(CloudProviders.AWS_EC2, Lists.<String>newArrayList("3.1"));
-
-        when(this.cloudPoolMock.getMetadata()).thenReturn(metadata);
-
-        // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.getMetadata();
-        assertEquals(response.getStatus(), Status.OK.getStatusCode());
-        assertEquals(response.getEntity(), JsonUtils.toJson(metadata));
-    }
-
-    /**
-     * Verify proper handling of {@code getMetadata} calls when an error is
-     * thrown from the backing {@link CloudPool}. In these cases, the server
-     * should respond with {@code 500}.
-     */
-    @Test
-    public void testGetMetadataDispatchOnInternalError() throws Exception {
-        // set up mock response
-        doThrow(new CloudPoolException("cloud api outage")).when(this.cloudPoolMock).getMetadata();
-
-        // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.getMetadata();
         assertEquals(response.getStatus(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
         assertThat(response.getEntity(), instanceOf(ErrorType.class));
     }

@@ -1,7 +1,6 @@
 package com.elastisys.scale.cloudpool.api;
 
 import com.elastisys.scale.cloudpool.api.restapi.CloudPoolHandler;
-import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
@@ -266,11 +265,4 @@ public interface CloudPool {
      */
     void detachMachine(String machineId, boolean decrementDesiredSize)
             throws NotFoundException, CloudPoolException, NotStartedException;
-
-    /**
-     * @return A {@link CloudPoolMetadata} object that describes certain static
-     *         metadata about the cloud pool implementation and the cloud it
-     *         manages.
-     */
-    CloudPoolMetadata getMetadata();
 }

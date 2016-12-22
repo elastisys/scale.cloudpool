@@ -22,7 +22,6 @@ import com.elastisys.scale.cloudpool.api.restapi.types.SetDesiredSizeRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetMembershipStatusRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetServiceStateRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.TerminateMachineRequest;
-import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
@@ -120,27 +119,6 @@ public class CloudPoolHandler {
             return cloudErrorResponse("failure to process GET /pool/size", e);
         } catch (Exception e) {
             return internalErrorResponse("internal error on GET /pool/size", e);
-        }
-    }
-
-    /**
-     * Returns metadata about the cloud pool and the cloud infrastructure it
-     * manages.
-     *
-     * @return A response message as per the
-     *         <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >
-     *         cloud pool REST API</a>.
-     */
-    @GET
-    @Path("/pool/metadata")
-    public Response getMetadata() {
-        requireStartedCloudPool();
-
-        try {
-            CloudPoolMetadata metadata = this.cloudPool.getMetadata();
-            return Response.ok(toJson(metadata)).build();
-        } catch (Exception e) {
-            return internalErrorResponse("internal error on GET /pool/metadata", e);
         }
     }
 

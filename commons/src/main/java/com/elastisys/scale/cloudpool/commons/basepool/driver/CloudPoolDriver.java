@@ -3,7 +3,6 @@ package com.elastisys.scale.cloudpool.commons.basepool.driver;
 import java.util.List;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
@@ -230,14 +229,4 @@ public interface CloudPoolDriver {
      *             If the {@link CloudPoolDriver} has not been configured.
      */
     public String getPoolName() throws IllegalStateException;
-
-    /**
-     * Returns description of static properties about the cloud pool itself and
-     * the cloud it manages.
-     *
-     * @return Description of static properties about the cloud pool itself and
-     *         the cloud it manages.
-     */
-    public CloudPoolMetadata getMetadata();
-
 }

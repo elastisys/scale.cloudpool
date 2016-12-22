@@ -13,10 +13,7 @@ import org.openstack4j.model.compute.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.elastisys.scale.cloudpool.api.ApiVersion;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.api.types.CloudPoolMetadata;
-import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
@@ -53,14 +50,11 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
     private final Object lock = new Object();
 
     /**
-     * Supported API versions by this implementation.
+     * The name of the cloud provider that the cloud pool operates against. For
+     * example, {@code RackSpace}. This will only be used to set the
+     * {@link Machine#getCloudProvider()} field of pool members.
      */
-    private final static List<String> supportedApiVersions = Arrays.asList(ApiVersion.LATEST);
-    /**
-     * Cloud pool metadata for this implementation.
-     */
-    private final static CloudPoolMetadata cloudPoolMetadata = new CloudPoolMetadata(CloudProviders.OPENSTACK,
-            supportedApiVersions);
+    private final String cloudProvider;
 
     /**
      * Creates a new {@link OpenStackPoolDriver}. Needs to be configured before
@@ -68,10 +62,16 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
      *
      * @param client
      *            The client to be used to communicate with the OpenStack API.
+     * @param cloudProvider
+     *            The name of the cloud provider that the cloud pool operates
+     *            against. For example, {@code RackSpace}. This will only be
+     *            used to set the {@link Machine#getCloudProvider()} field of
+     *            pool members.
      */
-    public OpenStackPoolDriver(OpenstackClient client) {
+    public OpenStackPoolDriver(OpenstackClient client, String cloudProvider) {
         this.config = null;
         this.client = client;
+        this.cloudProvider = cloudProvider;
     }
 
     @Override
@@ -225,11 +225,6 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
         return config().getPoolName();
     }
 
-    @Override
-    public CloudPoolMetadata getMetadata() {
-        return cloudPoolMetadata;
-    }
-
     /**
      * Retrieves a particular member machine from the cloud pool or throws an
      * exception if it could not be found.
@@ -269,7 +264,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
      * @return
      */
     private ServerToMachine serverToMachine() {
-        return new ServerToMachine(getMetadata().poolIdentifier(), cloudApiSettings().getRegion());
+        return new ServerToMachine(this.cloudProvider, cloudApiSettings().getRegion());
     }
 
     boolean isConfigured() {
