@@ -87,17 +87,20 @@ public class VmToMachine implements Function<VirtualMachine, Machine> {
         // failed)
         PowerState powerState = vm.powerState();
         if (powerState != null) {
-            switch (powerState) {
-            case STARTING:
+            if (powerState.equals(PowerState.STARTING)) {
                 return MachineState.PENDING;
-            case RUNNING:
+            } else if (powerState.equals(PowerState.RUNNING)) {
                 return MachineState.RUNNING;
-            case DEALLOCATED:
-                return MachineState.TERMINATED;
-            case DEALLOCATING:
+            } else if (powerState.equals(PowerState.DEALLOCATING)) {
                 return MachineState.TERMINATING;
-            default:
-                LOG.warn("VM found to be in unrecognized powerState: {}", powerState.name());
+            } else if (powerState.equals(PowerState.DEALLOCATED)) {
+                return MachineState.TERMINATED;
+            } else if (powerState.equals(PowerState.STOPPED)) {
+                return MachineState.TERMINATED;
+            } else if (powerState.equals(PowerState.UNKNOWN)) {
+                LOG.warn("VM found to be in UNKNOWN powerState");
+            } else {
+                LOG.warn("VM found to be in unrecognized powerState: {}", powerState);
             }
         }
 
@@ -123,7 +126,7 @@ public class VmToMachine implements Function<VirtualMachine, Machine> {
         case CANCELLED:
             return MachineState.TERMINATED;
         default:
-            LOG.warn("VM found to be in unrecognized provisioningState: {}", powerState.name());
+            LOG.warn("VM found to be in unrecognized provisioningState: {}", provisioningState);
         }
 
         throw new AzureVmMetadataException(String.format(

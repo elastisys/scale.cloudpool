@@ -31,7 +31,7 @@ public class DeleteVmRequest extends AzureRequest<Void> {
     @Override
     public Void doRequest(Azure api) throws RuntimeException {
         LOG.debug("deleting vm {} ...", this.vmId);
-        api.virtualMachines().delete(this.vmId);
+        api.virtualMachines().deleteById(this.vmId);
         LOG.debug("vm {} deleted.", this.vmId);
         return null;
     }

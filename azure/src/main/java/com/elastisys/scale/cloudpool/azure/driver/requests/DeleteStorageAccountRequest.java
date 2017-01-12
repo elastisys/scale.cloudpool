@@ -35,7 +35,7 @@ public class DeleteStorageAccountRequest extends AzureRequest<Void> {
     @Override
     public Void doRequest(Azure api) throws RuntimeException {
         LOG.debug("deleting storage account {} in resource group ...", this.storageAccountName, this.resourceGroup);
-        api.storageAccounts().delete(this.resourceGroup, this.storageAccountName);
+        api.storageAccounts().deleteByGroup(this.resourceGroup, this.storageAccountName);
         LOG.debug("storage account {} deleted.", this.storageAccountName);
 
         return null;

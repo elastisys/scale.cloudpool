@@ -23,10 +23,10 @@ import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.common.base.Charsets;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.VirtualMachine;
-import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithAdminUserName;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithCreate;
+import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithLinuxRootUsername;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithOS;
-import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithRootUserName;
+import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithWindowsAdminUsername;
 import com.microsoft.azure.management.network.NetworkInterface;
 import com.microsoft.azure.management.resources.fluentcore.model.Creatable;
 import com.microsoft.azure.management.resources.fluentcore.model.CreatedResources;
@@ -134,7 +134,7 @@ public class VmLauncher {
 
     private Creatable<VirtualMachine> linuxVmDefinition(VmSpec vmSpec, WithOS rawVmDef) {
         VmImage vmImage = new VmImage(vmSpec.getVmImage());
-        WithRootUserName vmWithImage = null;
+        WithLinuxRootUsername vmWithImage = null;
         if (vmImage.isImageReference()) {
             vmWithImage = rawVmDef.withSpecificLinuxImageVersion(vmImage.getImageReference());
         } else {
@@ -143,9 +143,9 @@ public class VmLauncher {
 
         LinuxSettings linuxSettings = vmSpec.getLinuxSettings().get();
         WithCreate vmWithOs = vmWithImage //
-                .withRootUserName(linuxSettings.getRootUserName()) //
-                .withSsh(linuxSettings.getPublicSshKey()) //
-                .withPassword(linuxSettings.getPassword());
+                .withRootUsername(linuxSettings.getRootUserName()) //
+                .withRootPassword(linuxSettings.getPassword()) //
+                .withSsh(linuxSettings.getPublicSshKey());
 
         vmWithOs.withSize(vmSpec.getVmSize()) //
                 .withTags(vmSpec.getTags());
@@ -166,7 +166,7 @@ public class VmLauncher {
 
     private Creatable<VirtualMachine> windowsVmDefinition(VmSpec vmSpec, WithOS rawVmDef) {
         VmImage vmImage = new VmImage(vmSpec.getVmImage());
-        WithAdminUserName vmWithImage = null;
+        WithWindowsAdminUsername vmWithImage = null;
         if (vmImage.isImageReference()) {
             vmWithImage = rawVmDef.withSpecificWindowsImageVersion(vmImage.getImageReference());
         } else {
@@ -175,8 +175,8 @@ public class VmLauncher {
 
         WindowsSettings windowsSettings = vmSpec.getWindowsSettings().get();
         WithCreate vmWithOs = vmWithImage //
-                .withAdminUserName(windowsSettings.getAdminUserName()) //
-                .withPassword(windowsSettings.getPassword());
+                .withAdminUsername(windowsSettings.getAdminUserName()) //
+                .withAdminPassword(windowsSettings.getPassword());
 
         vmWithOs.withSize(vmSpec.getVmSize()) //
                 .withTags(vmSpec.getTags());

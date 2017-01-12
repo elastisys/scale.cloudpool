@@ -42,11 +42,11 @@ public class DeleteNetworkInterfaceRequest extends AzureRequest<Void> {
                     publicIp.ipAddress(), nic.name());
             nic.update().withoutPrimaryPublicIpAddress().apply();
             LOG.debug("deleting public ip {} ...", publicIp.id());
-            api.publicIpAddresses().delete(publicIp.id());
+            api.publicIpAddresses().deleteById(publicIp.id());
         }
 
         LOG.debug("deleting network interface {} ...", nic.name());
-        api.networkInterfaces().delete(nic.id());
+        api.networkInterfaces().deleteById(nic.id());
         LOG.debug("network interface deleted.", nic.name());
 
         return null;

@@ -23,9 +23,9 @@ import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.ImageReference;
 import com.microsoft.azure.management.compute.VirtualMachine;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithLinuxCreate;
+import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithLinuxRootUsername;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithOS;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithPublicIpAddress;
-import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithRootUserName;
 import com.microsoft.azure.management.network.Network;
 import com.microsoft.azure.management.resources.fluentcore.model.CreatedResources;
 
@@ -79,12 +79,12 @@ public class CreateLinuxVirtualMachine extends BaseLabProgram {
             vmDefWithIp = vmDef.withoutPrimaryPublicIpAddress();
         }
 
-        WithRootUserName vmDefWithOs = null;
+        WithLinuxRootUsername vmDefWithOs = null;
 
         ImageReference imageReference = new VmImage(imageRef).getImageReference();
         vmDefWithOs = vmDefWithIp.withSpecificLinuxImageVersion(imageReference);
 
-        WithLinuxCreate vmDefWithLinux = vmDefWithOs.withRootUserName(rootUserName).withSsh(publicKey);
+        WithLinuxCreate vmDefWithLinux = vmDefWithOs.withRootUsername(rootUserName).withSsh(publicKey);
         vmDefWithLinux.withSize(vmSize);
         vmDefWithLinux.withTags(tags);
         // Disks in Azure are created in storage accounts. Create a new storage

@@ -25,7 +25,7 @@
     <dependency>
       <groupId>com.microsoft.azure</groupId>
       <artifactId>azure</artifactId>
-      <version>1.0.0-beta3</version>
+      <version>1.0.0-beta4</version>
     </dependency>
     <!-- Azure blob storage API: to be able to delete VM disks -->
     <dependency>
