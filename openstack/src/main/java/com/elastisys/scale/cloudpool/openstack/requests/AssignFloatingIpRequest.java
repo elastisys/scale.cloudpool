@@ -111,6 +111,6 @@ public class AssignFloatingIpRequest extends AbstractOpenstackRequest<String> {
      * @return
      */
     private Predicate<Addresses> ipAddressAssigned() {
-        return addresses -> !addresses.getAddresses().isEmpty();
+        return addresses -> addresses.getAddresses() != null && !addresses.getAddresses().isEmpty();
     }
 }

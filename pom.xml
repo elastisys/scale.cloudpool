@@ -55,7 +55,7 @@
     <java.version>1.8</java.version>
 
     <!-- scale.commons version to use -->
-    <commons.version>2.2.7</commons.version>
+    <commons.version>2.2.8-SNAPSHOT</commons.version>
     <docker.plugin.version>0.4.13</docker.plugin.version>
   </properties>
 

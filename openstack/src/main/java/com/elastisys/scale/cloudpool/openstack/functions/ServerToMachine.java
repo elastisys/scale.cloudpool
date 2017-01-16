@@ -15,6 +15,7 @@ import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.openstack.driver.Constants;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.net.ip.IsPrivateIp;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
@@ -85,10 +86,23 @@ public class ServerToMachine implements Function<Server, Machine> {
         for (Entry<String, List<? extends Address>> networkAddresses : serverAddresses.entrySet()) {
             List<? extends Address> addresses = networkAddresses.getValue();
             for (Address address : addresses) {
-                if (address.getType().equals(FLOATING)) {
-                    publicIps.add(address.getAddr());
+                String addressType = address.getType();
+                // The "OS-EXT-IPS:type" field may be set to indicate if this is
+                // a fixed (private) or floating (public) IP
+                if (addressType != null) {
+                    if (addressType.equals(FLOATING)) {
+                        publicIps.add(address.getAddr());
+                    } else {
+                        privateIps.add(address.getAddr());
+                    }
                 } else {
-                    privateIps.add(address.getAddr());
+                    // If no address type is assigned, we fall back to checking
+                    // if the IP address is in a private address range
+                    if (new IsPrivateIp().test(address.getAddr())) {
+                        privateIps.add(address.getAddr());
+                    } else {
+                        publicIps.add(address.getAddr());
+                    }
                 }
             }
         }
