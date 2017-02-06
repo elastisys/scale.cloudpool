@@ -5,7 +5,7 @@ MAINTAINER Elastisys <techteam@elastisys.com>
 RUN apk add --no-cache bash
 
 # install ec2pool server
-COPY ${project.build.finalName}.jar /opt/elastisys/ec2pool/ec2pool.jar
+COPY cloudpool.aws.ec2.jar /opt/elastisys/ec2pool/ec2pool.jar
 COPY start.sh /opt/elastisys/ec2pool/start.sh
 
 # create configuration directory

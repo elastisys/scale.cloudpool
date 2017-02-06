@@ -5,7 +5,7 @@ MAINTAINER Elastisys <techteam@elastisys.com>
 RUN apk add --no-cache bash
 
 # install azurepool server
-COPY ${project.build.finalName}.jar /opt/elastisys/azurepool/azurepool.jar
+COPY cloudpool.azure.jar /opt/elastisys/azurepool/azurepool.jar
 COPY start.sh /opt/elastisys/azurepool/start.sh
 
 # create configuration directory

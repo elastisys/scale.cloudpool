@@ -5,7 +5,7 @@ MAINTAINER Elastisys <techteam@elastisys.com>
 RUN apk add --no-cache bash
 
 # install kubernetespool server
-COPY ${project.build.finalName}.jar /opt/elastisys/kubernetespool/kubernetespool.jar
+COPY cloudpool.kubernetes.jar /opt/elastisys/kubernetespool/kubernetespool.jar
 COPY start.sh /opt/elastisys/kubernetespool/start.sh
 
 # create configuration directory

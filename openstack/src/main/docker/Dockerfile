@@ -5,7 +5,7 @@ MAINTAINER Elastisys <techteam@elastisys.com>
 RUN apk add --no-cache bash
 
 # install openstackpool server
-COPY ${project.build.finalName}.jar /opt/elastisys/openstackpool/openstackpool.jar
+COPY cloudpool.openstack.jar /opt/elastisys/openstackpool/openstackpool.jar
 COPY start.sh /opt/elastisys/openstackpool/start.sh
 
 # create configuration directory

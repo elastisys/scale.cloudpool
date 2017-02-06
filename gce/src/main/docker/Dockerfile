@@ -5,7 +5,7 @@ MAINTAINER Elastisys <techteam@elastisys.com>
 RUN apk add --no-cache bash
 
 # install gcepool server
-COPY ${project.build.finalName}.jar /opt/elastisys/gcepool/gcepool.jar
+COPY cloudpool.gce.jar /opt/elastisys/gcepool/gcepool.jar
 COPY start.sh /opt/elastisys/gcepool/start.sh
 
 # create configuration directory

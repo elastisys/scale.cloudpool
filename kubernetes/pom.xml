@@ -17,6 +17,7 @@
   </description>
 
   <properties>
+    <shade.mainClass>com.elastisys.scale.cloudpool.kubernetes.server.Main</shade.mainClass>
   </properties>
 
   <dependencies>
@@ -63,120 +64,17 @@
   </dependencies>
 
   <build>
-    <resources>
-      <resource>
-        <directory>src/main/resources</directory>
-      </resource>
-      <!--
-	  Copy src/main/docker to target/docker-resources.
-      -->      
-      <!-- Dockerfile needs placeholder substitution for project version 
-        to include the (version-qualified) server jar. -->
-      <resource>
-        <directory>src/main/docker</directory>
-        <targetPath>${project.build.directory}/docker-resources</targetPath>
-        <filtering>true</filtering>
-        <includes>
-          <include>Dockerfile</include>
-        </includes>        
-      </resource>
-      <resource>
-        <directory>src/main/docker</directory>
-        <targetPath>${project.build.directory}/docker-resources</targetPath>
-        <filtering>false</filtering>       
-        <excludes>
-          <exclude>Dockerfile</exclude>
-        </excludes>        
-      </resource>
-    </resources>
-  
     <plugins>
-      <!-- Build a standalone executable jar file that embeds all classpath 
-        dependencies. -->
+      <!-- Build a standalone executable jar file that embeds all classpath dependencies. -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>2.2</version>
-        <configuration>
-          <transformers>
-            <!-- Make jar file executable (add Main-Class header to jar manifest) -->
-            <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-              <mainClass>com.elastisys.scale.cloudpool.kubernetes.server.Main</mainClass>
-            </transformer>
-          </transformers>
-          <!-- Make shaded jar file the main artifact output by the build. -->
-          <shadedArtifactAttached>false</shadedArtifactAttached>
-          <createDependencyReducedPom>false</createDependencyReducedPom>
-          <filters>
-            <filter>
-              <artifact>*:*</artifact>
-              <excludes>
-                <exclude>META-INF/*.SF</exclude>
-                <exclude>META-INF/*.DSA</exclude>
-                <exclude>META-INF/*.RSA</exclude>
-              </excludes>
-            </filter>
-          </filters>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
 
-      <!--
-	  Builds a Docker image
-      -->
+      <!-- Builds a Docker image -->
       <plugin>
 	<groupId>com.spotify</groupId>
 	<artifactId>docker-maven-plugin</artifactId>
-	<version>${docker.plugin.version}</version>
-	<configuration>
-          <imageName>docker.elastisys.com:5000/elastisys/kubernetespool</imageName>
-	  <!-- Directory to be copied to target/docker -->
-          <dockerDirectory>${project.build.directory}/docker-resources</dockerDirectory>
-          <resources>
-	    <!-- include jar file in target/docker directory. -->
-            <resource>
-	      <targetPath>/</targetPath>
-	      <directory>${project.build.directory}</directory>
-	      <include>${project.build.finalName}.jar</include>
-            </resource>
-          </resources>
-	  <imageTags>
-            <imageTag>${project.version}</imageTag>
-            <imageTag>latest</imageTag>
-          </imageTags>
-	  <forceTags>true</forceTags>
-	</configuration>
-	<executions>
-	  <!-- On mvn install: build local Docker image -->
-	  <execution>
-	    <id>build.local.image</id>
-	    <phase>install</phase>
-	    <goals>
-              <goal>build</goal>
-	    </goals>
-	  </execution>
-	  <!-- On mvn release:perform: push to registry. -->
-	  <execution>
-	    <id>push.on.deploy</id>
-	    <phase>deploy</phase>
-	    <goals>
-              <goal>push</goal>
-	    </goals>
-	    <configuration>
-              <imageName>docker.elastisys.com:5000/elastisys/kubernetespool:${project.version}</imageName>
-	      <registryUrl>https://docker.elastisys.com:5000</registryUrl>
-	      <!-- docker registry credentials assumed to be in ~/.docker/config.json -->
-	      <useConfigFile>true</useConfigFile>
-	    </configuration>
-	  </execution>	  
-	</executions>
       </plugin>
 
     </plugins>

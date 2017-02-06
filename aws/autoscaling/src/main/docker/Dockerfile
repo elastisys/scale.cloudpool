@@ -5,7 +5,7 @@ MAINTAINER Elastisys <techteam@elastisys.com>
 RUN apk add --no-cache bash
 
 # install awsaspool server
-COPY ${project.build.finalName}.jar /opt/elastisys/awsaspool/awsaspool.jar
+COPY cloudpool.aws.autoscaling.jar /opt/elastisys/awsaspool/awsaspool.jar
 COPY start.sh /opt/elastisys/awsaspool/start.sh
 
 # create configuration directory

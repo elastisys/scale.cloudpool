@@ -7,27 +7,18 @@
     -DstagingDirectory=<devsite> See the Maven site plugin for more details: http://maven.apache.org/plugins/maven-site-plugin/usage.html -->
 
   <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.elastisys</groupId>
+    <artifactId>elastisys-public</artifactId>
+    <version>1.0</version>
+  </parent>
   <groupId>com.elastisys.scale</groupId>
   <artifactId>cloudpool.root</artifactId>
   <version>4.2.1-SNAPSHOT</version>
   <name>elastisys:scale :: cloudpool :: root</name>
   <description>Java-based elastisys:scale cloud pool implementations.</description>
   <packaging>pom</packaging>
-  <url>http://www.elastisys.com</url>
-  <organization>
-    <name>elastisys</name>
-    <url>http://www.elastisys.com</url>
-  </organization>
   <inceptionYear>2011</inceptionYear>
-
-
-  <licenses>
-    <license>
-      <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
 
   <modules>
     <module>api</module>
@@ -48,15 +39,8 @@
   </scm>
 
   <properties>
-    <!-- Instructs text processing plugins in inheriting projects to use UTF-8 source 
-      file encoding. -->
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <!-- Required JDK version -->
-    <java.version>1.8</java.version>
-
     <!-- scale.commons version to use -->
     <commons.version>2.2.8-SNAPSHOT</commons.version>
-    <docker.plugin.version>0.4.13</docker.plugin.version>
   </properties>
 
   <dependencyManagement>
@@ -111,284 +95,10 @@
         <artifactId>commons.cli</artifactId>
         <version>${commons.version}</version>
       </dependency>
-
-      <dependency>
-        <groupId>com.spotify</groupId>
-        <artifactId>docker-maven-plugin</artifactId>
-        <version>${docker.plugin.version}</version>
-      </dependency>
-      
     </dependencies>
   </dependencyManagement>
 
-  <build>
-    <plugins>
 
-      <!-- Unit tests -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.16</version>
-        <configuration>
-          <redirectTestOutputToFile>true</redirectTestOutputToFile>
-          <!-- Needed to make Cobertura work with Java7 -->
-          <!-- (see http://stackoverflow.com/questions/7010665/testng-emma-cobertura-coverage-and-jdk-7-result-in-classformaterror-and-verif) -->
-          <argLine>-XX:-UseSplitVerifier</argLine>
-        </configuration>
-      </plugin>
-
-      <!-- Compile byte code compatible with the targeted Java version -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.3</version>
-        <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
-        </configuration>
-      </plugin>
-
-      <!-- Enforce Java version -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <version>1.3</version>
-        <executions>
-          <execution>
-            <phase>validate</phase>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <requireJavaVersion>
-                  <version>[${java.version},)</version>
-                </requireJavaVersion>
-              </rules>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <!-- UTF-8 encoding of resource files -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-resources-plugin</artifactId>
-        <version>2.6</version>
-        <configuration>
-          <encoding>UTF-8</encoding>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>2.10</version>
-        <dependencies>
-          <!-- make sure project-specific checkstyle rules are picked up -->
-          <dependency>
-            <groupId>com.elastisys.scale</groupId>
-            <artifactId>commons.buildtools</artifactId>
-            <version>${commons.version}</version>
-          </dependency>
-        </dependencies>
-        <configuration>
-          <configLocation>checkstyle/checkstyle-rules.xml</configLocation>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-site-plugin</artifactId>
-        <version>3.3</version>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-release-plugin</artifactId>
-        <version>2.5</version>
-        <configuration>
-          <autoVersionSubmodules>true</autoVersionSubmodules>
-          <!-- Git tag should only be project version, e.g. "1.0.1" -->
-          <tagNameFormat>@{project.version}</tagNameFormat>
-          <useReleaseProfile>false</useReleaseProfile>
-          <releaseProfiles>release</releaseProfiles>
-          <goals>deploy</goals>
-        </configuration>
-      </plugin>
-
-      <!-- Configure maven-jar-plugin. -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>2.4</version>
-      </plugin>
-
-      <!-- Configure maven-war-plugin. -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-war-plugin</artifactId>
-        <version>2.4</version>
-        <configuration>
-          <!-- Deploys a jar artifact with classifier 'classes' alongside war artifact. 
-            Can be referenced as a dependency by other projects. -->
-          <attachClasses>true</attachClasses>
-          <classesClassifier>classes</classesClassifier>
-        </configuration>
-      </plugin>
-
-    </plugins>
-  </build>
-
-  <reporting>
-    <plugins>
-      <!-- generates various reports for the project site -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-project-info-reports-plugin</artifactId>
-        <version>2.7</version>
-        <configuration>
-        </configuration>
-        <reportSets>
-          <reportSet>
-            <!-- the reports to generate -->
-            <reports>
-              <report>index</report>
-              <report>project-team</report>
-              <report>dependency-management</report>
-              <report>dependency-info</report>
-              <report>issue-tracking</report>
-              <report>modules</report>
-              <report>summary</report>
-            </reports>
-          </reportSet>
-        </reportSets>
-      </plugin>
-      <!-- javadoc generation plugin -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.9.1</version>
-        <configuration>
-          <quiet>true</quiet>
-          <source>1.7</source>
-          <links>
-            <link>http://docs.oracle.com/javase/7/docs/api/</link>
-          </links>
-        </configuration>
-      </plugin>
-      <!-- Java cross-reference plugin -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jxr-plugin</artifactId>
-        <version>2.3</version>
-      </plugin>
-      <!-- test result report generation -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>2.16</version>
-        <configuration>
-          <aggregate>true</aggregate>
-        </configuration>
-      </plugin>
-      <!-- reports test coverage of unit tests -->
-      <!-- Note: cobertura doesn't work with Java7, unless -XX:-UseSplitVerifier 
-        is given as JVM argument to surefire test plugin -->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>cobertura-maven-plugin</artifactId>
-        <version>2.5.2</version>
-        <configuration>
-          <!-- unfortuantely, aggregate reports don't seem to work <aggregate>true</aggregate> -->
-          <formats>
-            <format>xml</format>
-            <format>html</format>
-          </formats>
-        </configuration>
-      </plugin>
-      <!-- -->
-      <!-- warns when project style conventions are violated -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>2.10</version>
-        <configuration>
-          <!-- make sure project-specific checkstyle rules are picked up from the 
-            buildtools module -->
-          <configLocation>checkstyle/checkstyle-rules.xml</configLocation>
-        </configuration>
-      </plugin>
-      <!-- reports on suspected bug patterns -->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>findbugs-maven-plugin</artifactId>
-        <version>2.5.2</version>
-      </plugin>
-      <!-- PMD source code analyzer -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-pmd-plugin</artifactId>
-        <version>3.0.1</version>
-      </plugin>
-    </plugins>
-  </reporting>
-
-  <profiles>
-    <profile>
-      <id>release</id>
-      <build>
-        <!-- Plugins that are only included in release builds -->
-        <plugins>
-          <!-- Attach sources to published Maven artifacts -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-source-plugin</artifactId>
-            <version>2.2.1</version>
-            <executions>
-              <execution>
-                <id>attach-sources</id>
-                <goals>
-                  <goal>jar-no-fork</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-
-          <!-- Attach javadocs to published Maven artifacts -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <version>2.9.1</version>
-            <executions>
-              <execution>
-                <id>attach-javadocs</id>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-
-          <!-- Sign published Maven artifacts -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.5</version>
-            <executions>
-              <execution>
-                <id>sign-artifacts</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 
   <issueManagement>
     <system>GitHub Issue Management</system>
@@ -400,66 +110,26 @@
       <id>peterg</id>
       <name>Peter Gardfjäll</name>
       <email>peter.gardfjall@elastisys.com</email>
-      <url>http://elastisys.com/</url>
+      <url>https://elastisys.com/</url>
       <organization>Elastisys AB</organization>
-      <organizationUrl>http://elastisys.com/</organizationUrl>
+      <organizationUrl>https://elastisys.com/</organizationUrl>
       <roles>
-        <role>architect</role>
         <role>developer</role>
       </roles>
       <timezone>+1</timezone>
     </developer>
     <developer>
-      <id>larsson</id>
-      <name>Lars Larsson</name>
-      <email>lars.larsson@elastisys.com</email>
-      <url>http://elastisys.com/</url>
+      <id>simonklb</id>
+      <name>Simon Kollberg</name>
+      <email>simon.kollberg@elastisys.com</email>
+      <url>https://elastisys.com/</url>
       <organization>Elastisys AB</organization>
-      <organizationUrl>http://elastisys.com/</organizationUrl>
+      <organizationUrl>https://elastisys.com/</organizationUrl>
       <roles>
-        <role>architect</role>
         <role>developer</role>
       </roles>
       <timezone>+1</timezone>
     </developer>
   </developers>
-
-
-  <!-- Destination repositories for releases (Sonatype's OSS Repository Hosting). 
-    Note: for releases to succeed, proper server credentials for the repository server 
-    need to be added to the ~/.m2/settings.xml file of the user performing the release. 
-    The ~/.m2/settings.xml file also needs to contain GPG signing credenials. For more 
-    details, see http://central.sonatype.org/pages/apache-maven.html. -->
-  <distributionManagement>
-    <!-- release repo -->
-    <repository>
-      <id>oss-repo</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-    <!-- snapshot repo -->
-    <snapshotRepository>
-      <id>oss-repo-snapshots</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
-    <!-- The URL to which the project site is deployed when running mvn site:deploy. 
-      See http://maven.apache.org/plugins/maven-site-plugin/usage.html -->
-    <site>
-      <id>development.site</id>
-      <url>file:///scratch/devsite/scale.cloudpool</url>
-    </site>
-  </distributionManagement>
-
-  <repositories>
-    <!-- To be able to use latest snapshot of openstack4j. Can be removed once 2.0.4 
-      is released. -->
-    <repository>
-      <id>maven-snapshots</id>
-      <name>sonatype-snapshots</name>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
 
 </project>

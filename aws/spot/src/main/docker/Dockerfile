@@ -5,7 +5,7 @@ MAINTAINER Elastisys <techteam@elastisys.com>
 RUN apk add --no-cache bash
 
 # install spotpool server
-COPY ${project.build.finalName}.jar /opt/elastisys/spotpool/spotpool.jar
+COPY cloudpool.aws.spot.jar /opt/elastisys/spotpool/spotpool.jar
 COPY start.sh /opt/elastisys/spotpool/start.sh
 
 # create configuration directory

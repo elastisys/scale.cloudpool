@@ -5,7 +5,7 @@ MAINTAINER Elastisys <techteam@elastisys.com>
 RUN apk add --no-cache bash
 
 # install citycloudpool server
-COPY ${project.build.finalName}.jar /opt/elastisys/citycloudpool/citycloudpool.jar
+COPY cloudpool.citycloud.jar /opt/elastisys/citycloudpool/citycloudpool.jar
 COPY start.sh /opt/elastisys/citycloudpool/start.sh
 
 # create configuration directory
