@@ -19,6 +19,7 @@
   </description>
 
   <properties>
+    <docker.image>elastisys/gcepool</docker.image>
     <shade.mainClass>com.elastisys.scale.cloudpool.gce.server.Main</shade.mainClass>
   </properties>
 

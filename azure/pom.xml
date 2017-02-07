@@ -18,6 +18,7 @@
   </description>
 
   <properties>
+    <docker.image>elastisys/azurepool</docker.image>
     <shade.mainClass>com.elastisys.scale.cloudpool.azure.server.Main</shade.mainClass>
   </properties>
 

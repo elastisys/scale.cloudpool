@@ -17,6 +17,7 @@
   </description>
 
   <properties>
+    <docker.image>elastisys/ec2pool</docker.image>
     <shade.mainClass>com.elastisys.scale.cloudpool.aws.ec2.server.Main</shade.mainClass>
   </properties>
 

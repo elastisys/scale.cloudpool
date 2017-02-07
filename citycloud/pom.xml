@@ -18,6 +18,7 @@
   </description>
 
   <properties>
+    <docker.image>elastisys/citycloudpool</docker.image>
     <shade.mainClass>com.elastisys.scale.cloudpool.citycloud.server.Main</shade.mainClass>
   </properties>
 

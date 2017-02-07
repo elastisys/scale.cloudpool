@@ -17,6 +17,7 @@
   </description>
 
   <properties>
+    <docker.image>elastisys/spotpool</docker.image>
     <shade.mainClass>com.elastisys.scale.cloudpool.aws.spot.server.Main</shade.mainClass>
   </properties>
 

@@ -17,6 +17,7 @@
   </description>
 
   <properties>
+    <docker.image>elastisys/openstackpool</docker.image>
     <shade.mainClass>com.elastisys.scale.cloudpool.openstack.server.Main</shade.mainClass>
   </properties>
 
