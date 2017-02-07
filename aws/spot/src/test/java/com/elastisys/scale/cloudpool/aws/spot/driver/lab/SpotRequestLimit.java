@@ -1,6 +1,7 @@
 package com.elastisys.scale.cloudpool.aws.spot.driver.lab;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -14,8 +15,6 @@ import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTempl
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.impl.AwsSpotClient;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
-
-import jersey.repackaged.com.google.common.collect.Lists;
 
 /**
  * A client that places spot requests in a given zone until no more requests are
@@ -41,7 +40,7 @@ public class SpotRequestLimit extends BaseClient {
         Ec2ProvisioningTemplate provisioningTemplate = JsonUtils.toObject(config.getProvisioningTemplate(),
                 Ec2ProvisioningTemplate.class);
         LOG.info("config: {}", provisioningTemplate);
-        List<SpotInstanceRequest> placedRequests = Lists.newArrayList();
+        List<SpotInstanceRequest> placedRequests = new ArrayList<>();
         int MAX = 200;
         try {
             placedRequests.addAll(

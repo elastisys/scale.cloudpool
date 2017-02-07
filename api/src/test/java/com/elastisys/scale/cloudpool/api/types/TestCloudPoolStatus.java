@@ -42,4 +42,11 @@ public class TestCloudPoolStatus {
         assertNotEquals(status2, status4);
         assertNotEquals(status3, status4);
     }
+
+    @Test
+    public void constants() {
+        assertThat(CloudPoolStatus.UNCONFIGURED_STOPPED, is(new CloudPoolStatus(false, false)));
+        assertThat(CloudPoolStatus.CONFIGURED_STOPPED, is(new CloudPoolStatus(false, true)));
+        assertThat(CloudPoolStatus.CONFIGURED_STARTED, is(new CloudPoolStatus(true, true)));
+    }
 }

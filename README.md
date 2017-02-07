@@ -19,8 +19,10 @@ for different cloud providers:
     that manages the size of an [AWS Auto Scaling Group](http://docs.aws.amazon.com/AutoScaling/latest/DeveloperGuide/WorkingWithASG.html).
   - [Microsoft Azure](azure/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages a group of [Microsoft Azure](https://azure.microsoft.com/en-us/) VMs.
-  - [Google Compute Engine](gce/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+  - [Google Compute Engine](google/compute/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages a [GCE instance group](https://cloud.google.com/compute/docs/instance-groups/#managed_instance_groups).
+  - [Google Container Engine](google/container/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+    that manages a [GKE container cluster](https://cloud.google.com/container-engine/docs/clusters/).	
 
 The [cloudpool.commons](commons) module contains a generic `CloudPool` implementation
 (`BaseCloudPool`) intended to be used as a basis for building cloud-specific cloud pools.

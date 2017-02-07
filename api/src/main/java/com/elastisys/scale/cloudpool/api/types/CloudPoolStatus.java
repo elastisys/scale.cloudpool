@@ -10,6 +10,9 @@ import com.google.common.base.Objects;
  * @see CloudPool
  */
 public class CloudPoolStatus {
+    public static final CloudPoolStatus UNCONFIGURED_STOPPED = new CloudPoolStatus(false, false);
+    public static final CloudPoolStatus CONFIGURED_STOPPED = new CloudPoolStatus(false, true);
+    public static final CloudPoolStatus CONFIGURED_STARTED = new CloudPoolStatus(true, true);
 
     /** Indicates if the {@link CloudPool} is in a started state. */
     private final boolean started;

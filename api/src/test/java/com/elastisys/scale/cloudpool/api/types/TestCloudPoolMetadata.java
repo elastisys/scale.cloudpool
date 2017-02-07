@@ -9,8 +9,7 @@ import java.util.List;
 import org.junit.Test;
 
 import com.elastisys.scale.commons.json.JsonUtils;
-
-import jersey.repackaged.com.google.common.collect.Lists;
+import com.google.common.collect.Lists;
 
 /**
  * Exercises the {@link CloudPoolMetadata} class.
@@ -53,28 +52,28 @@ public class TestCloudPoolMetadata {
 
     @Test(expected = NullPointerException.class)
     public void nullIdentifier() {
-        final List<String> supportedApiVersions = Lists.<String>newArrayList("1.0", "2.0", "3.14");
+        final List<String> supportedApiVersions = Lists.newArrayList("1.0", "2.0", "3.14");
         new CloudPoolMetadata((String) null, supportedApiVersions);
     }
 
     @Test(expected = IllegalStateException.class)
     public void incorrectVersionString() {
-        new CloudPoolMetadata(CloudProviders.AWS_EC2, Lists.<String>newArrayList("1.0a"));
+        new CloudPoolMetadata(CloudProviders.AWS_EC2, Lists.newArrayList("1.0a"));
     }
 
     @Test(expected = IllegalStateException.class)
     public void incorrectVersionString2() {
-        new CloudPoolMetadata(CloudProviders.AWS_EC2, Lists.<String>newArrayList("1."));
+        new CloudPoolMetadata(CloudProviders.AWS_EC2, Lists.newArrayList("1."));
     }
 
     @Test(expected = IllegalStateException.class)
     public void incorrectVersionString3() {
-        new CloudPoolMetadata(CloudProviders.AWS_EC2, Lists.<String>newArrayList(" 1.0"));
+        new CloudPoolMetadata(CloudProviders.AWS_EC2, Lists.newArrayList(" 1.0"));
     }
 
     @Test(expected = IllegalStateException.class)
     public void incorrectVersionString4() {
-        new CloudPoolMetadata(CloudProviders.AWS_EC2, Lists.<String>newArrayList(""));
+        new CloudPoolMetadata(CloudProviders.AWS_EC2, Lists.newArrayList(""));
     }
 
     @Test

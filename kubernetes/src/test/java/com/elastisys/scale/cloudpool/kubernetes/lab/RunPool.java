@@ -17,8 +17,8 @@ import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.gson.JsonObject;
 
 /**
- * Simple lab program that exercises the OpenStack {@link CloudPool} via
- * commands read from {@code stdin}.
+ * Simple lab program that exercises the {@link CloudPool} via commands read
+ * from {@code stdin}.
  */
 public class RunPool {
     static Logger LOG = LoggerFactory.getLogger(RunPool.class);

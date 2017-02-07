@@ -9,8 +9,7 @@ import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CreateInstances;
-
-import jersey.repackaged.com.google.common.collect.Iterables;
+import com.google.common.collect.Iterables;
 
 public class CreateInstanceMain extends AbstractClient {
 

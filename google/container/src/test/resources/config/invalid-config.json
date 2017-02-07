@@ -1,0 +1,36 @@
+{
+    "name": "google-container-engine-pool",
+
+    "cloudApiSettings": {
+        "serviceAccountKeyPath": "src/test/resources/config/valid-service-account-key.json"
+    },
+
+    "cluster": {
+        "name": "my-container-cluster",
+        "project": "my-project"
+
+    },
+
+    "scalingPolicy": "Balanced",
+    
+    "alerts": {
+        "duplicateSuppression": { "time": 2, "unit": "hours" },
+        "smtp": [
+            {
+                "subject": "[elastisys] alert for google-container-engine-poolgke-pool",
+                "recipients": ["foo@bar.com"],
+                "sender": "noreply@sender.com",
+                "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
+                "smtpClientConfig": {
+                    "smtpHost": "smtp.server",
+                    "smtpPort": 465,
+                    "useSsl": true,
+                    "authentication": { "username": "foo", "password": "bar" }
+                }
+            }
+        ]
+    },
+
+
+    "poolUpdateInterval":  {"time": 15, "unit": "seconds"}
+}

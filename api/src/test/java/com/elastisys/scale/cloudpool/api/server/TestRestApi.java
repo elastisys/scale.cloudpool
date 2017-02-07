@@ -45,10 +45,9 @@ import com.elastisys.scale.commons.net.host.HostUtils;
 import com.elastisys.scale.commons.rest.client.RestClients;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import com.google.gson.JsonObject;
-
-import jersey.repackaged.com.google.common.collect.Lists;
 
 /**
  * Tests that verify the behavior of the {@link CloudPoolServer} REST API backed

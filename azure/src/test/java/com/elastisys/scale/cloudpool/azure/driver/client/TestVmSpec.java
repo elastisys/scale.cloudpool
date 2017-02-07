@@ -18,8 +18,7 @@ import com.elastisys.scale.cloudpool.azure.driver.config.LinuxSettings;
 import com.elastisys.scale.cloudpool.azure.driver.config.NetworkSettings;
 import com.elastisys.scale.cloudpool.azure.driver.config.TestUtils;
 import com.elastisys.scale.cloudpool.azure.driver.config.WindowsSettings;
-
-import jersey.repackaged.com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * Exercise {@link VmSpec}

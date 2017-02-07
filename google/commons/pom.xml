@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.elastisys.scale</groupId>
+    <artifactId>cloudpool.google</artifactId>
+    <version>4.2.2-SNAPSHOT</version>
+  </parent>
+  <artifactId>cloudpool.google.commons</artifactId>
+  <packaging>jar</packaging>
+  <name>elastisys:scale :: cloudpool :: google :: commons</name>
+  <description>
+    Common utility classes for building cloud pools for the Google Cloud Platform
+  </description>
+
+  <properties>
+    <google.api.client.version>1.22.0</google.api.client.version>
+    <google.gce.client.version>v1-rev131-1.22.0</google.gce.client.version>
+    <google.gke.api.version>v1-rev10-1.22.0</google.gke.api.version>
+  </properties>
+
+  <dependencies>
+    <!-- Generic Google API client -->
+    <dependency>
+      <groupId>com.google.api-client</groupId>
+      <artifactId>google-api-client</artifactId>
+      <version>${google.api.client.version}</version>
+    </dependency>
+    <!-- Google Compute Engine (GCE) API client -->
+    <dependency>
+      <groupId>com.google.apis</groupId>
+      <artifactId>google-api-services-compute</artifactId>
+      <version>${google.gce.client.version}</version>
+    </dependency>
+    <!-- Google Container Engine (GKE) API client -->
+    <dependency>
+      <groupId>com.google.apis</groupId>
+      <artifactId>google-api-services-container</artifactId>
+      <version>${google.gke.api.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>cloudpool.api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>cloudpool.commons</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- Test dependencies -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

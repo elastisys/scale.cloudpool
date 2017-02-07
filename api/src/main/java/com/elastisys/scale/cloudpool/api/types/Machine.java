@@ -14,9 +14,9 @@ import java.util.concurrent.TimeUnit;
 import org.joda.time.DateTime;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
+import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Function;
-import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
@@ -407,12 +407,7 @@ public class Machine {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this).add("id", this.id).add("machineState", this.machineState)
-                .add("membershipStatus", this.membershipStatus).add("serviceState", this.serviceState)
-                .add("cloudProvider", this.cloudProvider).add("region", this.region)
-                .add("machineSize", this.machineSize).add("requestTime", this.requestTime)
-                .add("launchTime", this.launchTime).add("publicIps", this.publicIps).add("privateIps", this.privateIps)
-                .add("metadata", this.metadata).toString();
+        return JsonUtils.toString(JsonUtils.toJson(this));
     }
 
     /**
@@ -820,13 +815,7 @@ public class Machine {
 
         @Override
         public String apply(Machine machine) {
-            return MoreObjects.toStringHelper("").add("id", machine.getId())
-                    .add("machineState", machine.getMachineState().name())
-                    .add("membershipStatus", machine.getMembershipStatus())
-                    .add("serviceState", machine.getServiceState().name()).add("requestTime", machine.getRequestTime())
-                    .add("launchTime", machine.getLaunchTime()).add("publicIps", machine.getPublicIps())
-                    .add("privateIps", machine.getPrivateIps()).add("cloudProvider", machine.getCloudProvider())
-                    .add("region", machine.getRegion()).toString();
+            return new ToShortMachineFormat().apply(machine).toString();
         }
     }
 

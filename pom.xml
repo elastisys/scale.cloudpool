@@ -28,7 +28,7 @@
     <module>citycloud</module>
     <module>kubernetes</module>
     <module>azure</module>
-    <module>gce</module>
+    <module>google</module>
   </modules>
 
   <!-- Location of Git repository. Used to tag releases. -->
@@ -40,7 +40,7 @@
 
   <properties>
     <!-- scale.commons version to use -->
-    <commons.version>2.2.9</commons.version>
+    <commons.version>2.2.10-SNAPSHOT</commons.version>
   </properties>
 
   <dependencyManagement>

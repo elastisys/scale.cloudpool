@@ -36,6 +36,18 @@ public class PoolSizeSummary {
      */
     private final int active;
 
+    /**
+     * @param desiredSize
+     *            The desired size of the machine pool.
+     * @param allocated
+     *            The number of allocated machines in the pool (see
+     *            {@link Machine#isAllocated()}.
+     * @param active
+     *            The number of active machines in the pool
+     *            {@link Machine#isActiveMember()}. That is, the number of
+     *            allocated machines that have also been marked with an active
+     *            membership status.
+     */
     public PoolSizeSummary(int desiredSize, int allocated, int active) {
         this(UtcTime.now(), desiredSize, allocated, active);
     }
