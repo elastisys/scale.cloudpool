@@ -132,4 +132,15 @@
     </developer>
   </developers>
 
+  <build>
+    <plugins>
+      
+      <!-- Always include dependency licenses in target/third-party-licenses -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+      </plugin>
+      
+    </plugins>
+  </build>  
 </project>
