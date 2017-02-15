@@ -40,7 +40,7 @@
 
   <properties>
     <!-- scale.commons version to use -->
-    <commons.version>2.2.9-SNAPSHOT</commons.version>
+    <commons.version>2.2.9</commons.version>
   </properties>
 
   <dependencyManagement>
