@@ -13,7 +13,7 @@ with the desired size that the cloud pool has been instructed to maintain.
 ## Overview
 To understand how the `gkepool` operates, some basic understanding of
 GKE is required. For more details, refer to the 
-[official GKE documentation](https://cloud.google.com/container-engine/docs/)
+[official GKE documentation](https://cloud.google.com/container-engine/docs/).
 
 A container cluster consists of one [kubernetes master endpoint](https://cloud.google.com/container-engine/docs/clusters/#the_kubernetes_master), which hosts the API server and one or more 
 [node instances](https://cloud.google.com/container-engine/docs/clusters/#nodes),
@@ -128,7 +128,7 @@ The configuration keys have the following meaning:
   Use the name to distinguish between different `gkepools`.
 
 - `cloudApiSettings` (**required**): Sets up API credentials for the [service account](https://developers.google.com/api-client-library/java/google-api-java-client/oauth2#service_accounts) to use.  
-  For more details, refer to the [GCE pool README.md](../compute/README.md##service-account-key-configuration)
+  For more details, refer to the [GCE pool README.md](../compute/README.md#service-account-key-configuration)
     - `serviceAccountKeyPath` (*semi-optional*): Local file system path to a 
 	  JSON-formatted service account key. May be left out if `serviceAccountKey` is given.
     - `serviceAccountKey` (*semi-optional*): A JSON-formatted service account key. 
