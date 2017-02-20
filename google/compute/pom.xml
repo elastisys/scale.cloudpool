@@ -19,7 +19,7 @@
 
   <properties>
     <docker.image>elastisys/gcepool</docker.image>
-    <shade.mainClass>com.elastisys.scale.cloudpool.compute.server.Main</shade.mainClass>
+    <shade.mainClass>com.elastisys.scale.cloudpool.google.compute.server.Main</shade.mainClass>
   </properties>
 
   <dependencies>
