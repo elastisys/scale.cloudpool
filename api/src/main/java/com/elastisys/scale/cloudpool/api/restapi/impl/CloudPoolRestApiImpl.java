@@ -1,13 +1,13 @@
-package com.elastisys.scale.cloudpool.api.restapi;
+package com.elastisys.scale.cloudpool.api.restapi.impl;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
+import static com.google.common.base.Preconditions.checkArgument;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
+
 import javax.ws.rs.InternalServerErrorException;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -16,7 +16,9 @@ import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
+import com.elastisys.scale.cloudpool.api.NotConfiguredException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
+import com.elastisys.scale.cloudpool.api.restapi.CloudPoolRestApi;
 import com.elastisys.scale.cloudpool.api.restapi.types.DetachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetDesiredSizeRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetMembershipStatusRequest;
@@ -27,36 +29,202 @@ import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.ErrorType;
+import com.google.common.base.Charsets;
+import com.google.common.base.Optional;
+import com.google.common.io.Files;
 import com.google.gson.JsonObject;
 
 /**
- * Implements the cloud pool REST API, which is fully covered in the
+ * /** Implements the cloud pool REST API, which is fully covered in the
  * <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/">elastisys:scale
  * cloud pool REST API documentation</a>.
  */
 @Path("/")
-@Consumes(MediaType.APPLICATION_JSON)
-@Produces(MediaType.APPLICATION_JSON)
-public class CloudPoolHandler {
-    private static final Logger LOG = LoggerFactory.getLogger(CloudPoolHandler.class);
+public class CloudPoolRestApiImpl implements CloudPoolRestApi {
+    private static final Logger LOG = LoggerFactory.getLogger(CloudPoolRestApiImpl.class);
+    /**
+     * Default file name (within the storage directory) in which
+     * {@link CloudPool} configuration is stored.
+     */
+    public static final String DEFAULT_CONFIG_FILE_NAME = "config.json";
 
-    /** The {@link CloudPool} implementation to which all work is delegated. */
+    /** The {@link CloudPool} back-end to which all work is delegated. */
     private final CloudPool cloudPool;
+    /**
+     * The directory where runtime state for the {@link CloudPool} is stored.
+     * The {@link CloudPoolRestApiImpl} will use this directory to store every
+     * set configuration so that it can be restored on restart.
+     */
+    private final String storageDir;
 
-    public CloudPoolHandler(CloudPool cloudPool) {
-        LOG.info(getClass().getSimpleName() + " created");
-        this.cloudPool = cloudPool;
+    /**
+     * The file name, within the {@link #storageDir}, in which {@link CloudPool}
+     * configuration is stored.
+     */
+    private final String configFileName;
+
+    /**
+     * Creates a {@link CloudPoolRestApiImpl} that will store set
+     * {@link CloudPool} configurations under a given storage directory with the
+     * {@link #DEFAULT_CONFIG_FILE_NAME}.
+     *
+     * @param cloudPool
+     *            The back-end {@link CloudPool} that is being managed.
+     * @param storageDir
+     *            The directory path where runtime state for the
+     *            {@link CloudPool} is stored. The {@link CloudPoolRestApiImpl}
+     *            will use this directory to store every set configuration so
+     *            that it can be restored on restart. The directory will be
+     *            created if it does not exist.
+     */
+    public CloudPoolRestApiImpl(CloudPool cloudPool, String storageDir) {
+        this(cloudPool, storageDir, DEFAULT_CONFIG_FILE_NAME);
     }
 
     /**
-     * Retrieves the current machine pool members.
+     * Creates a {@link CloudPoolRestApiImpl} that will store set
+     * {@link CloudPool} configurations under a given storage directory with a
+     * given file name.
      *
-     * @return A response message as per the
-     *         <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >
-     *         cloud pool REST API</a>.
+     * @param cloudPool
+     *            The back-end {@link CloudPool} that is being managed.
+     * @param storageDir
+     *            The directory path where runtime state for the
+     *            {@link CloudPool} is stored. The {@link CloudPoolRestApiImpl}
+     *            will use this directory to store every set configuration so
+     *            that it can be restored on restart. The directory will be
+     *            created if it does not exist.
+     * @param configFileName
+     *            The file name, within the {@link #storageDir}, in which
+     *            {@link CloudPool} configuration is stored.
      */
-    @GET
-    @Path("/pool")
+    public CloudPoolRestApiImpl(CloudPool cloudPool, String storageDir, String configFileName) {
+        LOG.info(getClass().getSimpleName() + " created");
+        checkArgument(cloudPool != null, "cloudPool cannot be null");
+        File storageDirectory = new File(storageDir);
+        if (!storageDirectory.exists()) {
+            prepareStorageDir(storageDirectory);
+        } else {
+            checkArgument(storageDirectory.isDirectory(), "cloud pool storageDir %s is not a directory", storageDir);
+        }
+
+        checkArgument(configFileName != null, "configFileName cannot be null");
+        this.cloudPool = cloudPool;
+        this.storageDir = storageDir;
+        this.configFileName = configFileName;
+    }
+
+    /**
+     * Attempts to creates a given storage directory.
+     *
+     * @param storageDirectory
+     * @throws IllegalArgumentException
+     */
+    private void prepareStorageDir(File storageDirectory) throws IllegalArgumentException {
+        LOG.info("creating storage directory {}", storageDirectory.getAbsolutePath());
+        if (!storageDirectory.mkdirs()) {
+            throw new IllegalArgumentException(
+                    String.format("cloud pool: failed to create specified " + "storage directory %s",
+                            storageDirectory.getAbsolutePath()));
+        }
+    }
+
+    @Override
+    public Response getConfig() {
+        try {
+            Optional<JsonObject> configuration = this.cloudPool.getConfiguration();
+            if (!configuration.isPresent()) {
+                ErrorType entity = new ErrorType("no cloud pool configuration has been set");
+                return Response.status(Status.NOT_FOUND).entity(entity).build();
+            }
+            return Response.ok(configuration.get()).build();
+        } catch (Exception e) {
+            return internalErrorResponse("internal error on GET /config", e);
+        }
+    }
+
+    @Override
+    public Response setConfig(JsonObject configuration) {
+        try {
+            this.cloudPool.configure(configuration);
+            storeConfig(configuration);
+            return Response.ok().build();
+        } catch (IllegalArgumentException e) {
+            String message = "illegal input: " + e.getMessage();
+            LOG.error(message, e);
+            return Response.status(Status.BAD_REQUEST).entity(new ErrorType(message, e)).build();
+        } catch (CloudPoolException e) {
+            return cloudErrorResponse("failure to process POST /config", e);
+        } catch (Exception e) {
+            return internalErrorResponse("internal error on POST /config", e);
+        }
+    }
+
+    @Override
+    public Response start() {
+        try {
+            this.cloudPool.start();
+            return Response.ok().build();
+        } catch (NotConfiguredException e) {
+            LOG.error(e.getMessage());
+            return Response.status(Status.BAD_REQUEST).entity(new ErrorType(e.getMessage(), e)).build();
+        } catch (Exception e) {
+            String message = "failure to start cloud pool: " + e.getMessage();
+            LOG.error(message, e);
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(new ErrorType(message, e)).build();
+        }
+    }
+
+    @Override
+    public Response stop() {
+        try {
+            this.cloudPool.stop();
+            return Response.ok().build();
+        } catch (Exception e) {
+            String message = "failure to stop cloud pool: " + e.getMessage();
+            LOG.error(message, e);
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(new ErrorType(message, e)).build();
+        }
+    }
+
+    @Override
+    public Response getStatus() {
+        try {
+            CloudPoolStatus status = this.cloudPool.getStatus();
+            return Response.ok().entity(status).build();
+        } catch (Exception e) {
+            String message = "failure to get cloud pool execution status: " + e.getMessage();
+            LOG.error(message, e);
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(new ErrorType(message, e)).build();
+        }
+    }
+
+    /**
+     * Stores a configuration in the {@link #storageDir}, to allow it to be
+     * restored when the {@link CloudPool} is restarted.
+     *
+     * @param configuration
+     * @throws IOException
+     *             If the configuration could not be stored.
+     */
+    // TODO: public?
+    public void storeConfig(JsonObject configuration) throws IOException {
+        Files.write(JsonUtils.toPrettyString(configuration), getCloudPoolConfigPath().toFile(), Charsets.UTF_8);
+    }
+
+    /**
+     * Returns the file system path where the {@link CloudPoolRestApiImpl}
+     * stores received {@link CloudPool} configurations.
+     *
+     * @param storageDir
+     * @return
+     */
+    // TODO: public?
+    public java.nio.file.Path getCloudPoolConfigPath() {
+        return Paths.get(this.storageDir, this.configFileName);
+    }
+
+    @Override
     public Response getPool() {
         requireStartedCloudPool();
 
@@ -70,19 +238,7 @@ public class CloudPoolHandler {
         }
     }
 
-    /**
-     * Sets the desired number of machines in the machine pool. This method is
-     * asynchronous in that the method returns immediately without having
-     * carried out any required changes to the machine pool.
-     *
-     * @param request
-     *            The desired number of machine in the pool.
-     * @return A response message as per the
-     *         <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >
-     *         cloud pool REST API</a>.
-     */
-    @POST
-    @Path("/pool/size")
+    @Override
     public Response setDesiredSize(SetDesiredSizeRequest request) {
         requireStartedCloudPool();
 
@@ -99,16 +255,7 @@ public class CloudPoolHandler {
         }
     }
 
-    /**
-     * Returns the current size of the machine pool -- both in terms of the
-     * desired size and the actual size (as these may differ at any time).
-     *
-     * @return A response message as per the
-     *         <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >
-     *         cloud pool REST API</a>.
-     */
-    @GET
-    @Path("/pool/size")
+    @Override
     public Response getPoolSize() {
         requireStartedCloudPool();
 
@@ -122,21 +269,8 @@ public class CloudPoolHandler {
         }
     }
 
-    /**
-     * Terminates a particular machine pool member. The caller can control if a
-     * replacement machine is to be provisioned.
-     *
-     * @param machineId
-     *            The identifier of the machine to terminate.
-     * @param request
-     *            A {@link TerminateMachineRequest}.
-     * @return A response message as per the
-     *         <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >
-     *         cloud pool REST API</a>.
-     */
-    @POST
-    @Path("/pool/{machine}/terminate")
-    public Response terminateMachine(@PathParam("machine") String machineId, TerminateMachineRequest request) {
+    @Override
+    public Response terminateMachine(String machineId, TerminateMachineRequest request) {
         requireStartedCloudPool();
 
         try {
@@ -152,23 +286,8 @@ public class CloudPoolHandler {
         }
     }
 
-    /**
-     * Removes a member from the pool without terminating it. The machine keeps
-     * running but is no longer considered a pool member and, therefore, needs
-     * to be managed independently. The caller can control if a replacement
-     * machine is to be provisioned.
-     *
-     * @param machineId
-     *            The identifier of the machine to detach from the pool.
-     * @param request
-     *            A {@link DetachMachineRequest}.
-     * @return A response message as per the
-     *         <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >
-     *         cloud pool REST API</a>.
-     */
-    @POST
-    @Path("/pool/{machine}/detach")
-    public Response detachMachine(@PathParam("machine") String machineId, DetachMachineRequest request) {
+    @Override
+    public Response detachMachine(String machineId, DetachMachineRequest request) {
         requireStartedCloudPool();
 
         try {
@@ -184,20 +303,8 @@ public class CloudPoolHandler {
         }
     }
 
-    /**
-     * Attaches an already running machine instance to the pool, growing the
-     * pool with a new member. This operation implies that the desired size of
-     * the pool is incremented by one.
-     *
-     * @param machineId
-     *            The identifier of the machine to attach to the pool.
-     * @return A response message as per the
-     *         <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >
-     *         cloud pool REST API</a>.
-     */
-    @POST
-    @Path("/pool/{machine}/attach")
-    public Response attachMachine(@PathParam("machine") String machineId) {
+    @Override
+    public Response attachMachine(String machineId) {
         requireStartedCloudPool();
 
         try {
@@ -213,24 +320,8 @@ public class CloudPoolHandler {
         }
     }
 
-    /**
-     * Sets the service state of a given machine pool member. Setting the
-     * service state does not have any functional implications on the pool
-     * member, but should be seen as way to supply operational information about
-     * the service running on the machine to third-party services (such as load
-     * balancers).
-     *
-     * @param machineId
-     *            The machine whose service state is to be set.
-     * @param request
-     *            A {@link SetServiceStateRequest}.
-     * @return A response message as per the
-     *         <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/" >
-     *         cloud pool REST API</a>.
-     */
-    @POST
-    @Path("/pool/{machine}/serviceState")
-    public Response setServiceState(@PathParam("machine") String machineId, SetServiceStateRequest request) {
+    @Override
+    public Response setServiceState(String machineId, SetServiceStateRequest request) {
         requireStartedCloudPool();
 
         try {
@@ -246,9 +337,8 @@ public class CloudPoolHandler {
         }
     }
 
-    @POST
-    @Path("/pool/{machine}/membershipStatus")
-    public Response setMembershipStatus(@PathParam("machine") String machineId, SetMembershipStatusRequest request) {
+    @Override
+    public Response setMembershipStatus(String machineId, SetMembershipStatusRequest request) {
         requireStartedCloudPool();
 
         try {

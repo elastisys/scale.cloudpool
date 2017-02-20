@@ -20,14 +20,16 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
+import com.elastisys.scale.cloudpool.api.restapi.impl.CloudPoolRestApiImpl;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.file.FileUtils;
 import com.google.gson.JsonObject;
 
 /**
- * Tests for the {@link ConfigHandler} response handler.
+ * Verifies that the {@link CloudPoolRestApiImpl} correctly persists a config
+ * when set.
  */
-public class TestConfigHandler {
+public class TestCloudPoolConfigPersistence {
 
     private final CloudPool poolMock = mock(CloudPool.class);
 
@@ -39,12 +41,13 @@ public class TestConfigHandler {
     }
 
     /**
-     * Create a {@link ConfigHandler} with complete constructor argument list.
+     * Create a {@link CloudPoolRestApiImpl} with complete constructor argument
+     * list.
      */
     @Test
-    public void createWithExplicitArguments() {
-        ConfigHandler configHandler = new ConfigHandler(this.poolMock, storageDir, "testconfig.json");
-        assertThat(configHandler.getCloudPoolConfigPath(), is(Paths.get(storageDir, "testconfig.json")));
+    public void createWithCompleteArgs() {
+        CloudPoolRestApiImpl cloudPoolApi = new CloudPoolRestApiImpl(this.poolMock, storageDir, "testconfig.json");
+        assertThat(cloudPoolApi.getCloudPoolConfigPath(), is(Paths.get(storageDir, "testconfig.json")));
     }
 
     /**
@@ -52,10 +55,10 @@ public class TestConfigHandler {
      * name is explicitly given.
      */
     @Test
-    public void createWithDefaultConfigFileName() {
-        ConfigHandler configHandler = new ConfigHandler(this.poolMock, storageDir);
-        assertThat(configHandler.getCloudPoolConfigPath(),
-                is(Paths.get(storageDir, ConfigHandler.DEFAULT_CONFIG_FILE_NAME)));
+    public void createWithDefaults() {
+        CloudPoolRestApiImpl cloudPoolApi = new CloudPoolRestApiImpl(this.poolMock, storageDir);
+        assertThat(cloudPoolApi.getCloudPoolConfigPath(),
+                is(Paths.get(storageDir, CloudPoolRestApiImpl.DEFAULT_CONFIG_FILE_NAME)));
 
     }
 
@@ -66,11 +69,11 @@ public class TestConfigHandler {
     public void verifyThatStorageDirectoryGetsCreated() {
         // storage dir created
         assertFalse(new File(storageDir).exists());
-        new ConfigHandler(this.poolMock, storageDir);
+        new CloudPoolRestApiImpl(this.poolMock, storageDir);
         assertTrue(new File(storageDir).exists());
 
         // If storage directory already exists, that should work fine as well.
-        new ConfigHandler(this.poolMock, storageDir);
+        new CloudPoolRestApiImpl(this.poolMock, storageDir);
     }
 
     /**
@@ -82,7 +85,7 @@ public class TestConfigHandler {
         String privilegedAccessDir = "/root/cloudpool/storage";
         assertFalse(new File(privilegedAccessDir).exists());
         try {
-            new ConfigHandler(this.poolMock, privilegedAccessDir);
+            new CloudPoolRestApiImpl(this.poolMock, privilegedAccessDir);
             fail("unexpectedly managed to create directory under /root");
         } catch (IllegalArgumentException e) {
             // expected
@@ -91,8 +94,8 @@ public class TestConfigHandler {
     }
 
     /**
-     * Make sure {@link ConfigHandler#storeConfig(JsonObject)} correctly stores
-     * a configuration object under the storage directory.
+     * Make sure {@link CloudPoolRestApiImpl#storeConfig(JsonObject)} correctly
+     * stores a configuration object under the storage directory.
      */
     @Test
     public void storeConfig() throws IOException {
@@ -101,26 +104,26 @@ public class TestConfigHandler {
 
         String config = "{\"someKey\": \"someValue\"}";
         JsonObject jsonConfig = JsonUtils.parseJsonString(config).getAsJsonObject();
-        ConfigHandler configHandler = new ConfigHandler(this.poolMock, storageDir, "conf.json");
-        configHandler.storeConfig(jsonConfig);
+        CloudPoolRestApiImpl cloudPoolApi = new CloudPoolRestApiImpl(this.poolMock, storageDir, "conf.json");
+        cloudPoolApi.storeConfig(jsonConfig);
         assertTrue(destinationFile.exists());
         assertThat(JsonUtils.parseJsonFile(destinationFile).getAsJsonObject(), is(jsonConfig));
     }
 
     /**
-     * Make sure that the {@link ConfigHandler#setAndStoreConfig(JsonObject)}
+     * Make sure that the {@link CloudPoolRestApiImpl#setConfig(JsonObject)}
      * both sets the config on the {@link CloudPool} and stores the
      * configuration under the storage directory.
      */
     @Test
-    public void setAndStoreConfig() {
+    public void setConfig() {
         File destinationFile = new File(storageDir, "conf.json");
         assertFalse(destinationFile.exists());
 
         String config = "{\"someKey\": \"someValue\"}";
         JsonObject jsonConfig = JsonUtils.parseJsonString(config).getAsJsonObject();
-        ConfigHandler configHandler = new ConfigHandler(this.poolMock, storageDir, "conf.json");
-        configHandler.setAndStoreConfig(jsonConfig);
+        CloudPoolRestApiImpl cloudPoolApi = new CloudPoolRestApiImpl(this.poolMock, storageDir, "conf.json");
+        cloudPoolApi.setConfig(jsonConfig);
 
         // verify that config was set on cloud pool
         verify(this.poolMock).configure(jsonConfig);
@@ -143,8 +146,8 @@ public class TestConfigHandler {
         // cloud pool set up to fail on configure()
         doThrow(new RuntimeException("unexpected failure")).when(this.poolMock).configure(jsonConfig);
 
-        ConfigHandler configHandler = new ConfigHandler(this.poolMock, storageDir, "conf.json");
-        Response response = configHandler.setAndStoreConfig(jsonConfig);
+        CloudPoolRestApiImpl cloudPoolApi = new CloudPoolRestApiImpl(this.poolMock, storageDir, "conf.json");
+        Response response = cloudPoolApi.setConfig(jsonConfig);
         assertThat(response.getStatus(), is(INTERNAL_SERVER_ERROR.getStatusCode()));
 
         // verify that configure was called on cloud pool
@@ -152,5 +155,4 @@ public class TestConfigHandler {
         // verify that config was not saved
         assertFalse(destinationFile.exists());
     }
-
 }

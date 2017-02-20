@@ -20,7 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
-import com.elastisys.scale.cloudpool.api.restapi.ConfigHandler;
+import com.elastisys.scale.cloudpool.api.restapi.impl.CloudPoolRestApiImpl;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.host.HostUtils;
@@ -98,7 +98,7 @@ public class TestCloudPoolServerStartup {
      */
     @Test
     public void startServerWithSavedConfig() throws Exception {
-        File savedConfigFile = new File(storageDir, ConfigHandler.DEFAULT_CONFIG_FILE_NAME);
+        File savedConfigFile = new File(storageDir, CloudPoolRestApiImpl.DEFAULT_CONFIG_FILE_NAME);
         JsonObject config = JsonUtils.parseJsonString("{\"key1\": \"value1\"}").getAsJsonObject();
         saveConfig(JsonUtils.toString(config), savedConfigFile);
 
@@ -199,7 +199,7 @@ public class TestCloudPoolServerStartup {
      */
     @Test
     public void startServerWithoutSavedConfig() throws Exception {
-        assertFalse(new File(storageDir, ConfigHandler.DEFAULT_CONFIG_FILE_NAME).isFile());
+        assertFalse(new File(storageDir, CloudPoolRestApiImpl.DEFAULT_CONFIG_FILE_NAME).isFile());
         // no explicit config given and no config available from storage dir.
         CloudPoolOptions options = basicServerOptions();
         this.server = CloudPoolServer.createServer(this.cloudPool, options);
@@ -226,7 +226,7 @@ public class TestCloudPoolServerStartup {
      */
     @Test
     public void verifyThatSetConfigIsReloadedOnRestart() throws Exception {
-        assertFalse(new File(storageDir, ConfigHandler.DEFAULT_CONFIG_FILE_NAME).isFile());
+        assertFalse(new File(storageDir, CloudPoolRestApiImpl.DEFAULT_CONFIG_FILE_NAME).isFile());
         // no explicit config given and no config available from storage dir.
         CloudPoolOptions options = basicServerOptions();
         this.server = CloudPoolServer.createServer(this.cloudPool, options);

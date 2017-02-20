@@ -1,7 +1,6 @@
 package com.elastisys.scale.cloudpool.api.server;
 
 import org.kohsuke.args4j.Option;
-import org.kohsuke.args4j.spi.ExplicitBooleanOptionHandler;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.commons.cli.server.BaseServerCliOptions;
@@ -38,9 +37,6 @@ public class CloudPoolOptions extends BaseServerCliOptions {
             + "configuration is provided (--config) or if the cloud pool can "
             + "recover an old configration from the storage directory.")
     public boolean stopped = false; // default
-
-    @Option(name = "--exit-handler", handler = ExplicitBooleanOptionHandler.class, metaVar = "true|false", usage = "Publish an /exit handler that shuts down the server on 'GET /exit'.")
-    public boolean enableExitHandler = false;
 
     @Override
     public String getVersion() {

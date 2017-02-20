@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudpool.api;
 
-import com.elastisys.scale.cloudpool.api.restapi.CloudPoolHandler;
+import com.elastisys.scale.cloudpool.api.restapi.CloudPoolRestApi;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
@@ -26,7 +26,7 @@ import com.google.gson.JsonObject;
  * </ul>
  * <p/>
  * A {@link CloudPool} instance is intended to be made network-accessible by a
- * {@link CloudPoolHandler} REST endpoint, which exposes the {@link CloudPool}
+ * {@link CloudPoolRestApi} REST endpoint, which exposes the {@link CloudPool}
  * through the
  * <a href="http://cloudpoolrestapi.readthedocs.org/en/latest/">elastisys:scale
  * cloud pool REST API</a>).
@@ -34,7 +34,7 @@ import com.google.gson.JsonObject;
  * Implementors should take measures to ensure that implementations are
  * thread-safe, since they may be called by several concurrent threads.
  *
- * @see CloudPoolHandler
+ * @see CloudPoolRestApi
  */
 public interface CloudPool {
 

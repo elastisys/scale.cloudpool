@@ -1,13 +1,13 @@
 package com.elastisys.scale.cloudpool.api.restapi.types;
 
-import com.elastisys.scale.cloudpool.api.restapi.CloudPoolHandler;
+import com.elastisys.scale.cloudpool.api.restapi.CloudPoolRestApi;
 import com.google.common.base.Objects;
 
 /**
  * REST API request type that requests that a machine be detached from the
  * machine pool.
  *
- * @see CloudPoolHandler#detachMachine(String, DetachMachineRequest)
+ * @see CloudPoolRestApi#detachMachine(String, DetachMachineRequest)
  */
 public class DetachMachineRequest {
 

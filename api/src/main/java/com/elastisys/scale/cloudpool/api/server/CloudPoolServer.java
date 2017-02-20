@@ -11,13 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
-import com.elastisys.scale.cloudpool.api.restapi.CloudPoolHandler;
-import com.elastisys.scale.cloudpool.api.restapi.ConfigHandler;
-import com.elastisys.scale.cloudpool.api.restapi.StartStopHandler;
+import com.elastisys.scale.cloudpool.api.restapi.impl.CloudPoolRestApiImpl;
 import com.elastisys.scale.commons.cli.CommandLineParser;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.rest.filters.RequestLogFilter;
-import com.elastisys.scale.commons.rest.responsehandlers.ExitHandler;
 import com.elastisys.scale.commons.rest.server.JaxRsApplication;
 import com.elastisys.scale.commons.server.ServletDefinition;
 import com.elastisys.scale.commons.server.ServletServerBuilder;
@@ -112,22 +109,21 @@ public class CloudPoolServer {
     public static Server createServer(CloudPool cloudPool, CloudPoolOptions options) throws Exception {
 
         JaxRsApplication application = new JaxRsApplication();
-        // deploy pool handler
-        application.addHandler(new CloudPoolHandler(cloudPool));
 
-        ConfigHandler configHandler = new ConfigHandler(cloudPool, options.storageDir);
-        application.addHandler(configHandler);
+        CloudPoolRestApiImpl restApiHandler = new CloudPoolRestApiImpl(cloudPool, options.storageDir);
+        application.addHandler(restApiHandler);
+
         if (options.config != null) {
             // use explicitly specified configuration file
             JsonObject config = parseJsonConfig(options.config);
             cloudPool.configure(config);
-            configHandler.storeConfig(config);
+            restApiHandler.storeConfig(config);
             if (!options.stopped) {
                 cloudPool.start();
             }
         } else {
             // restore cloudpool config from storage directory (if available)
-            Optional<JsonObject> config = restoreConfig(configHandler.getCloudPoolConfigPath());
+            Optional<JsonObject> config = restoreConfig(restApiHandler.getCloudPoolConfigPath());
             if (config.isPresent()) {
                 cloudPool.configure(config.get());
                 if (!options.stopped) {
@@ -136,12 +132,6 @@ public class CloudPoolServer {
             }
         }
 
-        application.addHandler(new StartStopHandler(cloudPool));
-
-        if (options.enableExitHandler) {
-            // optionally deploy exit handler
-            application.addHandler(new ExitHandler());
-        }
         ResourceConfig appConfig = ResourceConfig.forApplication(application);
         appConfig.register(new RequestLogFilter());
 

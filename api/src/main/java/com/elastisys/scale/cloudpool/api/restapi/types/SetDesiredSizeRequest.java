@@ -1,13 +1,13 @@
 package com.elastisys.scale.cloudpool.api.restapi.types;
 
-import com.elastisys.scale.cloudpool.api.restapi.CloudPoolHandler;
+import com.elastisys.scale.cloudpool.api.restapi.CloudPoolRestApi;
 import com.google.common.base.Objects;
 
 /**
  * REST API request type that requests a certain desired size of the machine
  * pool.
  *
- * @see CloudPoolHandler#setDesiredSize(SetDesiredSizeRequest)
+ * @see CloudPoolRestApi#setDesiredSize(SetDesiredSizeRequest)
  */
 public class SetDesiredSizeRequest {
 

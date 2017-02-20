@@ -1,12 +1,12 @@
 package com.elastisys.scale.cloudpool.api.restapi.types;
 
-import com.elastisys.scale.cloudpool.api.restapi.CloudPoolHandler;
+import com.elastisys.scale.cloudpool.api.restapi.CloudPoolRestApi;
 import com.google.common.base.Objects;
 
 /**
  * REST API request type that requests that a machine be terminated.
  *
- * @see CloudPoolHandler#terminateMachine(String, TerminateMachineRequest)
+ * @see CloudPoolRestApi#terminateMachine(String, TerminateMachineRequest)
  */
 public class TerminateMachineRequest {
 

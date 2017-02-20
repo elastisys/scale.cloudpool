@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudpool.api.restapi.types;
 
-import com.elastisys.scale.cloudpool.api.restapi.CloudPoolHandler;
+import com.elastisys.scale.cloudpool.api.restapi.CloudPoolRestApi;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.google.common.base.Objects;
 
@@ -8,8 +8,7 @@ import com.google.common.base.Objects;
  * REST API request type that requests a certain membership status be set for a
  * machine in the pool.
  *
- * @see CloudPoolHandler#setMembershipStatus(String,
- *      com.elastisys.scale.cloudpool.api.restapi.SetMembershipStatusRequest)
+ * @see CloudPoolRestApi#setMembershipStatus(String, SetMembershipStatusRequest)
  */
 public class SetMembershipStatusRequest {
 
