@@ -29,16 +29,16 @@ public class RunPool {
      */
     private static final Path cloudPoolConfig = Paths.get(".", "myconfig2.json");
 
-    private static final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(10);
+    private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
 
     public static void main(String[] args) throws Exception {
-        CloudPool pool = new GoogleContainerEngineCloudPool(new StandardContainerClusterClient());
+        CloudPool pool = new GoogleContainerEngineCloudPool(new StandardContainerClusterClient(), executor);
 
         JsonObject config = JsonUtils.parseJsonFile(cloudPoolConfig.toFile()).getAsJsonObject();
         pool.configure(config);
 
         new CloudPoolCommandLineDriver(pool).start();
 
-        executorService.shutdownNow();
+        executor.shutdownNow();
     }
 }

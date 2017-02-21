@@ -27,17 +27,17 @@ public class RunPool extends AbstractClient {
 
     private static final Path configFile = Paths.get(".", "myconfig.json");
 
-    private static final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(10);
+    private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(10);
 
     public static void main(String[] args) throws Exception {
         StateStorage stateStorage = StateStorage.builder(new File("target/state")).build();
-        CloudPool pool = new BaseCloudPool(stateStorage, new Ec2PoolDriver(new AwsEc2Client()));
+        CloudPool pool = new BaseCloudPool(stateStorage, new Ec2PoolDriver(new AwsEc2Client()), executor);
 
         JsonObject config = JsonUtils.parseJsonFile(configFile.toFile()).getAsJsonObject();
         pool.configure(config);
 
         new CloudPoolCommandLineDriver(pool).start();
 
-        executorService.shutdownNow();
+        executor.shutdownNow();
     }
 }

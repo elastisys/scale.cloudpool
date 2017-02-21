@@ -23,7 +23,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -57,15 +58,12 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesExcept
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.net.alerter.AlertSeverity;
-import com.elastisys.scale.commons.util.concurrent.RestartableScheduledExecutorService;
-import com.elastisys.scale.commons.util.concurrent.StandardRestartableScheduledExecutorService;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.EventBus;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonElement;
 
 /**
@@ -136,16 +134,11 @@ import com.google.gson.JsonElement;
 public class SpotPoolDriver implements CloudPoolDriver {
     private static Logger LOG = LoggerFactory.getLogger(SpotPoolDriver.class);
 
-    /** Maximum number of threads to run in {@link #executor}. */
-    private static final int MAX_THREADS = 5;
-    /** Task grace time (in seconds) when the {@link #executor} is restarted. */
-    private static final int TASK_TERMINATION_GRACETIME = 30;
-
     /** The current driver configuration. */
     private DriverConfig config;
 
-    /** Task executor. */
-    private final RestartableScheduledExecutorService executor;
+    /** Used to run periodical clean-up tasks. */
+    private final ScheduledExecutorService executor;
 
     /** The client used to communicate with the EC2 API. */
     private final SpotClient client;
@@ -159,22 +152,27 @@ public class SpotPoolDriver implements CloudPoolDriver {
     /** Lock to prevent concurrent access to critical sections. */
     private final Object lock = new Object();
 
+    /** Task that periodically runs {@link DanglingInstanceCleaner}. */
+    private ScheduledFuture<?> danglingInstanceCleanupTask;
+
+    /** Task that periodically runs {@link WrongPricedRequestCanceller}. */
+    private ScheduledFuture<?> wrongPricedRequestCancellerTask;
+
     /**
      * Creates a new {@link SpotPoolDriver}.
      *
      * @param client
      *            The client used to communicate with the EC2 API.
+     * @param executor
+     *            Used to run periodical clean-up tasks.
      * @param eventBus
      *            Used to post {@link Alert}s that are to notify webhook/email
      *            recipients configured for the cloud pool (if any).
      */
-    public SpotPoolDriver(SpotClient client, EventBus eventBus) {
+    public SpotPoolDriver(SpotClient client, ScheduledExecutorService executor, EventBus eventBus) {
         this.client = client;
+        this.executor = executor;
         this.eventBus = eventBus;
-
-        ThreadFactory threadFactory = new ThreadFactoryBuilder().setDaemon(true).setNameFormat("spotdriver-tasks-%d")
-                .build();
-        this.executor = new StandardRestartableScheduledExecutorService(MAX_THREADS, threadFactory);
     }
 
     @Override
@@ -203,22 +201,22 @@ public class SpotPoolDriver implements CloudPoolDriver {
      * Starts periodical cleanup tasks.
      */
     private void start() {
-        if (this.executor.isStarted()) {
-            // stop any already running tasks
-            try {
-                this.executor.stop(TASK_TERMINATION_GRACETIME, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                LOG.warn("interrupted while waiting for executor to stop: {}", e.getMessage());
-            }
+        // cancel any prior running tasks
+        if (this.danglingInstanceCleanupTask != null) {
+            this.danglingInstanceCleanupTask.cancel(true);
         }
-        this.executor.start();
+        if (this.wrongPricedRequestCancellerTask != null) {
+            this.wrongPricedRequestCancellerTask.cancel(true);
+        }
+
         LOG.info("starting periodical execution of cleanup tasks");
         long period = cloudApiSettings().getDanglingInstanceCleanupPeriod();
-        this.executor.scheduleWithFixedDelay(new DanglingInstanceCleaner(), period, period, TimeUnit.SECONDS);
+        this.danglingInstanceCleanupTask = this.executor.scheduleWithFixedDelay(new DanglingInstanceCleaner(), period,
+                period, TimeUnit.SECONDS);
 
         long bidReplacePeriod = cloudApiSettings().getBidReplacementPeriod();
-        this.executor.scheduleWithFixedDelay(new WrongPricedRequestCanceller(), bidReplacePeriod, bidReplacePeriod,
-                TimeUnit.SECONDS);
+        this.wrongPricedRequestCancellerTask = this.executor.scheduleWithFixedDelay(new WrongPricedRequestCanceller(),
+                bidReplacePeriod, bidReplacePeriod, TimeUnit.SECONDS);
     }
 
     @Override

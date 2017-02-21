@@ -34,19 +34,19 @@ public class RunPool {
      */
     private static final Path cloudPoolConfig = Paths.get(".", "myconfig.json");
 
-    private static final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(10);
+    private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
 
     public static void main(String[] args) throws Exception {
         StateStorage stateStorage = StateStorage.builder(new File("target/state")).build();
         CloudPoolDriver openstackDriver = new OpenStackPoolDriver(new StandardOpenstackClient(),
                 CloudProviders.OPENSTACK);
-        CloudPool pool = new BaseCloudPool(stateStorage, openstackDriver);
+        CloudPool pool = new BaseCloudPool(stateStorage, openstackDriver, executor);
 
         JsonObject config = JsonUtils.parseJsonFile(cloudPoolConfig.toFile()).getAsJsonObject();
         pool.configure(config);
 
         new CloudPoolCommandLineDriver(pool).start();
 
-        executorService.shutdownNow();
+        executor.shutdownNow();
     }
 }

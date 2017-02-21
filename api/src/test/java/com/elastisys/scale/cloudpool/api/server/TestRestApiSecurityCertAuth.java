@@ -35,9 +35,6 @@ import com.google.gson.JsonObject;
 /**
  * Verifies the behavior of the {@link CloudPoolServer} when configured to
  * require client certificate authentication.
- *
- *
- *
  */
 public class TestRestApiSecurityCertAuth {
     private static final String SERVER_KEYSTORE = Resources.getResource("security/server/server_keystore.p12")

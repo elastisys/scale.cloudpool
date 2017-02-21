@@ -207,7 +207,6 @@ public class CloudPoolRestApiImpl implements CloudPoolRestApi {
      * @throws IOException
      *             If the configuration could not be stored.
      */
-    // TODO: public?
     public void storeConfig(JsonObject configuration) throws IOException {
         Files.write(JsonUtils.toPrettyString(configuration), getCloudPoolConfigPath().toFile(), Charsets.UTF_8);
     }
@@ -219,7 +218,6 @@ public class CloudPoolRestApiImpl implements CloudPoolRestApi {
      * @param storageDir
      * @return
      */
-    // TODO: public?
     public java.nio.file.Path getCloudPoolConfigPath() {
         return Paths.get(this.storageDir, this.configFileName);
     }

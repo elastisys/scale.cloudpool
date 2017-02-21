@@ -85,4 +85,12 @@ JAVA_OPTS="${JAVA_OPTS} -DLOG_DIR=${LOG_DIR}"
 # Start
 #
 
-${java} ${JVM_OPTS} ${JAVA_OPTS} -jar /opt/elastisys/openstackpool/openstackpool.jar ${RUNTIME_OPTS} ${SERVER_OPTS} ${AUTH_OPTS}
+#
+# If ${MULTIPOOL} is set to true, run as a multipool.
+# Otherwise run it as a singleton cloudpool.
+#
+if [ "${MULTIPOOL}" = true ]; then
+    ${java} ${JVM_OPTS} ${JAVA_OPTS} -cp /opt/elastisys/openstackpool/openstackpool.jar com.elastisys.scale.cloudpool.openstack.server.multipool.Main ${RUNTIME_OPTS} ${SERVER_OPTS} ${AUTH_OPTS}
+else
+    ${java} ${JVM_OPTS} ${JAVA_OPTS} -jar /opt/elastisys/openstackpool/openstackpool.jar ${RUNTIME_OPTS} ${SERVER_OPTS} ${AUTH_OPTS}
+fi

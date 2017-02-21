@@ -1,5 +1,8 @@
 package com.elastisys.scale.cloudpool.google.compute.server;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
 import com.elastisys.scale.cloudpool.api.server.CloudPoolOptions;
 import com.elastisys.scale.cloudpool.api.server.CloudPoolServer;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
@@ -15,7 +18,9 @@ public class Main {
     public static void main(String[] args) throws Exception {
         CloudPoolOptions options = CloudPoolServer.parseArgs(args);
         StateStorage stateStorage = StateStorage.builder(options.storageDir).build();
-        CloudPoolServer.main(
-                new BaseCloudPool(stateStorage, new GoogleComputeEnginePoolDriver(new StandardComputeClient())), args);
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
+
+        CloudPoolServer.main(new BaseCloudPool(stateStorage,
+                new GoogleComputeEnginePoolDriver(new StandardComputeClient()), executor), args);
     }
 }

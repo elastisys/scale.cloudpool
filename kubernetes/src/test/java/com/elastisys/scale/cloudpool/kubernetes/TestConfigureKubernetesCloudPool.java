@@ -10,6 +10,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.cert.Certificate;
 import java.security.interfaces.RSAPrivateKey;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.commons.codec.Charsets;
 import org.junit.Before;
@@ -32,13 +34,15 @@ public class TestConfigureKubernetesCloudPool {
     private static final Path CONFIG_DIR = Paths.get("src", "test", "resources", "config");
     private static final Path SSL_DIR = Paths.get("src", "test", "resources", "ssl");
 
+    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
+
     /** Object under test. */
     private KubernetesCloudPool cloudPool;
 
     @Before
     public void before() {
         KubernetesClient apiClientMock = mock(KubernetesClient.class);
-        this.cloudPool = new KubernetesCloudPool(apiClientMock);
+        this.cloudPool = new KubernetesCloudPool(apiClientMock, this.executor);
 
         assertThat(this.cloudPool.getStatus().isConfigured(), is(false));
         assertThat(this.cloudPool.getStatus().isStarted(), is(false));

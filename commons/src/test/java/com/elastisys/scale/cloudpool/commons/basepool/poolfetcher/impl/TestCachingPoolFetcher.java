@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.joda.time.DateTime;
@@ -67,6 +69,7 @@ public class TestCachingPoolFetcher {
      * {@link CachingPoolFetcher}.
      */
     private final PoolFetcher delegate = mock(PoolFetcher.class);
+    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
     /** {@link EventBus} used to carry {@link Alert}s. */
     private final EventBus mockEventbus = mock(EventBus.class);
 
@@ -102,7 +105,7 @@ public class TestCachingPoolFetcher {
     public void populateCacheOnFirstCall() {
         when(this.delegate.get(FORCE_REFRESH)).thenReturn(pool(machines("i-1", "i-2")));
 
-        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG,
+        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG, this.executor,
                 this.mockEventbus);
         fetcher.awaitFirstFetch();
 
@@ -124,7 +127,7 @@ public class TestCachingPoolFetcher {
     public void failIfNoFetchHasBeenSuccessful() {
         when(this.delegate.get(FORCE_REFRESH)).thenThrow(new CloudPoolException("api outage"));
 
-        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG,
+        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG, this.executor,
                 this.mockEventbus);
         fetcher.awaitFirstFetch();
 
@@ -157,7 +160,7 @@ public class TestCachingPoolFetcher {
             return pool(machines("i-1", "i-2"));
         });
 
-        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG,
+        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG, this.executor,
                 this.mockEventbus);
         // note: don't wait for first fetch to complete, attempt is ongoing ...
         try {
@@ -179,7 +182,7 @@ public class TestCachingPoolFetcher {
         when(this.delegate.get(FORCE_REFRESH)).thenReturn(initialPool);
 
         // populate cache
-        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG,
+        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG, this.executor,
                 this.mockEventbus);
         fetcher.awaitFirstFetch();
         MachinePool cachedPool = fetcher.get();
@@ -207,7 +210,7 @@ public class TestCachingPoolFetcher {
         when(this.delegate.get(FORCE_REFRESH)).thenReturn(initialPool);
 
         // populate cache
-        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG,
+        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG, this.executor,
                 this.mockEventbus);
         fetcher.awaitFirstFetch();
         MachinePool cachedPool = fetcher.get();
@@ -238,7 +241,7 @@ public class TestCachingPoolFetcher {
         when(this.delegate.get(FORCE_REFRESH)).thenReturn(initialPool);
 
         // populate cache
-        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG,
+        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG, this.executor,
                 this.mockEventbus);
         fetcher.awaitFirstFetch();
         MachinePool cachedPool = fetcher.get();
@@ -272,7 +275,7 @@ public class TestCachingPoolFetcher {
     public void alertOnFailuresToRefreshCache() {
         when(this.delegate.get(FORCE_REFRESH)).thenThrow(new CloudPoolDriverException("api outage"));
 
-        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG,
+        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG, this.executor,
                 this.mockEventbus);
         fetcher.awaitFirstFetch();
         try {
@@ -299,7 +302,7 @@ public class TestCachingPoolFetcher {
         File cacheFile = STATE_STORAGE.getCachedMachinePoolFile();
         assertThat(cacheFile.exists(), is(false));
 
-        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG,
+        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG, this.executor,
                 this.mockEventbus);
         fetcher.awaitFirstFetch();
 
@@ -331,7 +334,7 @@ public class TestCachingPoolFetcher {
 
         // create pool fetcher and verify that the cached pool is restored from
         // disk
-        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG,
+        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG, this.executor,
                 this.mockEventbus);
         assertThat(fetcher.get(), is(cachedPool));
         fetcher.close();
@@ -351,7 +354,7 @@ public class TestCachingPoolFetcher {
 
         // restored cache entry is not sufficiently up-to-date so a reachability
         // timeout error should be raised
-        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG,
+        CachingPoolFetcher fetcher = new CachingPoolFetcher(STATE_STORAGE, this.delegate, FETCH_CONFIG, this.executor,
                 this.mockEventbus);
         System.out.println(fetcher.get());
         fetcher.close();

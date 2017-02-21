@@ -11,7 +11,6 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
@@ -103,14 +102,14 @@ public class GoogleContainerEngineCloudPool implements CloudPool {
     /** Used to prevent concurrent {@link #updateCluster()} calls. */
     private final Object updateLock = new Object();
 
-    public GoogleContainerEngineCloudPool(ContainerClusterClient apiClient) {
-        this(apiClient, null, null);
+    public GoogleContainerEngineCloudPool(ContainerClusterClient apiClient, ScheduledExecutorService executor) {
+        this(apiClient, null, executor);
     }
 
     public GoogleContainerEngineCloudPool(ContainerClusterClient gkeClient, EventBus eventBus,
             ScheduledExecutorService executor) {
         this.client = gkeClient;
-        this.executor = Optional.fromNullable(executor).or(Executors.newScheduledThreadPool(THREAD_POOL_SIZE));
+        this.executor = executor;
         this.eventBus = Optional.fromNullable(eventBus).or(new AsyncEventBus(this.executor));
 
         this.alerter = new MultiplexingAlerter();

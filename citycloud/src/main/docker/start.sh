@@ -85,4 +85,8 @@ JAVA_OPTS="${JAVA_OPTS} -DLOG_DIR=${LOG_DIR}"
 # Start
 #
 
-${java} ${JVM_OPTS} ${JAVA_OPTS} -jar /opt/elastisys/citycloudpool/citycloudpool.jar ${RUNTIME_OPTS} ${SERVER_OPTS} ${AUTH_OPTS}
+if [ "${MULTIPOOL}" = true ]; then
+    ${java} ${JVM_OPTS} ${JAVA_OPTS} -cp /opt/elastisys/citycloudpool/citycloudpool.jar com.elastisys.scale.cloudpool.citycloud.server.multipool.Main ${RUNTIME_OPTS} ${SERVER_OPTS} ${AUTH_OPTS}
+else
+    ${java} ${JVM_OPTS} ${JAVA_OPTS} -jar /opt/elastisys/citycloudpool/citycloudpool.jar ${RUNTIME_OPTS} ${SERVER_OPTS} ${AUTH_OPTS}
+fi

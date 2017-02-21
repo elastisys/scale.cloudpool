@@ -7,6 +7,8 @@ import static org.junit.Assert.assertThat;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.core.Response;
@@ -42,6 +44,7 @@ public class TestAwsAsCloudPoolRestApi {
     private static final File STATE_STORAGE_DIR = new File("target/state");
     private static final StateStorage STATE_STORAGE = StateStorage.builder(STATE_STORAGE_DIR).build();
 
+    private static ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
     /** Web server to use throughout the tests. */
     private static Server server;
     /** Server port to use for HTTPS. */
@@ -56,7 +59,7 @@ public class TestAwsAsCloudPoolRestApi {
         List<Integer> freePorts = HostUtils.findFreePorts(1);
         httpsPort = freePorts.get(0);
 
-        cloudPool = new BaseCloudPool(STATE_STORAGE, new AwsAsPoolDriver(new AwsAutoScalingClient()));
+        cloudPool = new BaseCloudPool(STATE_STORAGE, new AwsAsPoolDriver(new AwsAutoScalingClient()), executor);
 
         CloudPoolOptions options = new CloudPoolOptions();
         options.httpsPort = httpsPort;

@@ -9,11 +9,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ScheduledFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +43,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.EventBus;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonElement;
 
 public class StandardPoolUpdater implements PoolUpdater {
@@ -84,11 +80,11 @@ public class StandardPoolUpdater implements PoolUpdater {
     /** Lock to protect the machine pool from concurrent modifications. */
     private final Object poolUpdateLock = new Object();
 
-    /** {@link ExecutorService} handling execution of cache updates. */
-    private final ScheduledExecutorService executorService;
+    /** Task that periodically updates the size of the {@link MachinePool}. */
+    private final ScheduledFuture<?> poolUpdateTask;
 
-    public StandardPoolUpdater(CloudPoolDriver cloudDriver, PoolFetcher poolFetcher, EventBus eventBus,
-            BaseCloudPoolConfig config) {
+    public StandardPoolUpdater(CloudPoolDriver cloudDriver, PoolFetcher poolFetcher, ScheduledExecutorService executor,
+            EventBus eventBus, BaseCloudPoolConfig config) {
         this.cloudDriver = cloudDriver;
         this.poolFetcher = poolFetcher;
         this.eventBus = eventBus;
@@ -98,11 +94,8 @@ public class StandardPoolUpdater implements PoolUpdater {
         this.desiredSize = null;
 
         // start periodical cache update task
-        ThreadFactory threadFactory = new ThreadFactoryBuilder().setDaemon(true).setNameFormat("pool-updater-%d")
-                .build();
-        this.executorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
         TimeInterval updateInterval = config.getPoolUpdate().getUpdateInterval();
-        this.executorService.scheduleWithFixedDelay(new PoolUpdateTask(this), updateInterval.getTime(),
+        this.poolUpdateTask = executor.scheduleWithFixedDelay(new PoolUpdateTask(this), updateInterval.getTime(),
                 updateInterval.getTime(), updateInterval.getUnit());
         LOG.debug("started {}", getClass().getSimpleName());
     }
@@ -110,13 +103,9 @@ public class StandardPoolUpdater implements PoolUpdater {
     @Override
     public void close() {
         // stop periodical execution of cache update task
-        try {
-            LOG.debug("shutting down {} ...", getClass().getSimpleName());
-            this.executorService.shutdown();
-            this.executorService.awaitTermination(3, TimeUnit.SECONDS);
-            this.executorService.shutdownNow();
-        } catch (InterruptedException e) {
-            LOG.warn("failed to shut down {}: {}", getClass().getSimpleName(), e.getMessage());
+        LOG.debug("shutting down {} ...", getClass().getSimpleName());
+        if (this.poolUpdateTask != null) {
+            this.poolUpdateTask.cancel(true);
         }
     }
 

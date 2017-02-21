@@ -41,6 +41,8 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.joda.time.DateTime;
@@ -88,6 +90,7 @@ public class TestBaseCloudPoolOperation {
             "target/state-" + TestBaseCloudPoolOperation.class.getSimpleName());
     private static final StateStorage STATE_STORAGE = StateStorage.builder(STATE_STORAGE_DIR).build();
 
+    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
     /** Mocked {@link EventBus} to capture events sent by the cloud pool. */
     private final EventBus eventBusMock = mock(EventBus.class);
     /** Mocked cloud driver for the simulated cloud. */
@@ -99,7 +102,7 @@ public class TestBaseCloudPoolOperation {
     public void onSetup() throws IOException {
         FileUtils.deleteRecursively(STATE_STORAGE_DIR);
         FrozenTime.setFixed(UtcTime.parse("2014-04-17T12:00:00.000Z"));
-        this.cloudPool = new BaseCloudPool(STATE_STORAGE, this.driverMock, this.eventBusMock);
+        this.cloudPool = new BaseCloudPool(STATE_STORAGE, this.driverMock, this.executor, this.eventBusMock);
         reset(this.eventBusMock);
     }
 
@@ -733,17 +736,23 @@ public class TestBaseCloudPoolOperation {
 
     @Test(expected = IllegalArgumentException.class)
     public void createWithNullStateStorage() {
-        new BaseCloudPool(null, this.driverMock);
+        new BaseCloudPool(null, this.driverMock, this.executor);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void createWithNullCloudDriver() {
-        new BaseCloudPool(STATE_STORAGE, null);
+        new BaseCloudPool(STATE_STORAGE, null, this.executor);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void createWithNullExecutor() {
+        ScheduledExecutorService nullExecutor = null;
+        new BaseCloudPool(STATE_STORAGE, this.driverMock, nullExecutor);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void createWithNullEventBus() {
-        new BaseCloudPool(STATE_STORAGE, this.driverMock, null);
+        new BaseCloudPool(STATE_STORAGE, this.driverMock, this.executor, null);
     }
 
     /**

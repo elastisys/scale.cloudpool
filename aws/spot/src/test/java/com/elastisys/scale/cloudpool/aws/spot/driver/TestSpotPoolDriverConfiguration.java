@@ -11,6 +11,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.util.Arrays;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +36,7 @@ public class TestSpotPoolDriverConfiguration {
 
     /** Mocked EC2 client. */
     private SpotClient mockClient = mock(SpotClient.class);
+    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
     /** Mocked event bus. */
     private EventBus mockEventBus = mock(EventBus.class);
     /** Object under test. */
@@ -44,7 +47,7 @@ public class TestSpotPoolDriverConfiguration {
      */
     @Before
     public void onSetup() {
-        this.driver = new SpotPoolDriver(this.mockClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.mockClient, this.executor, this.mockEventBus);
     }
 
     @Test

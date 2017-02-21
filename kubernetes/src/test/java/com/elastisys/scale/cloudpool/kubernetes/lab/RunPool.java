@@ -29,16 +29,17 @@ public class RunPool {
      */
     private static final Path cloudPoolConfig = Paths.get(".", "myconfig.json");
 
-    private static final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(10);
+    private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
 
     public static void main(String[] args) throws Exception {
-        CloudPool pool = new KubernetesCloudPool(new StandardKubernetesClient(new AuthenticatingHttpApiClient()));
+        CloudPool pool = new KubernetesCloudPool(new StandardKubernetesClient(new AuthenticatingHttpApiClient()),
+                executor);
 
         JsonObject config = JsonUtils.parseJsonFile(cloudPoolConfig.toFile()).getAsJsonObject();
         pool.configure(config);
 
         new CloudPoolCommandLineDriver(pool).start();
 
-        executorService.shutdownNow();
+        executor.shutdownNow();
     }
 }

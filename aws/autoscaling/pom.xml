@@ -27,6 +27,12 @@
       <artifactId>cloudpool.api</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <!-- MultiCloudPool API/server classes -->
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>cloudpool.multipool</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency>
       <groupId>com.elastisys.scale</groupId>
       <artifactId>cloudpool.aws.commons</artifactId>

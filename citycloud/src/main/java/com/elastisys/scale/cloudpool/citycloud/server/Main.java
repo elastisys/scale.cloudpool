@@ -1,5 +1,8 @@
 package com.elastisys.scale.cloudpool.citycloud.server;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.server.CloudPoolOptions;
 import com.elastisys.scale.cloudpool.api.server.CloudPoolServer;
@@ -21,6 +24,8 @@ public class Main {
         StateStorage stateStorage = StateStorage.builder(options.storageDir).build();
         CloudPoolDriver openstackDriver = new OpenStackPoolDriver(new StandardOpenstackClient(),
                 CloudProviders.CITYCLOUD);
-        CloudPoolServer.main(new BaseCloudPool(stateStorage, openstackDriver), args);
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
+
+        CloudPoolServer.main(new BaseCloudPool(stateStorage, openstackDriver, executor), args);
     }
 }

@@ -57,7 +57,7 @@ AUTH_OPTS=""
 # require clients to do basic authentication against a security realm
 if ${REQUIRE_BASIC_AUTH} ; then
     [ -z "${BASIC_AUTH_REALM_FILE}" ] && echo "error: no BASIC_AUTH_REALM_FILE specified" && exit 1
-    [ -z "${BASIC_AUTH_ROLE}" ] && echo "error: no BASIC_AUTH_ROLE specified" && exit 1   
+    [ -z "${BASIC_AUTH_ROLE}" ] && echo "error: no BASIC_AUTH_ROLE specified" && exit 1
     AUTH_OPTS="${AUTH_OPTS} --require-basicauth --require-role ${BASIC_AUTH_ROLE} --realm-file ${BASIC_AUTH_REALM_FILE}"
 fi
 # require clients to authenticate with a trusted certificate
@@ -85,4 +85,12 @@ JAVA_OPTS="${JAVA_OPTS} -DLOG_DIR=${LOG_DIR}"
 # Start
 #
 
-${java} ${JVM_OPTS} ${JAVA_OPTS} -jar /opt/elastisys/gkepool/gkepool.jar ${RUNTIME_OPTS} ${SERVER_OPTS} ${AUTH_OPTS}
+#
+# If ${MULTIPOOL} is set to true, run as a multipool.
+# Otherwise run it as a singleton cloudpool.
+#
+if [ "${MULTIPOOL}" = true ]; then
+    ${java} ${JVM_OPTS} ${JAVA_OPTS} -cp /opt/elastisys/gkepool/gkepool.jar com.elastisys.scale.cloudpool.google.container.server.multipool.Main ${RUNTIME_OPTS} ${SERVER_OPTS} ${AUTH_OPTS}
+else
+    ${java} ${JVM_OPTS} ${JAVA_OPTS} -jar /opt/elastisys/gkepool/gkepool.jar ${RUNTIME_OPTS} ${SERVER_OPTS} ${AUTH_OPTS}
+fi

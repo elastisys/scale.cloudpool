@@ -133,6 +133,12 @@ to control its behavior. At least one of `${HTTP_PORT}` and `${HTTPS_PORT}`
 _must_ be specified.
 
 
+Singleton/multipool mode:
+
+  - `MULTIPOOL`: Set to `true` to start the server in [multipool](../../multipool/README.md)-mode, 
+    in which it will publish a dynamic collection of *cloudpool instances*.
+    The default is to run the server as a singleton cloudpool.
+
 HTTP/HTTPS configuration:
 
   - `HTTP_PORT`: Enables a HTTP port on the server.  

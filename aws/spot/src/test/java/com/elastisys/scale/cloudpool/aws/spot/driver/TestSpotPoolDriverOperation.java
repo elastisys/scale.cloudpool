@@ -24,6 +24,8 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -97,6 +99,7 @@ public class TestSpotPoolDriverOperation {
     private FakeSpotClient fakeClient;
     /** Mock {@link SpotClient}. */
     private SpotClient mockClient = mock(SpotClient.class);
+    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
     /** Mocked event bus. */
     private EventBus mockEventBus = mock(EventBus.class);
     /** Object under test. */
@@ -121,7 +124,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test
     public void testListMachines() {
-        this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         // test against empty account with no spot requests
@@ -157,7 +160,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test
     public void testGroupMembershipFilteringInListMachines() {
-        this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         // sir-3 should be ignored, as it is a member of a different pool
@@ -176,7 +179,7 @@ public class TestSpotPoolDriverOperation {
     @SuppressWarnings("unchecked")
     @Test(expected = CloudPoolDriverException.class)
     public void testListMachinesOnError() {
-        this.driver = new SpotPoolDriver(this.mockClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.mockClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         doThrow(new AmazonServiceException("something went wrong")).when(this.mockClient)
@@ -191,7 +194,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test
     public void testStartMachines() {
-        this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         assertThat(this.driver.listMachines().size(), is(0));
@@ -207,7 +210,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test(expected = StartMachinesException.class)
     public void testStartMachinesOnError() {
-        this.driver = new SpotPoolDriver(this.mockClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.mockClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         doThrow(new AmazonServiceException("something went wrong")).when(this.mockClient).placeSpotRequests(
@@ -222,7 +225,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test
     public void testTerminateUnfulfilledRequest() {
-        this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         // terminating an unfulfilled spot request
@@ -256,7 +259,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test(expected = NotFoundException.class)
     public void testTerminateOnError() {
-        this.driver = new SpotPoolDriver(this.mockClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.mockClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         doThrow(new AmazonServiceException("something went wrong")).when(this.mockClient)
@@ -271,7 +274,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test(expected = NotFoundException.class)
     public void testTerminateRequestOnNonGroupMember() {
-        this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         // terminating an unfulfilled spot request
@@ -287,7 +290,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test
     public void testCancelWrongPricedRequests() {
-        this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
         double currentBidPrice = this.driver.cloudApiSettings().getBidPrice();
 
@@ -322,7 +325,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test
     public void cancellationOfWrongPricedRequestsWhenAllRequestsHaveCorrectPrice() {
-        this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
         double currentBidPrice = this.driver.cloudApiSettings().getBidPrice();
 
@@ -346,7 +349,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test
     public void testCleanupOfDanglingInstances() {
-        this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         // i-3 is a dangling instance, since its spot request (sir-3) is
@@ -370,7 +373,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test
     public void testDetach() {
-        this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         this.fakeClient.setupFakeAccount(
@@ -391,7 +394,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test(expected = NotFoundException.class)
     public void testDetachOnNonGroupMember() {
-        this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         this.fakeClient.setupFakeAccount(asList(spotRequest("sir-1", "open", null, POOL1_TAG)), emptyInstances);
@@ -406,7 +409,7 @@ public class TestSpotPoolDriverOperation {
     @SuppressWarnings("unchecked")
     @Test(expected = CloudPoolDriverException.class)
     public void testDetachOnError() {
-        this.driver = new SpotPoolDriver(this.mockClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.mockClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         List<SpotInstanceRequest> poolMembers = asList(spotRequest("sir-1", "open", null, POOL1_TAG));
@@ -424,7 +427,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test
     public void testAttach() {
-        this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         // sir-2 doesn't belong to the pool (no POOL1_TAG)
@@ -447,7 +450,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test(expected = NotFoundException.class)
     public void testAttachNonExistingSpotRequest() {
-        this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         this.fakeClient.setupFakeAccount(asList(spotRequest("sir-1", "open", null, POOL2_TAG)), emptyInstances);
@@ -462,7 +465,7 @@ public class TestSpotPoolDriverOperation {
     @SuppressWarnings("unchecked")
     @Test(expected = CloudPoolDriverException.class)
     public void testAttachOnError() {
-        this.driver = new SpotPoolDriver(this.mockClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.mockClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         List<SpotInstanceRequest> poolMembers = asList(spotRequest("sir-1", "open", null, POOL1_TAG));
@@ -480,7 +483,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test
     public void testSetServiceState() {
-        this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         this.fakeClient.setupFakeAccount(asList(spotRequest("sir-1", "active", "i-1", POOL1_TAG)),
@@ -499,7 +502,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test(expected = NotFoundException.class)
     public void testSetServiceStateOnNonPoolMember() {
-        this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         // sir-1 doesn't belong to the managed pool (POOL1)
@@ -515,7 +518,7 @@ public class TestSpotPoolDriverOperation {
     @SuppressWarnings("unchecked")
     @Test(expected = CloudPoolDriverException.class)
     public void testSetServiceStateOnError() {
-        this.driver = new SpotPoolDriver(this.mockClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.mockClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         List<SpotInstanceRequest> poolMembers = asList(spotRequest("sir-1", "open", null, POOL1_TAG));
@@ -533,7 +536,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test
     public void testSetMembershipStatus() {
-        this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         this.fakeClient.setupFakeAccount(asList(spotRequest("sir-1", "active", "i-1", POOL1_TAG)),
@@ -552,7 +555,7 @@ public class TestSpotPoolDriverOperation {
      */
     @Test(expected = NotFoundException.class)
     public void testSetMembershipStatusOnNonPoolMember() {
-        this.driver = new SpotPoolDriver(this.fakeClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         // sir-1 doesn't belong to the managed pool (POOL1)
@@ -568,7 +571,7 @@ public class TestSpotPoolDriverOperation {
     @SuppressWarnings("unchecked")
     @Test(expected = CloudPoolDriverException.class)
     public void testSetMembershipStatusOnError() {
-        this.driver = new SpotPoolDriver(this.mockClient, this.mockEventBus);
+        this.driver = new SpotPoolDriver(this.mockClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         List<SpotInstanceRequest> poolMembers = asList(spotRequest("sir-1", "open", null, POOL1_TAG));

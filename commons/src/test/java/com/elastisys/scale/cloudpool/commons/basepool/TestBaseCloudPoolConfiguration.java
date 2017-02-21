@@ -14,6 +14,8 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
@@ -51,6 +53,8 @@ public class TestBaseCloudPoolConfiguration {
             "target/state-" + TestBaseCloudPoolConfiguration.class.getSimpleName());
     private static final StateStorage STATE_STORAGE = StateStorage.builder(STATE_STORAGE_DIR).build();
 
+    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
+
     /** Mocked {@link EventBus} to capture events sent by the cloud pool. */
     private final EventBus eventBusMock = mock(EventBus.class);
 
@@ -61,7 +65,7 @@ public class TestBaseCloudPoolConfiguration {
     @Before
     public void onSetup() throws IOException {
         FileUtils.deleteRecursively(STATE_STORAGE_DIR);
-        this.cloudPool = new BaseCloudPool(STATE_STORAGE, this.driverMock, this.eventBusMock);
+        this.cloudPool = new BaseCloudPool(STATE_STORAGE, this.driverMock, this.executor, this.eventBusMock);
     }
 
     @Test

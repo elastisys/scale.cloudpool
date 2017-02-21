@@ -29,6 +29,12 @@
       <artifactId>cloudpool.openstack</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <!-- MultiCloudPool API/server classes -->
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>cloudpool.multipool</artifactId>
+      <version>${project.version}</version>
+    </dependency>    
 
     <!-- Test dependencies -->
     <dependency>

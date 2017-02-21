@@ -5,10 +5,8 @@ import static java.lang.String.format;
 
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.joda.time.DateTime;
@@ -30,13 +28,11 @@ import com.elastisys.scale.commons.net.alerter.AlertSeverity;
 import com.elastisys.scale.commons.net.alerter.Alerter;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.eventbus.EventBus;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * A {@link PoolFetcher} that caches {@link MachinePool}s retrieved by a wrapped
  * {@link PoolFetcher} for a configurable time (thereby also masking failures to
  * retrieve pool members from the backing cloud API).
- *
  */
 public class CachingPoolFetcher implements PoolFetcher {
     private static final Logger LOG = LoggerFactory.getLogger(CachingPoolFetcher.class);
@@ -60,8 +56,9 @@ public class CachingPoolFetcher implements PoolFetcher {
     private final EventBus eventBus;
 
     private final PersistentState<MachinePool> cachedMachinePool;
-    /** {@link ExecutorService} handling execution of cache updates. */
-    private final ScheduledExecutorService executorService;
+
+    /** Task that periodically refreshes the cached {@link MachinePool}. */
+    private final ScheduledFuture<?> refreshTask;
 
     /**
      * Creates a {@link CachingPoolFetcher} with a given {@link PoolFetcher}
@@ -75,7 +72,7 @@ public class CachingPoolFetcher implements PoolFetcher {
      *            Controls fetch behavior.
      */
     public CachingPoolFetcher(StateStorage stateStorage, PoolFetcher delegate, PoolFetchConfig fetchConfig,
-            EventBus eventBus) {
+            ScheduledExecutorService executor, EventBus eventBus) {
         this.delegate = delegate;
         this.fetchConfig = fetchConfig;
         this.eventBus = eventBus;
@@ -90,23 +87,15 @@ public class CachingPoolFetcher implements PoolFetcher {
         this.lastFetchError = null;
         this.firstFetchComplete = new CountDownLatch(1);
 
-        // start periodical cache update task
-        this.executorService = createExecutor();
-        startPeriodicalFetch(fetchConfig);
+        this.refreshTask = startPeriodicalFetch(executor, fetchConfig);
 
         LOG.debug("started {}", getClass().getSimpleName());
     }
 
-    private void startPeriodicalFetch(PoolFetchConfig fetchConfig) {
+    private ScheduledFuture<?> startPeriodicalFetch(ScheduledExecutorService executor, PoolFetchConfig fetchConfig) {
         TimeInterval refreshInterval = fetchConfig.getRefreshInterval();
-        this.executorService.scheduleWithFixedDelay(new PoolRefreshTask(this), 0L, refreshInterval.getTime(),
+        return executor.scheduleWithFixedDelay(new PoolRefreshTask(this), 0L, refreshInterval.getTime(),
                 refreshInterval.getUnit());
-    }
-
-    private ScheduledExecutorService createExecutor() {
-        ThreadFactory threadFactory = new ThreadFactoryBuilder().setDaemon(true).setNameFormat("pool-fetcher-%d")
-                .build();
-        return Executors.newSingleThreadScheduledExecutor(threadFactory);
     }
 
     /**
@@ -128,13 +117,9 @@ public class CachingPoolFetcher implements PoolFetcher {
     @Override
     public void close() {
         // stop periodical execution of cache update task
-        try {
-            LOG.debug("shutting down {} ...", getClass().getSimpleName());
-            this.executorService.shutdown();
-            this.executorService.awaitTermination(3, TimeUnit.SECONDS);
-            this.executorService.shutdownNow();
-        } catch (InterruptedException e) {
-            LOG.warn("failed to shut down {}: {}", getClass().getSimpleName(), e.getMessage());
+        LOG.debug("stopping {} ...", getClass().getSimpleName());
+        if (this.refreshTask != null) {
+            this.refreshTask.cancel(true);
         }
     }
 

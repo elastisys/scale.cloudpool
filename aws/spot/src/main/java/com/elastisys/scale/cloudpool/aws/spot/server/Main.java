@@ -1,5 +1,8 @@
 package com.elastisys.scale.cloudpool.aws.spot.server;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.server.CloudPoolOptions;
 import com.elastisys.scale.cloudpool.api.server.CloudPoolServer;
@@ -19,10 +22,13 @@ public class Main {
     public static void main(String[] args) throws Exception {
         CloudPoolOptions options = CloudPoolServer.parseArgs(args);
         StateStorage stateStorage = StateStorage.builder(options.storageDir).build();
+
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
         // event bus on which to send alerts are to be distributed to registered
         // email/webhook recipients
         EventBus eventBus = new EventBus();
-        CloudPoolDriver driver = new SpotPoolDriver(new AwsSpotClient(), eventBus);
-        CloudPoolServer.main(new BaseCloudPool(stateStorage, driver, eventBus), args);
+        CloudPoolDriver driver = new SpotPoolDriver(new AwsSpotClient(), executor, eventBus);
+
+        CloudPoolServer.main(new BaseCloudPool(stateStorage, driver, executor, eventBus), args);
     }
 }

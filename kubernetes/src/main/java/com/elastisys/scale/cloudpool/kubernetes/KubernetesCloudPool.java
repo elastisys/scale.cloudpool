@@ -2,8 +2,8 @@ package com.elastisys.scale.cloudpool.kubernetes;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,10 +22,7 @@ import com.elastisys.scale.cloudpool.kubernetes.client.KubernetesClient;
 import com.elastisys.scale.cloudpool.kubernetes.config.KubernetesCloudPoolConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
-import com.elastisys.scale.commons.util.concurrent.RestartableScheduledExecutorService;
-import com.elastisys.scale.commons.util.concurrent.StandardRestartableScheduledExecutorService;
 import com.google.common.base.Optional;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonObject;
 
 /**
@@ -59,19 +56,21 @@ public class KubernetesCloudPool implements CloudPool {
     private Integer desiredSize = null;
 
     /** Periodical executor of {@link PoolUpdateTask}. */
-    private final RestartableScheduledExecutorService executor;
+    private final ScheduledExecutorService executor;
+    /** Periodically executed pool update task. */
+    private ScheduledFuture<?> poolUpdateTask;
 
     /**
      * Creates a new {@link KubernetesCloudPool}.
      */
-    public KubernetesCloudPool(KubernetesClient apiClient) {
+    public KubernetesCloudPool(KubernetesClient apiClient, ScheduledExecutorService executor) {
+        checkArgument(apiClient != null, "apiClient cannot be null");
+        checkArgument(executor != null, "executor cannot be null");
         this.config = null;
         this.started = false;
         this.kubernetesClient = apiClient;
 
-        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("pool-updater-%d").setDaemon(true)
-                .build();
-        this.executor = new StandardRestartableScheduledExecutorService(MAX_THREADS, threadFactory);
+        this.executor = executor;
     }
 
     @Override
@@ -121,10 +120,10 @@ public class KubernetesCloudPool implements CloudPool {
 
         tryToDetermineDesiredSize();
 
-        this.executor.start();
         TimeInterval interval = this.config.getPoolUpdate().getUpdateInterval();
-        this.executor.scheduleWithFixedDelay(new PoolUpdateTask(this.kubernetesClient, this.desiredSize),
-                interval.getTime(), interval.getTime(), interval.getUnit());
+        this.poolUpdateTask = this.executor.scheduleWithFixedDelay(
+                new PoolUpdateTask(this.kubernetesClient, this.desiredSize), interval.getTime(), interval.getTime(),
+                interval.getUnit());
 
         this.started = true;
         LOG.info("{} started.", getClass().getSimpleName());
@@ -148,10 +147,8 @@ public class KubernetesCloudPool implements CloudPool {
     @Override
     public void stop() {
         LOG.info("stopping {} ...", getClass().getSimpleName());
-        try {
-            this.executor.stop(1, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            LOG.warn("interrupted while waiting for tasks to stop: {}", e.getMessage());
+        if (this.poolUpdateTask != null) {
+            this.poolUpdateTask.cancel(true);
         }
 
         this.started = false;

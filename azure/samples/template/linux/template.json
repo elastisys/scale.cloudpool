@@ -1,0 +1,567 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualMachines_testvm_1_adminPassword": {
+            "defaultValue": null,
+            "type": "SecureString"
+        },
+        "extensions_CustomScriptForLinux_protectedSettings": {
+            "defaultValue": null,
+            "type": "SecureObject"
+        },
+        "virtualMachines_testvm_1_name": {
+            "defaultValue": "testvm-1",
+            "type": "String"
+        },
+        "networkInterfaces_eth0_name": {
+            "defaultValue": "eth0",
+            "type": "String"
+        },
+        "networkInterfaces_testvm_0722_name": {
+            "defaultValue": "testvm-0722",
+            "type": "String"
+        },
+        "networkInterfaces_testvm_1853_name": {
+            "defaultValue": "testvm-1853",
+            "type": "String"
+        },
+        "networkInterfaces_testvmVMNic_name": {
+            "defaultValue": "testvmVMNic",
+            "type": "String"
+        },
+        "networkSecurityGroups_webserver_name": {
+            "defaultValue": "webserver",
+            "type": "String"
+        },
+        "publicIPAddresses_testvm_0_ip_name": {
+            "defaultValue": "testvm-0-ip",
+            "type": "String"
+        },
+        "publicIPAddresses_testvm_1_ip_name": {
+            "defaultValue": "testvm-1-ip",
+            "type": "String"
+        },
+        "publicIPAddresses_testvm0ip789_name": {
+            "defaultValue": "testvm0ip789",
+            "type": "String"
+        },
+        "publicIPAddresses_testvmPublicIP_name": {
+            "defaultValue": "testvmPublicIP",
+            "type": "String"
+        },
+        "virtualNetworks_testnet_name": {
+            "defaultValue": "testnet",
+            "type": "String"
+        },
+        "storageAccounts_cli038ba9d55748dce314804_name": {
+            "defaultValue": "cli038ba9d55748dce314804",
+            "type": "String"
+        },
+        "storageAccounts_cli96b74d557342d5df14804_name": {
+            "defaultValue": "cli96b74d557342d5df14804",
+            "type": "String"
+        },
+        "storageAccounts_clidbaa8eac41336dc514804_name": {
+            "defaultValue": "clidbaa8eac41336dc514804",
+            "type": "String"
+        },
+        "storageAccounts_clie85c7060f0ac5efe14804_name": {
+            "defaultValue": "clie85c7060f0ac5efe14804",
+            "type": "String"
+        },
+        "storageAccounts_clifc53c4ab1c49228f14804_name": {
+            "defaultValue": "clifc53c4ab1c49228f14804",
+            "type": "String"
+        },
+        "storageAccounts_testpooldiag646_name": {
+            "defaultValue": "testpooldiag646",
+            "type": "String"
+        },
+        "storageAccounts_vhd14804111043334_name": {
+            "defaultValue": "vhd14804111043334",
+            "type": "String"
+        },
+        "extensions_CustomScriptForLinux_name": {
+            "defaultValue": "testvm-1/CustomScriptForLinux",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Compute/virtualMachines/testvm-1'.",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('virtualMachines_testvm_1_name')]",
+            "apiVersion": "2015-06-15",
+            "location": "northeurope",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_DS1_v2"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "16.04.0-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[parameters('virtualMachines_testvm_1_name')]",
+                        "createOption": "FromImage",
+                        "vhd": {
+                            "uri": "[concat('https', '://', parameters('storageAccounts_vhd14804111043334_name'), '.blob.core.windows.net', concat('/vhds/', parameters('virtualMachines_testvm_1_name'),'201610309471.vhd'))]"
+                        },
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachines_testvm_1_name')]",
+                    "adminUsername": "ubuntu",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "/home/ubuntu/.ssh/authorized_keys",
+                                    "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDQpr6eUCI+oyXeWfZvYe1oY7yIfFp1eciP1fJMNHBKI1zfSOLdwBSWCVWHLrF2ip0lvoStdotz+mPe/V7bktRqt/Wra6TBJGM3ek5A994cZkg51O7Qj8S3IadG2fBkwipGZws7PC996O8UNY8en5mvanFe0O1RLg7vaORS09pE8iW2OgZoTMlRVFzOpTCpQcMmgh6CS1rZVI9MkuR1b6HGG0hk1vDPL1ZAsWHDTpY/jsuzZbNxKJRHyzIYrO1OWmSn0GGAbH5k56K9r/IIaYUuH4+YKb2tmR6z6qT2YSw1K1pHoyqTz/8p1KxtjaMmpX+tvqGiZPRM0P3+3kh6t+Ht"
+                                }
+                            ]
+                        }
+                    },
+                    "secrets": [],
+                    "adminPassword": "[parameters('virtualMachines_testvm_1_adminPassword')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_testvm_1853_name'))]"
+                        }
+                    ]
+                }
+            },
+            "resources": [],
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_vhd14804111043334_name'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_testvm_1853_name'))]"
+            ]
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Network/networkInterfaces/eth0'.",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[parameters('networkInterfaces_eth0_name')]",
+            "apiVersion": "2016-03-30",
+            "location": "northeurope",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1480427251173",
+                        "properties": {
+                            "privateIPAddress": "10.0.0.5",
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_testvm_0_ip_name'))]"
+                            },
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_testnet_name')), '/subnets/default')]"
+                            }
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableIPForwarding": false
+            },
+            "resources": [],
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_testvm_0_ip_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_testnet_name'))]"
+            ]
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Network/networkInterfaces/testvm-0722'.",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[parameters('networkInterfaces_testvm_0722_name')]",
+            "apiVersion": "2016-03-30",
+            "location": "northeurope",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "10.0.0.6",
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_testvm0ip789_name'))]"
+                            },
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_testnet_name')), '/subnets/default')]"
+                            }
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_webserver_name'))]"
+                }
+            },
+            "resources": [],
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_testvm0ip789_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_testnet_name'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_webserver_name'))]"
+            ]
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Network/networkInterfaces/testvm-1853'.",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[parameters('networkInterfaces_testvm_1853_name')]",
+            "apiVersion": "2016-03-30",
+            "location": "northeurope",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "10.0.0.7",
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_testvm_1_ip_name'))]"
+                            },
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_testnet_name')), '/subnets/default')]"
+                            }
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_webserver_name'))]"
+                }
+            },
+            "resources": [],
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_testvm_1_ip_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_testnet_name'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_webserver_name'))]"
+            ]
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Network/networkInterfaces/testvmVMNic'.",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[parameters('networkInterfaces_testvmVMNic_name')]",
+            "apiVersion": "2016-03-30",
+            "location": "northeurope",
+            "tags": {
+                "pool": "mypool"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfigtestvm",
+                        "properties": {
+                            "privateIPAddress": "10.0.0.4",
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_testvmPublicIP_name'))]"
+                            },
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_testnet_name')), '/subnets/default')]"
+                            }
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_webserver_name'))]"
+                }
+            },
+            "resources": [],
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_testvmPublicIP_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_testnet_name'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_webserver_name'))]"
+            ]
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Network/networkSecurityGroups/webserver'.",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[parameters('networkSecurityGroups_webserver_name')]",
+            "apiVersion": "2016-03-30",
+            "location": "northeurope",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "ssh",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "http",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "https",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            },
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Network/publicIPAddresses/testvm-0-ip'.",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[parameters('publicIPAddresses_testvm_0_ip_name')]",
+            "apiVersion": "2016-03-30",
+            "location": "northeurope",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "idleTimeoutInMinutes": 4,
+                "dnsSettings": {
+                    "domainNameLabel": "testdomain"
+                }
+            },
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Network/publicIPAddresses/testvm-1-ip'.",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[parameters('publicIPAddresses_testvm_1_ip_name')]",
+            "apiVersion": "2016-03-30",
+            "location": "northeurope",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "idleTimeoutInMinutes": 4
+            },
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Network/publicIPAddresses/testvm0ip789'.",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[parameters('publicIPAddresses_testvm0ip789_name')]",
+            "apiVersion": "2016-03-30",
+            "location": "northeurope",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "idleTimeoutInMinutes": 4
+            },
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Network/publicIPAddresses/testvmPublicIP'.",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[parameters('publicIPAddresses_testvmPublicIP_name')]",
+            "apiVersion": "2016-03-30",
+            "location": "northeurope",
+            "tags": {
+                "pool": "mypool"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "idleTimeoutInMinutes": 4
+            },
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Network/virtualNetworks/testnet'.",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('virtualNetworks_testnet_name')]",
+            "apiVersion": "2016-03-30",
+            "location": "northeurope",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "default",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24"
+                        }
+                    }
+                ]
+            },
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Storage/storageAccounts/cli038ba9d55748dce314804'.",
+            "type": "Microsoft.Storage/storageAccounts",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "Storage",
+            "name": "[parameters('storageAccounts_cli038ba9d55748dce314804_name')]",
+            "apiVersion": "2016-01-01",
+            "location": "northeurope",
+            "tags": {},
+            "properties": {},
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Storage/storageAccounts/cli96b74d557342d5df14804'.",
+            "type": "Microsoft.Storage/storageAccounts",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "Storage",
+            "name": "[parameters('storageAccounts_cli96b74d557342d5df14804_name')]",
+            "apiVersion": "2016-01-01",
+            "location": "northeurope",
+            "tags": {},
+            "properties": {},
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Storage/storageAccounts/clidbaa8eac41336dc514804'.",
+            "type": "Microsoft.Storage/storageAccounts",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "Storage",
+            "name": "[parameters('storageAccounts_clidbaa8eac41336dc514804_name')]",
+            "apiVersion": "2016-01-01",
+            "location": "northeurope",
+            "tags": {},
+            "properties": {},
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Storage/storageAccounts/clie85c7060f0ac5efe14804'.",
+            "type": "Microsoft.Storage/storageAccounts",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "Storage",
+            "name": "[parameters('storageAccounts_clie85c7060f0ac5efe14804_name')]",
+            "apiVersion": "2016-01-01",
+            "location": "northeurope",
+            "tags": {},
+            "properties": {},
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Storage/storageAccounts/clifc53c4ab1c49228f14804'.",
+            "type": "Microsoft.Storage/storageAccounts",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "Storage",
+            "name": "[parameters('storageAccounts_clifc53c4ab1c49228f14804_name')]",
+            "apiVersion": "2016-01-01",
+            "location": "northeurope",
+            "tags": {},
+            "properties": {},
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Storage/storageAccounts/testpooldiag646'.",
+            "type": "Microsoft.Storage/storageAccounts",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "Storage",
+            "name": "[parameters('storageAccounts_testpooldiag646_name')]",
+            "apiVersion": "2016-01-01",
+            "location": "northeurope",
+            "tags": {},
+            "properties": {},
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Storage/storageAccounts/vhd14804111043334'.",
+            "type": "Microsoft.Storage/storageAccounts",
+            "sku": {
+                "name": "Premium_LRS",
+                "tier": "Premium"
+            },
+            "kind": "Storage",
+            "name": "[parameters('storageAccounts_vhd14804111043334_name')]",
+            "apiVersion": "2016-01-01",
+            "location": "northeurope",
+            "tags": {
+                "pool": "mypool"
+            },
+            "properties": {},
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/5bf14e76-933e-417c-ae33-ae8028b32c95/resourceGroups/testpool/providers/Microsoft.Compute/virtualMachines/testvm-1/extensions/CustomScriptForLinux'.",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[parameters('extensions_CustomScriptForLinux_name')]",
+            "apiVersion": "2016-03-30",
+            "location": "northeurope",
+            "properties": {
+                "publisher": "Microsoft.OSTCExtensions",
+                "type": "CustomScriptForLinux",
+                "typeHandlerVersion": "1.4",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": []
+                },
+                "protectedSettings": "[parameters('extensions_CustomScriptForLinux_protectedSettings')]"
+            },
+            "resources": [],
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachines_testvm_1_name'))]"
+            ]
+        }
+    ]
+}

@@ -29,18 +29,15 @@ import com.google.common.io.Resources;
 
 /**
  * Verifies the behavior of the {@link CloudPoolServer} when configured to
- * require client certificate authentication.
- *
- *
- *
+ * require client basic authentication.
  */
 public class TestRestApiSecurityBasicAuth {
     private static final String SERVER_KEYSTORE = Resources.getResource("security/server/server_keystore.p12")
             .toString();
     private static final String SERVER_KEYSTORE_PASSWORD = "serverpass";
 
-    private static final String AUTHORIZED_CLIENT_USERNAME = "autoscaler";
-    private static final String AUTHORIZED_CLIENT_PASSWORD = "autoscalerpassword";
+    private static final String AUTHORIZED_CLIENT_USERNAME = "admin";
+    private static final String AUTHORIZED_CLIENT_PASSWORD = "adminpassword";
 
     private static final String UNAUTHORIZED_CLIENT_USERNAME = "unknownuser";
     private static final String UNAUTHORIZED_CLIENT_PASSWORD = "unknownpassword";
@@ -73,7 +70,7 @@ public class TestRestApiSecurityBasicAuth {
         options.sslKeyStore = SERVER_KEYSTORE;
         options.sslKeyStorePassword = SERVER_KEYSTORE_PASSWORD;
         options.requireBasicAuth = true;
-        options.requireRole = "AUTOSCALER";
+        options.requireRole = "ADMIN";
         options.realmFile = "src/test/resources/security/server/security-realm.properties";
         options.storageDir = storageDir;
 

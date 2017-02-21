@@ -22,6 +22,7 @@
 
   <modules>
     <module>api</module>
+    <module>multipool</module>
     <module>commons</module>
     <module>aws</module>
     <module>openstack</module>

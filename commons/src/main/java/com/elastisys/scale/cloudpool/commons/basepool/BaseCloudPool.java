@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.commons.basepool;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -200,6 +201,9 @@ public class BaseCloudPool implements CloudPool {
      */
     private final EventBus eventBus;
 
+    /** Used to perform any periodical tasks or background jobs. */
+    private final ScheduledExecutorService executor;
+
     /** The currently set configuration. */
     private BaseCloudPoolConfig config;
     /** <code>true</code> if pool has been started. */
@@ -224,9 +228,11 @@ public class BaseCloudPool implements CloudPool {
      *            Declares where the runtime state is stored.
      * @param cloudDriver
      *            A cloud-specific management driver for the cloud pool.
+     * @param executor
+     *            Used to perform any periodical tasks or background jobs.
      */
-    public BaseCloudPool(StateStorage stateStorage, CloudPoolDriver cloudDriver) {
-        this(stateStorage, cloudDriver, new EventBus());
+    public BaseCloudPool(StateStorage stateStorage, CloudPoolDriver cloudDriver, ScheduledExecutorService executor) {
+        this(stateStorage, cloudDriver, executor, new EventBus());
     }
 
     /**
@@ -238,17 +244,22 @@ public class BaseCloudPool implements CloudPool {
      *            Declares where the runtime state is stored.
      * @param cloudDriver
      *            A cloud-specific management driver for the cloud pool.
+     * @param executor
+     *            Used to perform any periodical tasks or background jobs.
      * @param eventBus
      *            The {@link EventBus} used to send {@link Alert}s and event
      *            messages between components of the cloud pool.
      */
-    public BaseCloudPool(StateStorage stateStorage, CloudPoolDriver cloudDriver, EventBus eventBus) {
+    public BaseCloudPool(StateStorage stateStorage, CloudPoolDriver cloudDriver, ScheduledExecutorService executor,
+            EventBus eventBus) {
         checkArgument(stateStorage != null, "no stateStorage given");
         checkArgument(cloudDriver != null, "no cloudDriver given");
+        checkArgument(executor != null, "no executor given");
         checkArgument(eventBus != null, "no eventBus given");
 
         this.stateStorage = stateStorage;
         this.cloudDriver = cloudDriver;
+        this.executor = executor;
         this.eventBus = eventBus;
 
         this.alerter = new MultiplexingAlerter();
@@ -318,9 +329,10 @@ public class BaseCloudPool implements CloudPool {
                 config().getPoolFetch().getRetries());
         // note: we wait for first attempt to get the pool to complete
         this.poolFetcher = new CachingPoolFetcher(this.stateStorage, retryingFetcher, config().getPoolFetch(),
-                this.eventBus);
+                this.executor, this.eventBus);
         this.poolFetcher.awaitFirstFetch();
-        this.poolUpdater = new StandardPoolUpdater(this.cloudDriver, this.poolFetcher, this.eventBus, config());
+        this.poolUpdater = new StandardPoolUpdater(this.cloudDriver, this.poolFetcher, this.executor, this.eventBus,
+                config());
 
         this.started = true;
         LOG.info(getClass().getSimpleName() + " started.");

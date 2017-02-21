@@ -32,19 +32,20 @@ public class RunPool {
      */
     private static final Path cloudPoolConfig = Paths.get(".", "myconfig.json");
 
-    private static final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(10);
+    private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
 
     public static void main(String[] args) throws Exception {
         StateStorage stateStorage = StateStorage.builder(new File("target/state")).build();
         EventBus eventBus = new EventBus();
-        CloudPool pool = new BaseCloudPool(stateStorage, new SpotPoolDriver(new AwsSpotClient(), eventBus), eventBus);
+        CloudPool pool = new BaseCloudPool(stateStorage, new SpotPoolDriver(new AwsSpotClient(), executor, eventBus),
+                executor, eventBus);
 
         JsonObject config = JsonUtils.parseJsonFile(cloudPoolConfig.toFile()).getAsJsonObject();
         pool.configure(JsonUtils.toJson(config).getAsJsonObject());
 
         new CloudPoolCommandLineDriver(pool).start();
 
-        executorService.shutdownNow();
+        executor.shutdownNow();
     }
 
 }

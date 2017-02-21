@@ -27,6 +27,9 @@ for different cloud providers:
 The [cloudpool.commons](commons) module contains a generic `CloudPool` implementation
 (`BaseCloudPool`) intended to be used as a basis for building cloud-specific cloud pools.
 
+A `MultiCloudPool`, which allows a dynamic collection of *cloudpool instances* 
+to be published on a single server, is also available under the 
+[multipool](multipool/README.md) module.
 
 Getting started
 ===============
@@ -62,7 +65,7 @@ The JSON document that is passed as configuration is outlined below.
 
 Configuration
 =============
-The configuration document follows the same schema for most cloud pool 
+The configuration document follows the same schema for *most* cloud pool 
 implementations in this project (see the individual cloud pool's `README.md`
 for details). In the general schema, outlined below, there are two parts 
 of the configuration document that carries cloud provider-specific settings:
@@ -239,12 +242,13 @@ In a little more detail, the configuration keys have the following meaning:
 Multi-cloud support
 ===================
 
-Elastisys has also developed a Splitter cloud pool implementation that can be 
-used to manage several clouds as one, complete with fail-over functionality 
-built in. It adheres to the exact same API as the provider-specific ones. 
-Users of the Splitter cloud pool defines a splitting policy, such as 
+Elastisys has also developed a Splitter cloud pool implementation, which lets
+a single logical cloudpool span across several clouds (and even cloud providers),
+complete with fail-over functionality built in. It adheres to the exact same 
+[cloudpool API](http://cloudpoolrestapi.readthedocs.io/en/latest/api.html).
+Users of the a cloud pool defines a splitting policy, such as 
 "90 percent AWS Spot instances, 10 percent AWS EC2 instances", and the 
-Splitter takes care of maintaining this ratio.
+Splitter cloudpool takes care of maintaining this ratio.
 
 Should a cloud fail to provide an instance fast enough (for whatever reason), 
 the Splitter cloud pool will obtain an equivalent instance from another of 

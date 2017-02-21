@@ -1,5 +1,8 @@
 package com.elastisys.scale.cloudpool.aws.ec2.server;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.server.CloudPoolOptions;
 import com.elastisys.scale.cloudpool.api.server.CloudPoolServer;
@@ -18,6 +21,8 @@ public class Main {
         CloudPoolOptions options = CloudPoolServer.parseArgs(args);
         StateStorage stateStorage = StateStorage.builder(options.storageDir).build();
         CloudPoolDriver driver = new Ec2PoolDriver(new AwsEc2Client());
-        CloudPoolServer.main(new BaseCloudPool(stateStorage, driver), args);
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
+
+        CloudPoolServer.main(new BaseCloudPool(stateStorage, driver, executor), args);
     }
 }

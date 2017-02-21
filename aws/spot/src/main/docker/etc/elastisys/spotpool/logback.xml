@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <configuration>
 
-  <!-- Log output directory is specified by system property/environment 
+  <!-- Log output directory is specified by system property/environment
        variable 'LOG_DIR'. If unspecified, a directory is used.-->
   <variable name="logdir" value="${LOG_DIR:-/tmp/elastisys/logs/spotpool}"/>
-  
+
   <!-- captures to file -->
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>${logdir}/spotpool.log</file>
@@ -14,19 +14,21 @@
       <!-- keep 7 days' worth of history -->
       <maxHistory>7</maxHistory>
     </rollingPolicy>
-    <encoder>      
-      <pattern>%date{ISO8601} [%thread] %-5level [%class{0}:%method:%line] - %msg%n</pattern>
+    <encoder>
+      <!-- when running as multipool, cloudpool MDC property is set mark which cloudpool instance produced a log entry -->
+      <pattern>%date{ISO8601} [%X{cloudpool:-server}/%thread] %-5level [%class{0}:%method:%line] %msg%n</pattern>
     </encoder>
   </appender>
 
   <!-- captures to stdout -->
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-    <target>System.out</target>    
+    <target>System.out</target>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
       <level>INFO</level>
     </filter>
     <encoder>
-      <pattern>%date{ISO8601} [%thread] %-5level [%class{0}:%method:%line] - %msg%n</pattern>
+      <!-- when running as multipool, cloudpool MDC property is set mark which cloudpool instance produced a log entry -->
+      <pattern>%date{ISO8601} [%X{cloudpool:-server}/%thread] %-5level [%class{0}:%method:%line] %msg%n</pattern>
     </encoder>
   </appender>
 
