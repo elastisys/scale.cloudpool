@@ -7,13 +7,14 @@
 #
 
 scriptdir=$(dirname ${0})
-rootdir=../${scriptdir}
+projectroot=$(realpath ${scriptdir}/..)
+echo "checking ${projectroot}"
 
 # stop any docker container from prior executions
-docker rm -f multicloudpool 2>&1 > /dev/null
+docker rm -f multicloudpool 2>&1> /dev/null
 
 # find all pom files that use the docker-maven-plugin
-for pom in $(find .. -name 'pom.xml' | xargs  grep -l docker-maven-plugin); do
+for pom in $(find ${projectroot} -name 'pom.xml' | xargs  grep -l docker-maven-plugin); do
     if grep -q docker.image ${pom}; then
 	# extract docker.image property
 	image_name=$(grep docker.image ${pom} | sed -r 's#<docker.image>(.*)</docker.image>#\1#' | sed 's/ //g')
