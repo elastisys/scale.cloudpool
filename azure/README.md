@@ -45,13 +45,17 @@ of that subscription.
 2. Within that account set up a subscription, which will be charged for the 
    VMs/assets created by the cloud pool.
 
-3. You also need to create a [service principal registration](https://github.com/Azure/azure-sdk-for-java/blob/master/AUTH.md) for the cloudpool. This will give the 
-   cloudpool credentials to operate on behalf of your account.
+3. You also need to create an Active Directory application and service 
+   principal for the cloudpool. This will give the cloudpool credentials
+   to operate on behalf of your account.
    
-    *Note: instructions use somewhat confusing and contradicting terms for
-    certain concepts.*
-
-    A suitable [role](https://docs.microsoft.com/en-us/azure/active-directory/role-based-access-built-in-roles) for the service principal is `Contributor`.
+    Instructions for this can be found [here](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal). A suitable [role](https://docs.microsoft.com/en-us/azure/active-directory/role-based-access-built-in-roles) 
+	for the service principal is `Contributor`.
+  
+    *Note: the referenced instructions use different terms for certain concepts.
+	 The `appId` in the instructions corresponds to the `clientId` in the cloudpool 
+	 configuration. Similarly `tenantId` corresponds to `domain` in the configuration
+	 and `authentication key` corresponds to `secret` in the configuration.*
 
     *Note: the registration process may not be instantaneous.
     Therefore, it may take a while before the service principal credentials
@@ -95,7 +99,7 @@ to the following:
             "auth": {
                 "clientId": "12345678-9abc-def0-1234-56789abcdef0",
                 "domain": "12345678-9abc-def0-1234-56789abcdef0",
-                "secret": "12345678-9abc-def0-1234-56789abcdef0",
+                "secret": "ABCDEFMNYT9yUPcD6nVx2NEf3ixxAxSIF3uvxS9FAIS=",
                 "environment": "AZURE"
             },
             "connectionTimeout": { "time": 10, "unit": "seconds" },
@@ -137,11 +141,11 @@ The configuration keys have the following meaning:
 
 - `cloudApiSettings`: API access credentials and settings.
     - `apiAccess`: Azure [service principal](https://github.com/Azure/azure-sdk-for-java/blob/master/AUTH.md) access credentials and settings:
-        - `subscriptionId`: The Azure account subscription that will be billed allocated resources. Format: `XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`.
+        - `subscriptionId`: The Azure account subscription that will be billed allocated resources. Format: UUID.
         - `auth`: Azure API authentication credentials.
-		  - `clientId`: The active directory client id for this application. May also be referred to as `appId`. Format: `XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`.
-		  - `domain`: The domain or tenant id containing this application. Format: `XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`.
-		  - `secret`: The authentication secret (password) for this application. Format: `XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`.
+		  - `clientId`: The active directory client id for this application. May also be referred to as `appId`. Format: UUID.
+		  - `domain`: The domain or tenant id containing this application. Format: UUID.
+		  - `secret`: The authentication key/secret (password) for this application. Format: base64-encoded string.
 		  - `environment` (*optional*): The particular Azure environment to authenticate against. One of: `AZURE`, `AZURE_CHINA`, `AZURE_US_GOVERNMENT`, `AZURE_GERMANY`. Default: `AZURE`, the world-wide public Azure cloud.
         - `connectionTimeout` (*optional*): The timeout until a connection is established. Default: `10 seconds`.
         - `socketTimeout` (*optional*): The socket timeout (`SO_TIMEOUT`), which is the timeout for waiting for data or, put differently, a maximum period inactivity between two consecutive data packets. Default: `10 seconds`.

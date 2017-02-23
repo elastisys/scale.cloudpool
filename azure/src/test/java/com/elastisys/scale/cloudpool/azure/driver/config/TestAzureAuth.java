@@ -19,7 +19,7 @@ public class TestAzureAuth {
     /** Sample domain/tenant. */
     private static final String DOMAIN = "87654321-abcd-efff-bcbc-90bbcfdeeecf";
     /** Sample secret/password. */
-    private static final String SECRET = "12121212-aaaa-bbbb-cccc-000000000000";
+    private static final String SECRET = "ABCDEFMNYT9yUPcD6nVx2NEf3ixxAxSIF3uvxS9FAIS=";
 
     /**
      * clientId, domain and secret are mandatory.

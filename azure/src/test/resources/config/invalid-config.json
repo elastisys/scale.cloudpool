@@ -7,7 +7,7 @@
             "auth": {
                 "clientId": "12345678-9abc-def0-1234-56789abcdef0",
                 "domain": "12345678-9abc-def0-1234-56789abcdef0",
-                "secret": "12345678-9abc-def0-1234-56789abcdef0",
+                "secret": "ABCDEFMNYT9yUPcD6nVx2NEf3ixxAxSIF3uvxS9FAIS=",
                 "environment": "AZURE"
             },
             "connectionTimeout": { "time": 10, "unit": "seconds" },

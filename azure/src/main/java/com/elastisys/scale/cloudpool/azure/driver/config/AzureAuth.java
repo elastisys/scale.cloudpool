@@ -26,18 +26,16 @@ public class AzureAuth {
 
     /**
      * The active directory client id for this application. May also be referred
-     * to as {@code appId}. Format:
-     * {@code XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}.
+     * to as {@code appId}. Format: UUID.
      */
     private final String clientId;
     /**
-     * The domain or tenant id containing this application. Format:
-     * {@code XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}.
+     * The domain or tenant id containing this application. Format: UUID.
      */
     private final String domain;
     /**
      * The authentication secret (password) for this application. Format:
-     * {@code XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}.
+     * base64-encoded string.
      */
     private final String secret;
 
@@ -55,14 +53,13 @@ public class AzureAuth {
      *
      * @param clientId
      *            The active directory client id for this application. May also
-     *            be referred to as {@code appId}. Format:
-     *            {@code XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}.
+     *            be referred to as {@code appId}. Format: UUID.
      * @param domain
      *            The domain or tenant id containing this application. Format:
-     *            {@code XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}.
+     *            UUID.
      * @param secret
      *            The authentication secret (password) for this application.
-     *            Format: {@code XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}.
+     *            Format: base64-encoded string.
      */
     public AzureAuth(String clientId, String domain, String secret) {
         this(clientId, domain, secret, null);
@@ -73,14 +70,13 @@ public class AzureAuth {
      *
      * @param clientId
      *            The active directory client id for this application. May also
-     *            be referred to as {@code appId}. Format:
-     *            {@code XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}.
+     *            be referred to as {@code appId}. Format: UUID.
      * @param domain
      *            The domain or tenant id containing this application. Format:
-     *            {@code XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}.
+     *            UUID.
      * @param secret
      *            The authentication secret (password) for this application.
-     *            Format: {@code XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}.
+     *            Format: base64-encoded string.
      * @param environment
      *            The particular Azure environment (see
      *            {@link AzureEnvironment}) to authenticate against. One of:
@@ -98,8 +94,7 @@ public class AzureAuth {
 
     /**
      * The active directory client id for this application. May also be referred
-     * to as {@code appId}. Format:
-     * {@code XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}.
+     * to as {@code appId}. Format: UUID.
      *
      * @return
      */
@@ -108,8 +103,7 @@ public class AzureAuth {
     }
 
     /**
-     * The domain or tenant id containing this application. Format:
-     * {@code XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}.
+     * The domain or tenant id containing this application. Format: UUID.
      *
      * @return
      */
@@ -119,7 +113,7 @@ public class AzureAuth {
 
     /**
      * The authentication secret (password) for this application. Format:
-     * {@code XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}.
+     * base64-encoded string.
      *
      * @return
      */
