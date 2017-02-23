@@ -25,12 +25,8 @@ import com.google.gson.JsonObject;
  */
 public class RunPool {
     static Logger LOG = LoggerFactory.getLogger(RunPool.class);
-    /**
-     * TODO: set up a cloud pool configuration file for the
-     * {@link OpenStackPoolDriver}. Relative paths are relative to base
-     * directory of enclosing Maven project.
-     */
-    private static final Path cloudPoolConfig = Paths.get(".", "myconfig.json");
+
+    private static final Path configFile = Paths.get(System.getenv("HOME"), ".elastisys", "spot", "config.json");
 
     private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
 
@@ -40,7 +36,7 @@ public class RunPool {
         CloudPool pool = new BaseCloudPool(stateStorage, new SpotPoolDriver(new AwsSpotClient(), executor, eventBus),
                 executor, eventBus);
 
-        JsonObject config = JsonUtils.parseJsonFile(cloudPoolConfig.toFile()).getAsJsonObject();
+        JsonObject config = JsonUtils.parseJsonFile(configFile.toFile()).getAsJsonObject();
         pool.configure(JsonUtils.toJson(config).getAsJsonObject());
 
         new CloudPoolCommandLineDriver(pool).start();

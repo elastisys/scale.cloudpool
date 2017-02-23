@@ -25,7 +25,7 @@ import com.google.gson.JsonObject;
 public class RunPool extends AbstractClient {
     static Logger logger = LoggerFactory.getLogger(RunPool.class);
 
-    private static final Path configFile = Paths.get(".", "myconfig.json");
+    private static final Path configFile = Paths.get(System.getenv("HOME"), ".elastisys", "ec2", "config.json");
 
     private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(10);
 

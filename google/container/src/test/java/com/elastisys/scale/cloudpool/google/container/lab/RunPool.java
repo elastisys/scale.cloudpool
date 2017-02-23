@@ -22,19 +22,14 @@ import com.google.gson.JsonObject;
 public class RunPool {
     static Logger LOG = LoggerFactory.getLogger(RunPool.class);
 
-    /**
-     * TODO: set to your config file for the
-     * {@link GoogleContainerEngineCloudPool}. Paths are relative to the base
-     * directory of enclosing Maven project.
-     */
-    private static final Path cloudPoolConfig = Paths.get(".", "myconfig2.json");
+    private static final Path configFile = Paths.get(System.getenv("HOME"), ".elastisys", "gke", "config.json");
 
     private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
 
     public static void main(String[] args) throws Exception {
         CloudPool pool = new GoogleContainerEngineCloudPool(new StandardContainerClusterClient(), executor);
 
-        JsonObject config = JsonUtils.parseJsonFile(cloudPoolConfig.toFile()).getAsJsonObject();
+        JsonObject config = JsonUtils.parseJsonFile(configFile.toFile()).getAsJsonObject();
         pool.configure(config);
 
         new CloudPoolCommandLineDriver(pool).start();

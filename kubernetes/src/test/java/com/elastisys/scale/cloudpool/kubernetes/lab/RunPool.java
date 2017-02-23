@@ -23,11 +23,7 @@ import com.google.gson.JsonObject;
 public class RunPool {
     static Logger LOG = LoggerFactory.getLogger(RunPool.class);
 
-    /**
-     * TODO: set to your config file for the {@link KubernetesCloudPool}. Paths
-     * are relative to the base directory of enclosing Maven project.
-     */
-    private static final Path cloudPoolConfig = Paths.get(".", "myconfig.json");
+    private static final Path configFile = Paths.get(System.getenv("HOME"), ".elastisys", "kubernetes", "config.json");
 
     private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
 
@@ -35,7 +31,7 @@ public class RunPool {
         CloudPool pool = new KubernetesCloudPool(new StandardKubernetesClient(new AuthenticatingHttpApiClient()),
                 executor);
 
-        JsonObject config = JsonUtils.parseJsonFile(cloudPoolConfig.toFile()).getAsJsonObject();
+        JsonObject config = JsonUtils.parseJsonFile(configFile.toFile()).getAsJsonObject();
         pool.configure(config);
 
         new CloudPoolCommandLineDriver(pool).start();

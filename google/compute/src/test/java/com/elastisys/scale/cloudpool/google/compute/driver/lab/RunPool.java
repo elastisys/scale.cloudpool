@@ -25,7 +25,7 @@ import com.google.gson.JsonObject;
  */
 public class RunPool {
 
-    private static final Path configFile = Paths.get(".", "myconfig.json");
+    private static final Path configFile = Paths.get(System.getenv("HOME"), ".elastisys", "gce", "config.json");
 
     private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
 

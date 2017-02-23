@@ -27,12 +27,7 @@ import com.google.gson.JsonObject;
 public class RunPool {
     static Logger LOG = LoggerFactory.getLogger(RunPool.class);
 
-    /**
-     * TODO: set up a cloud pool configuration file for the
-     * {@link OpenStackPoolDriver}. Relative paths are relative to base
-     * directory of enclosing Maven project.
-     */
-    private static final Path cloudPoolConfig = Paths.get(".", "myconfig.json");
+    private static final Path configFile = Paths.get(System.getenv("HOME"), ".elastisys", "citycloud", "config.json");
 
     private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(10);
 
@@ -42,7 +37,7 @@ public class RunPool {
                 CloudProviders.CITYCLOUD);
         CloudPool pool = new BaseCloudPool(stateStorage, cityCloudDriver, executor);
 
-        JsonObject config = JsonUtils.parseJsonFile(cloudPoolConfig.toFile()).getAsJsonObject();
+        JsonObject config = JsonUtils.parseJsonFile(configFile.toFile()).getAsJsonObject();
         pool.configure(config);
 
         new CloudPoolCommandLineDriver(pool).start();
