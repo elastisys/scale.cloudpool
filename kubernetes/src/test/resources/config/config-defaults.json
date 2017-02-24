@@ -1,8 +1,0 @@
-{
-    "podPool": {
-        "replicationController": "nginx"
-    },
-    "auth": {
-        "clientTokenPath": "src/test/resources/ssl/auth-token.base64"
-     }
-}  

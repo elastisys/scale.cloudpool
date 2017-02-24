@@ -14,6 +14,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Objects;
 
 import com.elastisys.scale.cloudpool.kubernetes.KubernetesCloudPool;
+import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.security.pem.PemUtils;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.common.base.Charsets;
@@ -82,17 +83,19 @@ public class AuthConfig {
 
     /**
      * The PEM-encoded server/CA certificate at the specified file system path
-     * will be used to authenticate the server. Optional. If left out, no
-     * validation of the server will be performed, similar to using {@code curl}
-     * with the {@code --insecure} flag.
+     * will be used to authenticate the server. Optional. If neither
+     * {@link #serverCertPath} nor {@link #serverCert} is given, no validation
+     * of the server will be performed, similar to using {@code curl} with the
+     * {@code --insecure} flag.
      */
     private final String serverCertPath;
 
     /**
      * The (base64-encoded) PEM-encoded server/CA certificate that will be used
-     * to authenticate the server. Optional. If left out, no validation of the
-     * server will be performed, similar to using {@code curl} with the
-     * {@code --insecure} flag.
+     * to authenticate the server. Optional. If neither {@link #serverCertPath}
+     * nor {@link #serverCert} is given, no validation of the server will be
+     * performed, similar to using {@code curl} with the {@code --insecure}
+     * flag.
      */
     private final String serverCert;
 
@@ -123,18 +126,19 @@ public class AuthConfig {
      *            {@link #clientCertPath}.
      * @param serverCertPath
      *            The PEM-encoded server/CA certificate at the specified file
-     *            system path will be used to authenticate the server. If left
-     *            out, no validation of the server will be performed, similar to
-     *            using {@code curl} with the {@code --insecure} flag.
+     *            system path will be used to authenticate the server. If
+     *            neither {@link #serverCertPath} nor {@link #serverCert} is
+     *            given, no validation of the server will be performed, similar
+     *            to using {@code curl} with the {@code --insecure} flag.
      * @param serverCert
      *            The (base64-encoded) PEM-encoded server/CA certificate that
-     *            will be used to authenticate the server. If left out, no
+     *            will be used to authenticate the server. If neither
+     *            {@link #serverCertPath} nor {@link #serverCert} is given, no
      *            validation of the server will be performed, similar to using
      *            {@code curl} with the {@code --insecure} flag.
      */
     public AuthConfig(String clientTokenPath, String clientToken, String clientCertPath, String clientCert,
-            String clientKeyPath, String clientKey, String serverCertPath, String serverCert,
-            Boolean verifyServerCert) {
+            String clientKeyPath, String clientKey, String serverCertPath, String serverCert) {
         this.clientTokenPath = clientTokenPath;
         this.clientToken = clientToken;
         this.clientCertPath = clientCertPath;
@@ -143,7 +147,6 @@ public class AuthConfig {
         this.clientKey = clientKey;
         this.serverCertPath = serverCertPath;
         this.serverCert = serverCert;
-        validate();
     }
 
     /**
@@ -272,10 +275,15 @@ public class AuthConfig {
         validateClientCert();
         validateClientKey();
         // client must perform some kind of authentication
-        checkArgument(hasClientToken() || (hasClientCert() && hasClientKey()),
+        checkArgument(hasClientToken() || hasClientCert() && hasClientKey(),
                 "auth: neither token- nor cert-based authentication specified");
 
         validateServerCert();
+    }
+
+    @Override
+    public String toString() {
+        return JsonUtils.toPrettyString(JsonUtils.toJson(this));
     }
 
     private void validateServerCert() throws IllegalArgumentException {
@@ -314,7 +322,7 @@ public class AuthConfig {
             try {
                 getClientCert();
             } catch (Exception e) {
-                throw new IllegalArgumentException(String.format("failed to parse client key: %s", e.getMessage()), e);
+                throw new IllegalArgumentException(String.format("failed to parse client cert: %s", e.getMessage()), e);
             }
         }
     }
@@ -367,5 +375,65 @@ public class AuthConfig {
      */
     public boolean hasServerCert() {
         return this.serverCert != null || this.serverCertPath != null;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private String clientTokenPath;
+        private String clientToken;
+        private String clientCertPath;
+        private String clientCert;
+        private String clientKeyPath;
+        private String clientKey;
+        private String serverCertPath;
+        private String serverCert;
+
+        public AuthConfig build() {
+            return new AuthConfig(this.clientTokenPath, this.clientToken, this.clientCertPath, this.clientCert,
+                    this.clientKeyPath, this.clientKey, this.serverCertPath, this.serverCert);
+        }
+
+        public Builder tokenPath(String path) {
+            this.clientTokenPath = path;
+            return this;
+        }
+
+        public Builder token(String tokenContent) {
+            this.clientToken = tokenContent;
+            return this;
+        }
+
+        public Builder certPath(String path) {
+            this.clientCertPath = path;
+            return this;
+        }
+
+        public Builder cert(String certContent) {
+            this.clientCert = certContent;
+            return this;
+        }
+
+        public Builder keyPath(String path) {
+            this.clientKeyPath = path;
+            return this;
+        }
+
+        public Builder key(String keyContent) {
+            this.clientKey = keyContent;
+            return this;
+        }
+
+        public Builder serverCertPath(String path) {
+            this.serverCertPath = path;
+            return this;
+        }
+
+        public Builder serverCert(String certContent) {
+            this.serverCert = certContent;
+            return this;
+        }
     }
 }

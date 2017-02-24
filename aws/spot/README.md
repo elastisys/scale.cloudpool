@@ -215,11 +215,10 @@ command-line tool, shows how to interact with the cloud pool over its
 
 The exact command-line arguments to pass to curl depends on the security
 settings that the server was launched with. For example, if client-certificate
-authentication is enforced (`--require-cert`), the `<authparams>` parameter 
-below can be replaced with:
+authentication is enforced (`--require-cert`), one needs to pass client 
+certificate credentials via `curl`: 
 
-    --key-type pem --key credentials/client_private.pem \
-    --cert-type pem --cert credentials/client_certificate.pem
+    --key-type pem --key key.pem --cert-type pem --cert cert.pem
 
 Here are some examples illustrating basic interactions with the cloud pool
 (these assume that the server was started on a HTTP port):

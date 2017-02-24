@@ -11,8 +11,7 @@ import org.slf4j.LoggerFactory;
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.commons.util.cli.CloudPoolCommandLineDriver;
 import com.elastisys.scale.cloudpool.kubernetes.KubernetesCloudPool;
-import com.elastisys.scale.cloudpool.kubernetes.client.impl.StandardKubernetesClient;
-import com.elastisys.scale.cloudpool.kubernetes.client.impl.http.impl.AuthenticatingHttpApiClient;
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.impl.StandardApiServerClient;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.gson.JsonObject;
 
@@ -28,8 +27,7 @@ public class RunPool {
     private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
 
     public static void main(String[] args) throws Exception {
-        CloudPool pool = new KubernetesCloudPool(new StandardKubernetesClient(new AuthenticatingHttpApiClient()),
-                executor);
+        CloudPool pool = new KubernetesCloudPool(new StandardApiServerClient(), executor);
 
         JsonObject config = JsonUtils.parseJsonFile(configFile.toFile()).getAsJsonObject();
         pool.configure(config);

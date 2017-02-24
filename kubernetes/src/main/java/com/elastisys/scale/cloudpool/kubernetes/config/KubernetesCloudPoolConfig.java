@@ -6,9 +6,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import com.elastisys.scale.cloudpool.commons.basepool.config.PoolUpdateConfig;
 import com.elastisys.scale.cloudpool.kubernetes.KubernetesCloudPool;
 import com.elastisys.scale.commons.json.types.TimeInterval;
+import com.elastisys.scale.commons.net.alerter.Alert;
+import com.elastisys.scale.commons.net.alerter.multiplexing.AlertersConfig;
+import com.elastisys.scale.commons.net.url.UrlUtils;
 
 /**
  * Carries configuration values for a {@link KubernetesCloudPool}. Declares
@@ -19,68 +21,70 @@ import com.elastisys.scale.commons.json.types.TimeInterval;
  *
  */
 public class KubernetesCloudPoolConfig {
-    /** Default apiserver. */
-    private static final ApiServerConfig DEFAULT_API_SERVER_CONFIG = new ApiServerConfig(ApiServerConfig.DEFAULT_HOST,
-            ApiServerConfig.DEFAULT_PORT);
     /** Default update interval. */
-    private static final PoolUpdateConfig DEFAULT_UPDATE_CONFIG = new PoolUpdateConfig(
-            new TimeInterval(10L, TimeUnit.SECONDS));
+    public static final TimeInterval DEFAULT_UPDATE_INTERVAL = new TimeInterval(10L, TimeUnit.SECONDS);
 
-    /** Configuration declaring how to reach the Kubernetes apiserver. */
-    private final ApiServerConfig apiServer;
     /**
-     * Configuration declaring the ReplicationController whose pod set is to be
-     * scaled.
+     * The base URL of the Kubernetes API server. For example,
+     * {@code https://some.host:443}. Required.
+     */
+    private final String apiServerUrl;
+    /** API authentication credentials. Required. */
+    private final AuthConfig auth;
+    /**
+     * Configuration declaring the API construct (ReplicationController,
+     * ReplicaSet, Deployment) whose pod set is to be scaled. Required.
      */
     private final PodPoolConfig podPool;
-    /** Client authentication configuration. */
-    private final AuthConfig auth;
 
     /**
-     * The time interval (in seconds) between periodical pool size updates.
+     * The time interval between periodical pool size updates. Optional. Default
+     * is {@link #DEFAULT_UPDATE_INTERVAL}.
      */
-    private final PoolUpdateConfig poolUpdate;
+    private final TimeInterval updateInterval;
+
+    /** {@link Alert} settings. Optional. */
+    private final AlertersConfig alerts;
 
     /**
      * Creates a {@link KubernetesCloudPoolConfig}.
      *
-     * @param apiServer
-     *            Configuration declaring how to reach the Kubernetes apiserver.
-     * @param podPool
-     *            Configuration declaring the ReplicationController whose pod
-     *            set is to be scaled.
+     * @param apiServerUrl
+     *            The base URL of the Kubernetes API server. For example,
+     *            {@code https://some.host:443}. Required.
      * @param auth
-     *            Client authentication configuration.
+     *            API authentication credentials. Required.
+     * @param podPool
+     *            Configuration declaring the API construct
+     *            (ReplicationController, ReplicaSet, Deployment) whose pod set
+     *            is to be scaled. Required.
+     * @param updateInterval
+     *            The time interval between periodical pool size updates.
+     *            Optional. Default is {@link #DEFAULT_UPDATE_INTERVAL}.
+     * @param alerts
+     *            {@link Alert} settings. Optional.
      */
-    public KubernetesCloudPoolConfig(ApiServerConfig apiServer, PodPoolConfig podPool, AuthConfig auth,
-            PoolUpdateConfig poolUpdate) {
-        this.apiServer = apiServer;
+    public KubernetesCloudPoolConfig(String apiServerUrl, AuthConfig auth, PodPoolConfig podPool,
+            TimeInterval updateInterval, AlertersConfig alerts) {
+        this.apiServerUrl = apiServerUrl;
         this.podPool = podPool;
         this.auth = auth;
-        this.poolUpdate = poolUpdate;
+        this.updateInterval = updateInterval;
+        this.alerts = alerts;
     }
 
     /**
-     * Configuration declaring how to reach the Kubernetes apiserver.
+     * The base URL of the Kubernetes API server. For example,
+     * {@code https://some.host:443}.
      *
      * @return
      */
-    public ApiServerConfig getApiServer() {
-        return Optional.ofNullable(this.apiServer).orElse(DEFAULT_API_SERVER_CONFIG);
+    public String getApiServerUrl() {
+        return this.apiServerUrl;
     }
 
     /**
-     * Configuration declaring the ReplicationController whose pod set is to be
-     * scaled.
-     *
-     * @return
-     */
-    public PodPoolConfig getPodPool() {
-        return this.podPool;
-    }
-
-    /**
-     * Client authentication configuration.
+     * API authentication credentials.
      *
      * @return
      */
@@ -89,38 +93,84 @@ public class KubernetesCloudPoolConfig {
     }
 
     /**
-     * The time interval (in seconds) between periodical pool size updates.
+     * Configuration declaring the API construct (ReplicationController,
+     * ReplicaSet, Deployment) whose pod set is to be scaled.
      *
      * @return
      */
-    public PoolUpdateConfig getPoolUpdate() {
-        return Optional.ofNullable(this.poolUpdate).orElse(DEFAULT_UPDATE_CONFIG);
+    public PodPoolConfig getPodPool() {
+        return this.podPool;
+    }
+
+    /**
+     * The time interval between periodical pool size updates.
+     *
+     * @return
+     */
+    public TimeInterval getUpdateInterval() {
+        return Optional.ofNullable(this.updateInterval).orElse(DEFAULT_UPDATE_INTERVAL);
+    }
+
+    /**
+     * Returns {@link Alert} settings. May be <code>null</code>.
+     *
+     * @return
+     */
+    public AlertersConfig getAlerts() {
+        return this.alerts;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.getApiServer(), this.podPool, this.auth, getPoolUpdate());
+        return Objects.hash(this.apiServerUrl, this.auth, this.podPool, this.updateInterval, this.alerts);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof KubernetesCloudPoolConfig) {
             KubernetesCloudPoolConfig that = (KubernetesCloudPoolConfig) obj;
-            return Objects.equals(this.getApiServer(), that.getApiServer())
-                    && Objects.equals(this.podPool, that.podPool) && Objects.equals(this.auth, that.auth)
-                    && Objects.equals(this.getPoolUpdate(), that.getPoolUpdate());
+            return Objects.equals(this.apiServerUrl, that.apiServerUrl) //
+                    && Objects.equals(this.auth, that.auth) //
+                    && Objects.equals(this.podPool, that.podPool) //
+                    && Objects.equals(this.updateInterval, that.updateInterval) //
+                    && Objects.equals(this.alerts, that.alerts);
         }
         return false;
     }
 
     public void validate() throws IllegalArgumentException {
-        checkArgument(this.getApiServer() != null, "config: no apiServer given");
-        checkArgument(this.podPool != null, "config: no podPool given");
+        checkArgument(this.apiServerUrl != null, "config: no apiServerUrl given");
         checkArgument(this.auth != null, "config: no auth given");
+        checkArgument(this.podPool != null, "config: no podPool given");
 
-        this.getApiServer().validate();
-        this.podPool.validate();
-        this.auth.validate();
-        this.getPoolUpdate().validate();
+        // verify that apiServerUrl is a URL
+        try {
+            UrlUtils.url(this.apiServerUrl);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(
+                    String.format("config: apiServerUrl: %s: %s", this.apiServerUrl, e.getMessage()), e);
+        }
+
+        try {
+            this.auth.validate();
+            this.podPool.validate();
+        } catch (Exception e) {
+            throw new IllegalArgumentException("config: " + e.getMessage(), e);
+        }
+
+        checkArgument(getUpdateInterval().getSeconds() > 0, "config: updateInterval must be a positive duration");
+        try {
+            getUpdateInterval().validate();
+        } catch (Exception e) {
+            throw new IllegalArgumentException("config: updateInterval: " + e.getMessage(), e);
+        }
+
+        if (this.alerts != null) {
+            try {
+                this.alerts.validate();
+            } catch (Exception e) {
+                throw new IllegalArgumentException("config: alerts: " + e.getMessage(), e);
+            }
+        }
     }
 }

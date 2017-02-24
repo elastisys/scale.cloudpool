@@ -8,13 +8,12 @@ import java.util.concurrent.ThreadFactory;
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.kubernetes.KubernetesCloudPool;
-import com.elastisys.scale.cloudpool.kubernetes.client.impl.StandardKubernetesClient;
-import com.elastisys.scale.cloudpool.kubernetes.client.impl.http.impl.AuthenticatingHttpApiClient;
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.impl.StandardApiServerClient;
 import com.elastisys.scale.cloudpool.multipool.impl.CloudPoolFactory;
 
 /**
- * A {@link CloudPoolFactory} that creates Kubernetes ReplicationController
- * {@link CloudPool} instances.
+ * A {@link CloudPoolFactory} that creates {@link KubernetesCloudPool}
+ * instances.
  */
 public class KubernetesCloudPoolFactory implements CloudPoolFactory {
 
@@ -25,7 +24,7 @@ public class KubernetesCloudPoolFactory implements CloudPoolFactory {
     public CloudPool create(ThreadFactory threadFactory, File stateDir) throws CloudPoolException {
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(THREADS_PER_CLOUDPOOL, threadFactory);
 
-        return new KubernetesCloudPool(new StandardKubernetesClient(new AuthenticatingHttpApiClient()), executor);
+        return new KubernetesCloudPool(new StandardApiServerClient(), executor);
     }
 
 }

@@ -1,101 +1,153 @@
 # Description
 
-The [elastisys](http://elastisys.com/) Kubernetes
-[cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest/)
-manages the size of a Kubernetes replication controller . 
-All replication controller pods are considered as pool members and
-the size (scale) of the replication controller is continously updated to 
-keep the pool's actual size in sync with the desired size that the cloud 
-pool has been instructed to maintain. The Kubernetes cloud pool performs
-all operations across the API exposed by the 
-[Kubernetes apiserver](http://kubernetes.io/docs/api/)
+The [elastisys](http://elastisys.com/) Kubernetes [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest/), from hereon referred to as `kubernetespool`, manages the size of a group of pod replicas, either via a [ReplicationController](https://kubernetes.io/docs/user-guide/replication-controller/), or via a [ReplicaSet](https://kubernetes.io/docs/user-guide/replicasets/), or via a [Deployment](https://kubernetes.io/docs/user-guide/deployments/).
 
-The cloud pool publishes a REST API that follows the general contract of an
-[elastisys](http://elastisys.com/) cloud pool (with a few exceptions, see below)
-through which a client (for example, an autoscaler) can manage the pool.
+After setting up a ReplicationController, or a ReplicaSet, or a Deployment in Kubernetes via one of its [access methods](https://kubernetes.io/docs/user-guide/accessing-the-cluster/) (such as [kubectl](https://kubernetes.io/docs/user-guide/kubectl-overview/), a `kubernetespool` can be told to manage the size of its pod replica group.
 
-For the complete API reference, the reader is referred to the 
-[cloud pool API documentation](http://cloudpoolrestapi.readthedocs.org/en/latest/).
+The number of pod replicas is continuously updated to keep the pool's actual size in sync with the desired size that the cloud pool has been instructed to maintain.
+
+The `kubernetespool` supports the [cloudpool REST API](http://cloudpoolrestapi.readthedocs.org/en/latest/) with a few exceptions (see below).
 
 
 ## Limitations
-The Kubernetes cloud pool does not implement the full 
-[cloud pool API](http://cloudpoolrestapi.readthedocs.org/en/latest/), but
-the following subset of operations: [set configuration](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html#set-configuration), [get configuration](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html#get-configuration) [start](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html#start), [stop](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html#stop), [get status](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html#get-status), [get machine pool](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html#get-machine-pool), [get size](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html#get-pool-size), [set desired size](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html#set-desired-size).
+The `kubernetespool` does not implement the full [cloud pool API](http://cloudpoolrestapi.readthedocs.org/en/latest/), but the following subset of operations: 
+
+- [set configuration](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html#set-configuration)
+- [get configuration](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html#get-configuration)
+- [start](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html#start)
+- [stop](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html#stop)
+- [get status](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html#get-status)
+- [get machine pool](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html#get-machine-pool)
+- [get size](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html#get-pool-size)
+- [set desired size](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html#set-desired-size)
 
 
 
 ## Configuration
-The `kubernetespool` accesses the Kubernetes apiserver to perform its work.
-When accessing the apiserver, the `kubernetespool` needs to authenticate.
-There are a couple of ways to authenticate the client -- (1) via a JSON Web
-Token or (2) via TLS certificate. Either approach can be used, but as
-explained in the [Kubernetes documentation](http://kubernetes.io/docs/user-guide/accessing-the-cluster/#accessing-the-api-from-a-pod) the preferred approach when running the `kubernetespool` inside a Kubernetes pod is to make use of
-approach (1), since a service account token will always be available on the
-pod's file system.
+The `kubernetespool` performs all operations against the 
+[Kubernetes API server](http://kubernetes.io/docs/api/).
+
+The `kubernetespool` expects a configuration document (either passed
+on start-up via the `--config` command-line option or set
+through the [set configuration](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html#set-configuration)
+API method. The configuration specifies which Kubernetes API server
+to connect to and how to authenticate against that server, as well
+as the pod replica API construct to manage (either a `ReplicationController`,
+or a `ReplicaSet`, or a `Deployment`).
+
+A configuration document may look as follows. For more details on the 
+available authentication options, refer to the [Authentication section](#authentication)
+below.
+
+```javascript
+{
+    "apiServerUrl": "https://kubernetes.host:443",
+
+    "auth": {
+		"clientCertPath": "/path/to/admin.pem",
+        "clientKeyPath": "/path/to/admin-key.pem",
+     },
+
+    "podPool": {
+        "namespace": "default",
+        "replicationController": "nginx-rc"
+     },
+     
+	 "updateInterval": { "time": 15, "unit": "seconds" }
+     },
+	 
+	 "alerts": {
+	    ...
+	 }
+}
+```
+
+The configuration keys carry the following semantics:
+
+  - `apiServerUrl`:  (**required**): The base URL of the Kubernetes API server.
+	  
+  - `auth` (**required**): API access credentials. Either certificate-based or
+    token-based authentication can be used. Credentials can either
+	be passed as file references or as base64-encoded values.  
+	Refer to the [Authentication section](#authentication) for details.
+	- Certificate-based client authentication (both cert and key must be specified):
+      - `clientCert`: A base64-encoded PEM-encoded certificate.
+      - `clientCertPath`: A path to a PEM-encoded certificate.
+      - `clientKey`: A base64-encoded PEM-encoded key.
+      - `clientKeyPath`: A path to a PEM-encoded key.
+    - Token-based client authentication:
+	  - `clientToken`: A base64-encoded JSON Web Token.
+	  - `clientTokenPath`: A path to a base64-encoded JSON Web Token.
+    - Server authentication (**optional**), if the API server's certificate
+	  is to be verified:
+	  - `serverCert`: A base64-encoded PEM-encoded server/CA certificate.
+	  - `serverCertPath`: A path to a PEM-encoded server/CA certificate.
+  - `podPool` (**required**): Declares the API construct (`ReplicationController`,
+    `ReplicaSet`, `Deployment`) whose pod set is to be managed. The configuration
+	must specify one and only one of the `replicationController`, `replicaSet`, 
+	`deployment` fields.
+    - `namespace` (**required**): The [namespace](http://kubernetes.io/docs/user-guide/namespaces/)
+	  that the managed API construct exists in.
+	- `replicationController`: The name of the `ReplicationController` to manage.
+	- `replicaSet`: The name of the `ReplicaSet` to manage.
+	- `deployment`: The name of the `Deployment` to manage.
+
+  - `updateInterval` (*optional*): The delay between attempts to synchronize 
+    the pool size with the desired size set with the `kubernetespool`.  
+    Default: `10 seconds`.
+
+  - `alerts` (*optional*): Configuration that describes how to send alerts 
+    via email or HTTP(S) webhooks. These settings are described in great 
+	detail in the [root-level README.md](../README.md#configuration)
+
+
+
+### Authentication
+To access the API server, the `kubernetespool` needs to be set up with 
+appropriate authentication credentials. There are a couple of ways to 
+authenticate the client -- (1) via a TLS certificate or (2) via a JSON 
+Web Token. 
+
+The first approach is the most common, especially when running the 
+`kubernetespool` outside the Kubernetes cluster. When running the
+`kubernetespool` as a pod inside the Kubernetes it is, however,
+[recommended](http://kubernetes.io/docs/user-guide/accessing-the-cluster/#accessing-the-api-from-a-pod) 
+to use approach (2), since a service account token will always be 
+available on the pod's file system. However, whether it's a good 
+idea to run the `kubernetespool` within the same Kubernetes cluster 
+it is instructed to manage is arguable.
 
 Tokens and certificates/keys can be passed either as file system paths
 (referring to the file system on which the `kubernetespool` is
 running) or be passed as (base 64-encoded) values. Configuration variables
 ending in `Path` are used to pass file system references.
 
-So, when running the `kubernetespool` from a pod inside the targeted
-Kubernetes cluster one would typically make use of configuration similar
-to the following (as explained in the [Kubernetes documentation](http://kubernetes.io/docs/user-guide/accessing-the-cluster/#accessing-the-api-from-a-pod),
-a pod can always reach the apiserver via the `kubernetes` DNS entry and 
-authentication credentials for the service user are available under 
-`/var/run/secrets`):
 
-```javascript
-{
-    "apiServer": {
-        "host": "kubernetes",
-        "port": 443
-    },
-    "podPool": {
-        "namespace": "default",
-        "replicationController": "nginx"
-    },
-    "auth": {
-        "clientTokenPath": "/var/run/secrets/kubernetes.io/serviceaccount/token",
-        "serverCertPath": "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-     },
-     "poolUpdate": {
-         "updateInterval": { "time": 5, "unit": "seconds" }
-     }
-}
-```
 
-This will manage the given ReplicationController using the given auth token to 
-authenticate against the specified Kubernetes apiserver.
+#### Running kubernetespool outside Kubernetes
 
 When running the `kubernetespool` _outside_ Kubernetes one could either use
-token-based or certificate-based authentication. Configuring the pool to use a
-certificate and key to authenticate can be done as follows:
+token-based or certificate-based authentication. Certificate-based authentication
+is probably the more natural option:
 
 ```javascript
 {
-    "apiServer": {
-        "host": "172.17.4.101",
-        "port": 443
-    },
-    "podPool": {
-        "namespace": "default",
-        "replicationController": "nginx"
-    },
+    "apiServerUrl": "https://some.host:443",
     "auth": {
         "clientCertPath": "/home/kube/ssl/admin.pem",
         "clientKeyPath": "/home/kube/ssl/admin-key.pem",
         "serverCertPath": "/home/kube/ssl/ca.pem"
-     },
-     "poolUpdate": {
-         "updateInterval": { "time": 5, "unit": "seconds" }
-     }
+    },
+    "podPool": {
+        "namespace": "default",
+        "replicationController": "nginx"
+    }
 }
 ```
 
 This will use the cert and key at the given file system locations where the
 `kubernetespool` is running.
+
 
 To pass the cert and key by value, one can send the PEM-encoded cert and
 key base64-encoded to the `kubernetespool`:
@@ -106,24 +158,48 @@ something like:
 
 ```javascript
 {
-    "apiServer": {
-        "host": "172.17.4.101",
-        "port": 443
+    "apiServerUrl": "https://some.host:443",
+
+    "auth": {
+        "clientCert": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM3ekNDQWRlZ0F3SUJBZ0lKQVBjQWZWbE0rdGk4TUEwR0NTcUdTSWIzRFFFQkN3VUFNQkl4RURBT0JnTlYKQkFNTUIydDFZbVV0WTJFd0hoY05NVFl3TXpJeU1UTXlNREE1V2hjTk1UY3dNekl5TVRNeU1EQTVXakFWTVJNdwpFUVlEVlFRRERBcHJkV0psTFdGa2JXbHVNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDCkFRRUFvV2xpZmY0dE5zb2hDWnVGajlrSDMySmFpVXpRbE02cFJiM0cwMW5KRWh1dnZPYld2d1R6UW9XNXN0Tm8KNE44K0pFMm96VFBqREN6cjRsN1hnZ0lhS3dOeFdwaGplVU04bW96NklRQjdMQTc4N2U1eXJOUkJvMTN6R0txZQp0bTNFWFAzK0NrODVvZWtTZTB4QkhKYjNrd1NudmVXL2s0eEJic0h0RXVtSmNQYk1URys5aHc5SzNGMGUyTDJwCmRWd0U5RzVZRCt5UE5nVjJGVE9OKzFjR3hNbW02bzF6Zk1Ec3lSL3QwN1JpT0xCOVVqYWxvdThDSVcxYnVBY2MKWGhadVYwaXdoaVdrSERxRnplSTBiaUVTNzdocEtSYWVjSVN3N1FsQlpjYjBjMjBQQk4zbUROS0RZYXRDZU1YaApuem1QU0oySGJ3Ny9DUm1sd0ViQXRpaWhhUUlEQVFBQm8wVXdRekFKQmdOVkhSTUVBakFBTUFzR0ExVWREd1FFCkF3SUY0REFwQmdOVkhSRUVJakFnZ2dwcmRXSmxjbTVsZEdWemdoSnJkV0psY201bGRHVnpMbVJsWm1GMWJIUXcKRFFZSktvWklodmNOQVFFTEJRQURnZ0VCQUlzWFZwVERxSS9qZEUzM2tvK1ZqY21Dd1gyNDNLR0s0V3ExNGd3dwpEYVFKNXZIZTl5TXk5bkpOSnBPMDRpSnhrczdiTlZvcEZVQjI3SFBuUjRsdExKNDJpV1FtdU8rcU5FUnd1azlMCk9IYUYxcGF6RW1UeGxmajNvZzNQRmppNHBESkc3NlVvRmdvTEw0VmJRRlMrSVRhNTR2VjRnaEVxMFVrUDk2ckUKOE1xaEZ1dXlUejlFcmdhcWVnSjJtc2xvR0N3WHAvdlBtR0tPRzdlRS9Yb2FUZzR6ckJiN1RQbEpXZ0ZUa1NzMwp6V2lsZFRlRzRrU3JGMFBHWDk5MUtxRklhNVNTN295UnJEN3VZc1plcTc5cVhWVW8vTEh6MStvNE9CWVlGNGl5Ck5MeEpaZ1pyUzIrQ1FEaFdQcElHMDMzNm9zaGJWcDhGOXpGYVBsbkxMUjFwLzNVPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==",
+        "clientKey": "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBb1dsaWZmNHROc29oQ1p1Rmo5a0gzMkphaVV6UWxNNnBSYjNHMDFuSkVodXZ2T2JXCnZ3VHpRb1c1c3RObzROOCtKRTJvelRQakRDenI0bDdYZ2dJYUt3TnhXcGhqZVVNOG1vejZJUUI3TEE3ODdlNXkKck5SQm8xM3pHS3FldG0zRVhQMytDazg1b2VrU2UweEJISmIza3dTbnZlVy9rNHhCYnNIdEV1bUpjUGJNVEcrOQpodzlLM0YwZTJMMnBkVndFOUc1WUQreVBOZ1YyRlRPTisxY0d4TW1tNm8xemZNRHN5Ui90MDdSaU9MQjlVamFsCm91OENJVzFidUFjY1hoWnVWMGl3aGlXa0hEcUZ6ZUkwYmlFUzc3aHBLUmFlY0lTdzdRbEJaY2IwYzIwUEJOM20KRE5LRFlhdENlTVhobnptUFNKMkhidzcvQ1JtbHdFYkF0aWloYVFJREFRQUJBb0lCQUhUandIUEZjakRQU0FXUgpIclFCVTNZdDM2cTJlZ2FKY29RUzNyMkhzOWp0TytMc3VHODB3b1ZXR2hpcWlMVHdkaXdNSVVZWllUOGIrT2JDCkVBY1NScWtIb1RzZVNFczBxZHF5WlNFcEhBbllBTXE5ZDBZNW9COFNsazB5b2lVeWNKVjNTbFZrOGpPU2VkUFkKY1A2blJUcXVrRnN3MmYrYi9uYWE4WGhVcnplaUc2QVVXdXlsKzhUOCtGSThYTlRLdXJ6ZUJDbWRLbGZYZDhsYQp3cGhRRjVkZHJVbGFqNndEVEtzSmxYWDFEbHFKckI2VWZXVTFlYTV6OVNDelU0MjBaczhYZjJ4UENrZXBwa1o5CkFxdWdEWDEvMXdsNHdFOTNXOUp4V09LMFlWQmRGZGZ0dU9HYWpGRmcxM3BwUlpKbDdKYnNVbUkzUlBZQ09HSXcKTUxLM050RUNnWUVBMWFzUThvUnBhSHhWa08rdGJUQ0xGNFlGSVRrQWg5LytUQU9XN0VMWjZNVTlPTnlWWFNaeApzSHVPakdDb0loay9zV3NxYkMxS0JUOEVIamdYSDYwWkI3czhHZnZtZDNmckh6SUNDNC9iSjFyRkFFeHAyVU51CncxdXdQazBTS0FNWk9QN0lOYU11UzlwemhoUTFmejQxM0VsQVZCTnlPUG1KanVKaHJFZ3B1RmNDZ1lFQXdXUHgKZm5tQmNLYzUvZnNUWS92dlBvODVYK0VUd0J1bnE3Ri9rYXhPS3czL1o3enVJcG1jWGNiRkk1SmMyMkxvcUtWWQphTi9rSUJqUkxLVXlaWmF3V1pTU1NBYVpFV0J1cDNHNFIrUW1FV1YwYVBaN0lycVB5eDlsOEpWKzBLOXNyZ1FxCnN5Z05waFdYaDIxNGl2Y2ZNVXlaK1N6VG1sYytNZnhWNkRSalhEOENnWUVBdG9vSDEzaGg2UjdYcHhQc0VLMTUKRnVhck9UL09nVVpPcFRnbjFyNGlGaWR6YjBHYjVWR3pyUGRSeUFISGdpSVo5UU85NFY4cnJxR3diZlN6Wko5bwpFOS9VcjhveGtYMEVoTWtmVUN0ZEtoajAxcFZ4bEdoMGx6ZWNzUXo4NXV3R3YxZURTYmVZRkx1VEdFZnBrRVJnCmxVcUxSNGk1ZTQxTUJLTEltUHVwa004Q2dZQjNISVNJUG5SQUcyOTNoQ1lNUmdhMEJHajFLZDhOU3JzNTM2aFAKNDgxOWJUQ3JCMDJ3MStYY1NHbnhuOXM3Y0s4VitFajh4ekZ0cDN0bVFSVktSc2ExVmZISEZQRkFKNkhmMWdZSAptWGpzN0EwSC9SQVljc25QOUxYSHVYd1RNb2tBb1NaZmxFTGIwWjZ6MWZRUnUyVmw2dVZHK0pvWURMWU0rWHM3Cit0QmI1d0tCZ0FGZWhIcG1WMG4xK3cwc2sxRDFzREZ1U3Z2WmlBMGlIVzFoMlVURVgyTE54RDcrQ0xzZFBvdzMKTnQ1RkM3RURzVVNiblpNblRzMlpMZndlSEg5a0k4VFFvL2NFcEE2TVcxaEc2MmJrYlA4Z0lDaWQrUE56TEZqdQpQckRZMHZITW9ERGR0WkFzKzNrbHh2UTZtK1JkWEhySHMzamQyTmhlSFpzVUR3SnFTRnIzCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg=="
     },
+	 
     "podPool": {
         "namespace": "default",
         "replicationController": "nginx"
     },
-    "auth": {
-        "clientCert": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM3ekNDQWRlZ0F3SUJBZ0lKQVBjQWZWbE0rdGk4TUEwR0NTcUdTSWIzRFFFQkN3VUFNQkl4RURBT0JnTlYKQkFNTUIydDFZbVV0WTJFd0hoY05NVFl3TXpJeU1UTXlNREE1V2hjTk1UY3dNekl5TVRNeU1EQTVXakFWTVJNdwpFUVlEVlFRRERBcHJkV0psTFdGa2JXbHVNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDCkFRRUFvV2xpZmY0dE5zb2hDWnVGajlrSDMySmFpVXpRbE02cFJiM0cwMW5KRWh1dnZPYld2d1R6UW9XNXN0Tm8KNE44K0pFMm96VFBqREN6cjRsN1hnZ0lhS3dOeFdwaGplVU04bW96NklRQjdMQTc4N2U1eXJOUkJvMTN6R0txZQp0bTNFWFAzK0NrODVvZWtTZTB4QkhKYjNrd1NudmVXL2s0eEJic0h0RXVtSmNQYk1URys5aHc5SzNGMGUyTDJwCmRWd0U5RzVZRCt5UE5nVjJGVE9OKzFjR3hNbW02bzF6Zk1Ec3lSL3QwN1JpT0xCOVVqYWxvdThDSVcxYnVBY2MKWGhadVYwaXdoaVdrSERxRnplSTBiaUVTNzdocEtSYWVjSVN3N1FsQlpjYjBjMjBQQk4zbUROS0RZYXRDZU1YaApuem1QU0oySGJ3Ny9DUm1sd0ViQXRpaWhhUUlEQVFBQm8wVXdRekFKQmdOVkhSTUVBakFBTUFzR0ExVWREd1FFCkF3SUY0REFwQmdOVkhSRUVJakFnZ2dwcmRXSmxjbTVsZEdWemdoSnJkV0psY201bGRHVnpMbVJsWm1GMWJIUXcKRFFZSktvWklodmNOQVFFTEJRQURnZ0VCQUlzWFZwVERxSS9qZEUzM2tvK1ZqY21Dd1gyNDNLR0s0V3ExNGd3dwpEYVFKNXZIZTl5TXk5bkpOSnBPMDRpSnhrczdiTlZvcEZVQjI3SFBuUjRsdExKNDJpV1FtdU8rcU5FUnd1azlMCk9IYUYxcGF6RW1UeGxmajNvZzNQRmppNHBESkc3NlVvRmdvTEw0VmJRRlMrSVRhNTR2VjRnaEVxMFVrUDk2ckUKOE1xaEZ1dXlUejlFcmdhcWVnSjJtc2xvR0N3WHAvdlBtR0tPRzdlRS9Yb2FUZzR6ckJiN1RQbEpXZ0ZUa1NzMwp6V2lsZFRlRzRrU3JGMFBHWDk5MUtxRklhNVNTN295UnJEN3VZc1plcTc5cVhWVW8vTEh6MStvNE9CWVlGNGl5Ck5MeEpaZ1pyUzIrQ1FEaFdQcElHMDMzNm9zaGJWcDhGOXpGYVBsbkxMUjFwLzNVPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==",
-        "clientKey": "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBb1dsaWZmNHROc29oQ1p1Rmo5a0gzMkphaVV6UWxNNnBSYjNHMDFuSkVodXZ2T2JXCnZ3VHpRb1c1c3RObzROOCtKRTJvelRQakRDenI0bDdYZ2dJYUt3TnhXcGhqZVVNOG1vejZJUUI3TEE3ODdlNXkKck5SQm8xM3pHS3FldG0zRVhQMytDazg1b2VrU2UweEJISmIza3dTbnZlVy9rNHhCYnNIdEV1bUpjUGJNVEcrOQpodzlLM0YwZTJMMnBkVndFOUc1WUQreVBOZ1YyRlRPTisxY0d4TW1tNm8xemZNRHN5Ui90MDdSaU9MQjlVamFsCm91OENJVzFidUFjY1hoWnVWMGl3aGlXa0hEcUZ6ZUkwYmlFUzc3aHBLUmFlY0lTdzdRbEJaY2IwYzIwUEJOM20KRE5LRFlhdENlTVhobnptUFNKMkhidzcvQ1JtbHdFYkF0aWloYVFJREFRQUJBb0lCQUhUandIUEZjakRQU0FXUgpIclFCVTNZdDM2cTJlZ2FKY29RUzNyMkhzOWp0TytMc3VHODB3b1ZXR2hpcWlMVHdkaXdNSVVZWllUOGIrT2JDCkVBY1NScWtIb1RzZVNFczBxZHF5WlNFcEhBbllBTXE5ZDBZNW9COFNsazB5b2lVeWNKVjNTbFZrOGpPU2VkUFkKY1A2blJUcXVrRnN3MmYrYi9uYWE4WGhVcnplaUc2QVVXdXlsKzhUOCtGSThYTlRLdXJ6ZUJDbWRLbGZYZDhsYQp3cGhRRjVkZHJVbGFqNndEVEtzSmxYWDFEbHFKckI2VWZXVTFlYTV6OVNDelU0MjBaczhYZjJ4UENrZXBwa1o5CkFxdWdEWDEvMXdsNHdFOTNXOUp4V09LMFlWQmRGZGZ0dU9HYWpGRmcxM3BwUlpKbDdKYnNVbUkzUlBZQ09HSXcKTUxLM050RUNnWUVBMWFzUThvUnBhSHhWa08rdGJUQ0xGNFlGSVRrQWg5LytUQU9XN0VMWjZNVTlPTnlWWFNaeApzSHVPakdDb0loay9zV3NxYkMxS0JUOEVIamdYSDYwWkI3czhHZnZtZDNmckh6SUNDNC9iSjFyRkFFeHAyVU51CncxdXdQazBTS0FNWk9QN0lOYU11UzlwemhoUTFmejQxM0VsQVZCTnlPUG1KanVKaHJFZ3B1RmNDZ1lFQXdXUHgKZm5tQmNLYzUvZnNUWS92dlBvODVYK0VUd0J1bnE3Ri9rYXhPS3czL1o3enVJcG1jWGNiRkk1SmMyMkxvcUtWWQphTi9rSUJqUkxLVXlaWmF3V1pTU1NBYVpFV0J1cDNHNFIrUW1FV1YwYVBaN0lycVB5eDlsOEpWKzBLOXNyZ1FxCnN5Z05waFdYaDIxNGl2Y2ZNVXlaK1N6VG1sYytNZnhWNkRSalhEOENnWUVBdG9vSDEzaGg2UjdYcHhQc0VLMTUKRnVhck9UL09nVVpPcFRnbjFyNGlGaWR6YjBHYjVWR3pyUGRSeUFISGdpSVo5UU85NFY4cnJxR3diZlN6Wko5bwpFOS9VcjhveGtYMEVoTWtmVUN0ZEtoajAxcFZ4bEdoMGx6ZWNzUXo4NXV3R3YxZURTYmVZRkx1VEdFZnBrRVJnCmxVcUxSNGk1ZTQxTUJLTEltUHVwa004Q2dZQjNISVNJUG5SQUcyOTNoQ1lNUmdhMEJHajFLZDhOU3JzNTM2aFAKNDgxOWJUQ3JCMDJ3MStYY1NHbnhuOXM3Y0s4VitFajh4ekZ0cDN0bVFSVktSc2ExVmZISEZQRkFKNkhmMWdZSAptWGpzN0EwSC9SQVljc25QOUxYSHVYd1RNb2tBb1NaZmxFTGIwWjZ6MWZRUnUyVmw2dVZHK0pvWURMWU0rWHM3Cit0QmI1d0tCZ0FGZWhIcG1WMG4xK3cwc2sxRDFzREZ1U3Z2WmlBMGlIVzFoMlVURVgyTE54RDcrQ0xzZFBvdzMKTnQ1RkM3RURzVVNiblpNblRzMlpMZndlSEg5a0k4VFFvL2NFcEE2TVcxaEc2MmJrYlA4Z0lDaWQrUE56TEZqdQpQckRZMHZITW9ERGR0WkFzKzNrbHh2UTZtK1JkWEhySHMzamQyTmhlSFpzVUR3SnFTRnIzCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==",
-        "serverCert": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM5ekNDQWQrZ0F3SUJBZ0lKQVBlcDlWMzREVUxZTUEwR0NTcUdTSWIzRFFFQkN3VUFNQkl4RURBT0JnTlYKQkFNTUIydDFZbVV0WTJFd0hoY05NVFl3TXpJeU1UTXlNREE1V2hjTk5ETXdPREE0TVRNeU1EQTVXakFTTVJBdwpEZ1lEVlFRRERBZHJkV0psTFdOaE1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBCjBMVmdOV0JYN3JQS1VzY3I4blNDcjQ5QWU5aEtVc1FKREs5WEdlSytDdVVySC9KNDBXaWljaUg2K3g4R1kwaEQKdlJqOUZsL0xhNEdZT3NES0p2amtOWUhIb0l2Y1pXWGlWdXY4N3ExRWZvejZPYjAvUFRQMW14M2JLemRMVTVIeApvSDN1UjZBdkZPT3UyWHRLamRYSzhobjVUT1d2dXFmQU9iM3VhSVN6TXJsUGl3UFdoNTZjMU5wSjhXODFCY0tSCklBa2JmSmRSQkxaakk5eUp5ajNIaXRZWThOazI2SjhZQ3dZaGhHYmtNdGszSmZXcDdkbjgwWENiak44WGxIT2MKM01tM0xGNGFYSVVtcGxDSEh2elZoaTF6aHJyZnhQMGZ2cnBuaFhLNlBZT1pQbE5lMVRFeGxqOHI0OTdIMmJtMQpiQzJhd2JONjhSeW5XMHY1ay9YWkJRSURBUUFCbzFBd1RqQWRCZ05WSFE0RUZnUVVwRFV3VUlWVHpLZGJEdmhsCk0wRHdUaHMxUnZrd0h3WURWUjBqQkJnd0ZvQVVwRFV3VUlWVHpLZGJEdmhsTTBEd1RoczFSdmt3REFZRFZSMFQKQkFVd0F3RUIvekFOQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBSkFtVzM1cjFQRU1MdUsyaVhWZGczOE9KNmQ3MAppRFBmRFdDemdLcEFneWFOV0ZGSStHUUxGRFJnSHV4L095Z1pkZEZFTVBNMVluRnl0ODFCb0JLMkRzYy9JUUJEClJsYzJKM21MTTFOdGtIY2JXc0liZU5VUmNwME1LbVFYeGZNemV5S1pwMmpaOTZvc0svWlM2V3ExQjhueFFqSU8KNGF1RGtaQjk2c202UExTZ2lwQytoU0FJTEFHWndPdTBOMHVJaUR5SUJyb2lDdEpLdVFoUitrRWNZc1BIYWhUVAo0TFVSeWowUW4rRVVZTUJSb3A5RXJUYit1RFZ3SEZYbDB3STFXbWlhanB1czlSeml4ZmdCOEx1MjdVMkRnUWdNCkZlNWZjYVdrNU1ndzJEc1hXOUNEZVorQkxpelJQbmtocVNIRm53SjFNQ3hpYWc4TjRxRHNqeTNqRmc9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=="
-     },
-     "poolUpdate": {
-         "updateInterval": { "time": 5, "unit": "seconds" }
-     }
 }
 ```
+
+
+
+#### Running kubernetespool inside Kubernetes (as a pod)
+
+When running the `kubernetespool` from a pod inside the targeted
+Kubernetes cluster one would typically make use of configuration similar
+to the one below. As explained in the 
+[Kubernetes documentation](http://kubernetes.io/docs/user-guide/accessing-the-cluster/#accessing-the-api-from-a-pod),
+a pod can always reach the API server via the `kubernetes` DNS entry and 
+authentication credentials for the service user are available under 
+`/var/run/secrets`):
+
+```javascript
+{
+    "apiServerUrl": "https://kubernetes:443",
+    "auth": {
+        "clientTokenPath": "/var/run/secrets/kubernetes.io/serviceaccount/token",
+        "serverCertPath": "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+    }
+    "podPool": {
+        "namespace": "default",
+        "replicationController": "nginx"
+    }
+}
+```
+
+This will manage the given `ReplicationController` using the given auth token to 
+authenticate against the specified Kubernetes apiserver.
 
 A client token can also be passed "by-value" via the `clientToken` configuration
 parameter.
@@ -268,47 +344,36 @@ command-line tool, shows how to interact with the cloud pool over its
 
 The exact command-line arguments to pass to curl depends on the security
 settings that the server was launched with. For example, if client-certificate
-authentication is enforced (`--require-cert`), the `<authparams>` parameter 
-below can be replaced with:
+authentication is enforced (`--require-cert`), one needs to pass client 
+certificate credentials via `curl`: 
 
-    --key-type pem --key credentials/client_private.pem \
-    --cert-type pem --cert credentials/client_certificate.pem
+    --key-type pem --key key.pem --cert-type pem --cert cert.pem
 
-Here are some examples illustrating basic interactions with the cloud pool:
+Here are some examples illustrating basic interactions with the cloud pool
+(these assume that the server was started on a HTTP port):
 
 
- 1. Retrieve the currently set configuration document:
+1. Retrieve the currently set configuration document:
 
-    ```
-    curl -v --insecure <authparams> -X GET https://localhost:8443/config
-    ```
+        curl -X GET http://localhost:8080/config
+    
 
  2. Set configuration:
 
-    ```
-    curl -v --insecure <authparams> \
-         -X POST -d @tests/config.json  --header "Content-Type:application/json" \
-         https://localhost:8443/config
-    ```
+        curl --header "Content-Type:application/json" \
+                    -X POST -d @myconfig.json http://localhost:8080/config
+
 
  3. Start:
 
-    ```
-    curl -v --insecure <authparams> -X POST https://localhost:8443/start
-    ```
+        curl -X POST http://localhost:8080/start
 
 
  4. Retrieve the current machine pool:
 
-    ```
-    curl -v --insecure <authparams> -X GET https://localhost:8443/pool
-    ```
+        curl -X POST http://localhost:8080/pool
 
  5. Request the machine pool to be resized to size ``4``:
 
-    ```
-    curl -v --insecure <authparams> \
-         -X POST -d '{"desiredCapacity": 4}' --header "Content-Type:application/json" \
-         https://localhost:8443/pool
-    ```
-
+        curl --header "Content-Type:application/json" \
+                    -X POST -d '{"desiredCapacity": 4}' http://localhost:8080/config
