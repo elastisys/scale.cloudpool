@@ -1,82 +1,123 @@
-scale.cloudpool
-===============
+# Cloudpools
+A _cloudpool_ is a an abstract, cloud-neutral, management interface for an 
+elastic pool of servers. 
 
-The ``scale.cloudpool`` project contains Java-based 
-[elastisys](http://elastisys.com/) 
-[cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) implementations 
-for different cloud providers:
+Different cloudpool implementations are available, each handling the
+communication with its particular cloud provider and the API it offers,
+thereby shielding the cloudpool client from such details, allowing 
+identical management of server groups for any cloud. 
+No matter which cloud infrastructure(s) the group is deployed on,
+increasing or decreasing the size of the group is as easy as setting 
+a desired size for the group. If the desired size is increased, a new 
+machine instance is provisioned. If the desired size is decreased, 
+a machine instance is selected for termination (note that, depending
+on the cloud and cloudpool implementation, the machine may not be
+immediately terminated, but may be kept around as long as possible
+before it enters a new billing period). If a machine instance in 
+the group is no longer operational, a replacement is provisioned.
 
-  - [OpenStack](openstack/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
-    that manages a group of [OpenStack](https://www.openstack.org/) servers.
-  - [CityCloud](citycloud/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
-    that manages a group of [OpenStack](https://www.openstack.org/) servers in City Cloud 
-    (an OpenStack-based cloud provider that uses Keystone v3 authentication).
-  - [AWS EC2](aws/ec2/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+A cloudpool offers a number of management primitives for the group of servers
+it mananages, the most important ones being primitives for
+
+- Tracking the machine pool members and their states.
+- Setting the _desired size_ of the machine pool. The cloud pool 
+  continuously starts/stops machine instances so that the number of
+  machines in the pool matches the desired size set for the pool.
+
+The cloudpool is managed via a REST API. For all the details, refer
+to http://cloudpoolrestapi.readthedocs.io/.
+
+Typically, one cloudpool is used to manage a group of similar servers,
+fulfilling one single role in the overall system. Examples include
+user-facing web server frontends, micro services, database read-replicas.
+One can think of a single cloudpool as managing the number of replicas of 
+a certain micro service.
+
+With Elastisys cloudpools, managing large deployments of micro services,
+even across different clouds, becomes easier, more robust, and more 
+cost-efficient.
+
+
+## Implementations
+The growing list of cloudpool implementations includes. For more details on 
+each implementation and its use, refer to its `README.md`:
+
+  - [AWS EC2](aws/ec2/README.md): a [cloudpool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages a group of [AWS EC2](http://aws.amazon.com/ec2/) instances.
-  - [AWS Spot](aws/spot/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+  - [AWS Spot](aws/spot/README.md): a [cloudpool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages a group of [AWS Spot](http://aws.amazon.com/ec2/spot/) instances.
-  - [AWS Auto Scaling Group](aws/autoscaling/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
-    that manages the size of an [AWS Auto Scaling Group](http://docs.aws.amazon.com/AutoScaling/latest/DeveloperGuide/WorkingWithASG.html).
-  - [Microsoft Azure](azure/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+  - [AWS Auto Scaling Group](aws/autoscaling/README.md): a [cloudpool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+    that manages an [AWS Auto Scaling Group](http://docs.aws.amazon.com/AutoScaling/latest/DeveloperGuide/WorkingWithASG.html).
+  - [CityCloud](citycloud/README.md): a [cloudpool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+    that manages a group of [OpenStack](https://www.openstack.org/) servers in [City Cloud](https://www.citycloud.com/).	
+  - [Microsoft Azure](azure/README.md): a [cloudpool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages a group of [Microsoft Azure](https://azure.microsoft.com/en-us/) VMs.
-  - [Google Compute Engine](google/compute/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+  - [Google Compute Engine](google/compute/README.md): a [cloudpool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages a [GCE instance group](https://cloud.google.com/compute/docs/instance-groups/#managed_instance_groups).
-  - [Google Container Engine](google/container/README.md): a [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+  - [Google Container Engine](google/container/README.md): a [cloudpool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
     that manages a [GKE container cluster](https://cloud.google.com/container-engine/docs/clusters/).	
+  - [OpenStack](openstack/README.md): a [cloudpool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
+    that manages a group of [OpenStack](https://www.openstack.org/) servers.
+	
 
-The [cloudpool.commons](commons) module contains a generic `CloudPool` implementation
-(`BaseCloudPool`) intended to be used as a basis for building cloud-specific cloud pools.
+For implementers, it may be worth noting that the [cloudpool.commons](commons) 
+module contains a generic `CloudPool` implementation (`BaseCloudPool`) intended
+to be used as a basis for building cloud-specific cloudpools.
 
 A `MultiCloudPool`, which allows a dynamic collection of *cloudpool instances* 
 to be published on a single server, is also available under the 
-[multipool](multipool/README.md) module.
+[multipool](multipool/README.md) module. All of the above cloudpool 
+implementations are possible to run both as singleton cloudpools and 
+as multipools.
 
-Getting started
-===============
 
-This project depends on [scale.commons](https://github.com/elastisys/scale.commons). If you are building from `master` yourself (where the POM file refers to a SNAPSHOT version), you need to clone and build that code repository first.
+## Building
+
+This project depends on [scale.commons](https://github.com/elastisys/scale.commons).
+If you are building from `master` yourself (where the `pom.xml` file refers to 
+a `SNAPSHOT` version), you need to clone and build that code repository first.
 
 Once that has been installed using Maven, this project can be built with:
 
   `mvn clean install`
 
 
-For each of the cloud pool implementation modules, the build produces an 
+For each of the cloudpool implementation modules, the build produces an 
 executable jar file that starts an HTTP(S) server that publishes the cloud
 pool [REST API](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html).
 
 To start a server, simply execute the jar file:
 
-  `java -jar <artifact>.jar --https-port 8443 --config <JSON file>`
+  `java -jar <artifact>.jar ...`
   
-This will start a server running listening on HTTPS port 8443.
-The port number can be changed (run with the `--help` flag to see the list of 
-available options).
+This will start a HTTP/HTTPS server publishing the 
+[cloudpool REST API](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html)
+at the specified port. For a full list of options run with the `--help` flag.
 
-The behavior of the cloud pool is controlled through a JSON-formatted 
+The behavior of the cloudpool is controlled through a JSON-formatted 
 configuration document and can either be set at start-up time with the
-`--config` command-line flag, or over a REST API in case the server
-has been started with the `--config-handler` command-line option.
-A configuration can be set over the REST API by a `POST` of the document 
-to  the `/config` endpoint.
+`--config` command-line flag, or over the 
+[POST /config](http://cloudpoolrestapi.readthedocs.io/en/latest/api.html#set-configuration) 
+REST API method.
 
-The JSON document that is passed as configuration is outlined below.
+The JSON document is specific to the cloudpool implementation (refer to 
+its `README.md` for full details) but some common configuration options 
+are described  below.
 
 
-Configuration
-=============
-The configuration document follows the same schema for *most* cloud pool 
-implementations in this project (see the individual cloud pool's `README.md`
+## Configuration
+_Most_ of the cloudpool implementations follow a similar schema for 
+the configuration document (refer to the individual cloudpool's `README.md`
 for details). In the general schema, outlined below, there are two parts 
 of the configuration document that carries cloud provider-specific settings:
 
 - `cloudApiSettings`: typically declares API access credentials and settings.
 - `provisioningTemplate`: contains cloud provider-specific server provisioning parameters.
   
-The configuration parameters supported by a particular cloud pool implementation can be
+The configuration parameters supported by a particular cloudpool implementation can be
 found in its `README.md` file.
 
-The overall structure of a cloudpool configuration is illustrated below:
+A common structure of a cloudpool configuration is illustrated below:
 
 ```javascript
 {
@@ -143,9 +184,9 @@ The overall structure of a cloudpool configuration is illustrated below:
 }
 ```
 
-The configuration document declares how the cloud pool:
+The configuration document declares how the cloudpool:
 
-  - identifies pool members (the `name` key). As an example, the cloud pool
+  - identifies pool members (the `name` key). As an example, the cloudpool
     implementation may choose to assign a metadata tag with the pool name to 
 	each started machine.
 
@@ -228,7 +269,7 @@ In a little more detail, the configuration keys have the following meaning:
         members.
       - `initialBackoffDelay`: Initial delay to use in exponential back-off on retries. 
         May be zero, which results in no delay between retries.
-    - `refreshInterval`: How often to refresh the cloud pool's view of the machine 
+    - `refreshInterval`: How often to refresh the cloudpool's view of the machine 
       pool members.
     - `reachabilityTimeout`: How long to respond with cached machine pool observations
       before responding with a cloud reachability error. In other words, for how long should
@@ -239,19 +280,18 @@ In a little more detail, the configuration keys have the following meaning:
       Default: 60 seconds.
 
 
-Multi-cloud support
-===================
+## Multi-cloud support
 
-Elastisys has also developed a Splitter cloud pool implementation, which lets
+Elastisys has also developed a Splitter cloudpool implementation, which lets
 a single logical cloudpool span across several clouds (and even cloud providers),
 complete with fail-over functionality built in. It adheres to the exact same 
 [cloudpool API](http://cloudpoolrestapi.readthedocs.io/en/latest/api.html).
-Users of the a cloud pool defines a splitting policy, such as 
+Users of the a cloudpool defines a splitting policy, such as 
 "90 percent AWS Spot instances, 10 percent AWS EC2 instances", and the 
 Splitter cloudpool takes care of maintaining this ratio.
 
 Should a cloud fail to provide an instance fast enough (for whatever reason), 
-the Splitter cloud pool will obtain an equivalent instance from another of 
+the Splitter cloudpool will obtain an equivalent instance from another of 
 its configured cloud backends. Once the original cloud provider is operating
 as intended again, the Splitter will automatically decommission the replacement
 machine from the other cloud backend.
@@ -260,9 +300,11 @@ Some of our customers use it to ensure that their services are highly available,
 even in the face of cloud provider failure. Others use it to run mostly Spot
 instances, and fall back to on-demand instances when Spot instances are scarce.
 
-The Splitter cloud pool is not open source at this time, so 
+Read more about it on our website: https://elastisys.com/cloud-platform-features/multi-cloud/
+
+The Splitter cloudpool is not open source at this time, so 
 [contact Elastisys](http://elastisys.com/contact/) if you would like to
-discuss how the Splitter cloud pool can help optimize your cloud deployment.
+discuss how the Splitter cloudpool can help optimize your cloud deployment.
 
 License
 =======
