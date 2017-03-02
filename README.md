@@ -6,14 +6,14 @@ Different cloudpool implementations are available, each handling the
 communication with its particular cloud provider and the API it offers,
 thereby shielding the cloudpool client from such details, allowing 
 identical management of server groups for any cloud. 
-No matter which cloud infrastructure(s) the group is deployed on,
+No matter which cloud infrastructure the group is deployed on,
 increasing or decreasing the size of the group is as easy as setting 
 a desired size for the group. If the desired size is increased, a new 
 machine instance is provisioned. If the desired size is decreased, 
 a machine instance is selected for termination (note that, depending
 on the cloud and cloudpool implementation, the machine may not be
 immediately terminated, but may be kept around as long as possible
-before it enters a new billing period). If a machine instance in 
+until it's about to enter a new billing period). If a machine instance in 
 the group is no longer operational, a replacement is provisioned.
 
 A cloudpool offers a number of management primitives for the group of servers
@@ -27,9 +27,9 @@ it mananages, the most important ones being primitives for
 The cloudpool is managed via a REST API. For all the details, refer
 to http://cloudpoolrestapi.readthedocs.io/.
 
-Typically, one cloudpool is used to manage a group of similar servers,
+Typically, each cloudpool is used to manage a group of similar servers,
 fulfilling one single role in the overall system. Examples include
-user-facing web server frontends, micro services, database read-replicas.
+user-facing web server frontends, application servers, and database read-replicas.
 One can think of a single cloudpool as managing the number of replicas of 
 a certain micro service.
 
@@ -42,22 +42,22 @@ cost-efficient.
 The growing list of cloudpool implementations includes. For more details on 
 each implementation and its use, refer to its `README.md`:
 
-  - [AWS EC2](aws/ec2/README.md): a [cloudpool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
-    that manages a group of [AWS EC2](http://aws.amazon.com/ec2/) instances.
-  - [AWS Spot](aws/spot/README.md): a [cloudpool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
-    that manages a group of [AWS Spot](http://aws.amazon.com/ec2/spot/) instances.
-  - [AWS Auto Scaling Group](aws/autoscaling/README.md): a [cloudpool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
-    that manages an [AWS Auto Scaling Group](http://docs.aws.amazon.com/AutoScaling/latest/DeveloperGuide/WorkingWithASG.html).
-  - [CityCloud](citycloud/README.md): a [cloudpool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
-    that manages a group of [OpenStack](https://www.openstack.org/) servers in [City Cloud](https://www.citycloud.com/).	
-  - [Microsoft Azure](azure/README.md): a [cloudpool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
-    that manages a group of [Microsoft Azure](https://azure.microsoft.com/en-us/) VMs.
-  - [Google Compute Engine](google/compute/README.md): a [cloudpool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
-    that manages a [GCE instance group](https://cloud.google.com/compute/docs/instance-groups/#managed_instance_groups).
-  - [Google Container Engine](google/container/README.md): a [cloudpool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
-    that manages a [GKE container cluster](https://cloud.google.com/container-engine/docs/clusters/).	
-  - [OpenStack](openstack/README.md): a [cloudpool](http://cloudpoolrestapi.readthedocs.org/en/latest) 
-    that manages a group of [OpenStack](https://www.openstack.org/) servers.
+  - `ec2pool`: a cloudpool that manages a group of [AWS EC2](http://aws.amazon.com/ec2/) instances. 
+    [README](aws/ec2/README.md)
+  - `spotpool`: a cloudpool that manages a group of [AWS Spot](http://aws.amazon.com/ec2/spot/) instances.
+    [README](aws/spot/README.md)
+  - `awsaspool`: a cloudpool that manages an [AWS Auto Scaling Group](http://docs.aws.amazon.com/AutoScaling/latest/DeveloperGuide/WorkingWithASG.html). 
+    [README](aws/autoscaling/README.md)
+  - `citycloudpool`: a cloudpool that manages a group of [OpenStack](https://www.openstack.org/) servers in [City Cloud](https://www.citycloud.com/). 
+    [README](citycloud/README.md)
+  - `azurepool`: a cloudpool that manages a group of [Microsoft Azure](https://azure.microsoft.com/en-us/) VMs. 
+    [README](azure/README.md)
+  - `gcepool`: a cloudpool that manages a [GCE instance group](https://cloud.google.com/compute/docs/instance-groups/#managed_instance_groups).
+    [README](google/compute/README.md)
+  - `gkepool`: a cloudpool that manages a [GKE container cluster](https://cloud.google.com/container-engine/docs/clusters/).
+    [README](google/container/README.md)
+  - `openstackpool`: a cloudpool that manages a group of [OpenStack](https://www.openstack.org/) servers.
+    [README](openstack/README.md)
 	
 
 For implementers, it may be worth noting that the [cloudpool.commons](commons) 
@@ -86,7 +86,8 @@ For each of the cloudpool implementation modules, the build produces an
 executable jar file that starts an HTTP(S) server that publishes the cloud
 pool [REST API](http://cloudpoolrestapi.readthedocs.org/en/latest/api.html).
 
-To start a server, simply execute the jar file:
+To start a server, simply execute the jar file (in the `target` directory of
+the cloudpool implementation's module):
 
   `java -jar <artifact>.jar ...`
   
@@ -95,7 +96,7 @@ This will start a HTTP/HTTPS server publishing the
 at the specified port. For a full list of options run with the `--help` flag.
 
 The behavior of the cloudpool is controlled through a JSON-formatted 
-configuration document and can either be set at start-up time with the
+configuration document and can either be set at start-time with the
 `--config` command-line flag, or over the 
 [POST /config](http://cloudpoolrestapi.readthedocs.io/en/latest/api.html#set-configuration) 
 REST API method.
