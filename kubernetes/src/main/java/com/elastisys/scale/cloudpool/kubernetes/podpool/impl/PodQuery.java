@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.MessageFormat;
+import java.util.Collections;
 import java.util.concurrent.Callable;
 
 import com.elastisys.scale.cloudpool.kubernetes.apiserver.ApiServerClient;
@@ -65,6 +66,9 @@ public class PodQuery implements Callable<PodList> {
     public PodList call() throws KubernetesApiException {
         try {
             PodList podList = JsonUtils.toObject(this.apiServer.get(listPodsPath(this.labelSelector)), PodList.class);
+            if (podList.items == null) {
+                podList.items = Collections.emptyList();
+            }
             return podList;
         } catch (Exception e) {
             throw new KubernetesApiException("failed to get pods: " + e.getMessage(), e);
