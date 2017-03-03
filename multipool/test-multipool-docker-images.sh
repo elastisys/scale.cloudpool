@@ -10,8 +10,13 @@ scriptdir=$(dirname ${0})
 projectroot=$(realpath ${scriptdir}/..)
 echo "checking ${projectroot}"
 
+HOST_PORT=8844
+
 # stop any docker container from prior executions
 docker rm -f multicloudpool 2>&1> /dev/null
+
+# on exit: make sure we don't leave any container around
+trap "{ docker rm -f multicloudpool 2>&1 > /dev/null; }" EXIT
 
 # find all pom files that use the docker-maven-plugin
 for pom in $(find ${projectroot} -name 'pom.xml' | xargs  grep -l docker-maven-plugin); do
@@ -24,11 +29,11 @@ for pom in $(find ${projectroot} -name 'pom.xml' | xargs  grep -l docker-maven-p
     fi
     image=${image_name}:latest
     echo "trying out ${image} ..."
-    docker run --name multicloudpool -d -p 8080:80 -e HTTP_PORT=80 -e MULTIPOOL=true ${image_name}
+    docker run --name multicloudpool -d -p ${HOST_PORT}:80 -e HTTP_PORT=80 -e MULTIPOOL=true ${image_name}
     echo "[${image}] waiting for server to start ..."
     sleep 4s
     # list cloudpool instances
-    instances=$(curl --silent -X GET http://localhost:8080/cloudpools)
+    instances=$(curl --silent -X GET http://localhost:${HOST_PORT}/cloudpools)
     num_instances=$(echo ${instances} | jq '. | length')
     if [[ ${num_instances} -ne 0 ]]; then
 	echo "[${image}] error: unexpected number of cloudpool instances: expexcted: 0, was: ${instances}"
@@ -38,10 +43,10 @@ for pom in $(find ${projectroot} -name 'pom.xml' | xargs  grep -l docker-maven-p
     
     # create cloudpool instances
     echo "[${image}] creating cloudpool instances pool1 and pool2 ..."
-    curl --silent -X POST http://localhost:8080/cloudpools/pool1
-    curl --silent -X POST http://localhost:8080/cloudpools/pool2
+    curl --silent -X POST http://localhost:${HOST_PORT}/cloudpools/pool1
+    curl --silent -X POST http://localhost:${HOST_PORT}/cloudpools/pool2
     # list cloudpool instances
-    instances=$(curl --silent -X GET http://localhost:8080/cloudpools)
+    instances=$(curl --silent -X GET http://localhost:${HOST_PORT}/cloudpools)
     num_instances=$(echo ${instances} | jq '. | length')
     if  [[ ${num_instances} -ne 2 ]]; then
 	echo "[${image}] error: unexpected number of cloudpool instances: expected 2, was: ${num_instances}"
@@ -51,8 +56,8 @@ for pom in $(find ${projectroot} -name 'pom.xml' | xargs  grep -l docker-maven-p
 
     # delete cloudpool instances
     echo "[${image}] deleting cloudpool instance pool1 ..."
-    curl --silent -X DELETE http://localhost:8080/cloudpools/pool1
-    instances=$(curl --silent -X GET http://localhost:8080/cloudpools)
+    curl --silent -X DELETE http://localhost:${HOST_PORT}/cloudpools/pool1
+    instances=$(curl --silent -X GET http://localhost:${HOST_PORT}/cloudpools)
     num_instances=$(echo ${instances} | jq '. | length')
     if  [[ ${num_instances} -ne 1 ]]; then
 	echo "[${image}] error: unexpected number of cloudpool instances: expected 1, was: ${num_instances}"
