@@ -349,27 +349,27 @@ Here are some examples illustrating basic interactions with the cloud pool (thes
 the server was started on a HTTP port):
 
 
- 1. Retrieve the currently set configuration document:
+1. Retrieve the currently set configuration document:
 
         curl -X GET http://localhost:8080/config
     
 
- 2. Set configuration:
+2. Set configuration:
 
         curl --header "Content-Type:application/json" \
 		    -X POST -d @myconfig.json http://localhost:8080/config
 
 
- 3. Start:
+3. Start:
 
         curl -X POST http://localhost:8080/start
 
 
- 4. Retrieve the current machine pool:
+4. Retrieve the current machine pool:
 
         curl -X POST http://localhost:8080/pool
 
- 5. Request the machine pool to be resized to size ``4``:
+5. Request the machine pool to be resized to size ``4``:
 
         curl --header "Content-Type:application/json" \
 		    -X POST -d '{"desiredCapacity": 4}' http://localhost:8080/config

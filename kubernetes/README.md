@@ -2,7 +2,7 @@
 
 The [elastisys](http://elastisys.com/) Kubernetes [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest/), from hereon referred to as `kubernetespool`, manages the size of a group of pod replicas, either via a [ReplicationController](https://kubernetes.io/docs/user-guide/replication-controller/), or via a [ReplicaSet](https://kubernetes.io/docs/user-guide/replicasets/), or via a [Deployment](https://kubernetes.io/docs/user-guide/deployments/).
 
-After setting up a ReplicationController, or a ReplicaSet, or a Deployment in Kubernetes via one of its [access methods](https://kubernetes.io/docs/user-guide/accessing-the-cluster/) (such as [kubectl](https://kubernetes.io/docs/user-guide/kubectl-overview/), a `kubernetespool` can be told to manage the size of its pod replica group.
+After setting up a ReplicationController, or a ReplicaSet, or a Deployment in Kubernetes via one of its [access methods](https://kubernetes.io/docs/user-guide/accessing-the-cluster/) (such as [kubectl](https://kubernetes.io/docs/user-guide/kubectl-overview/)), a `kubernetespool` can be told to manage the size of its pod replica group.
 
 The number of pod replicas is continuously updated to keep the pool's actual size in sync with the desired size that the cloud pool has been instructed to maintain.
 
@@ -358,22 +358,22 @@ Here are some examples illustrating basic interactions with the cloud pool
         curl -X GET http://localhost:8080/config
     
 
- 2. Set configuration:
+2. Set configuration:
 
         curl --header "Content-Type:application/json" \
                     -X POST -d @myconfig.json http://localhost:8080/config
 
 
- 3. Start:
+3. Start:
 
         curl -X POST http://localhost:8080/start
 
 
- 4. Retrieve the current machine pool:
+4. Retrieve the current machine pool:
 
         curl -X POST http://localhost:8080/pool
 
- 5. Request the machine pool to be resized to size ``4``:
+5. Request the machine pool to be resized to size ``4``:
 
         curl --header "Content-Type:application/json" \
                     -X POST -d '{"desiredCapacity": 4}' http://localhost:8080/config

@@ -56,6 +56,7 @@ each implementation and its use, refer to its `README.md`:
     [README](google/compute/README.md)
   - `gkepool`: a cloudpool that manages a [GKE container cluster](https://cloud.google.com/container-engine/docs/clusters/).
     [README](google/container/README.md)
+  - `kubernetespool`: a cloudpool that manages a group of [Kubernetes](https://kubernetes.io/) pod replicas. [README](kubernetes/README.md)
   - `openstackpool`: a cloudpool that manages a group of [OpenStack](https://www.openstack.org/) servers.
     [README](openstack/README.md)
 	
