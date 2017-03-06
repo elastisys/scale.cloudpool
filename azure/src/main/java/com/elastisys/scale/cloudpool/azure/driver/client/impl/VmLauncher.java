@@ -24,6 +24,7 @@ import com.google.common.base.Charsets;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.VirtualMachine;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithCreate;
+import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithFromImageCreateOptions;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithLinuxRootUsername;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithOS;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithWindowsAdminUsername;
@@ -142,7 +143,7 @@ public class VmLauncher {
         }
 
         LinuxSettings linuxSettings = vmSpec.getLinuxSettings().get();
-        WithCreate vmWithOs = vmWithImage //
+        WithFromImageCreateOptions vmWithOs = vmWithImage //
                 .withRootUsername(linuxSettings.getRootUserName()) //
                 .withRootPassword(linuxSettings.getPassword()) //
                 .withSsh(linuxSettings.getPublicSshKey());
@@ -155,6 +156,11 @@ public class VmLauncher {
         StorageAccount storageAccount = new GetStorageAccountRequest(this.apiAccess, vmSpec.getStorageAccountName(),
                 this.resourceGroup).call();
         vmWithOs.withExistingStorageAccount(storageAccount);
+
+        // add custom data (for example, cloud-init script)
+        if (linuxSettings.getCustomData() != null) {
+            vmWithOs.withCustomData(linuxSettings.getCustomData());
+        }
 
         // add custom boot script to be executed
         CustomScriptExtension customScript = linuxSettings.getCustomScript();

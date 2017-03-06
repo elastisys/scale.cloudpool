@@ -8,7 +8,11 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
+
 import org.junit.Test;
+
+import com.elastisys.scale.commons.util.base64.Base64Utils;
 
 /**
  * Exercises VM {@link LinuxSettings}.
@@ -22,14 +26,28 @@ public class TestLinuxSettings {
     /** Sample root password. */
     private static final String ROOT_PASSWORD = "secret";
 
+    /** Sample custom data cloud-init config. */
+    private static final String CLOUD_INIT = Base64Utils.toBase64(Arrays.asList(//
+            "#cloud-config", //
+            "write_files:", //
+            "  - path: /home/ubuntu/important.sh", //
+            "    permissions: 0700", //
+            "    owner: ubuntu:ubuntu", //
+            "    content: |", //
+            "      #!/bin/bash", //
+            "      echo \"important script being executed ...\""));
+
     /**
      * Should be okay to only specify SSH login key.
      */
     @Test
     public void onlySpecifySshKey() {
-        String rootUserName = null;
-        CustomScriptExtension customScript = null;
-        LinuxSettings settings = new LinuxSettings(rootUserName, PUBLIC_SSH_KEY, null, customScript);
+        String nullRootUserName = null;
+        String nullPassword = null;
+        String nullCustomData = null;
+        CustomScriptExtension nullCustomScript = null;
+        LinuxSettings settings = new LinuxSettings(nullRootUserName, PUBLIC_SSH_KEY, nullPassword, nullCustomData,
+                nullCustomScript);
         settings.validate();
 
         assertThat(settings.getPublicSshKey(), is(PUBLIC_SSH_KEY));
@@ -37,6 +55,7 @@ public class TestLinuxSettings {
         assertThat(settings.getRootUserName(), is(LinuxSettings.DEFAULT_ROOT_USER));
 
         assertThat(settings.getPassword(), is(nullValue()));
+        assertThat(settings.getCustomData(), is(nullValue()));
         assertThat(settings.getCustomScript(), is(nullValue()));
     }
 
@@ -45,9 +64,12 @@ public class TestLinuxSettings {
      */
     @Test
     public void onlySpecifyRootPassword() {
-        String rootUserName = null;
-        CustomScriptExtension customScript = null;
-        LinuxSettings settings = new LinuxSettings(rootUserName, null, ROOT_PASSWORD, customScript);
+        String nullRootUserName = null;
+        String nullSshKey = null;
+        String nullCustomData = null;
+        CustomScriptExtension nullCustomScript = null;
+        LinuxSettings settings = new LinuxSettings(nullRootUserName, nullSshKey, ROOT_PASSWORD, nullCustomData,
+                nullCustomScript);
         settings.validate();
 
         assertThat(settings.getPassword(), is(ROOT_PASSWORD));
@@ -55,12 +77,13 @@ public class TestLinuxSettings {
         assertThat(settings.getRootUserName(), is(LinuxSettings.DEFAULT_ROOT_USER));
 
         assertThat(settings.getPublicSshKey(), is(nullValue()));
+        assertThat(settings.getCustomData(), is(nullValue()));
         assertThat(settings.getCustomScript(), is(nullValue()));
     }
 
     @Test
     public void specifyRootUsername() {
-        LinuxSettings settings = new LinuxSettings("myrootuser", null, ROOT_PASSWORD, null);
+        LinuxSettings settings = new LinuxSettings("myrootuser", null, ROOT_PASSWORD, null, null);
         settings.validate();
 
         assertThat(settings.getRootUserName(), is("myrootuser"));
@@ -68,8 +91,23 @@ public class TestLinuxSettings {
     }
 
     @Test
+    public void specifyCustomData() {
+        String nullRootUser = null;
+        String nullPassword = null;
+        CustomScriptExtension nullCustomScript = null;
+        LinuxSettings settings = new LinuxSettings(nullRootUser, PUBLIC_SSH_KEY, nullPassword, CLOUD_INIT,
+                nullCustomScript);
+        settings.validate();
+
+        assertThat(settings.getCustomData(), is(CLOUD_INIT));
+    }
+
+    @Test
     public void specifyCustomScript() {
-        LinuxSettings settings = new LinuxSettings("myrootuser", null, ROOT_PASSWORD, validCustomScript());
+        String nullPassword = null;
+        String nullCustomData = null;
+        LinuxSettings settings = new LinuxSettings("myrootuser", nullPassword, ROOT_PASSWORD, nullCustomData,
+                validCustomScript());
         settings.validate();
 
         assertThat(settings.getRootUserName(), is("myrootuser"));
@@ -82,8 +120,12 @@ public class TestLinuxSettings {
      */
     @Test
     public void withBothRootPasswordAndSshKey() {
+        String nullRootUser = null;
+        String nullCustomData = null;
+        CustomScriptExtension nullCustomScript = null;
+
         try {
-            new LinuxSettings(null, PUBLIC_SSH_KEY, ROOT_PASSWORD, null).validate();
+            new LinuxSettings(nullRootUser, PUBLIC_SSH_KEY, ROOT_PASSWORD, nullCustomData, nullCustomScript).validate();
             fail("should fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("either publicSshKey or password must be given, not both"));
@@ -96,8 +138,12 @@ public class TestLinuxSettings {
      */
     @Test
     public void onIllegalCustomScript() {
+        String nullRootUser = null;
+        String nullPassword = null;
+        String nullCustomData = null;
         try {
-            new LinuxSettings(null, PUBLIC_SSH_KEY, null, invalidCustomScript()).validate();
+            new LinuxSettings(nullRootUser, PUBLIC_SSH_KEY, nullPassword, nullCustomData, invalidCustomScript())
+                    .validate();
             fail("should fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("customScript"));
@@ -106,17 +152,25 @@ public class TestLinuxSettings {
 
     @Test(expected = IllegalArgumentException.class)
     public void onRootUsernameWithLeadingWhitespace() {
-        new LinuxSettings(" illegal", PUBLIC_SSH_KEY, null, validCustomScript()).validate();
+        String nullPassword = null;
+        String nullCustomData = null;
+        new LinuxSettings(" illegal", PUBLIC_SSH_KEY, nullPassword, nullCustomData, validCustomScript()).validate();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void onRootUsernameWithLeadingDigit() {
-        new LinuxSettings("4oot", PUBLIC_SSH_KEY, null, validCustomScript()).validate();
+        String nullPassword = null;
+        String nullCustomData = null;
+
+        new LinuxSettings("4oot", PUBLIC_SSH_KEY, nullPassword, nullCustomData, validCustomScript()).validate();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void onRootUsernameWithColon() {
-        new LinuxSettings("root:user", PUBLIC_SSH_KEY, null, validCustomScript()).validate();
+        String nullPassword = null;
+        String nullCustomData = null;
+
+        new LinuxSettings("root:user", PUBLIC_SSH_KEY, nullPassword, nullCustomData, validCustomScript()).validate();
     }
 
 }

@@ -36,8 +36,18 @@ public class LinuxSettings {
     private final String password;
 
     /**
-     * A (set of) custom script(s) to run when a VM is booted. May be
-     * {@code null}.
+     * Allows passing of base64-encoded custom data to the VM. This can, for
+     * example, be used to pass a
+     * <a href="https://cloudinit.readthedocs.io/en/latest/">cloud-init</a> file
+     * to bootstrap a VM on <a href=
+     * "https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-using-cloud-init">Linux
+     * VMs that support this format</a>. May be <code>null</code>.
+     */
+    private final String customData;
+
+    /**
+     * A (set of) custom script(s) to download and execute run when a VM has
+     * booted. May be {@code null}.
      * <p/>
      * See
      * <a href="https://github.com/Azure/custom-script-extension-linux">custom
@@ -58,19 +68,27 @@ public class LinuxSettings {
      * @param password
      *            A password used to login to created VMs. May be {@code null}
      *            (if so, a {@link #publicSshKey} must be set).
+     * @param customData
+     *            Allows passing of base64-encoded custom data to the VM. This
+     *            can, for example, be used to pass a <a href=
+     *            "https://cloudinit.readthedocs.io/en/latest/">cloud-init</a>
+     *            file to bootstrap a VM on <a href=
+     *            "https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-using-cloud-init">Linux
+     *            VMs that support this format</a>. May be <code>null</code>.
      * @param customScript
-     *            A (set of) custom script(s) to run when a VM is booted. May be
-     *            {@code null}.
+     *            A (set of) custom script(s) to download and execute run when a
+     *            VM has booted. May be {@code null}.
      *            <p/>
      *            See <a href=
      *            "https://github.com/Azure/custom-script-extension-linux">custom
      *            script extensions for linux</a> for details.
      */
-    public LinuxSettings(String rootUserName, String publicSshKey, String password,
+    public LinuxSettings(String rootUserName, String publicSshKey, String password, String customData,
             CustomScriptExtension customScript) {
         this.rootUserName = rootUserName;
         this.publicSshKey = publicSshKey;
         this.password = password;
+        this.customData = customData;
         this.customScript = customScript;
     }
 
@@ -105,8 +123,22 @@ public class LinuxSettings {
     }
 
     /**
-     * A (set of) custom script(s) to run when a VM is booted. May be
-     * {@code null}.
+     * Allows passing of base64-encoded custom data to the VM. This can, for
+     * example, be used to pass a
+     * <a href="https://cloudinit.readthedocs.io/en/latest/">cloud-init</a> file
+     * to bootstrap a VM on <a href=
+     * "https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-using-cloud-init">Linux
+     * VMs that support this format</a>. May be <code>null</code>.
+     * 
+     * @return
+     */
+    public String getCustomData() {
+        return this.customData;
+    }
+
+    /**
+     * A (set of) custom script(s) to download and execute run when a VM has
+     * booted. May be {@code null}.
      * <p/>
      * See
      * <a href= "https://github.com/Azure/custom-script-extension-linux">custom
@@ -120,7 +152,8 @@ public class LinuxSettings {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(getRootUserName(), this.publicSshKey, this.password, this.customScript);
+        return Objects.hashCode(getRootUserName(), this.publicSshKey, this.password, this.customData,
+                this.customScript);
     }
 
     @Override
@@ -129,7 +162,8 @@ public class LinuxSettings {
             LinuxSettings that = (LinuxSettings) obj;
             return Objects.equal(getRootUserName(), that.getRootUserName())
                     && Objects.equal(this.publicSshKey, that.publicSshKey)
-                    && Objects.equal(this.password, that.password)
+                    && Objects.equal(this.password, that.password) //
+                    && Objects.equal(this.customData, that.customData) //
                     && Objects.equal(this.customScript, that.customScript);
 
         }

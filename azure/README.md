@@ -117,6 +117,7 @@ to the following:
             "linuxSettings": {
                 "rootUserName": "ubuntu",
                 "publicSshKey": "ssh-rsa XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX foo@bar",
+				"customData": "I2Nsb3VkLWNvbmZpZwp3cml0ZV9maWxlczoKICAtIHBhdGg6IC9ob21lL3VidW50dS9pbXBvcnRhbnQubm90ZQogICAgb3duZXI6IHVidW50dTp1YnVudHUKICAgIGNvbnRlbnQ6IHwKICAgICAgVGhlIHNlY3JldCBpcyA0Mi4K",
                 "customScript": {
                     "encodedCommand": "c2ggLWMgJ2FwdCB1cGRhdGUgLXF5ICYmIGFwdCBpbnN0YWxsIC1xeSBhcGFjaGUyJwo="
                 }
@@ -162,7 +163,8 @@ The configuration keys have the following meaning:
 	    - `rootUserName` (*optional*): Name of the root Linux account to create on created VMs. Default: `root`.
 		- `publicSshKey` (*semi-optional*): An OpenSSH public key used to login to created VMs. Must be given unless `password` is specified.
 		- `password` (*semi-optional*): A password used to login to created VMs. Must be given unless `publicSshKey` is specified.
-		- `customScript` (*optional*): a (set of) custom script(s) to run when a VM is booted.
+		- `customData` (*optional*): custom base64-encoded data to pass to the VM. This can, for example, be used to pass a [cloud-init](https://cloudinit.readthedocs.io/) file to bootstrap a VM on [Linux VMs that support this format](https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-using-cloud-init), such as Ubuntu and CoreOS.
+		- `customScript` (*optional*): a (set of) custom script(s) to download and execute when a VM has booted. See [custom script extensions for linux](https://github.com/Azure/custom-script-extension-linux) for details.
 		  - `fileUris` (*optional*): A set of file URIs to download before executing the script.
 		  - `encodedCommand`: A base64-encoded command to execute. Such a command can, for example, be generated via a call similar to: `echo "sh -c 'apt update -qy && apt install -qy apache2'" | base64 -w0`.
 	  - `windowsSettings` (*semi-optional*): Settings particular to launching Windows VMs. Either this or `linuxsSettings` must be specified.

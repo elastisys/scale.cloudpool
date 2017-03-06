@@ -5,9 +5,21 @@ import java.util.Map;
 
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
+import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.common.collect.ImmutableMap;
 
 public class TestUtils {
+
+    /** Sample custom data cloud-init config. */
+    private static final String CLOUD_INIT = Base64Utils.toBase64(Arrays.asList(//
+            "#cloud-config", //
+            "write_files:", //
+            "  - path: /home/ubuntu/important.sh", //
+            "    permissions: 0700", //
+            "    owner: ubuntu:ubuntu", //
+            "    content: |", //
+            "      #!/bin/bash", //
+            "      echo \"important script being executed ...\""));
 
     public static AzureAuth validAuth() {
         // Sample clientId/appId.
@@ -81,7 +93,7 @@ public class TestUtils {
     }
 
     public static LinuxSettings validLinuxSettings() {
-        return new LinuxSettings("ubuntu", null, "secret", new CustomScriptExtension(null,
+        return new LinuxSettings("ubuntu", null, "secret", CLOUD_INIT, new CustomScriptExtension(null,
                 "c2ggLWMgJ2FwdCB1cGRhdGUgLXF5ICYmIGFwdCBpbnN0YWxsIC1xeSBhcGFjaGUyJwo="));
     }
 
@@ -92,7 +104,7 @@ public class TestUtils {
      * @return
      */
     public static LinuxSettings invalidLinuxSettings() {
-        return new LinuxSettings("ubuntu", null, "secret", new CustomScriptExtension(null, null));
+        return new LinuxSettings("ubuntu", null, "secret", CLOUD_INIT, new CustomScriptExtension(null, null));
     }
 
     public static WindowsSettings validWindowsSettings() {
