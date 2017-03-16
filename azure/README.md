@@ -178,7 +178,7 @@ The configuration keys have the following meaning:
 	    - `virtualNetwork`: An existing virtual network that created VMs will be attached to (the VM's primary network interface will receive a private IP address from this network).
 	    - `subnetName`: The subnet within the virtual network, from which a (private) IP address will be assigned to created VMs.
 	    - `assignPublicIp` (*optional*): Set to `true` to assign a public IP address to created VMs. Default: `false`.
-	    - `networkSecurityGroups` (*optional*): A set of existing network security groups to associate with created VMs. May be {@code null}, which means that no security groups get associated with the primary network interface of created VMs. The default behavior is to allow all inbound traffic from inside the VM's virtual network and to allow all outbound traffic from a VM.
+	    - `networkSecurityGroups` (*optional*): A set of existing network security groups to associate with created VMs. May be `null`, which means that no security groups get associated with the primary network interface of created VMs. The default behavior is to allow all inbound traffic from inside the VM's virtual network and to allow all outbound traffic from a VM.
 	  - `tags` (*optional*): Tags to associate with created VMs. *Note: a `elastisys-CloudPool` tag will automatically be set on each pool VM and should not be overridden*.
 	  
 
