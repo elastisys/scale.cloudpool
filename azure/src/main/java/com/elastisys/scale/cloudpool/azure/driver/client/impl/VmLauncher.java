@@ -146,7 +146,8 @@ public class VmLauncher {
         WithFromImageCreateOptions vmWithOs = vmWithImage //
                 .withRootUsername(linuxSettings.getRootUserName()) //
                 .withRootPassword(linuxSettings.getPassword()) //
-                .withSsh(linuxSettings.getPublicSshKey());
+                .withSsh(linuxSettings.getPublicSshKey()) //
+                .withComputerName(vmSpec.getVmName());
 
         vmWithOs.withSize(vmSpec.getVmSize()) //
                 .withTags(vmSpec.getTags());
@@ -182,7 +183,8 @@ public class VmLauncher {
         WindowsSettings windowsSettings = vmSpec.getWindowsSettings().get();
         WithCreate vmWithOs = vmWithImage //
                 .withAdminUsername(windowsSettings.getAdminUserName()) //
-                .withAdminPassword(windowsSettings.getPassword());
+                .withAdminPassword(windowsSettings.getPassword()) //
+                .withComputerName(vmSpec.getVmName());
 
         vmWithOs.withSize(vmSpec.getVmSize()) //
                 .withTags(vmSpec.getTags());
