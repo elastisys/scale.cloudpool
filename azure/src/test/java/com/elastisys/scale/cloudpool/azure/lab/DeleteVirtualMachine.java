@@ -11,8 +11,7 @@ import com.elastisys.scale.cloudpool.azure.driver.requests.PurgeVmRequest;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.VirtualMachine;
-
-import okhttp3.logging.HttpLoggingInterceptor;
+import com.microsoft.rest.LogLevel;
 
 /**
  * Lab program that deletes a given VM and any associated public IP and network
@@ -31,8 +30,7 @@ public class DeleteVirtualMachine extends BaseLabProgram {
     public static void main(String[] args) {
 
         AzureApiAccess apiAccess = new AzureApiAccess(SUBSCRIPTION_ID, AZURE_AUTH,
-                new TimeInterval(10L, TimeUnit.SECONDS), new TimeInterval(10L, TimeUnit.SECONDS),
-                HttpLoggingInterceptor.Level.BASIC);
+                new TimeInterval(10L, TimeUnit.SECONDS), new TimeInterval(10L, TimeUnit.SECONDS), LogLevel.BASIC);
         Azure api = ApiUtils.acquireApiClient(apiAccess);
 
         VirtualMachine vm = api.virtualMachines().getByGroup(resourceGroup, vmName);

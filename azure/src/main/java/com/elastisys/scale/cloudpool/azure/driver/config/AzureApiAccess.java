@@ -7,9 +7,7 @@ import java.util.Optional;
 
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
-
-import okhttp3.logging.HttpLoggingInterceptor;
-import okhttp3.logging.HttpLoggingInterceptor.Level;
+import com.microsoft.rest.LogLevel;
 
 /**
  * Azure API access credentials and settings
@@ -17,7 +15,7 @@ import okhttp3.logging.HttpLoggingInterceptor.Level;
  * @see CloudApiSettings
  */
 public class AzureApiAccess {
-    static HttpLoggingInterceptor.Level DEFAULT_AZURE_SDK_LOG_LEVEL = Level.NONE;
+    static LogLevel DEFAULT_AZURE_SDK_LOG_LEVEL = LogLevel.NONE;
 
     static final TimeInterval DEFAULT_CONNECTION_TIMEOUT = new TimeInterval(10L, "seconds");
     static final TimeInterval DEFAULT_READ_TIMEOUT = new TimeInterval(10L, "seconds");
@@ -48,7 +46,7 @@ public class AzureApiAccess {
      * The log level to set for the Azure SDK. One of: NONE, BASIC, HEADERS, or
      * BODY. May be <code>null</code>. Default: NONE.
      */
-    private final HttpLoggingInterceptor.Level azureSdkLogLevel;
+    private final LogLevel azureSdkLogLevel;
 
     /**
      * Creates a new {@link CloudApiSettings}.
@@ -84,7 +82,7 @@ public class AzureApiAccess {
      *            HEADERS, or BODY. May be <code>null</code>. Default: NONE.
      */
     public AzureApiAccess(String subscriptionId, AzureAuth auth, TimeInterval connectionTimeout,
-            TimeInterval readTimeout, Level azureSdkLogLevel) {
+            TimeInterval readTimeout, LogLevel azureSdkLogLevel) {
         this.subscriptionId = subscriptionId;
         this.auth = auth;
         this.connectionTimeout = connectionTimeout;
@@ -136,7 +134,7 @@ public class AzureApiAccess {
      *
      * @return
      */
-    public HttpLoggingInterceptor.Level getAzureSdkLogLevel() {
+    public LogLevel getAzureSdkLogLevel() {
         return Optional.ofNullable(this.azureSdkLogLevel).orElse(DEFAULT_AZURE_SDK_LOG_LEVEL);
     }
 

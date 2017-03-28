@@ -1,8 +1,8 @@
 package com.elastisys.scale.cloudpool.azure.driver.client.impl;
 
+import com.elastisys.scale.cloudpool.azure.driver.client.AzureException;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
 import com.google.common.base.Preconditions;
-import com.microsoft.azure.CloudException;
 import com.microsoft.azure.management.Azure;
 
 /**
@@ -14,10 +14,10 @@ public class ApiUtils {
      * Acquires an authenticated API client.
      *
      * @return
-     * @throws CloudException
+     * @throws AzureException
      *             Thrown on failure to acquire the API client.
      */
-    public static Azure acquireApiClient(AzureApiAccess apiAccess) throws CloudException {
+    public static Azure acquireApiClient(AzureApiAccess apiAccess) throws AzureException {
         Preconditions.checkArgument(apiAccess != null, "apiAccess cannot be null");
 
         try {
@@ -29,7 +29,7 @@ public class ApiUtils {
                     .authenticate(apiAccess.getAuth().toTokenCredentials()) //
                     .withSubscription(apiAccess.getSubscriptionId());
         } catch (Exception e) {
-            throw new CloudException("failed to acquire API client: " + e.getMessage(), e);
+            throw new AzureException("failed to acquire API client: " + e.getMessage(), e);
         }
     }
 }

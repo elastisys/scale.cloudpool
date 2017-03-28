@@ -24,10 +24,9 @@ import com.google.common.base.Charsets;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.VirtualMachine;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithCreate;
-import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithFromImageCreateOptions;
-import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithLinuxRootUsername;
+import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged;
+import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithFromImageCreateOptionsUnmanaged;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithOS;
-import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithWindowsAdminUsername;
 import com.microsoft.azure.management.network.NetworkInterface;
 import com.microsoft.azure.management.resources.fluentcore.model.Creatable;
 import com.microsoft.azure.management.resources.fluentcore.model.CreatedResources;
@@ -82,7 +81,7 @@ public class VmLauncher {
         // launch
         try {
             CreatedResources<VirtualMachine> createdVms = new CreateVmsRequest(this.apiAccess, vmDefinitions).call();
-            return createdVms;
+            return new ArrayList<>(createdVms.values());
         } catch (Exception e) {
             LOG.error("VM launch failed: {}", e.getMessage(), e);
             LOG.info("attempting to clean up created network interfaces after failed VM launch ...");
@@ -135,33 +134,48 @@ public class VmLauncher {
 
     private Creatable<VirtualMachine> linuxVmDefinition(VmSpec vmSpec, WithOS rawVmDef) {
         VmImage vmImage = new VmImage(vmSpec.getVmImage());
-        WithLinuxRootUsername vmWithImage = null;
+        LinuxSettings linuxSettings = vmSpec.getLinuxSettings().get();
+        WithCreate vmWithOs = null;
+
+        // NOTE: due to the poor azure SDK design we need two separate, almost
+        // identical, VM builder call sequences depending on if an Azure-managed
+        // VM image or a private VM image is used.
         if (vmImage.isImageReference()) {
-            vmWithImage = rawVmDef.withSpecificLinuxImageVersion(vmImage.getImageReference());
+            WithFromImageCreateOptionsManaged vm = rawVmDef //
+                    .withSpecificLinuxImageVersion(vmImage.getImageReference()) //
+                    .withRootUsername(linuxSettings.getRootUserName()) //
+                    .withRootPassword(linuxSettings.getPassword()) //
+                    .withSsh(linuxSettings.getPublicSshKey()) //
+                    .withComputerName(vmSpec.getVmName());
+
+            // add custom data (for example, cloud-init script)
+            if (linuxSettings.getCustomData() != null) {
+                vm.withCustomData(linuxSettings.getCustomData());
+            }
+
+            vmWithOs = vm.withSize(vmSpec.getVmSize());
         } else {
-            vmWithImage = rawVmDef.withStoredLinuxImage(vmImage.getImageURL());
+            WithFromImageCreateOptionsUnmanaged vm = rawVmDef //
+                    .withStoredLinuxImage(vmImage.getImageURL())//
+                    .withRootUsername(linuxSettings.getRootUserName()) //
+                    .withRootPassword(linuxSettings.getPassword()) //
+                    .withSsh(linuxSettings.getPublicSshKey()) //
+                    .withComputerName(vmSpec.getVmName());
+
+            // add custom data (for example, cloud-init script)
+            if (linuxSettings.getCustomData() != null) {
+                vm.withCustomData(linuxSettings.getCustomData());
+            }
+
+            vmWithOs = vm.withSize(vmSpec.getVmSize());
         }
 
-        LinuxSettings linuxSettings = vmSpec.getLinuxSettings().get();
-        WithFromImageCreateOptions vmWithOs = vmWithImage //
-                .withRootUsername(linuxSettings.getRootUserName()) //
-                .withRootPassword(linuxSettings.getPassword()) //
-                .withSsh(linuxSettings.getPublicSshKey()) //
-                .withComputerName(vmSpec.getVmName());
-
-        vmWithOs.withSize(vmSpec.getVmSize()) //
-                .withTags(vmSpec.getTags());
-
+        vmWithOs.withTags(vmSpec.getTags());
         // storage account where OS disk will be stored (the disk is deleted on
         // scale-in)
         StorageAccount storageAccount = new GetStorageAccountRequest(this.apiAccess, vmSpec.getStorageAccountName(),
                 this.resourceGroup).call();
         vmWithOs.withExistingStorageAccount(storageAccount);
-
-        // add custom data (for example, cloud-init script)
-        if (linuxSettings.getCustomData() != null) {
-            vmWithOs.withCustomData(linuxSettings.getCustomData());
-        }
 
         // add custom boot script to be executed
         CustomScriptExtension customScript = linuxSettings.getCustomScript();
@@ -173,21 +187,28 @@ public class VmLauncher {
 
     private Creatable<VirtualMachine> windowsVmDefinition(VmSpec vmSpec, WithOS rawVmDef) {
         VmImage vmImage = new VmImage(vmSpec.getVmImage());
-        WithWindowsAdminUsername vmWithImage = null;
+        WindowsSettings windowsSettings = vmSpec.getWindowsSettings().get();
+        WithCreate vmWithOs = null;
+
+        // NOTE: due to the poor azure SDK design we need two separate, almost
+        // identical, VM builder call sequences depending on if an Azure-managed
+        // VM image or a private VM image is used.
         if (vmImage.isImageReference()) {
-            vmWithImage = rawVmDef.withSpecificWindowsImageVersion(vmImage.getImageReference());
+            WithFromImageCreateOptionsManaged vm = rawVmDef//
+                    .withSpecificWindowsImageVersion(vmImage.getImageReference()) //
+                    .withAdminUsername(windowsSettings.getAdminUserName()) //
+                    .withAdminPassword(windowsSettings.getPassword()) //
+                    .withComputerName(vmSpec.getVmName());
+            vmWithOs = vm.withSize(vmSpec.getVmSize());
         } else {
-            vmWithImage = rawVmDef.withStoredWindowsImage(vmImage.getImageURL());
+            WithFromImageCreateOptionsUnmanaged vm = rawVmDef.withStoredWindowsImage(vmImage.getImageURL())
+                    .withAdminUsername(windowsSettings.getAdminUserName()) //
+                    .withAdminPassword(windowsSettings.getPassword()) //
+                    .withComputerName(vmSpec.getVmName());
+            vmWithOs = vm.withSize(vmSpec.getVmSize());
         }
 
-        WindowsSettings windowsSettings = vmSpec.getWindowsSettings().get();
-        WithCreate vmWithOs = vmWithImage //
-                .withAdminUsername(windowsSettings.getAdminUserName()) //
-                .withAdminPassword(windowsSettings.getPassword()) //
-                .withComputerName(vmSpec.getVmName());
-
-        vmWithOs.withSize(vmSpec.getVmSize()) //
-                .withTags(vmSpec.getTags());
+        vmWithOs.withTags(vmSpec.getTags());
 
         // storage account where OS disk will be stored (the disk is deleted on
         // scale-in)

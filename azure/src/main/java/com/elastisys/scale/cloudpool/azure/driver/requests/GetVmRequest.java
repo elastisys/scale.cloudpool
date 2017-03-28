@@ -36,7 +36,7 @@ public class GetVmRequest extends AzureRequest<VirtualMachine> {
             LOG.debug("retrieving vm {} ...", this.vmId);
             return api.virtualMachines().getById(this.vmId);
         } catch (CloudException e) {
-            if (e.getBody().getCode().equals("ResourceNotFound")) {
+            if (e.body().code().equals("ResourceNotFound")) {
                 throw new NotFoundException("no such vm: " + this.vmId, e);
             }
             throw e;

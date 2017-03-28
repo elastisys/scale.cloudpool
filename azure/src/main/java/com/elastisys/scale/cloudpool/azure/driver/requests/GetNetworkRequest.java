@@ -40,7 +40,7 @@ public class GetNetworkRequest extends AzureRequest<Network> {
             LOG.debug("retrieving network {} ...", this.networkName);
             return api.networks().getByGroup(this.resourceGroup, this.networkName);
         } catch (CloudException e) {
-            if (e.getBody().getCode().equals("ResourceNotFound")) {
+            if (e.body().code().equals("ResourceNotFound")) {
                 throw new NotFoundException("no such network: " + this.networkName, e);
             }
             throw e;

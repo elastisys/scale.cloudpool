@@ -7,7 +7,6 @@ import java.util.Map;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.azure.driver.AzurePoolDriver;
 import com.elastisys.scale.cloudpool.azure.driver.config.CloudApiSettings;
-import com.microsoft.azure.CloudException;
 import com.microsoft.azure.management.compute.VirtualMachine;
 
 /**
@@ -33,9 +32,9 @@ public interface AzureClient {
      * @param vmSpecs
      *            A number of VM provisioning templates.
      * @return
-     * @throws CloudException
+     * @throws AzureException
      */
-    List<VirtualMachine> launchVms(List<VmSpec> vmSpecs) throws CloudException;
+    List<VirtualMachine> launchVms(List<VmSpec> vmSpecs) throws AzureException;
 
     /**
      * Deletes a VM and any associated network interface and public IP address.
@@ -48,9 +47,9 @@ public interface AzureClient {
      *            A VM identifier. Typically of form
      *            {@code /subscriptions/<subscription-id>/resourceGroups/<group>/providers/Microsoft.Compute/virtualMachines/<name>}
      * @throws NotFoundException
-     * @throws CloudException
+     * @throws AzureException
      */
-    void deleteVm(String vmId) throws NotFoundException, CloudException;
+    void deleteVm(String vmId) throws NotFoundException, AzureException;
 
     /**
      * Lists all VMs, with a given set of tags, that are located in the resource
@@ -58,9 +57,9 @@ public interface AzureClient {
      *
      * @param withTags
      * @return
-     * @throws CloudException
+     * @throws AzureException
      */
-    List<VirtualMachine> listVms(Map<String, String> withTags) throws CloudException;
+    List<VirtualMachine> listVms(Map<String, String> withTags) throws AzureException;
 
     /**
      * Retrieve metadata about a particular VM.
@@ -70,9 +69,9 @@ public interface AzureClient {
      *            {@code /subscriptions/123...abc/resourceGroups/<group>/providers/Microsoft.Compute/virtualMachines/<vm-name>}.
      * @return
      * @throws NotFoundException
-     * @throws CloudException
+     * @throws AzureException
      */
-    VirtualMachine getVm(String vmId) throws NotFoundException, CloudException;
+    VirtualMachine getVm(String vmId) throws NotFoundException, AzureException;
 
     /**
      * Sets a collection of tags on a given VM.
@@ -84,9 +83,9 @@ public interface AzureClient {
      * @param vm
      * @param tags
      * @throws NotFoundException
-     * @throws CloudException
+     * @throws AzureException
      */
-    void tagVm(VirtualMachine vm, Map<String, String> tags) throws NotFoundException, CloudException;
+    void tagVm(VirtualMachine vm, Map<String, String> tags) throws NotFoundException, AzureException;
 
     /**
      * Removes a collection of tags from a given VM.
@@ -98,7 +97,7 @@ public interface AzureClient {
      * @param vm
      * @param tagKeys
      * @throws NotFoundException
-     * @throws CloudException
+     * @throws AzureException
      */
-    void untagVm(VirtualMachine vm, Collection<String> tagKeys) throws NotFoundException, CloudException;
+    void untagVm(VirtualMachine vm, Collection<String> tagKeys) throws NotFoundException, AzureException;
 }

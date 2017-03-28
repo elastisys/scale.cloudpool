@@ -45,7 +45,7 @@ public class DeleteVmOsDiskRequest extends AzureRequest<Void> {
     public Void doRequest(Azure api) throws RuntimeException {
         LOG.debug("deleting OS disk for VM {} ...", this.vm.name());
 
-        URI osDiskUri = URI.create(this.vm.osDiskVhdUri());
+        URI osDiskUri = URI.create(this.vm.osUnmanagedDiskVhdUri());
         String storageAccountName = extractStorageAccountName(osDiskUri);
         StorageAccount storageAccount = api.storageAccounts().getByGroup(this.vm.resourceGroupName(),
                 storageAccountName);

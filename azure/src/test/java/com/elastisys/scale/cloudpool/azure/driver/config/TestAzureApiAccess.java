@@ -11,8 +11,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 import com.elastisys.scale.commons.json.types.TimeInterval;
-
-import okhttp3.logging.HttpLoggingInterceptor.Level;
+import com.microsoft.rest.LogLevel;
 
 /**
  * Exercises the {@link AzureApiAccess} configuration block.
@@ -45,7 +44,7 @@ public class TestAzureApiAccess {
     public void complete() {
         TimeInterval connectionTimeout = new TimeInterval(5L, TimeUnit.SECONDS);
         TimeInterval readTimeout = new TimeInterval(15L, TimeUnit.SECONDS);
-        Level azureSdkLogLevel = Level.BODY;
+        LogLevel azureSdkLogLevel = LogLevel.BODY;
         AzureApiAccess apiAccess = new AzureApiAccess(SUBECRIPTION_ID, validAuth(), connectionTimeout, readTimeout,
                 azureSdkLogLevel);
         apiAccess.validate();

@@ -3,7 +3,6 @@ package com.elastisys.scale.cloudpool.azure.driver.functions;
 import static com.elastisys.scale.cloudpool.azure.driver.Constants.MEMBERSHIP_STATUS_TAG;
 import static com.elastisys.scale.cloudpool.azure.driver.Constants.SERVICE_STATE_TAG;
 
-import java.util.List;
 import java.util.function.Function;
 
 import org.joda.time.DateTime;
@@ -18,7 +17,6 @@ import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.microsoft.azure.management.batch.ProvisioningState;
-import com.microsoft.azure.management.compute.DiskInstanceView;
 import com.microsoft.azure.management.compute.InstanceViewStatus;
 import com.microsoft.azure.management.compute.PowerState;
 import com.microsoft.azure.management.compute.VirtualMachine;
@@ -45,7 +43,12 @@ public class VmToMachine implements Function<VirtualMachine, Machine> {
                 builder.publicIp(publicIp);
             }
         }
-        builder.launchTime(extractLaunchTime(vm));
+        DateTime launchTime = extractProvisioningTime(vm);
+        builder.launchTime(launchTime);
+        if (launchTime == null) {
+            LOG.warn("failed to determine provisioning time for VM {}", vm.id());
+        }
+
         builder.machineState(extractMachineState(vm));
 
         // extract membership status if tag has been set on server
@@ -135,29 +138,32 @@ public class VmToMachine implements Function<VirtualMachine, Machine> {
     }
 
     /**
-     * Tries to determine the start time of an Azure VM.
+     * Tries to determine the start time of an Azure VM by looking at the time
+     * stamp of its <code>ProvisioningState</code>. <code>null</code> will be
+     * returned on failure to determine this time stamp.
+     * <p/>
+     * Note, however, that this timestamp may not always be the time at which
+     * the VM was launched, as it appears to be updated, for example, when
+     * updating a VM tag.
+     * <p/>
+     * See
+     * http://stackoverflow.com/questions/41036371/what-is-the-correct-way-of-determining-the-launch-time-of-an-azure-vm
+     *
      *
      * @param vm
      * @return
      */
-    private DateTime extractLaunchTime(VirtualMachine vm) {
-        // TODO: re-iterate the logic of determining Azure vm start time
-
-        // since there is no obvious way of determining this, look at the
-        // provisioning time stamp on the OS disk
-        String osDiskName = vm.storageProfile().osDisk().name();
-        List<DiskInstanceView> vmDisks = vm.instanceView().disks();
-        for (DiskInstanceView vmDisk : vmDisks) {
-            if (vmDisk.name().equals(osDiskName)) {
-                for (InstanceViewStatus status : vmDisk.statuses()) {
-                    if (status.code().toLowerCase().contains("provisioningstate")) {
-                        return status.time();
-                    }
+    private DateTime extractProvisioningTime(VirtualMachine vm) {
+        // since there is no obvious way of determining the VM's launch time,
+        // look at the latest provisioning time stamp
+        for (InstanceViewStatus status : vm.instanceView().statuses()) {
+            if (status.code().toLowerCase().contains("provisioningstate")) {
+                if (status.time() != null) {
+                    return status.time();
                 }
             }
         }
-        throw new AzureVmMetadataException(
-                String.format("failed to determine launchTime for VM %s by looking at the OS disk timestamp", vm.id()));
+        return null;
     }
 
 }

@@ -22,14 +22,13 @@ import com.microsoft.azure.CloudException;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.ImageReference;
 import com.microsoft.azure.management.compute.VirtualMachine;
-import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithLinuxCreate;
-import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithLinuxRootUsername;
+import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithLinuxCreateManagedOrUnmanaged;
+import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithLinuxRootUsernameManagedOrUnmanaged;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithOS;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithPublicIpAddress;
 import com.microsoft.azure.management.network.Network;
 import com.microsoft.azure.management.resources.fluentcore.model.CreatedResources;
-
-import okhttp3.logging.HttpLoggingInterceptor;
+import com.microsoft.rest.LogLevel;
 
 /**
  * Lab program for creating a Linux VM in Azure.
@@ -43,8 +42,7 @@ public class CreateLinuxVirtualMachine extends BaseLabProgram {
         String region = "northeurope";
 
         AzureApiAccess apiAccess = new AzureApiAccess(SUBSCRIPTION_ID, AZURE_AUTH,
-                new TimeInterval(10L, TimeUnit.SECONDS), new TimeInterval(10L, TimeUnit.SECONDS),
-                HttpLoggingInterceptor.Level.BASIC);
+                new TimeInterval(10L, TimeUnit.SECONDS), new TimeInterval(10L, TimeUnit.SECONDS), LogLevel.BASIC);
         Azure api = ApiUtils.acquireApiClient(apiAccess);
 
         String vmSize = "Standard_DS1_v2";
@@ -79,12 +77,13 @@ public class CreateLinuxVirtualMachine extends BaseLabProgram {
             vmDefWithIp = vmDef.withoutPrimaryPublicIpAddress();
         }
 
-        WithLinuxRootUsername vmDefWithOs = null;
+        WithLinuxRootUsernameManagedOrUnmanaged vmDefWithOs = null;
 
         ImageReference imageReference = new VmImage(imageRef).getImageReference();
         vmDefWithOs = vmDefWithIp.withSpecificLinuxImageVersion(imageReference);
 
-        WithLinuxCreate vmDefWithLinux = vmDefWithOs.withRootUsername(rootUserName).withSsh(publicKey);
+        WithLinuxCreateManagedOrUnmanaged vmDefWithLinux = vmDefWithOs.withRootUsername(rootUserName)
+                .withSsh(publicKey);
         vmDefWithLinux.withSize(vmSize);
         vmDefWithLinux.withTags(tags);
         // Disks in Azure are created in storage accounts. Create a new storage

@@ -14,6 +14,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.azure.driver.client.AzureClient;
+import com.elastisys.scale.cloudpool.azure.driver.client.AzureException;
 import com.elastisys.scale.cloudpool.azure.driver.client.VmSpec;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
 import com.elastisys.scale.cloudpool.azure.driver.config.CloudApiSettings;
@@ -21,7 +22,6 @@ import com.elastisys.scale.cloudpool.azure.driver.requests.GetVmRequest;
 import com.elastisys.scale.cloudpool.azure.driver.requests.PurgeVmRequest;
 import com.elastisys.scale.cloudpool.azure.driver.requests.TagVmRequest;
 import com.elastisys.scale.cloudpool.azure.driver.requests.UntagVmRequest;
-import com.microsoft.azure.CloudException;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.VirtualMachine;
 
@@ -47,7 +47,7 @@ public class StandardAzureClient implements AzureClient {
     }
 
     @Override
-    public List<VirtualMachine> launchVms(List<VmSpec> vmSpecs) throws CloudException {
+    public List<VirtualMachine> launchVms(List<VmSpec> vmSpecs) throws AzureException {
         checkState(isConfigured(), "attempt to use unconfigured azure client");
 
         validateVmSpecs(vmSpecs);
@@ -60,14 +60,14 @@ public class StandardAzureClient implements AzureClient {
     }
 
     @Override
-    public void deleteVm(String vmId) throws NotFoundException, CloudException {
+    public void deleteVm(String vmId) throws NotFoundException, AzureException {
         checkState(isConfigured(), "attempt to use unconfigured azure client");
 
         new PurgeVmRequest(apiAccess(), vmId).call();
     }
 
     @Override
-    public List<VirtualMachine> listVms(Map<String, String> withTags) throws CloudException {
+    public List<VirtualMachine> listVms(Map<String, String> withTags) throws AzureException {
         checkState(isConfigured(), "attempt to use unconfigured azure client");
 
         Azure api = ApiUtils.acquireApiClient(apiAccess());
@@ -82,21 +82,21 @@ public class StandardAzureClient implements AzureClient {
     }
 
     @Override
-    public VirtualMachine getVm(String vmId) throws NotFoundException, CloudException {
+    public VirtualMachine getVm(String vmId) throws NotFoundException, AzureException {
         checkState(isConfigured(), "attempt to use unconfigured azure client");
 
         return new GetVmRequest(apiAccess(), vmId).call();
     }
 
     @Override
-    public void tagVm(VirtualMachine vm, Map<String, String> tags) throws NotFoundException, CloudException {
+    public void tagVm(VirtualMachine vm, Map<String, String> tags) throws NotFoundException, AzureException {
         checkState(isConfigured(), "attempt to use unconfigured azure client");
 
         new TagVmRequest(apiAccess(), vm.id(), tags).call();
     }
 
     @Override
-    public void untagVm(VirtualMachine vm, Collection<String> tagKeys) throws NotFoundException, CloudException {
+    public void untagVm(VirtualMachine vm, Collection<String> tagKeys) throws NotFoundException, AzureException {
         checkState(isConfigured(), "attempt to use unconfigured azure client");
 
         new UntagVmRequest(apiAccess(), vm.id(), tagKeys).call();
