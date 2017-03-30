@@ -156,7 +156,7 @@ public class VmLauncher {
             vmWithOs = vm.withSize(vmSpec.getVmSize());
         } else {
             WithFromImageCreateOptionsUnmanaged vm = rawVmDef //
-                    .withStoredLinuxImage(vmImage.getImageURL())//
+                    .withStoredLinuxImage(vmImage.getImageURL()) //
                     .withRootUsername(linuxSettings.getRootUserName()) //
                     .withRootPassword(linuxSettings.getPassword()) //
                     .withSsh(linuxSettings.getPublicSshKey()) //
@@ -175,7 +175,8 @@ public class VmLauncher {
         // scale-in)
         StorageAccount storageAccount = new GetStorageAccountRequest(this.apiAccess, vmSpec.getStorageAccountName(),
                 this.resourceGroup).call();
-        vmWithOs.withExistingStorageAccount(storageAccount);
+        vmWithOs.withExistingStorageAccount(storageAccount) //
+                .withOsDiskName(vmSpec.getVmName());
 
         // add custom boot script to be executed
         CustomScriptExtension customScript = linuxSettings.getCustomScript();
@@ -214,7 +215,8 @@ public class VmLauncher {
         // scale-in)
         StorageAccount storageAccount = new GetStorageAccountRequest(this.apiAccess, vmSpec.getStorageAccountName(),
                 this.resourceGroup).call();
-        vmWithOs.withExistingStorageAccount(storageAccount);
+        vmWithOs.withExistingStorageAccount(storageAccount) //
+                .withOsDiskName(vmSpec.getVmName());
 
         // add custom boot script to be executed
         CustomScriptExtension customScript = windowsSettings.getCustomScript();

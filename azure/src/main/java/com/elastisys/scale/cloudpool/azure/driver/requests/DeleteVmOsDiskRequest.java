@@ -12,28 +12,24 @@ import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
 
 /**
- * An Azure request that, when called, deletes the VM disk VHD associated with a
- * given VM its the storage account container.
+ * An Azure request that, when called, deletes the OS disk associated with a
+ * given VM. If the OS disk is an unmanaged disk, all blobs found in the storage
+ * account container with th VM name as prefix will be deleted.
  *
  * @see PurgeVmRequest
  */
 public class DeleteVmOsDiskRequest extends AzureRequest<Void> {
 
-    /**
-     * A VM. All blobs found in the storage account container with the VM name
-     * as prefix will be deleted.
-     */
+    /** A VM whose OS disk is to be deleted. */
     private final VirtualMachine vm;
 
     /**
-     * Creates a {@link DeleteVmOsDiskRequest}. All blobs found in the storage
-     * account container with the VM name as prefix will be deleted.
+     * Creates a {@link DeleteVmOsDiskRequest}.
      *
      * @param apiAccess
-     *            https://testpooldisks.blob.core.windows.net/vhds
+     *            Azure API access credentials and settings.
      * @param vm
-     *            A VM. All blobs found in the storage account container with
-     *            the VM name as prefix will be deleted.
+     *            A VM whose OS disk is to be deleted.
      */
     public DeleteVmOsDiskRequest(AzureApiAccess apiAccess, VirtualMachine vm) {
         super(apiAccess);
@@ -43,13 +39,17 @@ public class DeleteVmOsDiskRequest extends AzureRequest<Void> {
 
     @Override
     public Void doRequest(Azure api) throws RuntimeException {
-        LOG.debug("deleting OS disk for VM {} ...", this.vm.name());
-
         if (this.vm.isManagedDiskEnabled()) {
+            LOG.debug("deleting managed OS disk for VM {} ...", this.vm.name());
             String osDiskId = this.vm.osDiskId();
+            if (osDiskId == null) {
+                LOG.debug("no managed OS disk to delete found for VM {}", this.vm.name());
+                return null;
+            }
             LOG.debug("deleting managed OS disk {}", osDiskId);
             api.disks().deleteById(osDiskId);
         } else {
+            LOG.debug("deleting unmanaged OS disk for VM {} ...", this.vm.name());
             deleteUnmanagedOsDisk(api);
         }
         LOG.debug("done deleting OS disk for VM {}.", this.vm.name());
