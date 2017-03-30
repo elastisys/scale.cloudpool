@@ -21,10 +21,12 @@ public class DeleteNetworkInterface extends BaseLabProgram {
     private static final Logger LOG = LoggerFactory.getLogger(DeleteNetworkInterface.class);
 
     /** TODO: set resource group name to operate on */
-    private static final String resourceGroup = "testpool";
-    private static final String region = "northeurope";
+    private static final String resourceGroup = "itest";
 
-    /** TODO: set the name of the VM within the resource group to delete. */
+    /**
+     * TODO: set the name of the network interface within the resource group to
+     * delete.
+     */
     private static final String networkInterfaceName = "AzureTestPool-1481267299236-0";
 
     public static void main(String[] args) {

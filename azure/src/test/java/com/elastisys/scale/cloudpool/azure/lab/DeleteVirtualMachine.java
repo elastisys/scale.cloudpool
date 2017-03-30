@@ -21,11 +21,10 @@ public class DeleteVirtualMachine extends BaseLabProgram {
     private static final Logger LOG = LoggerFactory.getLogger(DeleteVirtualMachine.class);
 
     /** TODO: set resource group name to operate on */
-    private static final String resourceGroup = "testpool";
-    private static final String region = "northeurope";
+    private static final String resourceGroup = "itest";
 
     /** TODO: set the name of the VM within the resource group to delete. */
-    private static final String vmName = "AzureTestPool-1481264393858-0";
+    private static final String vmName = "testvm-1490870352889";
 
     public static void main(String[] args) {
 

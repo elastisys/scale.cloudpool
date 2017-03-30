@@ -20,11 +20,11 @@ public class GetVirtualMachine extends BaseLabProgram {
     private static final Logger LOG = LoggerFactory.getLogger(GetVirtualMachine.class);
 
     /** TODO: set resource group name to operate on */
-    private static final String resourceGroup = "testpool";
+    private static final String resourceGroup = "itest";
     private static final String region = "northeurope";
 
     /** TODO: set the name of the VM within the resource group to get. */
-    private static final String vmName = "AzureTestPool-1481267548482-01";
+    private static final String vmName = "testvm-1490866859894";
 
     public static void main(String[] args) {
 
@@ -34,5 +34,13 @@ public class GetVirtualMachine extends BaseLabProgram {
 
         VirtualMachine vm = api.virtualMachines().getByGroup(resourceGroup, vmName);
         LOG.debug("found vm {}: {}", vm.name(), vm.id());
+
+        LOG.debug("is managed disk enabled: {}", vm.isManagedDiskEnabled());
+        LOG.debug("os disk id: {} ", vm.osDiskId());
+        LOG.debug("os disk vhd uri: {} ", vm.osUnmanagedDiskVhdUri());
+        LOG.debug("storage account type: {} ", vm.osDiskStorageAccountType());
+        LOG.debug("data disks: {}", vm.dataDisks());
+        LOG.debug("data disks: {}", vm.storageProfile().dataDisks());
+        LOG.debug("unmanaged data disks: {}", vm.unmanagedDataDisks());
     }
 }
