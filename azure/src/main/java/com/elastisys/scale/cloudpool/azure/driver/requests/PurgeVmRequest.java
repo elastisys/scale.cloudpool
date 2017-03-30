@@ -34,7 +34,11 @@ public class PurgeVmRequest extends AzureRequest<Void> {
         VirtualMachine vm = new GetVmRequest(apiAccess(), this.vmId).call();
         // need to delete VM before its network interface
         new DeleteVmRequest(apiAccess(), this.vmId).call();
-        new DeleteNetworkInterfaceRequest(apiAccess(), vm.primaryNetworkInterfaceId()).call();
+
+        if (vm.primaryNetworkInterfaceId() != null) {
+            new DeleteNetworkInterfaceRequest(apiAccess(), vm.primaryNetworkInterfaceId()).call();
+        }
+
         new DeleteVmOsDiskRequest(apiAccess(), vm).call();
         LOG.debug("vm {} purged.", this.vmId);
         return null;

@@ -34,15 +34,19 @@ public class VmToMachine implements Function<VirtualMachine, Machine> {
         builder.cloudProvider(CloudProviders.AZURE);
         builder.region(vm.regionName());
         builder.machineSize(vm.size().toString());
+
         NetworkInterface nic = vm.getPrimaryNetworkInterface();
-        builder.privateIp(nic.primaryPrivateIp());
-        NicIpConfiguration primaryIpConfig = nic.primaryIpConfiguration();
-        if (primaryIpConfig.publicIpAddressId() != null) {
-            String publicIp = primaryIpConfig.getPublicIpAddress().ipAddress();
-            if (publicIp != null) {
-                builder.publicIp(publicIp);
+        if (nic != null) {
+            builder.privateIp(nic.primaryPrivateIp());
+            NicIpConfiguration primaryIpConfig = nic.primaryIpConfiguration();
+            if (primaryIpConfig.publicIpAddressId() != null) {
+                String publicIp = primaryIpConfig.getPublicIpAddress().ipAddress();
+                if (publicIp != null) {
+                    builder.publicIp(publicIp);
+                }
             }
         }
+
         DateTime launchTime = extractProvisioningTime(vm);
         builder.launchTime(launchTime);
         if (launchTime == null) {
