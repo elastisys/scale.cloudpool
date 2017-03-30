@@ -35,6 +35,11 @@ public class DeleteNetworkInterfaceRequest extends AzureRequest<Void> {
     @Override
     public Void doRequest(Azure api) throws RuntimeException {
         NetworkInterface nic = api.networkInterfaces().getById(this.networkInterfaceId);
+        if (nic == null) {
+            LOG.debug("no network interface found with id {}", this.networkInterfaceId);
+            return null;
+        }
+
         LOG.debug("found network interface {}", nic.id());
         PublicIpAddress publicIp = nic.primaryIpConfiguration().getPublicIpAddress();
         if (publicIp != null) {

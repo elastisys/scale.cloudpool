@@ -274,7 +274,7 @@ public class VmLauncher {
                 LOG.info("cleaning up network interface {} ...", networkInterface.id());
                 new DeleteNetworkInterfaceRequest(this.apiAccess, networkInterface.id()).call();
             } catch (Exception e) {
-                LOG.warn("failed to clean up network interface {}: {}", networkInterface.id(), e.getMessage());
+                LOG.warn("failed to clean up network interface {}: {}", networkInterface.id(), e.getMessage(), e);
             }
         }
     }

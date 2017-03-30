@@ -45,7 +45,26 @@ public class DeleteVmOsDiskRequest extends AzureRequest<Void> {
     public Void doRequest(Azure api) throws RuntimeException {
         LOG.debug("deleting OS disk for VM {} ...", this.vm.name());
 
-        URI osDiskUri = URI.create(this.vm.osUnmanagedDiskVhdUri());
+        if (this.vm.isManagedDiskEnabled()) {
+            String osDiskId = this.vm.osDiskId();
+            LOG.debug("deleting managed OS disk {}", osDiskId);
+            api.disks().deleteById(osDiskId);
+        } else {
+            deleteUnmanagedOsDisk(api);
+        }
+        LOG.debug("done deleting OS disk for VM {}.", this.vm.name());
+        return null;
+    }
+
+    private void deleteUnmanagedOsDisk(Azure api) {
+        String osDiskUrl = this.vm.osUnmanagedDiskVhdUri();
+        if (osDiskUrl == null) {
+            LOG.warn("no unmanaged OS disk to delete found for VM {}.", this.vm.name());
+            return;
+        }
+
+        LOG.debug("deleting unmanaged OS disk {}", osDiskUrl);
+        URI osDiskUri = URI.create(osDiskUrl);
         String storageAccountName = extractStorageAccountName(osDiskUri);
         StorageAccount storageAccount = api.storageAccounts().getByGroup(this.vm.resourceGroupName(),
                 storageAccountName);
@@ -62,9 +81,6 @@ public class DeleteVmOsDiskRequest extends AzureRequest<Void> {
             throw new RuntimeException(String.format("failed to delete storage account blobs for VM %s: %s",
                     this.vm.name(), e.getMessage()), e);
         }
-
-        LOG.debug("done deleting OS disk for VM {}.", this.vm.name());
-        return null;
     }
 
     /**
