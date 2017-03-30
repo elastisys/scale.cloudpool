@@ -17,8 +17,6 @@ import com.google.common.collect.Lists;
  * Schedules termination of machine instances so that machine instances are
  * terminated as close as possible to the end of the current instance hour (with
  * a certain safety margin so that termination has time to complete).
- *
- *
  */
 public class TerminationScheduler {
 
@@ -63,7 +61,11 @@ public class TerminationScheduler {
     }
 
     /**
-     * Schedules termination for a single machine instance.
+     * Schedules termination for a single {@link Machine} instance.
+     * <p/>
+     * For cases where the {@link Machine} does not have a launch time set (it
+     * may not have been possible to determine), the {@link Machine} is
+     * scheduled for immediate termination.
      *
      * @param victim
      *            The machine instance to be scheduled for termination.
@@ -71,8 +73,10 @@ public class TerminationScheduler {
      */
     public ScheduledTermination scheduleEviction(Machine victim) {
         Preconditions.checkNotNull(victim, "null victim");
-        Preconditions.checkNotNull(victim.getLaunchTime(),
-                "cannot schedule termination for a " + "machine instance without launch time");
+
+        if (victim.getLaunchTime() == null) {
+            return new ScheduledTermination(victim, UtcTime.now());
+        }
 
         DateTime terminationTime = calculateTerminationTime(victim, this.instanceHourMargin);
         return new ScheduledTermination(victim, terminationTime);

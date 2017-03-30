@@ -130,11 +130,18 @@ public class TestTerminationScheduler extends AbstractScaledownTest {
         new TerminationScheduler(60).scheduleEviction(null);
     }
 
-    @Test(expected = NullPointerException.class)
+    /**
+     * {@link Machine}s without a launch time set (it may not have been possible
+     * to determine) are to be scheduled for immediate termination.
+     */
+    @Test
     public void candidateWithNullLaunchTime() {
-        DateTime launchTime = null;
+        FrozenTime.setFixed(UtcTime.parse("2013-06-01T12:00:00"));
+
+        DateTime nullLaunchTime = null;
         Machine machine = Machine.builder().id("i-1").machineState(MachineState.REQUESTED).cloudProvider("AWS-EC2")
-                .region("us-east-1").machineSize("m1.small").launchTime(null).build();
-        new TerminationScheduler(60).scheduleEviction(machine);
+                .region("us-east-1").machineSize("m1.small").launchTime(nullLaunchTime).build();
+        ScheduledTermination eviction = new TerminationScheduler(60).scheduleEviction(machine);
+        assertThat(eviction.getTerminationTime(), is(UtcTime.now()));
     }
 }
