@@ -12,6 +12,7 @@ JUL_CONFIG=${JUL_CONFIG:-/etc/elastisys/kubernetespool/logging.properties}
 # log destination dir for default LOG_CONFIG
 LOG_DIR=${LOG_DIR:-/var/log/elastisys/kubernetespool}
 mkdir -p ${LOG_DIR}
+STDOUT_LOG_LEVEL=${STDOUT_LOG_LEVEL:-INFO}
 
 #
 # Runtime configuration

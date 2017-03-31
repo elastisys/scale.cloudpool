@@ -235,6 +235,9 @@ Debug-related:
   - `LOG_DIR`: destination folder for log files (when using default
     `${LOG_CONFIG}` setup).  
     Default: `/var/log/elastisys/openstackpool`.
+  - `STDOUT_LOG_LEVEL`: output level for logging to stdout (note: log output 
+    that is written to file includes `DEBUG` level).  
+    Default: `INFO`.
 
 Client authentication:
 

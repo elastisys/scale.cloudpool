@@ -12,6 +12,7 @@ JUL_CONFIG=${JUL_CONFIG:-/etc/elastisys/spotpool/logging.properties}
 # log destination dir for default LOG_CONFIG
 LOG_DIR=${LOG_DIR:-/var/log/elastisys/spotpool}
 mkdir -p ${LOG_DIR}
+STDOUT_LOG_LEVEL=${STDOUT_LOG_LEVEL:-INFO}
 
 #
 # Runtime configuration
@@ -57,7 +58,7 @@ AUTH_OPTS=""
 # require clients to do basic authentication against a security realm
 if ${REQUIRE_BASIC_AUTH} ; then
     [ -z "${BASIC_AUTH_REALM_FILE}" ] && echo "error: no BASIC_AUTH_REALM_FILE specified" && exit 1
-    [ -z "${BASIC_AUTH_ROLE}" ] && echo "error: no BASIC_AUTH_ROLE specified" && exit 1   
+    [ -z "${BASIC_AUTH_ROLE}" ] && echo "error: no BASIC_AUTH_ROLE specified" && exit 1
     AUTH_OPTS="${AUTH_OPTS} --require-basicauth --require-role ${BASIC_AUTH_ROLE} --realm-file ${BASIC_AUTH_REALM_FILE}"
 fi
 # require clients to authenticate with a trusted certificate

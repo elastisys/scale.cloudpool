@@ -12,6 +12,7 @@ JUL_CONFIG=${JUL_CONFIG:-/etc/elastisys/openstackpool/logging.properties}
 # log destination dir for default LOG_CONFIG
 LOG_DIR=${LOG_DIR:-/var/log/elastisys/openstackpool}
 mkdir -p ${LOG_DIR}
+STDOUT_LOG_LEVEL=${STDOUT_LOG_LEVEL:-INFO}
 
 #
 # Runtime configuration

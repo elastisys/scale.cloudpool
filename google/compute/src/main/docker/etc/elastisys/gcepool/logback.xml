@@ -4,6 +4,8 @@
   <!-- Log output directory is specified by system property/environment
        variable 'LOG_DIR'. If unspecified, a directory is used.-->
   <variable name="logdir" value="${LOG_DIR:-/tmp/elastisys/logs/gcepool}"/>
+  <!-- Logging level to set for stdout -->
+  <variable name="stdout_log_level" value="${STDOUT_LOG_LEVEL:-INFO}"/>
 
   <!-- captures to file -->
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -24,7 +26,7 @@
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <target>System.out</target>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-      <level>INFO</level>
+      <level>${stdout_log_level}</level>
     </filter>
     <encoder>
       <!-- when running as multipool, cloudpool MDC property is set mark which cloudpool instance produced a log entry -->
