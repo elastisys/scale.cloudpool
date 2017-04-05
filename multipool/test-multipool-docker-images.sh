@@ -31,7 +31,10 @@ for pom in $(find ${projectroot} -name 'pom.xml' | xargs  grep -l docker-maven-p
     echo "trying out ${image} ..."
     docker run --name multicloudpool -d -p ${HOST_PORT}:80 -e HTTP_PORT=80 -e MULTIPOOL=true ${image_name}
     echo "[${image}] waiting for server to start ..."
-    sleep 4s
+    # wait for cloudpool to come up
+    while ! curl --silent http://localhost:${HOST_PORT}/cloudpools; do
+	sleep 1s
+    done
     # list cloudpool instances
     instances=$(curl --silent -X GET http://localhost:${HOST_PORT}/cloudpools)
     num_instances=$(echo ${instances} | jq '. | length')
