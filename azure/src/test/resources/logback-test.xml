@@ -14,10 +14,7 @@
   <logger name="com.elastisys">
     <level value="debug" />
   </logger>
-  <logger name="okhttp3">
-    <level value="info" />
-  </logger>
   <logger name="com.microsoft">
-    <level value="warn" />
+    <level value="INFO" />
   </logger>
 </configuration>

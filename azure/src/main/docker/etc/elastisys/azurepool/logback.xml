@@ -44,4 +44,9 @@
     <level value="DEBUG"/>
   </logger>
 
+  <!-- needed when azureSdkLogLevel config is set to value other than NONE -->
+  <logger name="com.microsoft">
+    <level value="INFO"/>
+  </logger>
+  
 </configuration>
