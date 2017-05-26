@@ -24,7 +24,7 @@ public class DeleteVirtualMachine extends BaseLabProgram {
     private static final String resourceGroup = "itest";
 
     /** TODO: set the name of the VM within the resource group to delete. */
-    private static final String vmName = "testvm-1490870352889";
+    private static final String vmName = "testvm-1495801148941";
 
     public static void main(String[] args) {
 
@@ -32,7 +32,7 @@ public class DeleteVirtualMachine extends BaseLabProgram {
                 new TimeInterval(10L, TimeUnit.SECONDS), new TimeInterval(10L, TimeUnit.SECONDS), LogLevel.BASIC);
         Azure api = ApiUtils.acquireApiClient(apiAccess);
 
-        VirtualMachine vm = api.virtualMachines().getByGroup(resourceGroup, vmName);
+        VirtualMachine vm = api.virtualMachines().getByResourceGroup(resourceGroup, vmName);
         LOG.debug("found vm {}: {}", vm.name(), vm.id());
 
         LOG.debug("deleting vm {}", vm.id());

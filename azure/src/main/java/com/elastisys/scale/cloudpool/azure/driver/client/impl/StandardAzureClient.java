@@ -71,7 +71,7 @@ public class StandardAzureClient implements AzureClient {
         checkState(isConfigured(), "attempt to use unconfigured azure client");
 
         Azure api = ApiUtils.acquireApiClient(apiAccess());
-        List<VirtualMachine> vms = api.virtualMachines().listByGroup(this.config.getResourceGroup());
+        List<VirtualMachine> vms = api.virtualMachines().listByResourceGroup(this.config.getResourceGroup());
 
         // filter out VMs in wrong region and with wrong tag set
         List<VirtualMachine> filteredVms = vms.stream()//

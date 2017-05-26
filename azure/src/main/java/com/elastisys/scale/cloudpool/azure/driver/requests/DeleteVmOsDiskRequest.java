@@ -66,7 +66,7 @@ public class DeleteVmOsDiskRequest extends AzureRequest<Void> {
         LOG.debug("deleting unmanaged OS disk {}", osDiskUrl);
         URI osDiskUri = URI.create(osDiskUrl);
         String storageAccountName = extractStorageAccountName(osDiskUri);
-        StorageAccount storageAccount = api.storageAccounts().getByGroup(this.vm.resourceGroupName(),
+        StorageAccount storageAccount = api.storageAccounts().getByResourceGroup(this.vm.resourceGroupName(),
                 storageAccountName);
 
         // extract API access key to allow us to access the blob container

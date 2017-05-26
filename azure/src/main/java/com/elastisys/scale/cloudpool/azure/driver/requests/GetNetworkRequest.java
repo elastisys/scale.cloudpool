@@ -38,7 +38,7 @@ public class GetNetworkRequest extends AzureRequest<Network> {
     public Network doRequest(Azure api) throws NotFoundException, CloudException {
         try {
             LOG.debug("retrieving network {} ...", this.networkName);
-            return api.networks().getByGroup(this.resourceGroup, this.networkName);
+            return api.networks().getByResourceGroup(this.resourceGroup, this.networkName);
         } catch (CloudException e) {
             if (e.body().code().equals("ResourceNotFound")) {
                 throw new NotFoundException("no such network: " + this.networkName, e);

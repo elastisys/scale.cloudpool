@@ -28,7 +28,7 @@ public class DeleteDisk extends BaseLabProgram {
                 new TimeInterval(10L, TimeUnit.SECONDS), new TimeInterval(10L, TimeUnit.SECONDS), LogLevel.BASIC);
         Azure api = ApiUtils.acquireApiClient(apiAccess);
 
-        Disk disk = api.disks().getByGroup(resourceGroup, diskName);
+        Disk disk = api.disks().getByResourceGroup(resourceGroup, diskName);
         LOG.debug("found disk {}", disk.id());
 
         api.disks().deleteById(disk.id());

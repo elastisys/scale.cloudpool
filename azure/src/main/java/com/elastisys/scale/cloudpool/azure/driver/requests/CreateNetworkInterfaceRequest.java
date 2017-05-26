@@ -68,9 +68,9 @@ public class CreateNetworkInterfaceRequest extends AzureRequest<NetworkInterface
                 .withExistingResourceGroup(this.resourceGroup) //
                 .withExistingPrimaryNetwork(network) //
                 .withSubnet(this.networkSettings.getSubnetName()) //
-                .withPrimaryPrivateIpAddressDynamic();
+                .withPrimaryPrivateIPAddressDynamic();
         if (this.networkSettings.getAssignPublicIp()) {
-            nicDef.withNewPrimaryPublicIpAddress(this.nicName);
+            nicDef.withNewPrimaryPublicIPAddress(this.nicName);
         }
         for (String securityGroup : this.networkSettings.getNetworkSecurityGroups()) {
             NetworkSecurityGroup nsg = new GetNetworkSecurityGroupRequest(apiAccess(), this.resourceGroup,

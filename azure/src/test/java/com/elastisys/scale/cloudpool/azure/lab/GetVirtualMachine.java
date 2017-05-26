@@ -32,7 +32,7 @@ public class GetVirtualMachine extends BaseLabProgram {
                 new TimeInterval(10L, TimeUnit.SECONDS), new TimeInterval(10L, TimeUnit.SECONDS), LogLevel.BASIC);
         Azure api = ApiUtils.acquireApiClient(apiAccess);
 
-        VirtualMachine vm = api.virtualMachines().getByGroup(resourceGroup, vmName);
+        VirtualMachine vm = api.virtualMachines().getByResourceGroup(resourceGroup, vmName);
         LOG.debug("found vm {}: {}", vm.name(), vm.id());
 
         LOG.debug("is managed disk enabled: {}", vm.isManagedDiskEnabled());

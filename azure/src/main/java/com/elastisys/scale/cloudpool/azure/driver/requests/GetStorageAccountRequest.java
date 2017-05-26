@@ -40,7 +40,7 @@ public class GetStorageAccountRequest extends AzureRequest<StorageAccount> {
     public StorageAccount doRequest(Azure api) throws NotFoundException, CloudException {
         try {
             LOG.debug("retrieving storage account {} ...", this.storageAccountName);
-            return api.storageAccounts().getByGroup(this.resourceGroup, this.storageAccountName);
+            return api.storageAccounts().getByResourceGroup(this.resourceGroup, this.storageAccountName);
         } catch (CloudException e) {
             if (e.body().code().equals("ResourceNotFound")) {
                 throw new NotFoundException("no such storage account: " + this.storageAccountName, e);

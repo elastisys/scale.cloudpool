@@ -32,13 +32,13 @@ public class ListVirtualMachines extends BaseLabProgram {
                 new TimeInterval(10L, TimeUnit.SECONDS), new TimeInterval(10L, TimeUnit.SECONDS), LogLevel.BASIC);
         Azure api = ApiUtils.acquireApiClient(apiAccess);
 
-        PagedList<VirtualMachine> vmsInGroup = api.virtualMachines().listByGroup(resourceGroup);
+        PagedList<VirtualMachine> vmsInGroup = api.virtualMachines().listByResourceGroup(resourceGroup);
         for (VirtualMachine vm : vmsInGroup) {
             LOG.debug("vm: {}", vm.name());
             LOG.debug("* tags: {}", vm.tags());
-            LOG.debug("* private ip: {}", vm.getPrimaryNetworkInterface().primaryPrivateIp());
-            if (vm.getPrimaryPublicIpAddress() != null) {
-                LOG.debug("* public ip:  {}", vm.getPrimaryPublicIpAddress().ipAddress());
+            LOG.debug("* private ip: {}", vm.getPrimaryNetworkInterface().primaryPrivateIP());
+            if (vm.getPrimaryPublicIPAddress() != null) {
+                LOG.debug("* public ip:  {}", vm.getPrimaryPublicIPAddress().ipAddress());
             }
             LOG.debug("* power state:        {}", vm.powerState());
             LOG.debug("* provisioning state: {}", vm.provisioningState());

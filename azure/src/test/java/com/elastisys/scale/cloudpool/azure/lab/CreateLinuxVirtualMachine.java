@@ -17,7 +17,6 @@ import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
 import com.elastisys.scale.cloudpool.azure.driver.config.LinuxSettings;
 import com.elastisys.scale.cloudpool.azure.driver.config.NetworkSettings;
 import com.elastisys.scale.commons.json.types.TimeInterval;
-import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
@@ -50,11 +49,11 @@ public class CreateLinuxVirtualMachine extends BaseLabProgram {
         String rootUserName = "ubuntu";
         String publicKey = Files.toString(new File(System.getenv("HOME"), ".ssh/id_rsa.pub"), Charsets.UTF_8);
         Map<String, String> tags = ImmutableMap.of("elastisys-cloudPool", "testpool");
-        String bootScript = "#!/bin/bash\nsudo apt update -qy && sudo apt install -qy apache2";
+        String base64BootScript = "IyEvYmluL2Jhc2gKCmFwdCB1cGRhdGUgLXF5ICYmIGFwdCBpbnN0YWxsIGFwYWNoZTIgLXF5CgpmdW5jdGlvbiBkZWZhdWx0X2lwIHsKICAgIGRlZmF1bHRfbmV0d29ya19pbnRlcmZhY2U9JChyb3V0ZSB8IGdyZXAgZGVmYXVsdCB8IGF3ayAne3ByaW50ICQ4fScpCiAgICBpcD0kKGlmY29uZmlnICR7ZGVmYXVsdF9uZXR3b3JrX2ludGVyZmFjZX0gfCBncmVwICdpbmV0IGFkZHInIHwgYXdrICd7cHJpbnQgJDJ9JyB8IGF3ayAtRiA6ICd7cHJpbnQgJDJ9JykKICAgIGVjaG8gIiR7aXB9Igp9CgpvdXRwdXRfcGF0aD0vdmFyL3d3dy9odG1sL2luZGV4Lmh0bWwKCmNhdCA+ICR7b3V0cHV0X3BhdGh9IDw8RU9GCjxodG1sPgo8Ym9keT4KSGVsbG8hIEkgYW0gJChkZWZhdWx0X2lwKSEKPC9ib2R5Pgo8L2h0bWw+CkVPRgo=";
 
         VmSpec vmSpec = new VmSpec(vmSize, imageRef, vmName,
-                Optional.of(new LinuxSettings(rootUserName, publicKey, null, Base64Utils.toBase64(bootScript), null)),
-                Optional.empty(), storageAccountName,
+                Optional.of(new LinuxSettings(rootUserName, publicKey, null, base64BootScript, null)), Optional.empty(),
+                storageAccountName,
                 new NetworkSettings(networkName, subnetName, assignPublicIp, Arrays.asList("itest-webserver")), tags);
         VmLauncher vmLauncher = new VmLauncher(apiAccess, resourceGroup, region);
         List<VirtualMachine> createdVms = vmLauncher.createVms(Arrays.asList(vmSpec));

@@ -32,7 +32,7 @@ public class GetNetworkSecurityGroupsRequest extends AzureRequest<List<NetworkSe
 
     @Override
     public List<NetworkSecurityGroup> doRequest(Azure api) throws RuntimeException {
-        return new ArrayList<>(api.networkSecurityGroups().listByGroup(this.resourceGroup));
+        return new ArrayList<>(api.networkSecurityGroups().listByResourceGroup(this.resourceGroup));
     }
 
 }

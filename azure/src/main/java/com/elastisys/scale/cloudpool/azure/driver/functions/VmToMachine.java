@@ -21,7 +21,7 @@ import com.microsoft.azure.management.compute.InstanceViewStatus;
 import com.microsoft.azure.management.compute.PowerState;
 import com.microsoft.azure.management.compute.VirtualMachine;
 import com.microsoft.azure.management.network.NetworkInterface;
-import com.microsoft.azure.management.network.NicIpConfiguration;
+import com.microsoft.azure.management.network.NicIPConfiguration;
 
 public class VmToMachine implements Function<VirtualMachine, Machine> {
     static Logger LOG = LoggerFactory.getLogger(VmToMachine.class);
@@ -37,10 +37,10 @@ public class VmToMachine implements Function<VirtualMachine, Machine> {
 
         NetworkInterface nic = vm.getPrimaryNetworkInterface();
         if (nic != null) {
-            builder.privateIp(nic.primaryPrivateIp());
-            NicIpConfiguration primaryIpConfig = nic.primaryIpConfiguration();
-            if (primaryIpConfig.publicIpAddressId() != null) {
-                String publicIp = primaryIpConfig.getPublicIpAddress().ipAddress();
+            builder.privateIp(nic.primaryPrivateIP());
+            NicIPConfiguration primaryIpConfig = nic.primaryIPConfiguration();
+            if (primaryIpConfig.publicIPAddressId() != null) {
+                String publicIp = primaryIpConfig.getPublicIPAddress().ipAddress();
                 if (publicIp != null) {
                     builder.publicIp(publicIp);
                 }

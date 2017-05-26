@@ -35,7 +35,7 @@ public class DeleteNetworkInterface extends BaseLabProgram {
                 new TimeInterval(10L, TimeUnit.SECONDS), new TimeInterval(10L, TimeUnit.SECONDS), LogLevel.BASIC);
         Azure api = ApiUtils.acquireApiClient(apiAccess);
 
-        NetworkInterface nic = api.networkInterfaces().getByGroup(resourceGroup, networkInterfaceName);
+        NetworkInterface nic = api.networkInterfaces().getByResourceGroup(resourceGroup, networkInterfaceName);
         LOG.debug("found network interface {}", nic.id());
 
         new DeleteNetworkInterfaceRequest(apiAccess, nic.id()).call();

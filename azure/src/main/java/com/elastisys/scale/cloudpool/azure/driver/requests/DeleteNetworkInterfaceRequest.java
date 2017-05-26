@@ -3,7 +3,7 @@ package com.elastisys.scale.cloudpool.azure.driver.requests;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.network.NetworkInterface;
-import com.microsoft.azure.management.network.PublicIpAddress;
+import com.microsoft.azure.management.network.PublicIPAddress;
 
 /**
  * An Azure request that, when called, deletes a network interface and any
@@ -41,13 +41,13 @@ public class DeleteNetworkInterfaceRequest extends AzureRequest<Void> {
         }
 
         LOG.debug("found network interface {}", nic.id());
-        PublicIpAddress publicIp = nic.primaryIpConfiguration().getPublicIpAddress();
+        PublicIPAddress publicIp = nic.primaryIPConfiguration().getPublicIPAddress();
         if (publicIp != null) {
             LOG.debug("disassociating public ip {} ({}) from network interface {}", publicIp.name(),
                     publicIp.ipAddress(), nic.name());
-            nic.update().withoutPrimaryPublicIpAddress().apply();
+            nic.update().withoutPrimaryPublicIPAddress().apply();
             LOG.debug("deleting public ip {} ...", publicIp.id());
-            api.publicIpAddresses().deleteById(publicIp.id());
+            api.publicIPAddresses().deleteById(publicIp.id());
         }
 
         LOG.debug("deleting network interface {} ...", nic.name());

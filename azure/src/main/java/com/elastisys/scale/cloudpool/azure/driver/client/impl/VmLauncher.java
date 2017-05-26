@@ -150,7 +150,10 @@ public class VmLauncher {
 
             // add custom data (for example, cloud-init script)
             if (linuxSettings.getCustomData() != null) {
-                vm.withCustomData(linuxSettings.getCustomData());
+                // cast as a temporary workaround for
+                // https://github.com/Azure/azure-sdk-for-java/issues/1628
+                ((VirtualMachine.DefinitionStages.WithLinuxCreateManagedOrUnmanaged) vm)
+                        .withCustomData(linuxSettings.getCustomData());
             }
 
             vmWithOs = vm.withSize(vmSpec.getVmSize());
@@ -176,7 +179,7 @@ public class VmLauncher {
         StorageAccount storageAccount = new GetStorageAccountRequest(this.apiAccess, vmSpec.getStorageAccountName(),
                 this.resourceGroup).call();
         vmWithOs.withExistingStorageAccount(storageAccount) //
-                .withOsDiskName(vmSpec.getVmName());
+                .withOSDiskName(vmSpec.getVmName());
 
         // add custom boot script to be executed
         CustomScriptExtension customScript = linuxSettings.getCustomScript();
@@ -216,7 +219,7 @@ public class VmLauncher {
         StorageAccount storageAccount = new GetStorageAccountRequest(this.apiAccess, vmSpec.getStorageAccountName(),
                 this.resourceGroup).call();
         vmWithOs.withExistingStorageAccount(storageAccount) //
-                .withOsDiskName(vmSpec.getVmName());
+                .withOSDiskName(vmSpec.getVmName());
 
         // add custom boot script to be executed
         CustomScriptExtension customScript = windowsSettings.getCustomScript();

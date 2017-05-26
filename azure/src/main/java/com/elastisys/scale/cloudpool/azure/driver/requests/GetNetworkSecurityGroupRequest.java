@@ -38,7 +38,7 @@ public class GetNetworkSecurityGroupRequest extends AzureRequest<NetworkSecurity
 
         try {
             LOG.debug("retrieving security group {} ...", this.securityGroup);
-            return api.networkSecurityGroups().getByGroup(this.resourceGroup, this.securityGroup);
+            return api.networkSecurityGroups().getByResourceGroup(this.resourceGroup, this.securityGroup);
         } catch (CloudException e) {
             if (e.body().code().equals("ResourceNotFound")) {
                 throw new NotFoundException("no such security group: " + this.securityGroup, e);
