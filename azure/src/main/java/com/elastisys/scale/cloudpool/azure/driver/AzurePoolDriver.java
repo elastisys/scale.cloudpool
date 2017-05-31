@@ -111,7 +111,8 @@ public class AzurePoolDriver implements CloudPoolDriver {
             String vmName = String.format("%s-%d-%d", vmNamePrefix, timeMillis, i);
             VmSpec vmSpec = new VmSpec(provisioningTemplate.getVmSize(), provisioningTemplate.getVmImage(), vmName,
                     provisioningTemplate.getLinuxSettings(), provisioningTemplate.getWindowsSettings(),
-                    provisioningTemplate.getStorageAccountName(), provisioningTemplate.getNetwork(), tags);
+                    provisioningTemplate.getStorageAccountName(), provisioningTemplate.getNetwork(),
+                    provisioningTemplate.getAvailabilitySet().orElse(null), tags);
             vmSpecs.add(vmSpec);
         }
         LOG.info("launching VMs: {}", Joiner.on("\n").join(vmSpecs));

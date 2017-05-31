@@ -34,6 +34,8 @@ public class TestAzureScaleOutConfig {
     private static final String VM_NAME_PREFIX = "apache";
     /** Sample storage account name. */
     private static final String STORAGE_ACCOUNT = "apache-disks";
+    /** Sample availability set. */
+    private static final String AVAILABILITY_SET = "availability-set";
 
     /**
      * Only storage account, network and one of linuxSettings and
@@ -42,7 +44,7 @@ public class TestAzureScaleOutConfig {
     @Test
     public void defaults() {
         ProvisioningTemplate conf = new ProvisioningTemplate(VM_SIZE, VM_IMAGE, null, validLinuxSettings(), null,
-                STORAGE_ACCOUNT, validNetworkSettings(), null);
+                STORAGE_ACCOUNT, validNetworkSettings(), null, null);
         conf.validate();
 
         assertThat(conf.getVmSize(), is(VM_SIZE));
@@ -50,6 +52,7 @@ public class TestAzureScaleOutConfig {
         assertThat(conf.getVmNamePrefix().isPresent(), is(false));
         assertThat(conf.getLinuxSettings().get(), is(validLinuxSettings()));
         assertThat(conf.getNetwork(), is(validNetworkSettings()));
+        assertThat(conf.getAvailabilitySet().isPresent(), is(false));
         assertThat(conf.getStorageAccountName(), is(STORAGE_ACCOUNT));
         assertThat(conf.getTags(), is(Collections.emptyMap()));
         assertThat(conf.getWindowsSettings().isPresent(), is(false));
@@ -61,7 +64,7 @@ public class TestAzureScaleOutConfig {
     @Test
     public void linuxVm() {
         ProvisioningTemplate conf = new ProvisioningTemplate(VM_SIZE, VM_IMAGE, VM_NAME_PREFIX, validLinuxSettings(),
-                null, STORAGE_ACCOUNT, validNetworkSettings(), validTags());
+                null, STORAGE_ACCOUNT, validNetworkSettings(), AVAILABILITY_SET, validTags());
         conf.validate();
 
         assertThat(conf.getVmSize(), is(VM_SIZE));
@@ -70,6 +73,7 @@ public class TestAzureScaleOutConfig {
         assertThat(conf.getLinuxSettings().get(), is(validLinuxSettings()));
         assertThat(conf.getNetwork(), is(validNetworkSettings()));
         assertThat(conf.getStorageAccountName(), is(STORAGE_ACCOUNT));
+        assertThat(conf.getAvailabilitySet().get(), is(AVAILABILITY_SET));
         assertThat(conf.getTags(), is(validTags()));
 
         // no windows VM settings
@@ -82,7 +86,7 @@ public class TestAzureScaleOutConfig {
     @Test
     public void windowsVm() {
         ProvisioningTemplate conf = new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, null,
-                validWindowsSettings(), STORAGE_ACCOUNT, validNetworkSettings(), validTags());
+                validWindowsSettings(), STORAGE_ACCOUNT, validNetworkSettings(), AVAILABILITY_SET, validTags());
         conf.validate();
 
         assertThat(conf.getVmSize(), is(VM_SIZE));
@@ -92,6 +96,7 @@ public class TestAzureScaleOutConfig {
         assertThat(conf.getWindowsSettings().get(), is(validWindowsSettings()));
         assertThat(conf.getNetwork(), is(validNetworkSettings()));
         assertThat(conf.getStorageAccountName(), is(STORAGE_ACCOUNT));
+        assertThat(conf.getAvailabilitySet().get(), is(AVAILABILITY_SET));
         assertThat(conf.getTags(), is(validTags()));
 
         // no linux VM settings
@@ -107,7 +112,7 @@ public class TestAzureScaleOutConfig {
             LinuxSettings linuxSettings = validLinuxSettings();
             WindowsSettings windowsSettings = null;
             new ProvisioningTemplate(null, VM_IMAGE, VM_NAME_PREFIX, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
-                    validNetworkSettings(), validTags()).validate();
+                    validNetworkSettings(), AVAILABILITY_SET, validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("vmSize"));
@@ -123,7 +128,7 @@ public class TestAzureScaleOutConfig {
             LinuxSettings linuxSettings = validLinuxSettings();
             WindowsSettings windowsSettings = null;
             new ProvisioningTemplate(VM_SIZE, null, VM_NAME_PREFIX, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
-                    validNetworkSettings(), validTags()).validate();
+                    validNetworkSettings(), AVAILABILITY_SET, validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("vmImage"));
@@ -139,7 +144,7 @@ public class TestAzureScaleOutConfig {
             LinuxSettings linuxSettings = null;
             WindowsSettings windowsSettings = null;
             new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, linuxSettings, windowsSettings,
-                    STORAGE_ACCOUNT, validNetworkSettings(), validTags()).validate();
+                    STORAGE_ACCOUNT, validNetworkSettings(), AVAILABILITY_SET, validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("neither linuxSettings nor windowsSettings given"));
@@ -153,7 +158,8 @@ public class TestAzureScaleOutConfig {
     public void onBothLinuxAndWindowsSettings() {
         try {
             new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, validLinuxSettings(),
-                    validWindowsSettings(), STORAGE_ACCOUNT, validNetworkSettings(), validTags()).validate();
+                    validWindowsSettings(), STORAGE_ACCOUNT, validNetworkSettings(), AVAILABILITY_SET, validTags())
+                            .validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("may only specify one of linuxSettings and windowsSettings, not both"));
@@ -168,7 +174,7 @@ public class TestAzureScaleOutConfig {
     public void onIllegalLinuxSettings() {
         try {
             new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, invalidLinuxSettings(), null,
-                    STORAGE_ACCOUNT, validNetworkSettings(), validTags()).validate();
+                    STORAGE_ACCOUNT, validNetworkSettings(), AVAILABILITY_SET, validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("linuxSettings"));
@@ -183,7 +189,7 @@ public class TestAzureScaleOutConfig {
     public void onIllegalWindowsSettings() {
         try {
             new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, null, invalidWindowsSettings(),
-                    STORAGE_ACCOUNT, validNetworkSettings(), validTags()).validate();
+                    STORAGE_ACCOUNT, validNetworkSettings(), AVAILABILITY_SET, validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("windowsSettings"));
@@ -199,7 +205,7 @@ public class TestAzureScaleOutConfig {
             LinuxSettings linuxSettings = validLinuxSettings();
             WindowsSettings windowsSettings = null;
             new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, linuxSettings, windowsSettings,
-                    STORAGE_ACCOUNT, null, validTags()).validate();
+                    STORAGE_ACCOUNT, null, AVAILABILITY_SET, validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("network"));
@@ -214,7 +220,7 @@ public class TestAzureScaleOutConfig {
     public void onIllegalNetworkSettings() {
         try {
             new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, null, validWindowsSettings(),
-                    STORAGE_ACCOUNT, invalidNetworkSettings(), validTags()).validate();
+                    STORAGE_ACCOUNT, invalidNetworkSettings(), AVAILABILITY_SET, validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             System.out.println(e);
@@ -231,7 +237,7 @@ public class TestAzureScaleOutConfig {
             LinuxSettings linuxSettings = validLinuxSettings();
             WindowsSettings windowsSettings = null;
             new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, linuxSettings, windowsSettings, null,
-                    validNetworkSettings(), validTags()).validate();
+                    validNetworkSettings(), AVAILABILITY_SET, validTags()).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("storageAccountName"));
@@ -246,7 +252,7 @@ public class TestAzureScaleOutConfig {
         try {
             Map<String, String> invalidTags = ImmutableMap.of("illegal/key", "value");
             new ProvisioningTemplate(VM_SIZE, WINDOWS_IMAGE, VM_NAME_PREFIX, null, validWindowsSettings(),
-                    STORAGE_ACCOUNT, validNetworkSettings(), invalidTags).validate();
+                    STORAGE_ACCOUNT, validNetworkSettings(), AVAILABILITY_SET, invalidTags).validate();
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("illegal tag key"));

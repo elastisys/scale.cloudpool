@@ -53,6 +53,13 @@ public class ProvisioningTemplate {
     private final NetworkSettings network;
 
     /**
+     * An existing availability set to which created VMs are to be added. May be
+     * <code>null</code>. If left out, created VMs will not be grouped into an
+     * availability set.
+     */
+    private final String availabilitySet;
+
+    /**
      * Tags to associate with created VMs. Note: the
      * {@link Constants#CLOUD_POOL_TAG} will automatically be set and should not
      * be overridden.
@@ -81,13 +88,17 @@ public class ProvisioningTemplate {
      *            created VMs.
      * @param network
      *            Network settings for created VMs. Required.
+     * @param availabilitySet
+     *            An existing availability set to which created VMs are to be
+     *            added. Optional. If left out, created VMs will not be grouped
+     *            into an availability set.
      * @param tags
      *            Tags to associate with created VMs. May be <code>null</code>.
      *            Note: the {@link Constants#CLOUD_POOL_TAG} will automatically
      *            be set and should not be overridden.
      */
     public ProvisioningTemplate(String vmSize, String vmImage, String vmNamePrefix, LinuxSettings linuxSettings,
-            WindowsSettings windowsSettings, String storageAccountName, NetworkSettings network,
+            WindowsSettings windowsSettings, String storageAccountName, NetworkSettings network, String availabilitySet,
             Map<String, String> tags) {
         this.vmSize = vmSize;
         this.vmImage = vmImage;
@@ -96,6 +107,7 @@ public class ProvisioningTemplate {
         this.windowsSettings = windowsSettings;
         this.storageAccountName = storageAccountName;
         this.network = network;
+        this.availabilitySet = availabilitySet;
         this.tags = tags;
     }
 
@@ -169,6 +181,16 @@ public class ProvisioningTemplate {
     }
 
     /**
+     * An existing availability set to which created VMs are to be added. If
+     * left out, created VMs will not be grouped into an availability set.
+     *
+     * @return
+     */
+    public Optional<String> getAvailabilitySet() {
+        return Optional.ofNullable(this.availabilitySet);
+    }
+
+    /**
      * Tags to associate with created VMs. Note: the
      * {@link Constants#CLOUD_POOL_TAG} will automatically be set and should not
      * be overridden.
@@ -182,7 +204,7 @@ public class ProvisioningTemplate {
     @Override
     public int hashCode() {
         return Objects.hash(this.vmSize, this.vmImage, this.vmNamePrefix, this.linuxSettings, this.storageAccountName,
-                this.network, this.tags);
+                this.network, this.availabilitySet, this.tags);
     }
 
     @Override
@@ -194,7 +216,9 @@ public class ProvisioningTemplate {
                     && Objects.equals(this.vmNamePrefix, that.vmNamePrefix)
                     && Objects.equals(this.linuxSettings, that.linuxSettings)
                     && Objects.equals(this.storageAccountName, that.storageAccountName)
-                    && Objects.equals(this.network, that.network) && Objects.equals(this.tags, that.tags);
+                    && Objects.equals(this.network, that.network) //
+                    && Objects.equals(this.availabilitySet, that.availabilitySet)
+                    && Objects.equals(this.tags, that.tags);
         }
         return false;
     }

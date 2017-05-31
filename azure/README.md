@@ -129,6 +129,7 @@ to the following:
                 "assignPublicIp": true,
                 "networkSecurityGroups": ["webserver"]
             },
+			"availabilitySet": "my-test-set",
             "tags": {
                 "tier": "web"
             }
@@ -179,8 +180,11 @@ The configuration keys have the following meaning:
 	    - `subnetName`: The subnet within the virtual network, from which a (private) IP address will be assigned to created VMs.
 	    - `assignPublicIp` (*optional*): Set to `true` to assign a public IP address to created VMs. Default: `false`.
 	    - `networkSecurityGroups` (*optional*): A set of existing network security groups to associate with created VMs. May be `null`, which means that no security groups get associated with the primary network interface of created VMs. The default behavior is to allow all inbound traffic from inside the VM's virtual network and to allow all outbound traffic from a VM.
-	  - `tags` (*optional*): Tags to associate with created VMs. *Note: a `elastisys-CloudPool` tag will automatically be set on each pool VM and should not be overridden*.
-	  
+	  - `availabilitySet` (*optional*): An existing
+        [availability set](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/create-availability-set) to
+        which created VMs are to be added. If left out, created VMs will not be
+        grouped into an availability set.
+      - `tags` (*optional*): Tags to associate with created VMs. *Note: a `elastisys-CloudPool` tag will automatically be set on each pool VM and should not be overridden*. 
 
 
 

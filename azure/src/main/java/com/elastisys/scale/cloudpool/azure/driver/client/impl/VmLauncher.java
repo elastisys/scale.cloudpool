@@ -18,10 +18,12 @@ import com.elastisys.scale.cloudpool.azure.driver.config.WindowsSettings;
 import com.elastisys.scale.cloudpool.azure.driver.requests.CreateNetworkInterfaceRequest;
 import com.elastisys.scale.cloudpool.azure.driver.requests.CreateVmsRequest;
 import com.elastisys.scale.cloudpool.azure.driver.requests.DeleteNetworkInterfaceRequest;
+import com.elastisys.scale.cloudpool.azure.driver.requests.GetAvailabilitySetRequest;
 import com.elastisys.scale.cloudpool.azure.driver.requests.GetStorageAccountRequest;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.common.base.Charsets;
 import com.microsoft.azure.management.Azure;
+import com.microsoft.azure.management.compute.AvailabilitySet;
 import com.microsoft.azure.management.compute.VirtualMachine;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithCreate;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged;
@@ -173,6 +175,14 @@ public class VmLauncher {
             vmWithOs = vm.withSize(vmSpec.getVmSize());
         }
 
+        // if specified, add VM to availability set
+        if (vmSpec.getAvailabilitySet().isPresent()) {
+            String availabilitySet = vmSpec.getAvailabilitySet().get();
+            AvailabilitySet set = new GetAvailabilitySetRequest(this.apiAccess, availabilitySet, this.resourceGroup)
+                    .call();
+            vmWithOs.withExistingAvailabilitySet(set);
+        }
+
         vmWithOs.withTags(vmSpec.getTags());
         // storage account where OS disk will be stored (the disk is deleted on
         // scale-in)
@@ -210,6 +220,14 @@ public class VmLauncher {
                     .withAdminPassword(windowsSettings.getPassword()) //
                     .withComputerName(vmSpec.getVmName());
             vmWithOs = vm.withSize(vmSpec.getVmSize());
+        }
+
+        // if specified, add VM to availability set
+        if (vmSpec.getAvailabilitySet().isPresent()) {
+            String availabilitySet = vmSpec.getAvailabilitySet().get();
+            AvailabilitySet set = new GetAvailabilitySetRequest(this.apiAccess, availabilitySet, this.resourceGroup)
+                    .call();
+            vmWithOs.withExistingAvailabilitySet(set);
         }
 
         vmWithOs.withTags(vmSpec.getTags());

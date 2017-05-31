@@ -48,6 +48,13 @@ public class VmSpec {
     /** Network settings for the created VM. */
     private final NetworkSettings network;
 
+    /**
+     * An existing availability set to which created VMs are to be added. May be
+     * <code>null</code>. If left out, created VMs will not be grouped into an
+     * availability set.
+     */
+    private final String availabilitySet;
+
     /** Tags to associate with the created VM. */
     private final Map<String, String> tags;
 
@@ -71,12 +78,17 @@ public class VmSpec {
      *            the created VM.
      * @param network
      *            Network settings for the created VM.
+     * @param availabilitySet
+     *            An existing availability set to which created VMs are to be
+     *            added. Optional. If left out, created VMs will not be grouped
+     *            into an availability set.
+     *
      * @param tags
      *            Tags to associate with the created VM.
      */
     public VmSpec(String vmSize, String vmImage, String vmName, Optional<LinuxSettings> linuxSettings,
             Optional<WindowsSettings> windowsSettings, String storageAccountName, NetworkSettings network,
-            Map<String, String> tags) {
+            String availabilitySet, Map<String, String> tags) {
         this.vmSize = vmSize;
         this.vmImage = vmImage;
         this.vmName = vmName;
@@ -84,6 +96,7 @@ public class VmSpec {
         this.windowsSettings = windowsSettings;
         this.storageAccountName = storageAccountName;
         this.network = network;
+        this.availabilitySet = availabilitySet;
         this.tags = tags;
 
         validate();
@@ -156,6 +169,16 @@ public class VmSpec {
     }
 
     /**
+     * An existing availability set to which created VMs are to be added. If
+     * left out, created VMs will not be grouped into an availability set.
+     *
+     * @return
+     */
+    public Optional<String> getAvailabilitySet() {
+        return Optional.ofNullable(this.availabilitySet);
+    }
+
+    /**
      * Tags to associate with the created VM.
      *
      * @return
@@ -167,7 +190,7 @@ public class VmSpec {
     @Override
     public int hashCode() {
         return Objects.hash(this.vmSize, this.vmImage, this.vmName, this.linuxSettings, this.windowsSettings,
-                this.storageAccountName, this.network, this.tags);
+                this.storageAccountName, this.network, this.availabilitySet, this.tags);
     }
 
     @Override
@@ -181,6 +204,7 @@ public class VmSpec {
                     && Objects.equals(this.windowsSettings, that.windowsSettings)
                     && Objects.equals(this.storageAccountName, that.storageAccountName)
                     && Objects.equals(this.network, that.network) //
+                    && Objects.equals(this.availabilitySet, that.availabilitySet) //
                     && Objects.equals(this.tags, that.tags);
         }
         return false;

@@ -1,6 +1,7 @@
 package com.elastisys.scale.cloudpool.azure.driver.client.impl;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.azure.driver.client.VmSpec;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
+import com.elastisys.scale.cloudpool.azure.driver.requests.GetAvailabilitySetRequest;
 import com.elastisys.scale.cloudpool.azure.driver.requests.GetNetworkRequest;
 import com.elastisys.scale.cloudpool.azure.driver.requests.GetNetworkSecurityGroupsRequest;
 import com.elastisys.scale.cloudpool.azure.driver.requests.GetStorageAccountRequest;
@@ -70,6 +72,21 @@ public class VmSpecValidator {
         Network network = validateVirtualNetwork(vmSpec.getNetwork().getVirtualNetwork());
         validateSubnet(network, vmSpec.getNetwork().getSubnetName());
         validateSecurityGroups(vmSpec.getNetwork().getNetworkSecurityGroups());
+        validateAvailabilitySet(vmSpec.getAvailabilitySet());
+    }
+
+    private void validateAvailabilitySet(Optional<String> availabilitySet) {
+        if (!availabilitySet.isPresent()) {
+            return;
+        }
+
+        LOG.debug("validating availability set {} ...", availabilitySet.get());
+        try {
+            new GetAvailabilitySetRequest(this.apiAccess, availabilitySet.get(), this.resourceGroup).call();
+        } catch (NotFoundException e) {
+            throw new IllegalArgumentException(String.format("availability set not found in resource group %s: %s",
+                    this.resourceGroup, availabilitySet.get()));
+        }
     }
 
     private void validateSecurityGroups(List<String> referencedSecurityGroups) {
@@ -101,7 +118,7 @@ public class VmSpecValidator {
             return new GetNetworkRequest(this.apiAccess, virtualNetwork, this.resourceGroup).call();
         } catch (NotFoundException e) {
             throw new IllegalArgumentException(
-                    String.format("network not found in resouce group %s: %s", this.resourceGroup, virtualNetwork));
+                    String.format("network not found in resource group %s: %s", this.resourceGroup, virtualNetwork));
         }
     }
 
@@ -110,7 +127,7 @@ public class VmSpecValidator {
         try {
             new GetStorageAccountRequest(this.apiAccess, storageAccountName, this.resourceGroup).call();
         } catch (NotFoundException e) {
-            throw new IllegalArgumentException(String.format("storage account not found in resouce group %s: %s",
+            throw new IllegalArgumentException(String.format("storage account not found in resource group %s: %s",
                     this.resourceGroup, storageAccountName));
         }
     }

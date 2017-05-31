@@ -19,15 +19,8 @@ import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.gson.JsonObject;
 
 /**
- * Lab program that exercises the AWS Auto Scaling Group {@link CloudPool} via
- * commands read from {@code stdin}.
- * <p/>
- * Note that an Auto Scaling group with the specified name (
- * {@value #autoScalingGroup}) must exist in the selected region (
- * {@value #region}) before running the program.The
- * {@code CreateLoadBalancerMain}, {@code CreateLaunchConfigurationMain} and
- * {@code CreateAutoScalingGroupMain} lab programs could get you started.
- *
+ * Lab program that exercises the Azure {@link CloudPool} via commands read from
+ * {@code stdin}.
  */
 public class RunPool {
     static Logger logger = LoggerFactory.getLogger(RunPool.class);

@@ -31,6 +31,7 @@ public class TestVmSpec {
     private static final String VM_NAME = "vm-0";
     private static final String VM_IMAGE = "Canonical:UbuntuServer:16.04.0-LTS:latest";
     private static final String VM_SIZE = "Standard_DS1_v2";
+    private static final String AVAILABILITY_SET = "availabiltiy-set";
     private static final Map<String, String> VM_TAGS = ImmutableMap.of(//
             Constants.CLOUD_POOL_TAG, "scaling-pool", //
             "tier", "web");
@@ -44,7 +45,7 @@ public class TestVmSpec {
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
         VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
-                VM_NETWORK, VM_TAGS);
+                VM_NETWORK, AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
 
         assertThat(vmSpec.getVmSize(), is(VM_SIZE));
@@ -54,6 +55,7 @@ public class TestVmSpec {
         assertThat(vmSpec.getWindowsSettings().isPresent(), is(false));
         assertThat(vmSpec.getStorageAccountName(), is(STORAGE_ACCOUNT));
         assertThat(vmSpec.getNetwork(), is(VM_NETWORK));
+        assertThat(vmSpec.getAvailabilitySet().get(), is(AVAILABILITY_SET));
         assertThat(vmSpec.getTags(), is(VM_TAGS));
     }
 
@@ -63,7 +65,7 @@ public class TestVmSpec {
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
         VmSpec vmSpec = new VmSpec(null, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT, VM_NETWORK,
-                VM_TAGS);
+                AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
     }
 
@@ -73,7 +75,7 @@ public class TestVmSpec {
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
         VmSpec vmSpec = new VmSpec(VM_SIZE, null, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT, VM_NETWORK,
-                VM_TAGS);
+                AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
     }
 
@@ -83,7 +85,7 @@ public class TestVmSpec {
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
         VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, null, linuxSettings, windowsSettings, STORAGE_ACCOUNT, VM_NETWORK,
-                VM_TAGS);
+                AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
     }
 
@@ -93,7 +95,7 @@ public class TestVmSpec {
         Optional<LinuxSettings> linuxSettings = Optional.empty();
 
         VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
-                VM_NETWORK, VM_TAGS);
+                VM_NETWORK, AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
 
     }
@@ -104,7 +106,7 @@ public class TestVmSpec {
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
         VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
-                VM_NETWORK, VM_TAGS);
+                VM_NETWORK, AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
 
     }
@@ -115,7 +117,7 @@ public class TestVmSpec {
         Optional<LinuxSettings> linuxSettings = Optional.of(invalidLinuxSettings());
 
         VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
-                VM_NETWORK, VM_TAGS);
+                VM_NETWORK, AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
 
     }
@@ -126,7 +128,7 @@ public class TestVmSpec {
         Optional<LinuxSettings> linuxSettings = Optional.empty();
 
         VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
-                VM_NETWORK, VM_TAGS);
+                VM_NETWORK, AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
 
     }
@@ -137,7 +139,7 @@ public class TestVmSpec {
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
         VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, null, VM_NETWORK,
-                VM_TAGS);
+                AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
 
     }
@@ -148,7 +150,7 @@ public class TestVmSpec {
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
         VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT, null,
-                VM_TAGS);
+                AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
 
     }
@@ -159,7 +161,7 @@ public class TestVmSpec {
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
         VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
-                invalidNetworkSettings(), VM_TAGS);
+                invalidNetworkSettings(), AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
 
     }
@@ -170,7 +172,20 @@ public class TestVmSpec {
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
         VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
-                VM_NETWORK, null);
+                VM_NETWORK, AVAILABILITY_SET, null);
+        vmSpec.validate();
+    }
+
+    /**
+     * It is optional to specify an availability set for VMs.
+     */
+    @Test
+    public void missingAvailabilitySet() {
+        String nullAvailabilitySet = null;
+        Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
+        Optional<WindowsSettings> windowsSettings = Optional.empty();
+        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
+                VM_NETWORK, nullAvailabilitySet, VM_TAGS);
         vmSpec.validate();
     }
 
@@ -181,7 +196,7 @@ public class TestVmSpec {
 
         Map<String, String> invalidTags = ImmutableMap.of("a/key", "value");
         VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
-                VM_NETWORK, invalidTags);
+                VM_NETWORK, AVAILABILITY_SET, invalidTags);
         vmSpec.validate();
 
     }
