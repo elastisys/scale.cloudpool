@@ -38,7 +38,7 @@ public class CloudPoolServer {
      * to process the command-line arguments, an error will be written together
      * with a usage string and then the program will exit with a failure code.
      * <p/>
-     * The {@code --help} will cause the uasge text to be written before exiting
+     * The {@code --help} will cause the usage text to be written before exiting
      * the program (with a zero exit code).
      *
      * @param args
