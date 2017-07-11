@@ -30,6 +30,7 @@
     <module>kubernetes</module>
     <module>azure</module>
     <module>google</module>
+    <module>vsphere</module>
   </modules>
 
   <!-- Location of Git repository. Used to tag releases. -->
