@@ -4,7 +4,7 @@ import com.vmware.vim25.mo.ManagedEntity;
 
 import java.rmi.RemoteException;
 
-public interface Tagging {
+public interface Tagger {
 
     boolean isTagged(ManagedEntity me, String tag);
 

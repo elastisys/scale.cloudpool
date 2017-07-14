@@ -1,0 +1,11 @@
+{
+	"name": "integration-test-pool",
+	"cloudApiSettings": {
+		"url": "https://192.168.104.230/sdk",
+		"username": "administrator@vsphere.local",
+		"password": "Sverker_tonfisk1!"
+	},
+	"provisioningTemplate": {
+		"template": "minimal-template"
+	}
+}
