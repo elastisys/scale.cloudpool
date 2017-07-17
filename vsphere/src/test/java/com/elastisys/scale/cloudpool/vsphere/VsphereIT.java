@@ -63,6 +63,7 @@ public class VsphereIT {
     @Test
     public void taggedResourceShouldBeTagged() throws RemoteException {
         Tagger tagger = new CustomAttributeTagger();
+        tagger.initialize(serviceInstance);
         tagger.tag(minimalVm, Tag.CLOUD_POOL);
         assertTrue(tagger.isTagged(minimalVm, Tag.CLOUD_POOL));
     }

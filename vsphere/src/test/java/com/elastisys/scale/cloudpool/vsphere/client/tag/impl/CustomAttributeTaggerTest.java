@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.vsphere.client.tag.impl;
 
 import com.elastisys.scale.cloudpool.vsphere.client.tag.Tag;
 import com.elastisys.scale.cloudpool.vsphere.client.tag.Tagger;
+import com.vmware.vim25.CustomFieldDef;
 import com.vmware.vim25.CustomFieldStringValue;
 import com.vmware.vim25.mo.VirtualMachine;
 import org.junit.Before;
@@ -27,13 +28,15 @@ public class CustomAttributeTaggerTest {
     }
 
     @Test
-    public void newVirtualMachineShouldNotBeTagged() {
+    public void newVirtualMachineShouldNotBeTagged() throws RemoteException {
+        CustomFieldDef[] cfdArr = {};
+        when(virtualMachineMock.getAvailableField()).thenReturn(cfdArr);
         assertFalse(customAttributeTagger.isTagged(virtualMachineMock, Tag.CLOUD_POOL));
     }
 
     @Test
     public void tagWithoutError() throws RemoteException {
-        customAttributeTagger.tag(virtualMachineMock, "Tagged");
+        customAttributeTagger.tag(virtualMachineMock, Tag.CLOUD_POOL);
     }
 
     @Test(expected = RemoteException.class)
@@ -48,6 +51,11 @@ public class CustomAttributeTaggerTest {
         cfsv.setKey(1);
         cfsv.setValue("Set");
         CustomFieldStringValue[] cfsvArr = {cfsv};
+        CustomFieldDef cfd = new CustomFieldDef();
+        cfd.setName(Tag.CLOUD_POOL);
+        cfd.setKey(1);
+        CustomFieldDef[] cfdArr = {cfd};
+        when(virtualMachineMock.getAvailableField()).thenReturn(cfdArr);
         when(virtualMachineMock.getCustomValue()).thenReturn(cfsvArr);
         assertTrue(customAttributeTagger.isTagged((virtualMachineMock), Tag.CLOUD_POOL));
     }
