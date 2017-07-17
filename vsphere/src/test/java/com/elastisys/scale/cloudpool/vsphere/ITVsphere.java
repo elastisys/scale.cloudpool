@@ -20,7 +20,7 @@ import java.util.UUID;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class VsphereIT {
+public class ITVsphere {
 
     private static DriverConfig driverConfig;
     private static VsphereApiSettings vsphereApiSettings;
