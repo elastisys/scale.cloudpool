@@ -6,7 +6,6 @@ import com.elastisys.scale.cloudpool.vsphere.client.tag.Tagger;
 import com.vmware.vim25.CustomFieldDef;
 import com.vmware.vim25.CustomFieldStringValue;
 import com.vmware.vim25.CustomFieldValue;
-import com.vmware.vim25.NotFound;
 import com.vmware.vim25.mo.*;
 
 import java.rmi.RemoteException;
