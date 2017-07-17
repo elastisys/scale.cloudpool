@@ -1,6 +1,32 @@
 package com.elastisys.scale.cloudpool.vsphere.config;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 public class VsphereProvisioningTemplate {
 
-    public String template;
+    private final String template;
+    private final String resourcePool;
+    private final String folder;
+
+    public VsphereProvisioningTemplate(String template, String resourcePool, String folder) {
+        this.template = template;
+        this.resourcePool = resourcePool;
+        this.folder = folder;
+    }
+
+    public void validate() {
+        checkArgument(this.template != null, "missing template");
+    }
+
+    public String getTemplate() {
+        return template;
+    }
+
+    public String getResourcePool() {
+        return resourcePool;
+    }
+
+    public String getFolder() {
+        return folder;
+    }
 }

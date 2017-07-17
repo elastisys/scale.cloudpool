@@ -41,7 +41,7 @@ public class ITVsphere {
 
         Folder root = serviceInstance.getRootFolder();
         VirtualMachine template = (VirtualMachine) new InventoryNavigator(root).searchManagedEntity("VirtualMachine",
-                provisioningTemplate.template);
+                provisioningTemplate.getTemplate());
         VirtualMachineCloneSpec cloneSpec = new VirtualMachineCloneSpec();
         ResourcePool pool = (ResourcePool) new InventoryNavigator(root)
                 .searchManagedEntity(ResourcePool.class.getSimpleName(), "Resources");
