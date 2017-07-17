@@ -10,16 +10,9 @@ import org.junit.Test;
 
 public class TestVsphereApiSettings {
 
-    private static String url;
-    private static String username;
-    private static String password;
-
-    @BeforeClass
-    public static void setup() throws MalformedURLException {
-        url = "https://example.com";
-        username = "Username";
-        password = "passw0rd";
-    }
+    private static String url = "https://example.com";
+    private static String username = "Username";
+    private static String password = "passw0rd";
 
     @Test
     public void completeConfig() throws MalformedURLException {
