@@ -36,12 +36,15 @@ public class ITVsphere {
         driverConfig = JsonUtils.toObject(JsonUtils.parseJsonResource("VcenterInfo.json"), DriverConfig.class);
         vsphereApiSettings = driverConfig.parseCloudApiSettings(VsphereApiSettings.class);
         provisioningTemplate = driverConfig.parseProvisioningTemplate(VsphereProvisioningTemplate.class);
-        serviceInstance = new ServiceInstance(vsphereApiSettings.url, vsphereApiSettings.username, vsphereApiSettings.password, true);
+        serviceInstance = new ServiceInstance(vsphereApiSettings.getUrl(), vsphereApiSettings.getUsername(),
+                vsphereApiSettings.getPassword(), true);
 
         Folder root = serviceInstance.getRootFolder();
-        VirtualMachine template = (VirtualMachine)new InventoryNavigator(root).searchManagedEntity("VirtualMachine", provisioningTemplate.template);
+        VirtualMachine template = (VirtualMachine) new InventoryNavigator(root).searchManagedEntity("VirtualMachine",
+                provisioningTemplate.template);
         VirtualMachineCloneSpec cloneSpec = new VirtualMachineCloneSpec();
-        ResourcePool pool = (ResourcePool)new InventoryNavigator(root).searchManagedEntity(ResourcePool.class.getSimpleName(), "Resources");
+        ResourcePool pool = (ResourcePool) new InventoryNavigator(root)
+                .searchManagedEntity(ResourcePool.class.getSimpleName(), "Resources");
         VirtualMachineRelocateSpec relocateSpec = new VirtualMachineRelocateSpec();
         relocateSpec.setPool(pool.getMOR());
         cloneSpec.setPowerOn(false);
@@ -50,10 +53,10 @@ public class ITVsphere {
         String cloneName = "integration-test-" + UUID.randomUUID().toString();
         Task task = template.cloneVM_Task((Folder) template.getParent(), cloneName, cloneSpec);
         task.waitForTask();
-        if(task.getTaskInfo().getState().equals(Task.SUCCESS)) {
+        if (task.getTaskInfo().getState().equals(Task.SUCCESS)) {
             throw new Exception();
         }
-        minimalVm = (VirtualMachine)new InventoryNavigator(root).searchManagedEntity("VirtualMachine", cloneName);
+        minimalVm = (VirtualMachine) new InventoryNavigator(root).searchManagedEntity("VirtualMachine", cloneName);
 
         tagger = new CustomAttributeTagger();
         tagger.initialize(serviceInstance);
