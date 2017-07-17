@@ -1,10 +1,12 @@
 package com.elastisys.scale.cloudpool.vsphere.client.tag.impl;
 
+import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.vsphere.client.tag.Tag;
 import com.elastisys.scale.cloudpool.vsphere.client.tag.Tagger;
 import com.vmware.vim25.CustomFieldDef;
 import com.vmware.vim25.CustomFieldStringValue;
 import com.vmware.vim25.CustomFieldValue;
+import com.vmware.vim25.NotFound;
 import com.vmware.vim25.mo.*;
 
 import java.rmi.RemoteException;
@@ -30,47 +32,54 @@ public class CustomAttributeTagger implements Tagger {
 
     @Override
     public boolean isTagged(ManagedEntity me, String tag) throws RemoteException {
-        CustomFieldValue[] cfvArr = me.getCustomValue();
-        CustomFieldDef[] cfdArr = me.getAvailableField();
-        if (cfvArr == null || cfdArr == null) {
-            return false;
-        }
-        Integer key = -1;
-        for(CustomFieldDef def : cfdArr) {
-            if(tag.equals(def.getName())){
-                key = def.getKey();
-            }
-        }
-        if(key == -1){
-            return false;
-        }
-        for(CustomFieldValue cfv : cfvArr){
-            CustomFieldStringValue cfsv = (CustomFieldStringValue) cfv;
-            if(cfv.getKey() == key && cfsv.getValue().equals(TagValues.Set)) {
+        try {
+            if (getCustomValue(me, tag).equals(TagValues.Set)) {
                 return true;
             }
-        }
-        return false;
-
-        /*
-        if(cfvArr == null) {
+            return false;
+        } catch (NotFoundException e) {
             return false;
         }
-        for (CustomFieldValue cfv : cfvArr) {
-            CustomFieldStringValue cfsv = (CustomFieldStringValue) cfv;
-            // TODO: use cfsv.getKey() to find the right custom attribute
-            if(cfsv.getValue().equals(TagValues.Set)) {
-                return true;
-            }
-        }
-        return false;
-        */
     }
 
     @Override
     public void tag(ManagedEntity me, String tag) throws RemoteException {
         VirtualMachine vm = (VirtualMachine) me;
         vm.setCustomValue(tag, TagValues.Set);
+    }
+
+    @Override
+    public void untag(ManagedEntity me, String tag) throws RemoteException {
+        VirtualMachine vm = (VirtualMachine) me;
+        vm.setCustomValue(tag, TagValues.Unset);
+    }
+
+    private String getCustomValue(ManagedEntity me, String definition) throws RemoteException, NotFoundException {
+        CustomFieldValue[] cfvArr = me.getCustomValue();
+        CustomFieldDef[] cfdArr = me.getAvailableField();
+        Integer key = -1;
+        if (cfvArr == null || cfdArr == null) {
+            throw new NotFoundException();
+        }
+
+        // fetch the key for the CustomFieldDefinition
+        for(CustomFieldDef def : cfdArr) {
+            if(definition.equals(def.getName())){
+                key = def.getKey();
+            }
+        }
+        if(key == -1){
+            throw new NotFoundException();
+        }
+
+        // check if the key has a corresponding CustomFieldValue
+        for(CustomFieldValue cfv : cfvArr){
+            CustomFieldStringValue cfsv = (CustomFieldStringValue) cfv;
+            if(cfv.getKey() == key) {
+                return cfsv.getValue();
+            }
+        }
+        throw new NotFoundException();
     }
 
     private static final class TagValues {

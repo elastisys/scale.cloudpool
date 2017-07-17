@@ -17,6 +17,7 @@ import org.junit.Test;
 import java.rmi.RemoteException;
 import java.util.UUID;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class VsphereIT {
@@ -27,6 +28,8 @@ public class VsphereIT {
 
     private static ServiceInstance serviceInstance;
     private static VirtualMachine minimalVm;
+
+    private static Tagger tagger;
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -51,6 +54,9 @@ public class VsphereIT {
             throw new Exception();
         }
         minimalVm = (VirtualMachine)new InventoryNavigator(root).searchManagedEntity("VirtualMachine", cloneName);
+
+        tagger = new CustomAttributeTagger();
+        tagger.initialize(serviceInstance);
     }
 
     @AfterClass
@@ -62,10 +68,10 @@ public class VsphereIT {
 
     @Test
     public void taggedResourceShouldBeTagged() throws RemoteException {
-        Tagger tagger = new CustomAttributeTagger();
-        tagger.initialize(serviceInstance);
         tagger.tag(minimalVm, Tag.CLOUD_POOL);
         assertTrue(tagger.isTagged(minimalVm, Tag.CLOUD_POOL));
+        tagger.untag(minimalVm, Tag.CLOUD_POOL);
+        assertFalse(tagger.isTagged(minimalVm, Tag.CLOUD_POOL));
     }
 
 }

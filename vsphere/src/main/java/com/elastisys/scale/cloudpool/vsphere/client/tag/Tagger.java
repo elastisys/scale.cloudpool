@@ -13,4 +13,6 @@ public interface Tagger {
 
     void tag(ManagedEntity me, String tag) throws RemoteException;
 
+    void untag(ManagedEntity me, String tag) throws RemoteException;
+
 }

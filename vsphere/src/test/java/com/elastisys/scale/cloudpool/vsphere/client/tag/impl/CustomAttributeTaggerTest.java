@@ -47,17 +47,35 @@ public class CustomAttributeTaggerTest {
 
     @Test
     public void taggedVirtualMachineShouldBeTagged() throws RemoteException {
+        setupMockTags(Tag.CLOUD_POOL, true);
+        assertTrue(customAttributeTagger.isTagged((virtualMachineMock), Tag.CLOUD_POOL));
+    }
+
+    @Test
+    public void untaggedVirtualMachineShouldNotBeTagged() throws RemoteException {
+        setupMockTags(Tag.CLOUD_POOL, true);
+        customAttributeTagger.untag(virtualMachineMock, Tag.CLOUD_POOL);
+        Mockito.verify(virtualMachineMock).setCustomValue(anyString(), anyString());
+    }
+
+    private void setupMockTags(String tag, boolean set) throws RemoteException {
+        int key = 1;
+        String value;
+        if (set) {
+            value = "Set";
+        } else {
+            value = "Unset";
+        }
         CustomFieldStringValue cfsv = new CustomFieldStringValue();
-        cfsv.setKey(1);
-        cfsv.setValue("Set");
+        cfsv.setKey(key);
+        cfsv.setValue(value);
         CustomFieldStringValue[] cfsvArr = {cfsv};
         CustomFieldDef cfd = new CustomFieldDef();
-        cfd.setName(Tag.CLOUD_POOL);
-        cfd.setKey(1);
+        cfd.setName(tag);
+        cfd.setKey(key);
         CustomFieldDef[] cfdArr = {cfd};
         when(virtualMachineMock.getAvailableField()).thenReturn(cfdArr);
         when(virtualMachineMock.getCustomValue()).thenReturn(cfsvArr);
-        assertTrue(customAttributeTagger.isTagged((virtualMachineMock), Tag.CLOUD_POOL));
     }
 
 }
