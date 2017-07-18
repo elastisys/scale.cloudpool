@@ -1,4 +1,4 @@
-package com.elastisys.scale.cloudpool.vsphere;
+package com.elastisys.scale.cloudpool.vsphere.server;
 
 import com.elastisys.scale.cloudpool.api.server.CloudPoolOptions;
 import com.elastisys.scale.cloudpool.api.server.CloudPoolServer;

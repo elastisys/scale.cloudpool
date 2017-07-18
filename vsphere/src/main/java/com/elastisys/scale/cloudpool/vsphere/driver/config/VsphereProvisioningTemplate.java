@@ -1,4 +1,4 @@
-package com.elastisys.scale.cloudpool.vsphere.config;
+package com.elastisys.scale.cloudpool.vsphere.driver.config;
 
 import static com.google.common.base.Preconditions.checkArgument;
 

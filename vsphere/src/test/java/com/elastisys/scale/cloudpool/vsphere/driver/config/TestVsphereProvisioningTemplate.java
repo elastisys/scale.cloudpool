@@ -1,4 +1,4 @@
-package com.elastisys.scale.cloudpool.vsphere.config;
+package com.elastisys.scale.cloudpool.vsphere.driver.config;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;

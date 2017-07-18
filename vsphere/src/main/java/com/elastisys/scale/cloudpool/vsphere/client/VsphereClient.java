@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.vsphere.client;
 
-import com.elastisys.scale.cloudpool.vsphere.config.VsphereApiSettings;
-import com.elastisys.scale.cloudpool.vsphere.config.VsphereProvisioningTemplate;
+import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
+import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
 import com.vmware.vim25.mo.VirtualMachine;
 
 import java.util.List;
