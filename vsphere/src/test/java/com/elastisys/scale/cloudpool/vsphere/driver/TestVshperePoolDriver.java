@@ -15,8 +15,8 @@ import static org.mockito.Matchers.any;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
-import com.elastisys.scale.cloudpool.vsphere.config.VsphereApiSettings;
-import com.elastisys.scale.cloudpool.vsphere.config.VsphereProvisioningTemplate;
+import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
+import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.gson.JsonObject;
 
