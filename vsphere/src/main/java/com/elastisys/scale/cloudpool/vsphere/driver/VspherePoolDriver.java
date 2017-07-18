@@ -12,6 +12,7 @@ import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
 
+import java.rmi.RemoteException;
 import java.util.List;
 
 public class VspherePoolDriver implements CloudPoolDriver {
@@ -33,7 +34,11 @@ public class VspherePoolDriver implements CloudPoolDriver {
         vsphereProvisioningTemplate = configuration.parseProvisioningTemplate(VsphereProvisioningTemplate.class);
         vsphereProvisioningTemplate.validate();
 
-        vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
+        try {
+            vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
+        } catch (RemoteException e) {
+            throw new CloudPoolDriverException();
+        }
 
         driverConfig = configuration;
     }

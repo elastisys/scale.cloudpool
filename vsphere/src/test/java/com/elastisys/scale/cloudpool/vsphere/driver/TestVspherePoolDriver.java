@@ -17,7 +17,9 @@ import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTe
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.gson.JsonObject;
 
-public class TestVshperePoolDriver {
+import java.rmi.RemoteException;
+
+public class TestVspherePoolDriver {
 
     private VspherePoolDriver driver;
     private VsphereClient mockedClient = mock(VsphereClient.class);
@@ -39,7 +41,7 @@ public class TestVshperePoolDriver {
     }
 
     @Test
-    public void configuredDriverShouldBeConfigured() {
+    public void configuredDriverShouldBeConfigured() throws RemoteException{
         DriverConfig configuration = loadDriverConfig(specificConfigPath);
         assertFalse(driver.isConfigured());
         driver.configure(configuration);
@@ -48,7 +50,7 @@ public class TestVshperePoolDriver {
     }
 
     @Test
-    public void minimalDriverConfiguration() {
+    public void minimalDriverConfiguration() throws RemoteException{
         DriverConfig configuration = loadDriverConfig(minimalConfigPath);
         assertFalse(driver.isConfigured());
         driver.configure(configuration);
