@@ -17,11 +17,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.rmi.RemoteException;
+import java.util.List;
 import java.util.UUID;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.*;
 
 public class ITVsphere {
 
@@ -81,9 +81,17 @@ public class ITVsphere {
     }
 
     @Test
-    public void clientConfigurationShouldSucceed() throws RemoteException{
+    public void clientConfigurationShouldSucceed() throws RemoteException {
         VsphereClient vsphereClient = new StandardVsphereClient();
         vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
+    }
+
+    @Test
+    public void clientShouldGetVirtualMachines() throws RemoteException {
+        VsphereClient vsphereClient = new StandardVsphereClient();
+        vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
+        List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines();
+        assertTrue(virtualMachines.isEmpty());
     }
 
 }
