@@ -21,44 +21,41 @@ public class TestCustomAttributeTagger {
 
     private VirtualMachine mockVirtualMachine;
     private Tagger customAttributeTagger;
+    private Tag mockTag;
 
     @Before
     public void setup(){
         mockVirtualMachine = mock(VirtualMachine.class);
         customAttributeTagger = new CustomAttributeTagger();
+        mockTag = createMockTag("PoolName", "MyCloudPool");
     }
 
     @Test
     public void newVirtualMachineShouldNotBeTagged() throws RemoteException {
         CustomFieldDef[] cfdArr = {};
         when(mockVirtualMachine.getAvailableField()).thenReturn(cfdArr);
-        Tag mockTag = createMockTag("PoolName", "MyCloudPool");
         assertFalse(customAttributeTagger.isTagged(mockVirtualMachine, mockTag));
     }
 
     @Test
     public void tagWithoutError() throws RemoteException {
-        Tag mockTag = createMockTag("PoolName", "MyCloudPool");
         customAttributeTagger.tag(mockVirtualMachine, mockTag);
     }
 
     @Test(expected = RemoteException.class)
     public void nonInstantiatedVirtualMachineShouldThrowException() throws RemoteException {
         Mockito.doThrow(new RemoteException()).when(mockVirtualMachine).setCustomValue(anyString(), anyString());
-        Tag mockTag = createMockTag("PoolName", "MyCloudPool");
         customAttributeTagger.tag(mockVirtualMachine, mockTag);
     }
 
     @Test
     public void taggedVirtualMachineShouldBeTagged() throws RemoteException {
-        Tag mockTag = createMockTag("PoolName", "MyCloudPool");
         setupMockTags(mockTag.getKey(), mockTag.getValue());
         assertTrue(customAttributeTagger.isTagged(mockVirtualMachine, mockTag));
     }
 
     @Test
     public void untaggedVirtualMachineShouldNotBeTagged() throws RemoteException {
-        Tag mockTag = createMockTag("PoolName", "MyCloudPool");
         setupMockTags("PoolName", "");
         customAttributeTagger.untag(mockVirtualMachine, mockTag);
         assertFalse(customAttributeTagger.isTagged(mockVirtualMachine, mockTag));
