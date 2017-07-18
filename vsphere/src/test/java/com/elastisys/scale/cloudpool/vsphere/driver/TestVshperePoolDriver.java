@@ -2,10 +2,7 @@ package com.elastisys.scale.cloudpool.vsphere.driver;
 
 import static org.junit.Assert.*;
 
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.mockito.Mockito.mock;
@@ -31,21 +28,9 @@ public class TestVshperePoolDriver {
     private String missingPasswordConfig = "config/missing-password-vsphere-config.json";
     private String missingTemplateConfig = "config/missing-template-vsphere-config.json";
 
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
-    }
-
-    @AfterClass
-    public static void tearDownAfterClass() throws Exception {
-    }
-
     @Before
     public void setUp() throws Exception {
         driver = new VspherePoolDriver(mockedClient);
-    }
-
-    @After
-    public void tearDown() throws Exception {
     }
 
     @Test
@@ -56,17 +41,19 @@ public class TestVshperePoolDriver {
     @Test
     public void configuredDriverShouldBeConfigured() {
         DriverConfig configuration = loadDriverConfig(specificConfigPath);
+        assertFalse(driver.isConfigured());
         driver.configure(configuration);
-        assertTrue(this.driver.isConfigured());
-        verify(this.mockedClient).configure(any(VsphereApiSettings.class), any(VsphereProvisioningTemplate.class));
+        assertTrue(driver.isConfigured());
+        verify(mockedClient).configure(any(VsphereApiSettings.class), any(VsphereProvisioningTemplate.class));
     }
 
     @Test
     public void minimalDriverConfiguration() {
         DriverConfig configuration = loadDriverConfig(minimalConfigPath);
+        assertFalse(driver.isConfigured());
         driver.configure(configuration);
-        assertTrue(this.driver.isConfigured());
-        verify(this.mockedClient).configure(any(VsphereApiSettings.class), any(VsphereProvisioningTemplate.class));
+        assertTrue(driver.isConfigured());
+        verify(mockedClient).configure(any(VsphereApiSettings.class), any(VsphereProvisioningTemplate.class));
     }
 
     @Test
@@ -78,6 +65,7 @@ public class TestVshperePoolDriver {
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("URL"));
         }
+        assertFalse(driver.isConfigured());
     }
 
     @Test
@@ -89,6 +77,7 @@ public class TestVshperePoolDriver {
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("username"));
         }
+        assertFalse(driver.isConfigured());
     }
 
     @Test
@@ -100,6 +89,7 @@ public class TestVshperePoolDriver {
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("password"));
         }
+        assertFalse(driver.isConfigured());
     }
 
     @Test
@@ -111,6 +101,7 @@ public class TestVshperePoolDriver {
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("template"));
         }
+        assertFalse(driver.isConfigured());
     }
 
     @Test
