@@ -12,17 +12,15 @@ import static org.mockito.Matchers.any;
 
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
-import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
-import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.gson.JsonObject;
+import com.elastisys.scale.cloudpool.vsphere.TestUtils;
 
 import java.rmi.RemoteException;
 
-public class TestVspherePoolDriver {
+public class TestVspherePoolDriverConfiguration {
 
     private VspherePoolDriver driver;
     private VsphereClient mockedClient = mock(VsphereClient.class);
@@ -39,13 +37,8 @@ public class TestVspherePoolDriver {
     }
 
     @Test
-    public void testVspherePoolDriver() {
-        fail("Not yet implemented");
-    }
-
-    @Test
-    public void configuredDriverShouldBeConfigured() throws RemoteException{
-        DriverConfig configuration = loadDriverConfig(specificConfigPath);
+    public void configuredDriverShouldBeConfigured() throws RemoteException {
+        DriverConfig configuration = TestUtils.loadDriverConfig(specificConfigPath);
         assertFalse(driver.isConfigured());
         driver.configure(configuration);
         assertTrue(driver.isConfigured());
@@ -53,8 +46,8 @@ public class TestVspherePoolDriver {
     }
 
     @Test
-    public void minimalDriverConfiguration() throws RemoteException{
-        DriverConfig configuration = loadDriverConfig(minimalConfigPath);
+    public void minimalDriverConfiguration() throws RemoteException {
+        DriverConfig configuration = TestUtils.loadDriverConfig(minimalConfigPath);
         assertFalse(driver.isConfigured());
         driver.configure(configuration);
         assertTrue(driver.isConfigured());
@@ -63,8 +56,8 @@ public class TestVspherePoolDriver {
 
     @Test
     public void reconfigure() throws RemoteException {
-        DriverConfig configuration1 = loadDriverConfig(minimalConfigPath);
-        DriverConfig configuration2 = loadDriverConfig(specificConfigPath);
+        DriverConfig configuration1 = TestUtils.loadDriverConfig(minimalConfigPath);
+        DriverConfig configuration2 = TestUtils.loadDriverConfig(specificConfigPath);
 
         assertFalse(driver.isConfigured());
         driver.configure(configuration1);
@@ -77,7 +70,7 @@ public class TestVspherePoolDriver {
     @Test
     public void configureWithMissingUrl() {
         try {
-            DriverConfig config = loadDriverConfig(missingUrlConfig);
+            DriverConfig config = TestUtils.loadDriverConfig(missingUrlConfig);
             driver.configure(config);
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
@@ -89,7 +82,7 @@ public class TestVspherePoolDriver {
     @Test
     public void configureWithMissingUsername() {
         try {
-            DriverConfig config = loadDriverConfig(missingUsernameConfig);
+            DriverConfig config = TestUtils.loadDriverConfig(missingUsernameConfig);
             driver.configure(config);
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
@@ -101,7 +94,7 @@ public class TestVspherePoolDriver {
     @Test
     public void configureWithMissingPassword() {
         try {
-            DriverConfig config = loadDriverConfig(missingPasswordConfig);
+            DriverConfig config = TestUtils.loadDriverConfig(missingPasswordConfig);
             driver.configure(config);
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
@@ -113,7 +106,7 @@ public class TestVspherePoolDriver {
     @Test
     public void configureWithMissingTemplate() {
         try {
-            DriverConfig config = loadDriverConfig(missingTemplateConfig);
+            DriverConfig config = TestUtils.loadDriverConfig(missingTemplateConfig);
             driver.configure(config);
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
@@ -160,55 +153,6 @@ public class TestVspherePoolDriver {
     @Test(expected = IllegalStateException.class)
     public void getNameWithoutConfig() {
         driver.getPoolName();
-    }
-
-    @Test
-    public void testListMachines() {
-        fail("Not yet implemented");
-    }
-
-    @Test
-    public void testStartMachines() {
-        fail("Not yet implemented");
-    }
-
-    @Test
-    public void testTerminateMachine() {
-        fail("Not yet implemented");
-    }
-
-    @Test
-    public void testAttachMachine() {
-        fail("Not yet implemented");
-    }
-
-    @Test
-    public void testDetachMachine() {
-        fail("Not yet implemented");
-    }
-
-    @Test
-    public void testSetServiceState() {
-        fail("Not yet implemented");
-    }
-
-    @Test
-    public void testSetMembershipStatus() {
-        fail("Not yet implemented");
-    }
-
-    @Test
-    public void testGetPoolName() {
-        fail("Not yet implemented");
-    }
-
-    private DriverConfig loadDriverConfig(String resourcePath) {
-        BaseCloudPoolConfig baseConfig = JsonUtils.toObject(JsonUtils.parseJsonResource(resourcePath),
-                BaseCloudPoolConfig.class);
-        JsonObject cloudApiSettings = JsonUtils.toJson(baseConfig.getCloudApiSettings()).getAsJsonObject();
-        JsonObject provisioningTemplate = JsonUtils.toJson(baseConfig.getProvisioningTemplate()).getAsJsonObject();
-        DriverConfig config = new DriverConfig(baseConfig.getName(), cloudApiSettings, provisioningTemplate);
-        return config;
     }
 
 }
