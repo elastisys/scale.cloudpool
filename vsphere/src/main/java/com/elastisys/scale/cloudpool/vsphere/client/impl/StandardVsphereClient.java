@@ -1,9 +1,10 @@
 package com.elastisys.scale.cloudpool.vsphere.client.impl;
 
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
-import com.elastisys.scale.cloudpool.vsphere.client.tag.Tag;
-import com.elastisys.scale.cloudpool.vsphere.client.tag.Tagger;
-import com.elastisys.scale.cloudpool.vsphere.client.tag.impl.CustomAttributeTagger;
+import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
+import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
+import com.elastisys.scale.cloudpool.vsphere.client.tagger.Tagger;
+import com.elastisys.scale.cloudpool.vsphere.client.tagger.impl.CustomAttributeTagger;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
 import com.google.common.collect.Lists;
@@ -37,7 +38,7 @@ public class StandardVsphereClient implements VsphereClient {
     }
 
     @Override
-    public List<VirtualMachine> getVirtualMachines() throws RemoteException {
+    public List<VirtualMachine> getVirtualMachines(List<Tag> tags) throws RemoteException {
         Folder rootFolder = serviceInstance.getRootFolder();
         List<VirtualMachine> vms = Lists.newArrayList();
         ManagedEntity[] meArr = createInventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine");
@@ -46,19 +47,36 @@ public class StandardVsphereClient implements VsphereClient {
         }
         List<ManagedEntity> meList = Arrays.asList(meArr);
         for (ManagedEntity me : meList) {
-            tagger.isTagged(me, Tag.CLOUD_POOL);
-            vms.add((VirtualMachine) me);
+            boolean addMe = true;
+            for(Tag tag : tags) {
+                if(!tagger.isTagged(me, tag)) {
+                    addMe = false;
+                }
+            }
+            if(addMe) {
+                vms.add((VirtualMachine) me);
+            }
         }
         return vms;
     }
 
     @Override
-    public List<VirtualMachine> launchVirtualMachines(int count) {
+    public List<VirtualMachine> launchVirtualMachines(int count, List<Tag> tags) {
         return null;
     }
 
     @Override
     public void terminateVirtualMachines(List<String> ids) {
+    }
+
+    @Override
+    public void tag(String id, List<Tag> tags) {
+
+    }
+
+    @Override
+    public void untag(String id, List<Tag> tags) {
+
     }
 
     ServiceInstance createServiceInstance(URL url, String username, String password, boolean ignoreSsl) throws

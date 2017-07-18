@@ -3,12 +3,14 @@ package com.elastisys.scale.cloudpool.vsphere;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.client.impl.StandardVsphereClient;
-import com.elastisys.scale.cloudpool.vsphere.client.tag.Tag;
-import com.elastisys.scale.cloudpool.vsphere.client.tag.Tagger;
-import com.elastisys.scale.cloudpool.vsphere.client.tag.impl.CustomAttributeTagger;
+import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
+import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
+import com.elastisys.scale.cloudpool.vsphere.client.tagger.Tagger;
+import com.elastisys.scale.cloudpool.vsphere.client.tagger.impl.CustomAttributeTagger;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.google.common.collect.Lists;
 import com.vmware.vim25.VirtualMachineCloneSpec;
 import com.vmware.vim25.VirtualMachineRelocateSpec;
 import com.vmware.vim25.mo.*;
@@ -74,10 +76,11 @@ public class ITVsphere {
 
     @Test
     public void taggedResourceShouldBeTagged() throws RemoteException {
-        tagger.tag(minimalVm, Tag.CLOUD_POOL);
-        assertTrue(tagger.isTagged(minimalVm, Tag.CLOUD_POOL));
-        tagger.untag(minimalVm, Tag.CLOUD_POOL);
-        assertFalse(tagger.isTagged(minimalVm, Tag.CLOUD_POOL));
+        Tag tag = new VsphereTag(VsphereTag.ScalingTag.CLOUD_POOL, "MyCloudPool");
+        tagger.tag(minimalVm, tag);
+        assertTrue(tagger.isTagged(minimalVm, tag));
+        tagger.untag(minimalVm, tag);
+        assertFalse(tagger.isTagged(minimalVm, tag));
     }
 
     @Test
@@ -87,11 +90,23 @@ public class ITVsphere {
     }
 
     @Test
-    public void clientShouldGetVirtualMachines() throws RemoteException {
+    public void shouldNotGetVirtualMachinesForTagThatDoesNotExist() throws RemoteException {
         VsphereClient vsphereClient = new StandardVsphereClient();
         vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
-        List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines();
+        List<Tag> tags = Lists.newArrayList();
+        tags.add(new VsphereTag(VsphereTag.ScalingTag.CLOUD_POOL, "NoSuchPool"));
+        List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines(tags);
         assertTrue(virtualMachines.isEmpty());
+    }
+
+    @Test
+    public void shouldGetVirtualMachineWithoutTagRequirements() throws RemoteException {
+        // this test assumes that there is at least one virtual machine or template ManagedEntity on the server
+        VsphereClient vsphereClient = new StandardVsphereClient();
+        vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
+        List<Tag> tags = Lists.newArrayList();
+        List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines(tags);
+        assertFalse(virtualMachines.isEmpty());
     }
 
 }

@@ -1,8 +1,9 @@
-package com.elastisys.scale.cloudpool.vsphere.client.tag.impl;
+package com.elastisys.scale.cloudpool.vsphere.client.tagger.impl;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.vsphere.client.tag.Tag;
-import com.elastisys.scale.cloudpool.vsphere.client.tag.Tagger;
+import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
+import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
+import com.elastisys.scale.cloudpool.vsphere.client.tagger.Tagger;
 import com.vmware.vim25.CustomFieldDef;
 import com.vmware.vim25.CustomFieldStringValue;
 import com.vmware.vim25.CustomFieldValue;
@@ -10,7 +11,6 @@ import com.vmware.vim25.mo.*;
 
 import java.rmi.RemoteException;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,7 +20,7 @@ public class CustomAttributeTagger implements Tagger {
     public void initialize(ServiceInstance si) throws RemoteException {
         CustomFieldsManager customFieldsManager = si.getCustomFieldsManager();
         List<CustomFieldDef> cfdList = Arrays.asList(customFieldsManager.getField());
-        HashSet<String> tags = Tag.getTags();
+        List<String> tags = VsphereTag.ScalingTag.getValues();
         List<String> tagDefinitions = cfdList.stream().map(CustomFieldDef::getName).collect(Collectors.toList());
         for(String tag : tags) {
             if(!tagDefinitions.contains(tag)) {
@@ -30,9 +30,9 @@ public class CustomAttributeTagger implements Tagger {
     }
 
     @Override
-    public boolean isTagged(ManagedEntity me, String tag) throws RemoteException {
+    public boolean isTagged(ManagedEntity me, Tag vsphereTag) throws RemoteException {
         try {
-            if (getCustomValue(me, tag).equals(TagValues.Set)) {
+            if (getCustomValue(me, vsphereTag.getKey()).equals(vsphereTag.getValue())) {
                 return true;
             }
             return false;
@@ -42,15 +42,15 @@ public class CustomAttributeTagger implements Tagger {
     }
 
     @Override
-    public void tag(ManagedEntity me, String tag) throws RemoteException {
+    public void tag(ManagedEntity me, Tag tag) throws RemoteException {
         VirtualMachine vm = (VirtualMachine) me;
-        vm.setCustomValue(tag, TagValues.Set);
+        vm.setCustomValue(tag.getKey(), tag.getValue());
     }
 
     @Override
-    public void untag(ManagedEntity me, String tag) throws RemoteException {
+    public void untag(ManagedEntity me, Tag tag) throws RemoteException {
         VirtualMachine vm = (VirtualMachine) me;
-        vm.setCustomValue(tag, TagValues.Unset);
+        vm.setCustomValue(tag.getKey(), "");
     }
 
     private String getCustomValue(ManagedEntity me, String definition) throws RemoteException, NotFoundException {
@@ -79,11 +79,6 @@ public class CustomAttributeTagger implements Tagger {
             }
         }
         throw new NotFoundException();
-    }
-
-    private static final class TagValues {
-        public static final String Set = "Set";
-        public static final String Unset = "Unset";
     }
 
 }

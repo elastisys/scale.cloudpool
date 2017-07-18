@@ -5,6 +5,9 @@ import com.elastisys.scale.cloudpool.vsphere.TestUtils;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
 
+import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
+import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
+import com.google.common.collect.Lists;
 import com.vmware.vim25.mo.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -14,6 +17,7 @@ import java.net.URL;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
 public class TestStandardVsphereClient {
@@ -53,7 +57,7 @@ public class TestStandardVsphereClient {
         ManagedEntity[] vms = {mock(VirtualMachine.class)};
         doReturn(vms).when(mockInventoryNavigator).searchManagedEntities(anyString());
         vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
-        List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines();
+        List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines(Lists.newArrayList());
         assertEquals(virtualMachines.size(), 1);
     }
 
