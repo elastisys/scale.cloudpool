@@ -11,10 +11,10 @@ public interface VsphereClient {
 
     void configure(VsphereApiSettings vsphereApiSettings, VsphereProvisioningTemplate vsphereProvisioningTemplate) throws RemoteException;
 
-    List<VirtualMachine> getVirtualMachines();
+    List<VirtualMachine> getVirtualMachines() throws RemoteException;
 
-    List<VirtualMachine> launchVirtualMachines(int count);
+    List<VirtualMachine> launchVirtualMachines(int count) throws RemoteException;
 
-    void terminateVirtualMachines(List<String> ids);
+    void terminateVirtualMachines(List<String> ids) throws RemoteException;
 
 }
