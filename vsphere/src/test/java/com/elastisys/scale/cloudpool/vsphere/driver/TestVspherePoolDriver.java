@@ -7,8 +7,11 @@ import org.junit.Test;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 import static org.mockito.Matchers.any;
 
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
+import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
@@ -59,6 +62,19 @@ public class TestVspherePoolDriver {
     }
 
     @Test
+    public void reconfigure() throws RemoteException {
+        DriverConfig configuration1 = loadDriverConfig(minimalConfigPath);
+        DriverConfig configuration2 = loadDriverConfig(specificConfigPath);
+
+        assertFalse(driver.isConfigured());
+        driver.configure(configuration1);
+        assertTrue(driver.isConfigured());
+        driver.configure(configuration2);
+        assertTrue(driver.isConfigured());
+        verify(mockedClient, times(2)).configure(any(VsphereApiSettings.class), any(VsphereProvisioningTemplate.class));
+    }
+
+    @Test
     public void configureWithMissingUrl() {
         try {
             DriverConfig config = loadDriverConfig(missingUrlConfig);
@@ -104,6 +120,46 @@ public class TestVspherePoolDriver {
             assertTrue(e.getMessage().contains("template"));
         }
         assertFalse(driver.isConfigured());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void listMachinesWithoutConfig() {
+        driver.listMachines();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void startMachinesWithoutConfig() {
+        driver.startMachines(1);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void terminateMachineWithoutConfig() {
+        driver.terminateMachine("machine-id");
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void attachMachineWithoutConfig() {
+        driver.attachMachine("machine-id");
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void detachMachineWithoutConfig() {
+        driver.detachMachine("machine-id");
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void setServiceStateWithoutConfig() {
+        driver.setServiceState("machine-id", ServiceState.IN_SERVICE);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void setMembershipStatusWithoutConfig() {
+        driver.setMembershipStatus("machine-id", MembershipStatus.defaultStatus());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void getNameWithoutConfig() {
+        driver.getPoolName();
     }
 
     @Test

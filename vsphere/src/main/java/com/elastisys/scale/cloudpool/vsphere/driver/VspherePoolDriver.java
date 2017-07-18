@@ -12,6 +12,8 @@ import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import java.rmi.RemoteException;
 import java.util.List;
 
@@ -45,46 +47,54 @@ public class VspherePoolDriver implements CloudPoolDriver {
 
     @Override
     public List<Machine> listMachines() throws IllegalStateException, CloudPoolDriverException {
+        checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
         return null;
     }
 
     @Override
     public List<Machine> startMachines(int count) throws IllegalStateException, StartMachinesException {
+        checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
         return null;
     }
 
     @Override
     public void terminateMachine(String machineId)
             throws IllegalStateException, NotFoundException, CloudPoolDriverException {
+        checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
 
     }
 
     @Override
     public void attachMachine(String machineId)
             throws IllegalStateException, NotFoundException, CloudPoolDriverException {
+        checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
 
     }
 
     @Override
     public void detachMachine(String machineId)
             throws IllegalStateException, NotFoundException, CloudPoolDriverException {
+        checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
 
     }
 
     @Override
     public void setServiceState(String machineId, ServiceState serviceState)
             throws IllegalStateException, NotFoundException, CloudPoolDriverException {
+        checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
 
     }
 
     @Override
     public void setMembershipStatus(String machineId, MembershipStatus membershipStatus)
             throws IllegalStateException, NotFoundException, CloudPoolDriverException {
+        checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
 
     }
 
     @Override
     public String getPoolName() throws IllegalStateException {
+        checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
         return null;
     }
 
