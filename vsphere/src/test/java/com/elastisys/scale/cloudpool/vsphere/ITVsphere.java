@@ -1,6 +1,8 @@
 package com.elastisys.scale.cloudpool.vsphere;
 
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
+import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
+import com.elastisys.scale.cloudpool.vsphere.client.impl.StandardVsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.client.tag.Tag;
 import com.elastisys.scale.cloudpool.vsphere.client.tag.Tagger;
 import com.elastisys.scale.cloudpool.vsphere.client.tag.impl.CustomAttributeTagger;
@@ -19,12 +21,13 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class ITVsphere {
 
     private static DriverConfig driverConfig;
     private static VsphereApiSettings vsphereApiSettings;
-    private static VsphereProvisioningTemplate provisioningTemplate;
+    private static VsphereProvisioningTemplate vsphereProvisioningTemplate;
 
     private static ServiceInstance serviceInstance;
     private static VirtualMachine minimalVm;
@@ -35,13 +38,13 @@ public class ITVsphere {
     public static void setup() throws Exception {
         driverConfig = JsonUtils.toObject(JsonUtils.parseJsonResource("VcenterInfo.json"), DriverConfig.class);
         vsphereApiSettings = driverConfig.parseCloudApiSettings(VsphereApiSettings.class);
-        provisioningTemplate = driverConfig.parseProvisioningTemplate(VsphereProvisioningTemplate.class);
+        vsphereProvisioningTemplate = driverConfig.parseProvisioningTemplate(VsphereProvisioningTemplate.class);
         serviceInstance = new ServiceInstance(vsphereApiSettings.getUrl(), vsphereApiSettings.getUsername(),
                 vsphereApiSettings.getPassword(), true);
 
         Folder root = serviceInstance.getRootFolder();
         VirtualMachine template = (VirtualMachine) new InventoryNavigator(root).searchManagedEntity("VirtualMachine",
-                provisioningTemplate.getTemplate());
+                vsphereProvisioningTemplate.getTemplate());
         VirtualMachineCloneSpec cloneSpec = new VirtualMachineCloneSpec();
         ResourcePool pool = (ResourcePool) new InventoryNavigator(root)
                 .searchManagedEntity(ResourcePool.class.getSimpleName(), "Resources");
@@ -75,6 +78,12 @@ public class ITVsphere {
         assertTrue(tagger.isTagged(minimalVm, Tag.CLOUD_POOL));
         tagger.untag(minimalVm, Tag.CLOUD_POOL);
         assertFalse(tagger.isTagged(minimalVm, Tag.CLOUD_POOL));
+    }
+
+    @Test
+    public void clientConfigurationShouldSucceed() throws RemoteException{
+        VsphereClient vsphereClient = new StandardVsphereClient();
+        vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
     }
 
 }
