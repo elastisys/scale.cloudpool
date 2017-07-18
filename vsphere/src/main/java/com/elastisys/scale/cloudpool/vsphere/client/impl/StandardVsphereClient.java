@@ -51,6 +51,7 @@ public class StandardVsphereClient implements VsphereClient {
             for(Tag tag : tags) {
                 if(!tagger.isTagged(me, tag)) {
                     addMe = false;
+                    break;
                 }
             }
             if(addMe) {
