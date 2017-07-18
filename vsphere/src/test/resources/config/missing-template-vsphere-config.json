@@ -1,0 +1,11 @@
+{
+	"name": "invalid-pool",
+	"cloudApiSettings": {
+		"username": "username",
+		"password": "password",
+		"url": "https://example.com"
+	},
+	"provisioningTemplate": {
+		
+	}
+}

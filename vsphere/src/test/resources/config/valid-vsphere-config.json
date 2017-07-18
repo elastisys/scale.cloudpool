@@ -1,0 +1,13 @@
+{
+	"name": "webserver-pool",
+	"cloudApiSettings": {
+		"username": "username",
+		"password": "password",
+		"url": "https://example.com"
+	},
+	"provisioningTemplate": {
+		"template": "template-name",
+		"folder": "Discovered Virtual Machines",
+		"resource pool": "production"
+	}
+}

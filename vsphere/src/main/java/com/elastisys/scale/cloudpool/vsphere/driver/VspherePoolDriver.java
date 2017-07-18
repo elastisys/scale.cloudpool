@@ -9,12 +9,15 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverExce
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
+import com.elastisys.scale.cloudpool.vsphere.config.VsphereApiSettings;
+import com.elastisys.scale.cloudpool.vsphere.config.VsphereProvisioningTemplate;
 
 import java.util.List;
 
 public class VspherePoolDriver implements CloudPoolDriver {
 
     private VsphereClient vsphereClient;
+    private DriverConfig driverConfig;
 
     public VspherePoolDriver(VsphereClient vsphereClient) {
         this.vsphereClient = vsphereClient;
@@ -22,7 +25,17 @@ public class VspherePoolDriver implements CloudPoolDriver {
 
     @Override
     public void configure(DriverConfig configuration) throws IllegalArgumentException, CloudPoolDriverException {
+        VsphereApiSettings vsphereApiSettings;
+        VsphereProvisioningTemplate vsphereProvisioningTemplate;
 
+        vsphereApiSettings = configuration.parseCloudApiSettings(VsphereApiSettings.class);
+        vsphereApiSettings.validate();
+        vsphereProvisioningTemplate = configuration.parseProvisioningTemplate(VsphereProvisioningTemplate.class);
+        vsphereProvisioningTemplate.validate();
+
+        vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
+
+        driverConfig = configuration;
     }
 
     @Override
@@ -36,32 +49,41 @@ public class VspherePoolDriver implements CloudPoolDriver {
     }
 
     @Override
-    public void terminateMachine(String machineId) throws IllegalStateException, NotFoundException, CloudPoolDriverException {
+    public void terminateMachine(String machineId)
+            throws IllegalStateException, NotFoundException, CloudPoolDriverException {
 
     }
 
     @Override
-    public void attachMachine(String machineId) throws IllegalStateException, NotFoundException, CloudPoolDriverException {
+    public void attachMachine(String machineId)
+            throws IllegalStateException, NotFoundException, CloudPoolDriverException {
 
     }
 
     @Override
-    public void detachMachine(String machineId) throws IllegalStateException, NotFoundException, CloudPoolDriverException {
+    public void detachMachine(String machineId)
+            throws IllegalStateException, NotFoundException, CloudPoolDriverException {
 
     }
 
     @Override
-    public void setServiceState(String machineId, ServiceState serviceState) throws IllegalStateException, NotFoundException, CloudPoolDriverException {
+    public void setServiceState(String machineId, ServiceState serviceState)
+            throws IllegalStateException, NotFoundException, CloudPoolDriverException {
 
     }
 
     @Override
-    public void setMembershipStatus(String machineId, MembershipStatus membershipStatus) throws IllegalStateException, NotFoundException, CloudPoolDriverException {
+    public void setMembershipStatus(String machineId, MembershipStatus membershipStatus)
+            throws IllegalStateException, NotFoundException, CloudPoolDriverException {
 
     }
 
     @Override
     public String getPoolName() throws IllegalStateException {
         return null;
+    }
+
+    public boolean isConfigured() {
+        return driverConfig != null;
     }
 }

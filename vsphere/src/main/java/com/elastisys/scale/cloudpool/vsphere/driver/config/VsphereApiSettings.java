@@ -18,6 +18,7 @@ public class VsphereApiSettings {
     }
 
     public void validate() throws IllegalArgumentException {
+        checkArgument(this.url != null, "missing URL");
         checkArgument(this.username != null, "missing username");
         checkArgument(this.password != null, "missing password");
     }

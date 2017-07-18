@@ -1,0 +1,10 @@
+{
+	"name": "invalid-pool",
+	"cloudApiSettings": {
+		"username": "username",
+		"password": "password"
+	},
+	"provisioningTemplate": {
+		"template": "template-name"
+	}
+}
