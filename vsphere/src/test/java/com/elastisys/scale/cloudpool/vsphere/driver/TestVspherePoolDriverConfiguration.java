@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.vsphere.driver;
 
 import static org.junit.Assert.*;
 
+import com.elastisys.scale.commons.json.JsonUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -16,7 +17,6 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
-import com.elastisys.scale.cloudpool.vsphere.TestUtils;
 
 import java.rmi.RemoteException;
 
@@ -38,7 +38,7 @@ public class TestVspherePoolDriverConfiguration {
 
     @Test
     public void configuredDriverShouldBeConfigured() throws RemoteException {
-        DriverConfig configuration = TestUtils.loadDriverConfig(specificConfigPath);
+        DriverConfig configuration = JsonUtils.toObject(JsonUtils.parseJsonResource(specificConfigPath), DriverConfig.class);
         assertFalse(driver.isConfigured());
         driver.configure(configuration);
         assertTrue(driver.isConfigured());
@@ -47,7 +47,7 @@ public class TestVspherePoolDriverConfiguration {
 
     @Test
     public void minimalDriverConfiguration() throws RemoteException {
-        DriverConfig configuration = TestUtils.loadDriverConfig(minimalConfigPath);
+        DriverConfig configuration = JsonUtils.toObject(JsonUtils.parseJsonResource(minimalConfigPath), DriverConfig.class);
         assertFalse(driver.isConfigured());
         driver.configure(configuration);
         assertTrue(driver.isConfigured());
@@ -56,8 +56,8 @@ public class TestVspherePoolDriverConfiguration {
 
     @Test
     public void reconfigure() throws RemoteException {
-        DriverConfig configuration1 = TestUtils.loadDriverConfig(minimalConfigPath);
-        DriverConfig configuration2 = TestUtils.loadDriverConfig(specificConfigPath);
+        DriverConfig configuration1 = JsonUtils.toObject(JsonUtils.parseJsonResource(minimalConfigPath), DriverConfig.class);
+        DriverConfig configuration2 = JsonUtils.toObject(JsonUtils.parseJsonResource(specificConfigPath), DriverConfig.class);
 
         assertFalse(driver.isConfigured());
         driver.configure(configuration1);
@@ -70,8 +70,8 @@ public class TestVspherePoolDriverConfiguration {
     @Test
     public void configureWithMissingUrl() {
         try {
-            DriverConfig config = TestUtils.loadDriverConfig(missingUrlConfig);
-            driver.configure(config);
+            DriverConfig configuration = JsonUtils.toObject(JsonUtils.parseJsonResource(missingUrlConfig), DriverConfig.class);
+            driver.configure(configuration);
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("URL"));
@@ -82,8 +82,8 @@ public class TestVspherePoolDriverConfiguration {
     @Test
     public void configureWithMissingUsername() {
         try {
-            DriverConfig config = TestUtils.loadDriverConfig(missingUsernameConfig);
-            driver.configure(config);
+            DriverConfig configuration = JsonUtils.toObject(JsonUtils.parseJsonResource(missingUsernameConfig), DriverConfig.class);
+            driver.configure(configuration);
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("username"));
@@ -94,8 +94,8 @@ public class TestVspherePoolDriverConfiguration {
     @Test
     public void configureWithMissingPassword() {
         try {
-            DriverConfig config = TestUtils.loadDriverConfig(missingPasswordConfig);
-            driver.configure(config);
+            DriverConfig configuration = JsonUtils.toObject(JsonUtils.parseJsonResource(missingPasswordConfig), DriverConfig.class);
+            driver.configure(configuration);
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("password"));
@@ -106,8 +106,8 @@ public class TestVspherePoolDriverConfiguration {
     @Test
     public void configureWithMissingTemplate() {
         try {
-            DriverConfig config = TestUtils.loadDriverConfig(missingTemplateConfig);
-            driver.configure(config);
+            DriverConfig configuration = JsonUtils.toObject(JsonUtils.parseJsonResource(missingTemplateConfig), DriverConfig.class);
+            driver.configure(configuration);
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("template"));

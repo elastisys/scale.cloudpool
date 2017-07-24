@@ -1,6 +1,5 @@
 package com.elastisys.scale.cloudpool.vsphere.tag.impl;
 
-import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
 import org.junit.Test;
 
 public class TestTag {
