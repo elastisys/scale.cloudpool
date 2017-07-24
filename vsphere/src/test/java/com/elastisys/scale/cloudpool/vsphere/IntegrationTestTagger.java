@@ -3,8 +3,8 @@ package com.elastisys.scale.cloudpool.vsphere;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
 import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
-import com.elastisys.scale.cloudpool.vsphere.client.tagger.Tagger;
-import com.elastisys.scale.cloudpool.vsphere.client.tagger.impl.CustomAttributeTagger;
+import com.elastisys.scale.cloudpool.vsphere.tagger.Tagger;
+import com.elastisys.scale.cloudpool.vsphere.tagger.impl.CustomAttributeTagger;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
 import com.elastisys.scale.commons.json.JsonUtils;
@@ -29,7 +29,7 @@ public class IntegrationTestTagger {
     private static ServiceInstance serviceInstance;
     private static VirtualMachine minimalVm;
 
-    private static Tagger tagger;
+    private static CustomAttributeTagger tagger;
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -59,7 +59,6 @@ public class IntegrationTestTagger {
         minimalVm = (VirtualMachine) new InventoryNavigator(root).searchManagedEntity("VirtualMachine", cloneName);
 
         tagger = new CustomAttributeTagger();
-        tagger.initialize(serviceInstance);
     }
 
     @AfterClass

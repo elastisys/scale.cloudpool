@@ -2,9 +2,9 @@ package com.elastisys.scale.cloudpool.vsphere.client.impl;
 
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
-import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
-import com.elastisys.scale.cloudpool.vsphere.client.tagger.Tagger;
-import com.elastisys.scale.cloudpool.vsphere.client.tagger.impl.CustomAttributeTagger;
+import com.elastisys.scale.cloudpool.vsphere.tagger.Tagger;
+import com.elastisys.scale.cloudpool.vsphere.tagger.TaggerFactory;
+import com.elastisys.scale.cloudpool.vsphere.tagger.impl.CustomAttributeTagger;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
 import com.google.common.collect.Lists;
@@ -34,7 +34,7 @@ public class StandardVsphereClient implements VsphereClient {
         } catch (MalformedURLException e) {
             throw new RemoteException();
         }
-        this.tagger = new CustomAttributeTagger();
+        this.tagger = TaggerFactory.getTagger();
     }
 
     @Override

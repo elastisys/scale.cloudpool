@@ -1,7 +1,7 @@
-package com.elastisys.scale.cloudpool.vsphere.client.tagger.impl;
+package com.elastisys.scale.cloudpool.vsphere.tagger.impl;
 
 import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
-import com.elastisys.scale.cloudpool.vsphere.client.tagger.Tagger;
+import com.elastisys.scale.cloudpool.vsphere.tagger.Tagger;
 import com.vmware.vim25.CustomFieldDef;
 import com.vmware.vim25.CustomFieldStringValue;
 import com.vmware.vim25.mo.VirtualMachine;

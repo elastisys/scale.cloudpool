@@ -1,9 +1,9 @@
-package com.elastisys.scale.cloudpool.vsphere.client.tagger.impl;
+package com.elastisys.scale.cloudpool.vsphere.tagger.impl;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
 import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
-import com.elastisys.scale.cloudpool.vsphere.client.tagger.Tagger;
+import com.elastisys.scale.cloudpool.vsphere.tagger.Tagger;
 import com.vmware.vim25.CustomFieldDef;
 import com.vmware.vim25.CustomFieldStringValue;
 import com.vmware.vim25.CustomFieldValue;
@@ -17,9 +17,9 @@ import java.util.stream.Collectors;
 
 public class CustomAttributeTagger implements Tagger {
 
-    @Override
     public void initialize(ServiceInstance si) throws RemoteException {
         CustomFieldsManager customFieldsManager = si.getCustomFieldsManager();
+        System.err.println("customFieldsManager: " + customFieldsManager);
         List<CustomFieldDef> cfdList = Arrays.asList(customFieldsManager.getField());
         Collection<String> tags = VsphereTag.ScalingTag.getValues();
         List<String> tagDefinitions = cfdList.stream().map(CustomFieldDef::getName).collect(Collectors.toList());

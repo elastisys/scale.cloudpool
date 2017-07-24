@@ -2,7 +2,7 @@ package com.elastisys.scale.cloudpool.vsphere.tag.impl;
 
 import org.junit.Test;
 
-public class TestTag {
+public class TestVsphereTag {
 
     @Test
     public void shouldBeAbleToCreateCloudPoolTag() {
