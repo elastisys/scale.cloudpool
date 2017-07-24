@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.vsphere.driver;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.any;
 import static org.hamcrest.CoreMatchers.is;
 
 import java.rmi.RemoteException;
@@ -53,11 +54,10 @@ public class TestVspherePoolDriverOperations {
 
         List<VirtualMachine> vms = Lists.newArrayList();
         vms.add(vm);
-        when(mockedClient.getVirtualMachines()).thenReturn(vms);
+        when(mockedClient.getVirtualMachines(any())).thenReturn(vms);
 
         List<Machine> result = driver.listMachines();
         assertEquals(1, result.size());
-        assertEquals(name, result.get(0).getId());
         assertThat(result, is(MachinesMatcher.machines(name)));
     }
 

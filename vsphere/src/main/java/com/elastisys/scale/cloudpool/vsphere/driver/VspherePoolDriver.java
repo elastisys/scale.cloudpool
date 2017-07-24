@@ -12,6 +12,8 @@ import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
 import com.elastisys.scale.cloudpool.vsphere.driver.functions.VirtualMachineToMachine;
+import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
+import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
 import com.vmware.vim25.mo.VirtualMachine;
 
 import jersey.repackaged.com.google.common.collect.Lists;
@@ -54,7 +56,7 @@ public class VspherePoolDriver implements CloudPoolDriver {
     public List<Machine> listMachines() throws IllegalStateException, CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
         try {
-            List<VirtualMachine> machines = vsphereClient.getVirtualMachines();
+            List<VirtualMachine> machines = vsphereClient.getVirtualMachines(cloudPoolTag());
             return Lists.transform(machines, new VirtualMachineToMachine());
         } catch (RemoteException e) {
             throw new CloudPoolDriverException(
@@ -106,10 +108,14 @@ public class VspherePoolDriver implements CloudPoolDriver {
     @Override
     public String getPoolName() throws IllegalStateException {
         checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
-        return null;
+        return driverConfig.getPoolName();
     }
 
     public boolean isConfigured() {
         return driverConfig != null;
+    }
+
+    private List<Tag> cloudPoolTag() {
+        return Lists.newArrayList(new VsphereTag(VsphereTag.ScalingTag.CLOUD_POOL, driverConfig.getPoolName()));
     }
 }
