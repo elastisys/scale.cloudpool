@@ -2,7 +2,6 @@ package com.elastisys.scale.cloudpool.vsphere.client.impl;
 
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
-import com.elastisys.scale.cloudpool.vsphere.tagger.Tagger;
 import com.elastisys.scale.cloudpool.vsphere.tagger.TaggerFactory;
 import com.elastisys.scale.cloudpool.vsphere.tagger.impl.CustomAttributeTagger;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
@@ -21,7 +20,7 @@ public class StandardVsphereClient implements VsphereClient {
     private VsphereApiSettings vsphereApiSettings;
     private VsphereProvisioningTemplate vsphereProvisioningTemplate;
     private ServiceInstance serviceInstance;
-    private Tagger tagger;
+    private CustomAttributeTagger tagger;
 
     @Override
     public void configure(VsphereApiSettings vsphereApiSettings, VsphereProvisioningTemplate vsphereProvisioningTemplate)
@@ -34,7 +33,8 @@ public class StandardVsphereClient implements VsphereClient {
         } catch (MalformedURLException e) {
             throw new RemoteException();
         }
-        this.tagger = TaggerFactory.getTagger();
+        this.tagger = (CustomAttributeTagger) TaggerFactory.getTagger();
+        tagger.initialize(serviceInstance);
     }
 
     @Override

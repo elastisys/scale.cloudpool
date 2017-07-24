@@ -19,7 +19,6 @@ public class CustomAttributeTagger implements Tagger {
 
     public void initialize(ServiceInstance si) throws RemoteException {
         CustomFieldsManager customFieldsManager = si.getCustomFieldsManager();
-        System.err.println("customFieldsManager: " + customFieldsManager);
         List<CustomFieldDef> cfdList = Arrays.asList(customFieldsManager.getField());
         Collection<String> tags = VsphereTag.ScalingTag.getValues();
         List<String> tagDefinitions = cfdList.stream().map(CustomFieldDef::getName).collect(Collectors.toList());
