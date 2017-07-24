@@ -5,7 +5,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.doThrow;
 import static org.hamcrest.CoreMatchers.is;
 
 import java.rmi.RemoteException;
@@ -60,6 +59,27 @@ public class TestVspherePoolDriverOperations {
         verify(mockedClient).getVirtualMachines(any());
         assertEquals(1, result.size());
         assertThat(result, is(MachinesMatcher.machines(name)));
+    }
+
+    @Test
+    public void listMoreMachines() throws RemoteException {
+        List<String> names = Lists.newArrayList("vm1", "vm2", "vm3");
+        List<VirtualMachine> vms = Lists.newArrayList();
+
+        for (String name : names) {
+            vms.add(getMockedVM(name));
+        }
+        when(mockedClient.getVirtualMachines(any())).thenReturn(vms);
+
+        List<Machine> result = driver.listMachines();
+        verify(mockedClient).getVirtualMachines(any());
+        assertEquals(3, result.size());
+        assertThat(result, is(new MachinesMatcher(names)));
+    }
+
+    @Test
+    public void listMachinesWithDifferentStates() {
+        fail("Not yet implemented");
     }
 
     @Test(expected = CloudPoolDriverException.class)
