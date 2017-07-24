@@ -3,7 +3,7 @@ package com.elastisys.scale.cloudpool.vsphere.tag.impl;
 import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class VsphereTag implements Tag {
@@ -37,8 +37,8 @@ public class VsphereTag implements Tag {
             this.value = value;
         }
 
-        public static List<String> getValues(){
-            return Arrays.stream(ScalingTag.values()).map(ScalingTag::scalingTagToString).collect(Collectors.toList());
+        public static Set<String> getValues(){
+            return Arrays.stream(ScalingTag.values()).map(ScalingTag::scalingTagToString).collect(Collectors.toSet());
         }
 
         private static String scalingTagToString(ScalingTag tag) {

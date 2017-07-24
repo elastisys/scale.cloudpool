@@ -11,6 +11,7 @@ import com.vmware.vim25.mo.*;
 
 import java.rmi.RemoteException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,7 +21,7 @@ public class CustomAttributeTagger implements Tagger {
     public void initialize(ServiceInstance si) throws RemoteException {
         CustomFieldsManager customFieldsManager = si.getCustomFieldsManager();
         List<CustomFieldDef> cfdList = Arrays.asList(customFieldsManager.getField());
-        List<String> tags = VsphereTag.ScalingTag.getValues();
+        Collection<String> tags = VsphereTag.ScalingTag.getValues();
         List<String> tagDefinitions = cfdList.stream().map(CustomFieldDef::getName).collect(Collectors.toList());
         for(String tag : tags) {
             if(!tagDefinitions.contains(tag)) {
