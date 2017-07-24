@@ -14,9 +14,9 @@ import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
-import com.elastisys.scale.cloudpool.vsphere.TestUtils;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.driver.MachinesMatcher;
+import com.elastisys.scale.commons.json.JsonUtils;
 import com.vmware.vim25.GuestInfo;
 import com.vmware.vim25.ManagedEntityStatus;
 import com.vmware.vim25.mo.VirtualMachine;
@@ -31,7 +31,7 @@ public class TestVspherePoolDriverOperations {
     @Before
     public void setup() {
         String specificConfigPath = "config/valid-vsphere-config.json";
-        DriverConfig configuration = TestUtils.loadDriverConfig(specificConfigPath);
+        DriverConfig configuration = JsonUtils.toObject(JsonUtils.parseJsonResource(specificConfigPath), DriverConfig.class);
         driver = new VspherePoolDriver(mockedClient);
         driver.configure(configuration);
     }
