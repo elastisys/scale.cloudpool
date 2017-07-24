@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.doThrow;
 import static org.hamcrest.CoreMatchers.is;
 
 import java.rmi.RemoteException;
@@ -13,6 +15,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.driver.MachinesMatcher;
@@ -31,7 +34,8 @@ public class TestVspherePoolDriverOperations {
     @Before
     public void setup() {
         String specificConfigPath = "config/valid-vsphere-config.json";
-        DriverConfig configuration = JsonUtils.toObject(JsonUtils.parseJsonResource(specificConfigPath), DriverConfig.class);
+        DriverConfig configuration = JsonUtils.toObject(JsonUtils.parseJsonResource(specificConfigPath),
+                DriverConfig.class);
         driver = new VspherePoolDriver(mockedClient);
         driver.configure(configuration);
     }
@@ -49,16 +53,19 @@ public class TestVspherePoolDriverOperations {
     @Test
     public void listSingleMachine() throws RemoteException {
         String name = "vmName";
-        VirtualMachine vm = getMockedVM(name);
-        when(vm.getName()).thenReturn(name);
-
-        List<VirtualMachine> vms = Lists.newArrayList();
-        vms.add(vm);
+        List<VirtualMachine> vms = Lists.newArrayList(getMockedVM(name));
         when(mockedClient.getVirtualMachines(any())).thenReturn(vms);
 
         List<Machine> result = driver.listMachines();
+        verify(mockedClient).getVirtualMachines(any());
         assertEquals(1, result.size());
         assertThat(result, is(MachinesMatcher.machines(name)));
+    }
+
+    @Test(expected = CloudPoolDriverException.class)
+    public void failToGetMachines() throws CloudPoolDriverException, RemoteException {
+        when(this.mockedClient.getVirtualMachines(any())).thenThrow(new RemoteException("API unreachable"));
+        driver.listMachines();
     }
 
     @Test

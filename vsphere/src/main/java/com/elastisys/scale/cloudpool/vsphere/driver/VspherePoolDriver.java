@@ -116,6 +116,7 @@ public class VspherePoolDriver implements CloudPoolDriver {
     }
 
     private List<Tag> cloudPoolTag() {
+        checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
         return Lists.newArrayList(new VsphereTag(VsphereTag.ScalingTag.CLOUD_POOL, driverConfig.getPoolName()));
     }
 }
