@@ -11,8 +11,13 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesExcept
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
+import com.elastisys.scale.cloudpool.vsphere.driver.functions.VirtualMachineToMachine;
+import com.vmware.vim25.mo.VirtualMachine;
+
+import jersey.repackaged.com.google.common.collect.Lists;
 
 import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.format;
 
 import java.rmi.RemoteException;
 import java.util.List;
@@ -48,7 +53,13 @@ public class VspherePoolDriver implements CloudPoolDriver {
     @Override
     public List<Machine> listMachines() throws IllegalStateException, CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
-        return null;
+        try {
+            List<VirtualMachine> machines = vsphereClient.getVirtualMachines();
+            return Lists.transform(machines, new VirtualMachineToMachine());
+        } catch (RemoteException e) {
+            throw new CloudPoolDriverException(
+                    format("failed to retrieve machines in cloud pool \"%s\": %s", getPoolName(), e.getMessage()), e);
+        }
     }
 
     @Override
