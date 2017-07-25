@@ -74,8 +74,26 @@ public class TestVspherePoolDriverOperations {
     }
 
     @Test
-    public void listMachinesWithDifferentStates() {
-        fail("Not yet implemented");
+    public void listMachinesWithDifferentStates() throws RemoteException {
+        List<String> names = Lists.newArrayList("vmOn", "vmOff");
+        List<VirtualMachine> vms = Lists.newArrayList();
+        VirtualMachinePowerState poweredOn = VirtualMachinePowerState.poweredOn;
+        VirtualMachinePowerState poweredOff = VirtualMachinePowerState.poweredOff;
+
+        VirtualMachine vmOn = getMockedVM(names.get(0));
+        VirtualMachine vmOff = getMockedVM(names.get(1));
+
+        when(vmOn.getRuntime().getPowerState()).thenReturn(poweredOn);
+        when(vmOff.getRuntime().getPowerState()).thenReturn(poweredOff);
+        vms.add(vmOn);
+        vms.add(vmOff);
+
+        when(mockedClient.getVirtualMachines(any())).thenReturn(vms);
+
+        List<Machine> result = driver.listMachines();
+        verify(mockedClient).getVirtualMachines(any());
+        assertEquals(names.size(), result.size());
+        assertThat(result, is(new MachinesMatcher(names)));
     }
 
     @Test(expected = CloudPoolDriverException.class)

@@ -29,7 +29,7 @@ public class TestVirtualMachineToMachine {
     }
 
     @Test
-    public void convertSimpleVM() throws RemoteException {
+    public void convertSimpleVm() throws RemoteException {
         String name = "vm1";
 
         VirtualMachine vm = new MockedVm().withName(name)
@@ -48,6 +48,32 @@ public class TestVirtualMachineToMachine {
         assertThat(result.getMembershipStatus(), is(MembershipStatus.defaultStatus()));
         assertThat(result.getServiceState(), is(ServiceState.UNKNOWN));
         assertThat(result.getPublicIps().size(), is(0));
+        assertThat(result.getPrivateIps().size(), is(0));
+    }
+
+    @Test
+    public void convertVmWithIp() throws RemoteException {
+        String name = "vm1";
+        String publicIp = "192.168.104.230";
+
+        VirtualMachine vm = new MockedVm().withName(name)
+                .withLaunchTime(launchTime)
+                .withPowerState(poweredOn)
+                .withResourcePool(region)
+                .withMachineSize(machineSize)
+                .withPublicIps(publicIp)
+                .build();
+        Machine result = new VirtualMachineToMachine().apply(vm);
+        assertThat(result.getId(), is(vm.getName()));
+        assertThat(result.getLaunchTime(), is(launchTime));
+        assertThat(result.getMachineState(), is(MachineState.RUNNING));
+        assertThat(result.getCloudProvider(), is(CloudProviders.VSPHERE));
+        assertThat(result.getRegion(), is(region));
+        assertThat(result.getMachineSize(), is(machineSize));
+        assertThat(result.getMembershipStatus(), is(MembershipStatus.defaultStatus()));
+        assertThat(result.getServiceState(), is(ServiceState.UNKNOWN));
+        assertThat(result.getPublicIps().size(), is(1));
+        assertThat(result.getPublicIps().get(0), is(publicIp));
         assertThat(result.getPrivateIps().size(), is(0));
     }
 

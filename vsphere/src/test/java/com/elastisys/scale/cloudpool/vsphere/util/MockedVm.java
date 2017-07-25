@@ -1,9 +1,6 @@
 package com.elastisys.scale.cloudpool.vsphere.util;
 
-import com.vmware.vim25.VirtualHardware;
-import com.vmware.vim25.VirtualMachineConfigInfo;
-import com.vmware.vim25.VirtualMachinePowerState;
-import com.vmware.vim25.VirtualMachineRuntimeInfo;
+import com.vmware.vim25.*;
 import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vim25.mo.VirtualMachine;
 import org.joda.time.DateTime;
@@ -54,6 +51,13 @@ public class MockedVm {
         when(config.getHardware()).thenReturn(hardware);
         when(hardware.getNumCPU()).thenReturn(2);
         when(hardware.getMemoryMB()).thenReturn(1024);
+        return this;
+    }
+
+    public MockedVm withPublicIps(String publicIp) {
+        GuestInfo guestInfo = mock(GuestInfo.class);
+        when(vm.getGuest()).thenReturn(guestInfo);
+        when(guestInfo.getIpAddress()).thenReturn(publicIp);
         return this;
     }
 
