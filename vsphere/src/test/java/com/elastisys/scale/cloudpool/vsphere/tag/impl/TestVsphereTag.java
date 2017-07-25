@@ -6,7 +6,7 @@ public class TestVsphereTag {
 
     @Test
     public void shouldBeAbleToCreateCloudPoolTag() {
-        new VsphereTag(VsphereTag.ScalingTag.CLOUD_POOL, "MyCloudPool");
+        new VsphereTag(ScalingTag.CLOUD_POOL, "MyCloudPool");
     }
 
 }

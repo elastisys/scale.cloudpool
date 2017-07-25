@@ -6,6 +6,7 @@ import com.elastisys.scale.cloudpool.vsphere.client.impl.StandardVsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
 import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
+import com.elastisys.scale.cloudpool.vsphere.tag.impl.ScalingTag;
 import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.collect.Lists;
@@ -42,7 +43,7 @@ public class IntegrationTestClient {
         VsphereClient vsphereClient = new StandardVsphereClient();
         vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
         List<Tag> tags = Lists.newArrayList();
-        tags.add(new VsphereTag(VsphereTag.ScalingTag.CLOUD_POOL, "NoSuchPool"));
+        tags.add(new VsphereTag(ScalingTag.CLOUD_POOL, "NoSuchPool"));
         List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines(tags);
         assertTrue(virtualMachines.isEmpty());
     }

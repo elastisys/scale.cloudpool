@@ -13,6 +13,7 @@ import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
 import com.elastisys.scale.cloudpool.vsphere.driver.functions.VirtualMachineToMachine;
 import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
+import com.elastisys.scale.cloudpool.vsphere.tag.impl.ScalingTag;
 import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
 import com.vmware.vim25.mo.VirtualMachine;
 
@@ -117,6 +118,6 @@ public class VspherePoolDriver implements CloudPoolDriver {
 
     private List<Tag> cloudPoolTag() {
         checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
-        return Lists.newArrayList(new VsphereTag(VsphereTag.ScalingTag.CLOUD_POOL, driverConfig.getPoolName()));
+        return Lists.newArrayList(new VsphereTag(ScalingTag.CLOUD_POOL, driverConfig.getPoolName()));
     }
 }

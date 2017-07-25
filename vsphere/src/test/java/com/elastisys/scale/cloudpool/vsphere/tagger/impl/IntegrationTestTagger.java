@@ -1,13 +1,14 @@
-package com.elastisys.scale.cloudpool.vsphere;
+package com.elastisys.scale.cloudpool.vsphere.tagger.impl;
 
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
-import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
-import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
-import com.elastisys.scale.cloudpool.vsphere.tagger.Tagger;
-import com.elastisys.scale.cloudpool.vsphere.tagger.impl.CustomAttributeTagger;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
+import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
+import com.elastisys.scale.cloudpool.vsphere.tag.impl.ScalingTag;
+import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.google.common.collect.Sets;
+import com.vmware.vim25.CustomFieldDef;
 import com.vmware.vim25.VirtualMachineCloneSpec;
 import com.vmware.vim25.VirtualMachineRelocateSpec;
 import com.vmware.vim25.mo.*;
@@ -16,9 +17,15 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.rmi.RemoteException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 public class IntegrationTestTagger {
 
@@ -30,6 +37,8 @@ public class IntegrationTestTagger {
     private static VirtualMachine minimalVm;
 
     private static CustomAttributeTagger tagger;
+
+    private static String testDef = "NoSuchTag";
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -65,16 +74,49 @@ public class IntegrationTestTagger {
     public static void teardown() throws Exception {
         Task task = minimalVm.destroy_Task();
         task.waitForTask();
+        CustomFieldsManager customFieldsManager = serviceInstance.getCustomFieldsManager();
+        CustomFieldDef[] cfdArr = customFieldsManager.getField();
+        int key = -1;
+        for(CustomFieldDef cfd : cfdArr) {
+            if (cfd.getName().equals(testDef)){
+                key = cfd.getKey();
+            }
+        }
+        if(key != -1) {
+            customFieldsManager.removeCustomFieldDef(key);
+        }
+        else {
+            System.err.println("IntegrationTestTagger failed to remove CustomAttribute testing definition");
+        }
         serviceInstance.getServerConnection().logout();
     }
 
     @Test
     public void taggedResourceShouldBeTagged() throws RemoteException {
-        Tag tag = new VsphereTag(VsphereTag.ScalingTag.CLOUD_POOL, "MyCloudPool");
+        Tag tag = new VsphereTag(ScalingTag.CLOUD_POOL, "MyCloudPool");
         tagger.tag(minimalVm, tag);
         assertTrue(tagger.isTagged(minimalVm, tag));
         tagger.untag(minimalVm, tag);
         assertFalse(tagger.isTagged(minimalVm, tag));
+    }
+
+    @Test
+    public void testTaggerInitialization() throws RemoteException {
+        CustomAttributeTagger spyCustomAttributeTagger = spy(new CustomAttributeTagger());
+        Collection<String> mockTags = Sets.newHashSet();
+        mockTags.add(testDef);
+        when(spyCustomAttributeTagger.getTags()).thenReturn(mockTags);
+        spyCustomAttributeTagger.initialize(serviceInstance);
+
+        CustomFieldsManager customFieldsManager = serviceInstance.getCustomFieldsManager();
+        List<CustomFieldDef> cfdList = Arrays.asList(customFieldsManager.getField());
+        List<String> tagDefinitions = cfdList.stream().map(CustomFieldDef::getName).collect(Collectors.toList());
+        for(String tag : mockTags) {
+            System.out.println("Tag: "+tag);
+            if(!tagDefinitions.contains(tag)) {
+                fail("Expected to find tag definition");
+            }
+        }
     }
 
 }
