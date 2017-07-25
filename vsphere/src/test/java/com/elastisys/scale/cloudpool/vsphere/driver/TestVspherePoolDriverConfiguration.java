@@ -1,24 +1,21 @@
 package com.elastisys.scale.cloudpool.vsphere.driver;
 
-import static org.junit.Assert.*;
-
-import com.elastisys.scale.commons.json.JsonUtils;
-import org.junit.Before;
-import org.junit.Test;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.times;
-import static org.mockito.Matchers.any;
-
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
+import com.elastisys.scale.cloudpool.vsphere.util.TestUtils;
+import com.elastisys.scale.commons.json.JsonUtils;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.rmi.RemoteException;
+
+import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 public class TestVspherePoolDriverConfiguration {
 
@@ -38,10 +35,11 @@ public class TestVspherePoolDriverConfiguration {
 
     @Test
     public void configuredDriverShouldBeConfigured() throws RemoteException {
-        DriverConfig configuration = JsonUtils.toObject(JsonUtils.parseJsonResource(specificConfigPath), DriverConfig.class);
+        DriverConfig configuration = TestUtils.loadDriverConfig(specificConfigPath);
         assertFalse(driver.isConfigured());
         driver.configure(configuration);
         assertTrue(driver.isConfigured());
+        assertNotNull(driver.getPoolName());
         verify(mockedClient).configure(any(VsphereApiSettings.class), any(VsphereProvisioningTemplate.class));
     }
 
