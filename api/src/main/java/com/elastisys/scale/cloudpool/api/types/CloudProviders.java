@@ -13,4 +13,5 @@ public class CloudProviders {
     public static final String AWS_AUTO_SCALING_GROUP = "AWS-AUTO-SCALING-GROUP";
     public static final String AZURE = "Azure";
     public static final String GCE = "GCE";
+    public static final String VSPHERE = "Vsphere";
 }
