@@ -1,4 +1,4 @@
-package com.elastisys.scale.cloudpool.vsphere.driver.functions;
+package com.elastisys.scale.cloudpool.vsphere.functions;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;

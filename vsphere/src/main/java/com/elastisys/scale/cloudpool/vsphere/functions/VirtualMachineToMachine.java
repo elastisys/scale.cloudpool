@@ -1,10 +1,9 @@
-package com.elastisys.scale.cloudpool.vsphere.driver.functions;
+package com.elastisys.scale.cloudpool.vsphere.functions;
 
 import com.elastisys.scale.cloudpool.api.types.*;
 import com.elastisys.scale.cloudpool.vsphere.tagger.Tagger;
 import com.elastisys.scale.cloudpool.vsphere.tagger.TaggerFactory;
 import com.google.common.base.Preconditions;
-import com.vmware.vim25.ManagedEntityStatus;
 import com.vmware.vim25.VirtualHardware;
 import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.mo.VirtualMachine;

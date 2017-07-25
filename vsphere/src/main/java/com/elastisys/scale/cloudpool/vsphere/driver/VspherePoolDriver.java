@@ -11,7 +11,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesExcept
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
-import com.elastisys.scale.cloudpool.vsphere.driver.functions.VirtualMachineToMachine;
+import com.elastisys.scale.cloudpool.vsphere.functions.VirtualMachineToMachine;
 import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
 import com.elastisys.scale.cloudpool.vsphere.tag.impl.ScalingTag;
 import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
