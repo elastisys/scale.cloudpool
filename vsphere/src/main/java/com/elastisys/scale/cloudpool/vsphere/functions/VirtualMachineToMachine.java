@@ -66,7 +66,10 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
 
     private DateTime extractDateTime(VirtualMachine vm) {
         Calendar calendar = vm.getRuntime().getBootTime();
-        return DateTime.parse(calendar.toInstant().toString());
+        if(calendar != null){
+            return DateTime.parse(calendar.toInstant().toString());
+        }
+        return null;
     }
 
     private MachineState extractMachineState(VirtualMachine vm) {
