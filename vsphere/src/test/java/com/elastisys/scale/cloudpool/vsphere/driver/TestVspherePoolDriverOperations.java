@@ -69,7 +69,7 @@ public class TestVspherePoolDriverOperations {
 
         List<Machine> result = driver.listMachines();
         verify(mockedClient).getVirtualMachines(any());
-        assertEquals(3, result.size());
+        assertEquals(names.size(), result.size());
         assertThat(result, is(new MachinesMatcher(names)));
     }
 

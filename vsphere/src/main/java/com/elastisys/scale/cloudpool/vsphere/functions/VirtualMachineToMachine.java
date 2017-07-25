@@ -4,10 +4,11 @@ import com.elastisys.scale.cloudpool.api.types.*;
 import com.elastisys.scale.cloudpool.vsphere.tagger.Tagger;
 import com.elastisys.scale.cloudpool.vsphere.tagger.TaggerFactory;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.vmware.vim25.GuestInfo;
 import com.vmware.vim25.VirtualHardware;
 import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.mo.VirtualMachine;
-
 import jersey.repackaged.com.google.common.base.Function;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.rmi.RemoteException;
 import java.util.Calendar;
+import java.util.Collection;
 
 public class VirtualMachineToMachine implements Function<VirtualMachine, Machine> {
     private static final Logger LOG = LoggerFactory.getLogger(VirtualMachineToMachine.class);
@@ -31,6 +33,8 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
         String region = extractRegion(vm);
         String machineSize = extractMachineSize(vm);
 
+        Collection<String> publicIps = extractPublicIps(vm);
+
         // TODO: Only partially implemented
         MembershipStatus membershipStatus = MembershipStatus.defaultStatus();
         ServiceState serviceState = ServiceState.UNKNOWN;
@@ -44,9 +48,20 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
                 .cloudProvider(cloudProvider)
                 .region(region)
                 .machineSize(machineSize)
+                .publicIps(publicIps)
                 .build();
 
         return machine;
+    }
+
+    private Collection<String> extractPublicIps(VirtualMachine vm) {
+        GuestInfo guestInfo = vm.getGuest();
+        Collection<String> publicIps = Lists.newArrayList();
+        if (guestInfo != null) {
+            publicIps.add(guestInfo.getIpAddress());
+        }
+
+        return publicIps;
     }
 
     private DateTime extractDateTime(VirtualMachine vm) {
