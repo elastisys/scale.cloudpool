@@ -112,7 +112,6 @@ public class IntegrationTestTagger {
         List<CustomFieldDef> cfdList = Arrays.asList(customFieldsManager.getField());
         List<String> tagDefinitions = cfdList.stream().map(CustomFieldDef::getName).collect(Collectors.toList());
         for(String tag : mockTags) {
-            System.out.println("Tag: "+tag);
             if(!tagDefinitions.contains(tag)) {
                 fail("Expected to find tag definition");
             }
