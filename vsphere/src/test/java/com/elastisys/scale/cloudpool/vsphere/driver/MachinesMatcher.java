@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.vsphere.driver;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.hamcrest.Description;
@@ -25,10 +26,14 @@ public class MachinesMatcher extends TypeSafeMatcher<List<Machine>> {
      * Constructs an {@link MachinesMatcher} that will match any {@link Machine}
      * s with the specified id.
      *
-     * @param expectedMachineId
+     * @param expectedMachineIds
      */
     public MachinesMatcher(List<String> expectedMachineIds) {
         this.expectedMachineIds = expectedMachineIds;
+    }
+
+    public MachinesMatcher(String... names) {
+        this(Arrays.asList(names));
     }
 
     @Override

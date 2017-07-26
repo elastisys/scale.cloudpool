@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.vsphere.driver;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.util.MockedVm;
 import com.elastisys.scale.commons.json.JsonUtils;
@@ -15,6 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.rmi.RemoteException;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -62,9 +64,7 @@ public class TestVspherePoolDriverOperations {
         List<String> names = Lists.newArrayList("vm1", "vm2", "vm3");
         List<VirtualMachine> vms = Lists.newArrayList();
 
-        for (String name : names) {
-            vms.add(getMockedVM(name));
-        }
+        vms.addAll(getMockedVMs(names));
         when(mockedClient.getVirtualMachines(any())).thenReturn(vms);
 
         List<Machine> result = driver.listMachines();
@@ -103,8 +103,31 @@ public class TestVspherePoolDriverOperations {
     }
 
     @Test
-    public void testStartMachines() {
-        fail("Not yet implemented");
+    public void startSingleMachine() throws RemoteException {
+        int count = 1;
+        List<VirtualMachine> vms = getMockedVMs("vm1");
+        when(mockedClient.launchVirtualMachines(anyInt(), any())).thenReturn(vms);
+
+        List<Machine> result = driver.startMachines(count);
+        assertThat(result, is(new MachinesMatcher("vm1")));
+    }
+
+    @Test
+    public void startTwoMachines() throws RemoteException {
+        int count = 2;
+        List<VirtualMachine> vms = getMockedVMs("vm1", "vm2");
+        when(mockedClient.launchVirtualMachines(anyInt(), any())).thenReturn(vms);
+
+        List<Machine> result = driver.startMachines(count);
+        assertThat(result, is(new MachinesMatcher("vm1", "vm2")));
+    }
+
+    @Test(expected = StartMachinesException.class)
+    public void failToStartMachines() throws RemoteException {
+        int count = 2;
+        when(mockedClient.launchVirtualMachines(anyInt(), any())).thenThrow(RemoteException.class);
+
+        driver.startMachines(count);
     }
 
     @Test
@@ -152,5 +175,17 @@ public class TestVspherePoolDriverOperations {
                 .withMachineSize(machineSize)
                 .build();
         return vm;
+    }
+
+    private List<VirtualMachine> getMockedVMs(String... names) throws RemoteException {
+        return getMockedVMs(Arrays.asList(names));
+    }
+
+    private List<VirtualMachine> getMockedVMs(List<String> names) throws RemoteException {
+        List<VirtualMachine> vms = Lists.newArrayListWithCapacity(names.size());
+        for (String name : names) {
+            vms.add(getMockedVM(name));
+        }
+        return vms;
     }
 }
