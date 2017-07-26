@@ -15,6 +15,7 @@ public class MockedVm {
 
     private VirtualMachine vm;
     private VirtualMachineRuntimeInfo runtimeInfo;
+    private int key = 1;
 
     public MockedVm() {
         vm = mock(VirtualMachine.class);
@@ -58,6 +59,20 @@ public class MockedVm {
         GuestInfo guestInfo = mock(GuestInfo.class);
         when(vm.getGuest()).thenReturn(guestInfo);
         when(guestInfo.getIpAddress()).thenReturn(publicIp);
+        return this;
+    }
+
+    public MockedVm withTag(com.elastisys.scale.cloudpool.vsphere.tag.Tag tag) throws RemoteException {
+        CustomFieldDef cfd = new CustomFieldDef();
+        cfd.setName(tag.getKey());
+        cfd.setKey(key);
+        CustomFieldDef[] cfdArr = {cfd};
+        CustomFieldStringValue cfsv = new CustomFieldStringValue();
+        cfsv.setKey(key);
+        cfsv.setValue(tag.getValue());
+        CustomFieldStringValue[] cfsvArr = {cfsv};
+        when(vm.getAvailableField()).thenReturn(cfdArr);
+        when(vm.getCustomValue()).thenReturn(cfsvArr);
         return this;
     }
 

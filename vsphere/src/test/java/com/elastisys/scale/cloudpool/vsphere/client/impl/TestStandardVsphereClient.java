@@ -3,8 +3,7 @@ package com.elastisys.scale.cloudpool.vsphere.client.impl;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
-
-import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.cloudpool.vsphere.util.MockedVm;
 import com.google.common.collect.Lists;
 import com.vmware.vim25.CustomFieldDef;
 import com.vmware.vim25.mo.*;
@@ -15,6 +14,7 @@ import org.junit.Test;
 import java.net.URL;
 import java.util.List;
 
+import static com.elastisys.scale.cloudpool.vsphere.util.TestUtils.loadDriverConfig;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
@@ -30,7 +30,7 @@ public class TestStandardVsphereClient {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        DriverConfig driverConfig = JsonUtils.toObject(JsonUtils.parseJsonResource("config/valid-vsphere-config.json"), DriverConfig.class);
+        DriverConfig driverConfig = loadDriverConfig("config/valid-vsphere-config.json");
         vsphereApiSettings = driverConfig.parseCloudApiSettings(VsphereApiSettings.class);
         vsphereProvisioningTemplate = driverConfig.parseProvisioningTemplate(VsphereProvisioningTemplate.class);
         vsphereClient = spy(new StandardVsphereClient());
@@ -56,7 +56,7 @@ public class TestStandardVsphereClient {
 
     @Test
     public void listMachinesShouldReturnListOfVms() throws Exception {
-        ManagedEntity[] vms = {mock(VirtualMachine.class)};
+        ManagedEntity[] vms = {new MockedVm().build()};
         doReturn(vms).when(mockInventoryNavigator).searchManagedEntities(anyString());
         vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
         List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines(Lists.newArrayList());
