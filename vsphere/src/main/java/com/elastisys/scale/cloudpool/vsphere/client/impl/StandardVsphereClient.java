@@ -123,8 +123,10 @@ public class StandardVsphereClient implements VsphereClient {
         // Initiate and wait for powerOff tasks
         List<Task> powerOffTasks = Lists.newArrayList();
         for (ManagedEntity managedEntity : managedEntities) {
-            VirtualMachine virtualMachine = (VirtualMachine) managedEntity;
-            powerOffTasks.add(virtualMachine.powerOffVM_Task());
+            if (ids.contains(managedEntity.getName())) {
+                VirtualMachine virtualMachine = (VirtualMachine) managedEntity;
+                powerOffTasks.add(virtualMachine.powerOffVM_Task());
+            }
         }
         for (Task task : powerOffTasks) {
             try {

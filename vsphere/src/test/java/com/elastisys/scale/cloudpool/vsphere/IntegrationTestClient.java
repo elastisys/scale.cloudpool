@@ -10,7 +10,6 @@ import com.elastisys.scale.cloudpool.vsphere.tag.impl.ScalingTag;
 import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.collect.Lists;
-import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -19,6 +18,7 @@ import org.junit.Test;
 
 import java.rmi.RemoteException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -44,24 +44,7 @@ public class IntegrationTestClient {
         List<Tag> tags = Lists.newArrayList();
         tags.add(new VsphereTag(ScalingTag.CLOUD_POOL, testTagValue));
         List<VirtualMachine> machines = vsphereClient.getVirtualMachines(tags);
-
-        //power off
-        List<Task> powerOffTasks = Lists.newArrayList();
-        for(VirtualMachine machine : machines) {
-            powerOffTasks.add(machine.powerOffVM_Task());
-        }
-        for(Task task : powerOffTasks) {
-            task.waitForTask();
-        }
-
-        // destroy
-        List<Task> destroyTasks = Lists.newArrayList();
-        for(VirtualMachine machine : machines) {
-            destroyTasks.add(machine.destroy_Task());
-        }
-        for(Task task : destroyTasks) {
-            task.waitForTask();
-        }
+        vsphereClient.terminateVirtualMachines(machines.stream().map(VirtualMachine::getName).collect(Collectors.toList()));
     }
 
     @Before
