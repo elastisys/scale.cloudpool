@@ -1,11 +1,9 @@
 package com.elastisys.scale.cloudpool.vsphere.tag;
 
-import java.util.Collection;
-
 public interface Tag {
 
-    public String getKey();
+    String getKey();
 
-    public String getValue();
+    String getValue();
 
 }
