@@ -58,7 +58,10 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
         GuestInfo guestInfo = vm.getGuest();
         Collection<String> publicIps = Lists.newArrayList();
         if (guestInfo != null) {
-            publicIps.add(guestInfo.getIpAddress());
+            String ip = guestInfo.getIpAddress();
+            if (ip != null) {
+                publicIps.add(ip);
+            }
         }
 
         return publicIps;

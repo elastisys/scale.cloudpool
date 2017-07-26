@@ -5,7 +5,6 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.client.impl.StandardVsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.driver.VspherePoolDriver;
-import com.elastisys.scale.cloudpool.vsphere.util.TestUtils;
 import com.elastisys.scale.commons.json.JsonUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -17,6 +16,7 @@ import static org.junit.Assert.assertTrue;
 public class IntegrationTestVspherePoolDriver {
 
     private static VspherePoolDriver vspherePoolDriver;
+    private DriverConfig driverConfig = JsonUtils.toObject(JsonUtils.parseJsonResource("myconfig.json"), DriverConfig.class);
 
     @BeforeClass
     public static void setUpBeforeClass() {
@@ -26,22 +26,20 @@ public class IntegrationTestVspherePoolDriver {
 
     @Test
     public void testConfiguration() {
-        DriverConfig driverConfig = JsonUtils.toObject(JsonUtils.parseJsonResource("VcenterInfo.json"), DriverConfig.class);
         vspherePoolDriver.configure(driverConfig);
         assertTrue(vspherePoolDriver.isConfigured());
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testListWithoutConfig() {
+        vspherePoolDriver.listMachines();
+    }
+
     @Test
     public void testListMachines() {
-        DriverConfig driverConfig = TestUtils.loadDriverConfig("VcenterInfo.json");
         vspherePoolDriver.configure(driverConfig);
-        System.err.println("testListMachines driverConfig.getPoolName(): " + driverConfig.getPoolName());
-        List<Machine> listMachines = vspherePoolDriver.listMachines();
-        System.err.println("listMachines.size: " + listMachines.size());
-        for(Machine machine : listMachines) {
-            System.err.println("machine: " + machine);
-        }
-        //System.err.println(vspherePoolDriver.listMachines());
+        List<Machine> result = vspherePoolDriver.listMachines();
+        assertTrue(result.isEmpty());
     }
 
 }
