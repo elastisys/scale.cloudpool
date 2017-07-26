@@ -6,7 +6,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.util.MockedVm;
-import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.cloudpool.vsphere.util.TestUtils;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.mo.VirtualMachine;
@@ -31,8 +31,7 @@ public class TestVspherePoolDriverOperations {
     @Before
     public void setup() {
         String specificConfigPath = "config/valid-vsphere-config.json";
-        DriverConfig configuration = JsonUtils.toObject(JsonUtils.parseJsonResource(specificConfigPath),
-                DriverConfig.class);
+        DriverConfig configuration = TestUtils.loadDriverConfig(specificConfigPath);
         driver = new VspherePoolDriver(mockedClient);
         driver.configure(configuration);
     }
@@ -152,11 +151,6 @@ public class TestVspherePoolDriverOperations {
 
     @Test
     public void testSetMembershipStatus() {
-        fail("Not yet implemented");
-    }
-
-    @Test
-    public void testGetPoolName() {
         fail("Not yet implemented");
     }
 
