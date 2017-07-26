@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.vsphere.driver;
 
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
@@ -111,6 +112,13 @@ public class TestVspherePoolDriverConfiguration {
             assertTrue(e.getMessage().contains("template"));
         }
         assertFalse(driver.isConfigured());
+    }
+
+    @Test(expected = CloudPoolDriverException.class)
+    public void configureWithConnectionProblem() throws RemoteException {
+        DriverConfig configuration = TestUtils.loadDriverConfig(specificConfigPath);
+        doThrow(RemoteException.class).when(mockedClient).configure(any(), any());
+        driver.configure(configuration);
     }
 
     @Test(expected = IllegalStateException.class)
