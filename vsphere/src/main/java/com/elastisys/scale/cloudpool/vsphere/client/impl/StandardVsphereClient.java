@@ -109,7 +109,7 @@ public class StandardVsphereClient implements VsphereClient {
         for(String name : names) {
             vms.add((VirtualMachine) searchManagedEntity(folder, VirtualMachine.class.getSimpleName(), name));
         }
-
+        System.err.println("vms:" + vms);
         return vms;
     }
 
@@ -137,10 +137,9 @@ public class StandardVsphereClient implements VsphereClient {
     }
 
     ManagedEntity searchManagedEntity(Folder folder, String type, String name) throws RemoteException {
-        ManagedEntity me = createInventoryNavigator(folder).searchManagedEntity(type,
-                vsphereProvisioningTemplate.getTemplate());
+        ManagedEntity me = createInventoryNavigator(folder).searchManagedEntity(type, name);
         if (me == null) {
-            throw new NotFoundException("Entity: " + type + " Name: " + name + " not found");
+            throw new NotFoundException("Entity: " + type + " Name: \"" + name + "\" not found");
         }
         return me;
     }
