@@ -71,7 +71,6 @@ public class StandardVsphereClient implements VsphereClient {
 
     @Override
     public List<VirtualMachine> launchVirtualMachines(int count, List<Tag> tags) throws RemoteException {
-
         Folder rootFolder = this.serviceInstance.getRootFolder();
         VirtualMachine template = (VirtualMachine) searchManagedEntity(rootFolder, VirtualMachine.class.getSimpleName(),
                 vsphereProvisioningTemplate.getTemplate());
@@ -106,15 +105,49 @@ public class StandardVsphereClient implements VsphereClient {
 
         // Find the references to created VirtualMachines in order to return them
         List<VirtualMachine> vms = Lists.newArrayList();
-        for(String name : names) {
-            vms.add((VirtualMachine) searchManagedEntity(folder, VirtualMachine.class.getSimpleName(), name));
+        for (String name : names) {
+            VirtualMachine vm = (VirtualMachine) searchManagedEntity(folder, VirtualMachine.class.getSimpleName(), name);
+            for (Tag tag : tags) {
+                tagger.tag(vm, tag);
+            }
+            vms.add(vm);
         }
-        System.err.println("vms:" + vms);
         return vms;
     }
 
     @Override
-    public void terminateVirtualMachines(List<String> ids) {
+    public void terminateVirtualMachines(List<String> ids) throws RemoteException {
+        Folder rootFolder = serviceInstance.getRootFolder();
+        List<ManagedEntity> managedEntities = Arrays.asList(createInventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine"));
+
+        // Initiate and wait for powerOff tasks
+        List<Task> powerOffTasks = Lists.newArrayList();
+        for (ManagedEntity managedEntity : managedEntities) {
+            VirtualMachine virtualMachine = (VirtualMachine) managedEntity;
+            powerOffTasks.add(virtualMachine.powerOffVM_Task());
+        }
+        for (Task task : powerOffTasks) {
+            try {
+                task.waitForTask();
+            } catch (InterruptedException e) {
+                logger.error("Failed to power off VirtualMachine: powerOffVM_Task was interrupted");
+            }
+        }
+
+        // Initiate and wait for destroy tasks
+        List<Task> destroyTasks = Lists.newArrayList();
+        for (ManagedEntity managedEntity : managedEntities) {
+            if (ids.contains(managedEntity.getName())) {
+                destroyTasks.add(managedEntity.destroy_Task());
+            }
+        }
+        for (Task task : destroyTasks) {
+            try {
+                task.waitForTask();
+            } catch (InterruptedException e) {
+                logger.error("Failed to destroy VirtualMachine: destroy_Task was interrupted");
+            }
+        }
     }
 
     @Override

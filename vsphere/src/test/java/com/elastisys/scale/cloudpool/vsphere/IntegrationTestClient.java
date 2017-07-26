@@ -10,6 +10,7 @@ import com.elastisys.scale.cloudpool.vsphere.tag.impl.ScalingTag;
 import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.collect.Lists;
+import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -29,6 +30,8 @@ public class IntegrationTestClient {
     private static VsphereProvisioningTemplate vsphereProvisioningTemplate;
     private static VsphereClient vsphereClient;
 
+    private static String testTagValue = "VsphereClientIntegrationTest";
+
     @BeforeClass
     public static void setUpBeforeClass() {
         DriverConfig driverConfig = JsonUtils.toObject(JsonUtils.parseJsonResource("myconfig.json"), DriverConfig.class);
@@ -37,8 +40,28 @@ public class IntegrationTestClient {
     }
 
     @AfterClass
-    public static void tearDownAfterClass() {
-        // terminate machines with integration test tag
+    public static void tearDownAfterClass() throws Exception {
+        List<Tag> tags = Lists.newArrayList();
+        tags.add(new VsphereTag(ScalingTag.CLOUD_POOL, testTagValue));
+        List<VirtualMachine> machines = vsphereClient.getVirtualMachines(tags);
+
+        //power off
+        List<Task> powerOffTasks = Lists.newArrayList();
+        for(VirtualMachine machine : machines) {
+            powerOffTasks.add(machine.powerOffVM_Task());
+        }
+        for(Task task : powerOffTasks) {
+            task.waitForTask();
+        }
+
+        // destroy
+        List<Task> destroyTasks = Lists.newArrayList();
+        for(VirtualMachine machine : machines) {
+            destroyTasks.add(machine.destroy_Task());
+        }
+        for(Task task : destroyTasks) {
+            task.waitForTask();
+        }
     }
 
     @Before
@@ -65,8 +88,13 @@ public class IntegrationTestClient {
     @Test
     public void shouldLaunchNewMachines() throws RemoteException {
         List<Tag> tags = Lists.newArrayList();
-        tags.add(new VsphereTag(ScalingTag.CLOUD_POOL, "VsphereClientIntegrationTest"));
+        tags.add(new VsphereTag(ScalingTag.CLOUD_POOL, testTagValue));
         List<VirtualMachine> virtualMachines = vsphereClient.launchVirtualMachines(1, tags);
         assertEquals(virtualMachines.size(), 1);
+    }
+
+    @Test
+    public void shouldDestroyMachines() throws RemoteException {
+
     }
 }
