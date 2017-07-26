@@ -16,6 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.elastisys.scale.cloudpool.vsphere.util.TestUtils.loadDriverConfig;
@@ -81,6 +82,18 @@ public class TestStandardVsphereClient {
         List<VirtualMachine> virtualMachines = vsphereClient.launchVirtualMachines(2, tags);
         verify(vm, times(2)).cloneVM_Task(any(Folder.class), anyString(), any(VirtualMachineCloneSpec.class));
         assertEquals(virtualMachines.size(), 2);
+    }
+
+    @Test
+    public void terminateMachinesShouldRemoveVms() throws Exception {
+        VirtualMachine virtualMachine = new MockedVm().withName("Vm_destroy").build();
+        VirtualMachine[] virtualMachineArr = {virtualMachine};
+        when(mockInventoryNavigator.searchManagedEntity(eq("Folder"), anyString())).thenReturn(mock(Folder.class));
+        when(mockInventoryNavigator.searchManagedEntities("VirtualMachine")).thenReturn(virtualMachineArr);
+        when(virtualMachine.powerOffVM_Task()).thenReturn(mock(Task.class));
+        when(virtualMachine.destroy_Task()).thenReturn(mock(Task.class));
+        vsphereClient.terminateVirtualMachines(Arrays.asList("Vm_destroy"));
+        verify(virtualMachine, times(1)).destroy_Task();
     }
 
 }
