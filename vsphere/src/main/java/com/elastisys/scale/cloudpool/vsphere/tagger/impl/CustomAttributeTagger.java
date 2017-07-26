@@ -3,12 +3,14 @@ package com.elastisys.scale.cloudpool.vsphere.tagger.impl;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
 import com.elastisys.scale.cloudpool.vsphere.tag.impl.ScalingTag;
-import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
 import com.elastisys.scale.cloudpool.vsphere.tagger.Tagger;
 import com.vmware.vim25.CustomFieldDef;
 import com.vmware.vim25.CustomFieldStringValue;
 import com.vmware.vim25.CustomFieldValue;
-import com.vmware.vim25.mo.*;
+import com.vmware.vim25.mo.CustomFieldsManager;
+import com.vmware.vim25.mo.ManagedEntity;
+import com.vmware.vim25.mo.ServiceInstance;
+import com.vmware.vim25.mo.VirtualMachine;
 
 import java.rmi.RemoteException;
 import java.util.Arrays;
@@ -33,10 +35,7 @@ public class CustomAttributeTagger implements Tagger {
     @Override
     public boolean isTagged(ManagedEntity me, Tag vsphereTag) throws RemoteException {
         try {
-            if (getCustomValue(me, vsphereTag.getKey()).equals(vsphereTag.getValue())) {
-                return true;
-            }
-            return false;
+            return getCustomValue(me, vsphereTag.getKey()).equals(vsphereTag.getValue());
         } catch (NotFoundException e) {
             return false;
         }
