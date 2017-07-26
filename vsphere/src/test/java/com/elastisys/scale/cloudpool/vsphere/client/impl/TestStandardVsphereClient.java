@@ -70,12 +70,32 @@ public class TestStandardVsphereClient {
     }
 
     @Test
+    public void getNoMachines() throws RemoteException {
+        ManagedEntity[] vms = null;
+        doReturn(vms).when(mockInventoryNavigator).searchManagedEntities(anyString());
+        vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
+        List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines(Lists.newArrayList());
+        assertEquals(virtualMachines.size(), 0);
+    }
+
+    @Test
     public void listMachinesShouldReturnListOfVms() throws Exception {
         ManagedEntity[] vms = {new MockedVm().build()};
         doReturn(vms).when(mockInventoryNavigator).searchManagedEntities(anyString());
         vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
         List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines(Lists.newArrayList());
         assertEquals(virtualMachines.size(), 1);
+    }
+
+    @Test
+    public void getMachinesWithWrongTag() throws RemoteException {
+        Tag existingTag = new VsphereTag(ScalingTag.CLOUD_POOL, "TestCloudPool");
+        ManagedEntity[] vms = {new MockedVm().withTag(existingTag).build()};
+        Tag noSuchTag = new VsphereTag(ScalingTag.CLOUD_POOL, "NoSuchThing");
+        doReturn(vms).when(mockInventoryNavigator).searchManagedEntities(anyString());
+        vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
+        List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines(Lists.newArrayList(existingTag, noSuchTag));
+        assertEquals(virtualMachines.size(), 0);
     }
 
     @Test
@@ -92,6 +112,21 @@ public class TestStandardVsphereClient {
         List<VirtualMachine> virtualMachines = vsphereClient.launchVirtualMachines(2, tags);
         verify(vm, times(2)).cloneVM_Task(any(Folder.class), anyString(), any(VirtualMachineCloneSpec.class));
         assertEquals(virtualMachines.size(), 2);
+    }
+
+    @Test
+    public void interruptedLaunchOfMachine() throws RemoteException, InterruptedException {
+        vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
+        Task task = mock(Task.class);
+        VirtualMachine vm = new MockedVm().build();
+
+        when(mockInventoryNavigator.searchManagedEntity(eq("Folder"), anyString())).thenReturn(mock(Folder.class));
+        when(mockInventoryNavigator.searchManagedEntity(eq("VirtualMachine"), anyString())).thenReturn(vm);
+        when(mockInventoryNavigator.searchManagedEntity(eq("ResourcePool"), anyString())).thenReturn(mock(ResourcePool.class));
+        when(vm.cloneVM_Task(any(), anyString(), any())).thenReturn(task);
+        when(task.waitForTask()).thenThrow(InterruptedException.class);
+
+        vsphereClient.launchVirtualMachines(1, Lists.newArrayList());
     }
 
     @Test

@@ -55,14 +55,7 @@ public class StandardVsphereClient implements VsphereClient {
         }
         List<ManagedEntity> meList = Arrays.asList(meArr);
         for (ManagedEntity me : meList) {
-            boolean addMe = true;
-            for (Tag tag : tags) {
-                if (!tagger.isTagged(me, tag)) {
-                    addMe = false;
-                    break;
-                }
-            }
-            if (addMe) {
+            if (hasAllTags(me, tags)) {
                 vms.add((VirtualMachine) me);
             }
         }
@@ -177,6 +170,15 @@ public class StandardVsphereClient implements VsphereClient {
             throw new NotFoundException("Entity: " + type + " Name: \"" + name + "\" not found");
         }
         return me;
+    }
+
+    private boolean hasAllTags(ManagedEntity me, List<Tag> tags) throws RemoteException {
+        for (Tag tag : tags) {
+            if (!tagger.isTagged(me, tag)) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }
