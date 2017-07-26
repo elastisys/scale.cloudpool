@@ -15,7 +15,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -56,6 +58,14 @@ public class TestStandardVsphereClient {
 
     @Test
     public void testConfigure() throws Exception {
+        vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
+    }
+
+    // URL is already checked when we get to the client, but we want coverage :P
+    @Test(expected = RemoteException.class)
+    public void configureWithMalformedUrl() throws RemoteException, MalformedURLException {
+        doThrow(MalformedURLException.class).when(vsphereClient).createServiceInstance(any(), anyString(),
+                anyString(), anyBoolean());
         vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
     }
 
