@@ -19,6 +19,7 @@ import com.vmware.vim25.mo.VirtualMachine;
 import jersey.repackaged.com.google.common.collect.Lists;
 
 import java.rmi.RemoteException;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -81,7 +82,12 @@ public class VspherePoolDriver implements CloudPoolDriver {
     public void terminateMachine(String machineId)
             throws IllegalStateException, NotFoundException, CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
-
+        try {
+            vsphereClient.terminateVirtualMachines(Arrays.asList(machineId));
+        } catch (RemoteException e) {
+            String message = format("Failed to terminate machine \"%s\": %s", machineId, e.getMessage());
+            throw new CloudPoolDriverException(message, e);
+        }
     }
 
     @Override

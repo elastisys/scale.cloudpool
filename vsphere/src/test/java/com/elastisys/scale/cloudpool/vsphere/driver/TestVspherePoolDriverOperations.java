@@ -130,8 +130,11 @@ public class TestVspherePoolDriverOperations {
     }
 
     @Test
-    public void testTerminateMachine() {
-        fail("Not yet implemented");
+    public void testTerminateMachine() throws RemoteException {
+        String name = "vm1";
+        driver.terminateMachine(name);
+        verify(mockedClient).terminateVirtualMachines(Lists.newArrayList(name));
+        verify(mockedClient, times(1)).terminateVirtualMachines(any());
     }
 
     @Test

@@ -8,6 +8,6 @@
 	"provisioningTemplate": {
 		"template": "template-name",
 		"folder": "Discovered Virtual Machines",
-		"resource pool": "production"
+		"resourcePool": "production"
 	}
 }
