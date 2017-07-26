@@ -17,12 +17,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.rmi.RemoteException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class IntegrationTestClient {
 
@@ -78,6 +78,12 @@ public class IntegrationTestClient {
 
     @Test
     public void shouldDestroyMachines() throws RemoteException {
-
+        List<Tag> tags = Lists.newArrayList();
+        tags.add(new VsphereTag(ScalingTag.CLOUD_POOL, testTagValue));
+        int startingSize = vsphereClient.getVirtualMachines(tags).size();
+        List<VirtualMachine> virtualMachines = vsphereClient.launchVirtualMachines(1, tags);
+        assertEquals(vsphereClient.getVirtualMachines(tags).size(), (startingSize+1));
+        vsphereClient.terminateVirtualMachines(Arrays.asList(virtualMachines.get(0).getName()));
+        assertEquals(vsphereClient.getVirtualMachines(tags).size(), startingSize);
     }
 }
