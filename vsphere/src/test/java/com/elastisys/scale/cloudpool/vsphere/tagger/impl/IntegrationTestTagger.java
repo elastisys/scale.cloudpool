@@ -42,7 +42,7 @@ public class IntegrationTestTagger {
 
     @BeforeClass
     public static void setup() throws Exception {
-        driverConfig = JsonUtils.toObject(JsonUtils.parseJsonResource("VcenterInfo.json"), DriverConfig.class);
+        driverConfig = JsonUtils.toObject(JsonUtils.parseJsonResource("myconfig.json"), DriverConfig.class);
         vsphereApiSettings = driverConfig.parseCloudApiSettings(VsphereApiSettings.class);
         vsphereProvisioningTemplate = driverConfig.parseProvisioningTemplate(VsphereProvisioningTemplate.class);
         serviceInstance = new ServiceInstance(vsphereApiSettings.getUrl(), vsphereApiSettings.getUsername(),
