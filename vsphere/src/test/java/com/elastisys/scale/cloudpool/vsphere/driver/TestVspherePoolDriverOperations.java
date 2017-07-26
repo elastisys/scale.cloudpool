@@ -130,11 +130,17 @@ public class TestVspherePoolDriverOperations {
     }
 
     @Test
-    public void testTerminateMachine() throws RemoteException {
+    public void terminateMachine() throws RemoteException {
         String name = "vm1";
         driver.terminateMachine(name);
         verify(mockedClient).terminateVirtualMachines(Lists.newArrayList(name));
         verify(mockedClient, times(1)).terminateVirtualMachines(any());
+    }
+
+    @Test(expected = CloudPoolDriverException.class)
+    public void failToTerminateMachine() throws RemoteException {
+        doThrow(RemoteException.class).when(mockedClient).terminateVirtualMachines(any());
+        driver.terminateMachine("vm1");
     }
 
     @Test
