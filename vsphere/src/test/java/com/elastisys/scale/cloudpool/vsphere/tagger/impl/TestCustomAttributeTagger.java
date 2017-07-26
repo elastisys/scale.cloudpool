@@ -56,6 +56,7 @@ public class TestCustomAttributeTagger {
     @Test
     public void taggedVirtualMachineShouldBeTagged() throws RemoteException {
         VirtualMachine mockVirtualMachine = new MockedVm().withTag(mockTag).build();
+        customAttributeTagger.tag(mockVirtualMachine, mockTag);
         assertTrue(customAttributeTagger.isTagged(mockVirtualMachine, mockTag));
     }
 

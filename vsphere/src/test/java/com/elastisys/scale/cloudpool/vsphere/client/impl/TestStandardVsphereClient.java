@@ -3,9 +3,13 @@ package com.elastisys.scale.cloudpool.vsphere.client.impl;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
+import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
+import com.elastisys.scale.cloudpool.vsphere.tag.impl.ScalingTag;
+import com.elastisys.scale.cloudpool.vsphere.tag.impl.VsphereTag;
 import com.elastisys.scale.cloudpool.vsphere.util.MockedVm;
 import com.google.common.collect.Lists;
 import com.vmware.vim25.CustomFieldDef;
+import com.vmware.vim25.VirtualMachineCloneSpec;
 import com.vmware.vim25.mo.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -61,6 +65,22 @@ public class TestStandardVsphereClient {
         vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
         List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines(Lists.newArrayList());
         assertEquals(virtualMachines.size(), 1);
+    }
+
+    @Test
+    public void launchMachinesShouldAddVms() throws Exception {
+        vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
+        List<Tag> tags = Lists.newArrayList();
+        Tag tag = new VsphereTag(ScalingTag.CLOUD_POOL, "StandardVsphereClientTestPool");
+        tags.add(tag);
+        VirtualMachine vm = new MockedVm().build();
+        when(mockInventoryNavigator.searchManagedEntity(eq("VirtualMachine"), anyString())).thenReturn(vm);
+        when(mockInventoryNavigator.searchManagedEntity(eq("Folder"), anyString())).thenReturn(mock(Folder.class));
+        when(mockInventoryNavigator.searchManagedEntity(eq("ResourcePool"), anyString())).thenReturn(mock(ResourcePool.class));
+        when(vm.cloneVM_Task(any(), anyString(), any())).thenReturn(mock(Task.class));
+        List<VirtualMachine> virtualMachines = vsphereClient.launchVirtualMachines(2, tags);
+        verify(vm, times(2)).cloneVM_Task(any(Folder.class), anyString(), any(VirtualMachineCloneSpec.class));
+        assertEquals(virtualMachines.size(), 2);
     }
 
 }
