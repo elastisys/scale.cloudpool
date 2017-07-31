@@ -24,7 +24,7 @@ public class TestVirtualMachineToMachine {
     private DateTime launchTime = UtcTime.now();
     private int numCpu = 2;
     private int ram = 1024;
-    private String machineSize = String.format("%dvCPU %dMB RAM", numCpu, ram);
+    private String machineSize = String.format("cpu-%d-mem-%d", numCpu, ram);
     private VirtualMachinePowerState poweredOn = VirtualMachinePowerState.poweredOn;
 
     @Before

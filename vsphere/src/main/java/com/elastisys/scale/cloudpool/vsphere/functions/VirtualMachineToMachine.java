@@ -104,7 +104,7 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
     private String extractMachineSize(VirtualMachine vm) {
         String machineSize;
         VirtualHardware hardware = vm.getConfig().getHardware();
-        machineSize = String.format("%dvCPU %dMB RAM", hardware.getNumCPU(), hardware.getMemoryMB());
+        machineSize = String.format("cpu-%d-mem-%d", hardware.getNumCPU(), hardware.getMemoryMB());
         return machineSize;
     }
 
