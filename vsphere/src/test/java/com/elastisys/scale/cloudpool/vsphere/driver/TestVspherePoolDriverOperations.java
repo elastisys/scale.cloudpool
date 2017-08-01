@@ -1,6 +1,7 @@
 package com.elastisys.scale.cloudpool.vsphere.driver;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
+import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
@@ -60,14 +61,22 @@ public class TestVspherePoolDriverOperations {
 
     @Test
     public void listMoreMachines() throws RemoteException {
-        List<String> names = Lists.newArrayList("vm1", "vm2", "vm3");
-        List<VirtualMachine> vms = Lists.newArrayList();
+        List<String> runningNames = Lists.newArrayList("vm1", "vm2", "vm3");
+        List<String> pendingNames = Lists.newArrayList("vm4", "vm5");
+        List<String> names = runningNames;
+        names.addAll(pendingNames);
 
-        vms.addAll(getMockedVMs(names));
-        when(mockedClient.getVirtualMachines(any())).thenReturn(vms);
+        List<VirtualMachine> runningVms = Lists.newArrayList();
+        List<VirtualMachine> pendingVms = Lists.newArrayList();
+
+        runningVms.addAll(getMockedVMs(runningNames));
+        pendingVms.addAll(getMockedVMs(pendingNames));
+        when(mockedClient.getVirtualMachines(any())).thenReturn(runningVms);
+        when(mockedClient.pendingVirtualMachines()).thenReturn(pendingNames);
 
         List<Machine> result = driver.listMachines();
         verify(mockedClient).getVirtualMachines(any());
+        verify(mockedClient).pendingVirtualMachines();
         assertEquals(names.size(), result.size());
         assertThat(result, is(new MachinesMatcher(names)));
     }
@@ -93,6 +102,18 @@ public class TestVspherePoolDriverOperations {
         verify(mockedClient).getVirtualMachines(any());
         assertEquals(names.size(), result.size());
         assertThat(result, is(new MachinesMatcher(names)));
+    }
+
+    @Test
+    public void listPendingMachine() throws RemoteException {
+        String name = "vmName";
+        when(mockedClient.pendingVirtualMachines()).thenReturn(Lists.newArrayList(name));
+
+        List<Machine> result = driver.listMachines();
+        verify(mockedClient).pendingVirtualMachines();
+        assertEquals(1, result.size());
+        assertThat(result, is(MachinesMatcher.machines(name)));
+        assertThat(result.get(0).getMachineState(), is(MachineState.PENDING));
     }
 
     @Test(expected = CloudPoolDriverException.class)

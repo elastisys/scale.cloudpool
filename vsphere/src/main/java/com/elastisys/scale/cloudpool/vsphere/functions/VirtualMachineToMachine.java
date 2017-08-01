@@ -81,7 +81,7 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
         MachineState state;
         VirtualMachineRuntimeInfo runtime = vm.getRuntime();
         if (runtime == null) {
-            return MachineState.REQUESTED;
+            return MachineState.PENDING;
         }
         VirtualMachinePowerState powerState = runtime.getPowerState();
 

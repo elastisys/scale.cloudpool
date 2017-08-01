@@ -20,6 +20,7 @@ import jersey.repackaged.com.google.common.collect.Lists;
 import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
@@ -56,6 +57,9 @@ public class VspherePoolDriver implements CloudPoolDriver {
     public List<Machine> listMachines() throws IllegalStateException, CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
         List<Machine> machines = Lists.newArrayList();
+
+        List<String> pendingNames = vsphereClient.pendingVirtualMachines();
+
         try {
             List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines(cloudPoolTag());
             machines.addAll(Lists.transform(virtualMachines, new VirtualMachineToMachine()));
@@ -63,9 +67,17 @@ public class VspherePoolDriver implements CloudPoolDriver {
             throw new CloudPoolDriverException(
                     format("failed to retrieve machines in cloud pool \"%s\": %s", getPoolName(), e.getMessage()), e);
         }
-        List<String> pendingNames = vsphereClient.pendingVirtualMachines();
+
+        // Make sure no machine is listed as both pending and running
+        removeDoubles(machines, pendingNames);
+
         machines.addAll(placeholderMachines(pendingNames));
         return machines;
+    }
+
+    private void removeDoubles(List<Machine> machines, List<String> pendingNames) {
+        List<String> runningNames = machines.stream().map(Machine::getId).collect(Collectors.toList());
+        pendingNames.removeIf(name -> runningNames.contains(name));
     }
 
     @Override
@@ -144,7 +156,7 @@ public class VspherePoolDriver implements CloudPoolDriver {
                             .cloudProvider(CloudProviders.VSPHERE)
                             .machineSize("unknown")
                             .region(provisioningTemplate.getResourcePool())
-                            .machineState(MachineState.REQUESTED).launchTime(UtcTime.now()).build());
+                            .machineState(MachineState.PENDING).launchTime(UtcTime.now()).build());
         }
         return placeholderMachines;
     }
