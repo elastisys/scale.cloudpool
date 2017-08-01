@@ -1,6 +1,7 @@
 package com.elastisys.scale.cloudpool.vsphere;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
+import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.client.impl.StandardVsphereClient;
@@ -12,6 +13,7 @@ import org.junit.Test;
 
 import java.util.List;
 
+import static java.lang.Thread.sleep;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -28,8 +30,9 @@ public class IntegrationTestVspherePoolDriver {
     }
 
     @AfterClass
-    public static void tearDown() {
+    public static void tearDown() throws InterruptedException {
         List<Machine> machines = vspherePoolDriver.listMachines();
+        waitUntilRunning();
         machines.forEach(machine -> vspherePoolDriver.terminateMachine(machine.getId()));
     }
 
@@ -52,7 +55,7 @@ public class IntegrationTestVspherePoolDriver {
     }
 
     @Test
-    public void simpleScale() {
+    public void simpleScale() throws InterruptedException {
         vspherePoolDriver.configure(driverConfig);
         List<Machine> result = vspherePoolDriver.listMachines();
         assertTrue(result.isEmpty());
@@ -63,13 +66,15 @@ public class IntegrationTestVspherePoolDriver {
         result = vspherePoolDriver.listMachines();
         assertThat(result.size(), is(1));
 
+        waitUntilRunning();
+
         vspherePoolDriver.terminateMachine(result.get(0).getId());
         result = vspherePoolDriver.listMachines();
         assertTrue(result.isEmpty());
     }
 
     @Test
-    public void scaleMore() {
+    public void scaleMore() throws InterruptedException {
         vspherePoolDriver.configure(driverConfig);
 
         // Scale 0 -> 1
@@ -84,6 +89,9 @@ public class IntegrationTestVspherePoolDriver {
 
         result = vspherePoolDriver.listMachines();
         assertThat(result.size(), is(3));
+
+        waitUntilRunning();
+
         // Scale 3 -> 1
         vspherePoolDriver.terminateMachine(result.get(0).getId());
         vspherePoolDriver.terminateMachine(result.get(1).getId());
@@ -93,6 +101,19 @@ public class IntegrationTestVspherePoolDriver {
         vspherePoolDriver.terminateMachine(result.get(0).getId());
         result = vspherePoolDriver.listMachines();
         assertTrue(result.isEmpty());
+    }
+
+    private static void waitUntilRunning() throws InterruptedException {
+        boolean running;
+        do {
+            running = true;
+            for (Machine machine : vspherePoolDriver.listMachines()) {
+                if (!machine.getMachineState().equals(MachineState.RUNNING)) {
+                    running = false;
+                    sleep(10);
+                }
+            }
+        } while (!running);
     }
 
 }

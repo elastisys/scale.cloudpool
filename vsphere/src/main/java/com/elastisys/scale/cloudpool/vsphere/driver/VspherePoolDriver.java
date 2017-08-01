@@ -55,13 +55,17 @@ public class VspherePoolDriver implements CloudPoolDriver {
     @Override
     public List<Machine> listMachines() throws IllegalStateException, CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
+        List<Machine> machines = Lists.newArrayList();
         try {
             List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines(cloudPoolTag());
-            return Lists.transform(virtualMachines, new VirtualMachineToMachine());
+            machines.addAll(Lists.transform(virtualMachines, new VirtualMachineToMachine()));
         } catch (RemoteException e) {
             throw new CloudPoolDriverException(
                     format("failed to retrieve machines in cloud pool \"%s\": %s", getPoolName(), e.getMessage()), e);
         }
+        List<String> pendingNames = vsphereClient.pendingVirtualMachines();
+        machines.addAll(placeholderMachines(pendingNames));
+        return machines;
     }
 
     @Override
