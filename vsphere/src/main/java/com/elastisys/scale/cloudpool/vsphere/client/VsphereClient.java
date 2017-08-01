@@ -14,7 +14,7 @@ public interface VsphereClient {
 
     List<VirtualMachine> getVirtualMachines(List<Tag> tags) throws RemoteException;
 
-    List<VirtualMachine> launchVirtualMachines(int count, List<Tag> tags) throws RemoteException;
+    List<String> launchVirtualMachines(int count, List<Tag> tags) throws RemoteException;
 
     void terminateVirtualMachines(List<String> ids) throws RemoteException;
 
