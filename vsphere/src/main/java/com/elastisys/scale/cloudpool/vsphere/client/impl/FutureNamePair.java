@@ -2,7 +2,7 @@ package com.elastisys.scale.cloudpool.vsphere.client.impl;
 
 import java.util.concurrent.Future;
 
-public class FutureNamePair {
+class FutureNamePair {
     Future future;
     String name;
 
