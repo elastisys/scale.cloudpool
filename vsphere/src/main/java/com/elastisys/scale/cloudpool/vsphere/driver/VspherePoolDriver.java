@@ -75,11 +75,6 @@ public class VspherePoolDriver implements CloudPoolDriver {
         return machines;
     }
 
-    private void removeDoubles(List<Machine> machines, List<String> pendingNames) {
-        List<String> runningNames = machines.stream().map(Machine::getId).collect(Collectors.toList());
-        pendingNames.removeIf(name -> runningNames.contains(name));
-    }
-
     @Override
     public List<Machine> startMachines(int count) throws IllegalStateException, StartMachinesException {
         checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
@@ -159,5 +154,15 @@ public class VspherePoolDriver implements CloudPoolDriver {
                             .machineState(MachineState.PENDING).launchTime(UtcTime.now()).build());
         }
         return placeholderMachines;
+    }
+
+    /**
+     * Remove pending machines that are already running.
+     * @param machines running machines
+     * @param pendingNames names of pending machines
+     */
+    private void removeDoubles(List<Machine> machines, List<String> pendingNames) {
+        List<String> runningNames = machines.stream().map(Machine::getId).collect(Collectors.toList());
+        pendingNames.removeIf(name -> runningNames.contains(name));
     }
 }
