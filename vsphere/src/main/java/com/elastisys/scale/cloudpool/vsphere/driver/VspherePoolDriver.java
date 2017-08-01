@@ -72,7 +72,7 @@ public class VspherePoolDriver implements CloudPoolDriver {
         try {
             List<VirtualMachine> newVms = vsphereClient.launchVirtualMachines(count, cloudPoolTag());
             startedMachines.addAll(Lists.transform(newVms, new VirtualMachineToMachine()));
-        } catch (RemoteException e) {
+        } catch (RemoteException|NotFoundException e) {
             throw new StartMachinesException(count, startedMachines, e);
         }
         return startedMachines;
