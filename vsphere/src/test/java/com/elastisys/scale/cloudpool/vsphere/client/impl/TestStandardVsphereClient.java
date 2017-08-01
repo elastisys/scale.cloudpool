@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.vsphere.client.impl;
 
+import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
@@ -127,6 +128,21 @@ public class TestStandardVsphereClient {
         vsphereClient.launchVirtualMachines(1, Lists.newArrayList());
     }
 
+    @Test(expected = NotFoundException.class)
+    public void launchWithWrongTemplate() throws RemoteException {
+        vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
+        Task task = mock(Task.class);
+        VirtualMachine vm = new MockedVm().build();
+
+        when(mockInventoryNavigator.searchManagedEntity(eq("Folder"), anyString())).thenReturn(null);
+
+        when(mockInventoryNavigator.searchManagedEntity(eq("VirtualMachine"), anyString())).thenReturn(vm);
+        when(mockInventoryNavigator.searchManagedEntity(eq("ResourcePool"), anyString())).thenReturn(mock(ResourcePool.class));
+        when(vm.cloneVM_Task(any(), anyString(), any())).thenReturn(task);
+
+        vsphereClient.launchVirtualMachines(1, Lists.newArrayList());
+    }
+
     @Test
     public void terminateMachinesShouldRemoveVms() throws Exception {
         VirtualMachine virtualMachine = new MockedVm().withName("Vm_destroy").build();
@@ -143,5 +159,31 @@ public class TestStandardVsphereClient {
         List<String> pendingMachines = vsphereClient.pendingVirtualMachines();
     }
 
+    /**
+     * This test does not test much, just that the client does not crash in case of
+     * interruptions when trying to terminate a machine.
+     */
+    @Test
+    public void interruptedPowerOff() throws RemoteException, InterruptedException {
+        VirtualMachine vm = new MockedVm().withName("Vm_destroy").build();
+        VirtualMachine[] virtualMachineArr = {vm};
+        Task powerOffTask = mock(Task.class);
+        Task destroyTask = mock(Task.class);
+
+        vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
+
+        when(mockInventoryNavigator.searchManagedEntity(eq("Folder"), anyString())).thenReturn(mock(Folder.class));
+        when(mockInventoryNavigator.searchManagedEntities("VirtualMachine")).thenReturn(virtualMachineArr);
+
+        when(vm.powerOffVM_Task()).thenReturn(powerOffTask);
+        when(vm.destroy_Task()).thenReturn(destroyTask);
+
+        when(powerOffTask.waitForTask()).thenThrow(InterruptedException.class);
+        vsphereClient.terminateVirtualMachines(Arrays.asList("Vm_destroy"));
+        reset(powerOffTask);
+
+        when(destroyTask.waitForTask()).thenThrow(InterruptedException.class);
+        vsphereClient.terminateVirtualMachines(Arrays.asList("Vm_destroy"));
+    }
 
 }

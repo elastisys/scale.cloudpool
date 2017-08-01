@@ -117,7 +117,7 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
         if (hardware == null) {
             return "unknown";
         }
-        machineSize = String.format("%dvCPU %dMB RAM", hardware.getNumCPU(), hardware.getMemoryMB());
+        machineSize = String.format("cpu-%d-mem-%d", hardware.getNumCPU(), hardware.getMemoryMB());
         return machineSize;
     }
 
