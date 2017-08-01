@@ -128,6 +128,7 @@ public class StandardVsphereClient implements VsphereClient {
 
         public CloneTask(Task task, List<Tag> tags) {
             this.task = task;
+            this.tags = tags;
         }
 
         @Override
@@ -136,6 +137,7 @@ public class StandardVsphereClient implements VsphereClient {
             ManagedObjectReference mor = (ManagedObjectReference) task.getTaskInfo().getResult();
             VirtualMachine virtualMachine = new VirtualMachine(task.getServerConnection(), mor);
             for(Tag tag : tags){
+                System.err.println("Tagging: " +virtualMachine.getName() + " with: " + tag.getKey() + ":" + tag.getValue());
                 tagger.tag(virtualMachine, tag);
             }
             return virtualMachine;

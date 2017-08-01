@@ -17,12 +17,13 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.rmi.RemoteException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.lang.Thread.sleep;
 import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class IntegrationTestClient {
 
@@ -43,6 +44,9 @@ public class IntegrationTestClient {
     public static void tearDownAfterClass() throws Exception {
         List<Tag> tags = Lists.newArrayList();
         tags.add(new VsphereTag(ScalingTag.CLOUD_POOL, testTagValue));
+        while(!vsphereClient.pendingVirtualMachines().isEmpty()){
+            sleep(100);
+        }
         List<VirtualMachine> machines = vsphereClient.getVirtualMachines(tags);
         vsphereClient.terminateVirtualMachines(machines.stream().map(VirtualMachine::getName).collect(Collectors.toList()));
     }
@@ -77,13 +81,17 @@ public class IntegrationTestClient {
     }
 
     @Test
-    public void shouldDestroyMachines() throws RemoteException {
+    public void shouldDestroyMachines() throws Exception {
         List<Tag> tags = Lists.newArrayList();
         tags.add(new VsphereTag(ScalingTag.CLOUD_POOL, testTagValue));
         int startingSize = vsphereClient.getVirtualMachines(tags).size();
+        System.err.println("startingSize: " + startingSize);
         List<String> names = vsphereClient.launchVirtualMachines(1, tags);
+        while(!vsphereClient.pendingVirtualMachines().isEmpty()) {
+            sleep(100);
+        }
         assertEquals(vsphereClient.getVirtualMachines(tags).size(), (startingSize+1));
-        vsphereClient.terminateVirtualMachines(Arrays.asList(names.get(0)));
+        vsphereClient.terminateVirtualMachines(names);
         assertEquals(vsphereClient.getVirtualMachines(tags).size(), startingSize);
     }
 }
