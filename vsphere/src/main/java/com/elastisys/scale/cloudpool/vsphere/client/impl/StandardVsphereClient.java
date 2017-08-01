@@ -20,10 +20,8 @@ import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 public class StandardVsphereClient implements VsphereClient {
@@ -37,7 +35,7 @@ public class StandardVsphereClient implements VsphereClient {
     private ServiceInstance serviceInstance;
     private CustomAttributeTagger tagger;
 
-    private ConcurrentHashSet<Foo> pendingMachines = new ConcurrentHashSet<>();
+    private ConcurrentHashSet<FutureNamePair> pendingMachines = new ConcurrentHashSet<>();
 
     @Override
     public void configure(VsphereApiSettings vsphereApiSettings, VsphereProvisioningTemplate vsphereProvisioningTemplate)
@@ -73,12 +71,12 @@ public class StandardVsphereClient implements VsphereClient {
     }
 
     public List<String> pendingVirtualMachines(){
-        for(Foo foo : pendingMachines){
-            if(foo.future.isDone()) {
-                pendingMachines.remove(foo);
+        for(FutureNamePair futureNamePair : pendingMachines){
+            if(futureNamePair.future.isDone()) {
+                pendingMachines.remove(futureNamePair);
             }
         }
-        return pendingMachines.stream().map(Foo::getName).collect(Collectors.toList());
+        return pendingMachines.stream().map(FutureNamePair::getName).collect(Collectors.toList());
     }
 
     @Override
@@ -103,45 +101,10 @@ public class StandardVsphereClient implements VsphereClient {
             String name = UUID.randomUUID().toString();
             names.add(name);
             Task task = template.cloneVM_Task(folder, name, cloneSpec);
-            CloneTask cloneTask = new CloneTask(task, tags);
-            pendingMachines.add(new Foo(executor.submit(cloneTask), name));
+            CloneTask cloneTask = new CloneTask(tagger, task, tags);
+            pendingMachines.add(new FutureNamePair(executor.submit(cloneTask), name));
         }
         return names;
-    }
-
-    public class Foo {
-        Future future;
-        String name;
-        public Foo(Future future, String name) {
-            this.future = future;
-            this.name = name;
-        }
-        public String getName() {
-            return this.name;
-        }
-    }
-
-    public class CloneTask implements Callable {
-
-        Task task;
-        List<Tag> tags;
-
-        public CloneTask(Task task, List<Tag> tags) {
-            this.task = task;
-            this.tags = tags;
-        }
-
-        @Override
-        public VirtualMachine call() throws RemoteException, InterruptedException {
-            task.waitForTask();
-            ManagedObjectReference mor = (ManagedObjectReference) task.getTaskInfo().getResult();
-            VirtualMachine virtualMachine = new VirtualMachine(task.getServerConnection(), mor);
-            for(Tag tag : tags){
-                System.err.println("Tagging: " +virtualMachine.getName() + " with: " + tag.getKey() + ":" + tag.getValue());
-                tagger.tag(virtualMachine, tag);
-            }
-            return virtualMachine;
-        }
     }
 
     @Override
