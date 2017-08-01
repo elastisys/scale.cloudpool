@@ -53,6 +53,8 @@ public class TestStandardVsphereClient {
         when(mockServiceInstance.getCustomFieldsManager()).thenReturn(mockCustomFieldsManager);
         when(mockCustomFieldsManager.getField()).thenReturn(new CustomFieldDef[0]);
         doReturn(mockInventoryNavigator).when(vsphereClient).createInventoryNavigator(any(Folder.class));
+        when(mockInventoryNavigator.searchManagedEntity(eq("Folder"), anyString())).thenReturn(mock(Folder.class));
+        when(mockInventoryNavigator.searchManagedEntity(eq("ResourcePool"), anyString())).thenReturn(mock(ResourcePool.class));
         doReturn(mock(Folder.class)).when(mockServiceInstance).getRootFolder();
     }
 
@@ -106,8 +108,6 @@ public class TestStandardVsphereClient {
         tags.add(tag);
         VirtualMachine vm = new MockedVm().build();
         when(mockInventoryNavigator.searchManagedEntity(eq("VirtualMachine"), anyString())).thenReturn(vm);
-        when(mockInventoryNavigator.searchManagedEntity(eq("Folder"), anyString())).thenReturn(mock(Folder.class));
-        when(mockInventoryNavigator.searchManagedEntity(eq("ResourcePool"), anyString())).thenReturn(mock(ResourcePool.class));
         when(vm.cloneVM_Task(any(), anyString(), any())).thenReturn(mock(Task.class));
         List<String> names = vsphereClient.launchVirtualMachines(2, tags);
         verify(vm, times(2)).cloneVM_Task(any(Folder.class), anyString(), any(VirtualMachineCloneSpec.class));
@@ -120,9 +120,7 @@ public class TestStandardVsphereClient {
         Task task = mock(Task.class);
         VirtualMachine vm = new MockedVm().build();
 
-        when(mockInventoryNavigator.searchManagedEntity(eq("Folder"), anyString())).thenReturn(mock(Folder.class));
         when(mockInventoryNavigator.searchManagedEntity(eq("VirtualMachine"), anyString())).thenReturn(vm);
-        when(mockInventoryNavigator.searchManagedEntity(eq("ResourcePool"), anyString())).thenReturn(mock(ResourcePool.class));
         when(vm.cloneVM_Task(any(), anyString(), any())).thenReturn(task);
         when(task.waitForTask()).thenThrow(InterruptedException.class);
 
@@ -133,12 +131,17 @@ public class TestStandardVsphereClient {
     public void terminateMachinesShouldRemoveVms() throws Exception {
         VirtualMachine virtualMachine = new MockedVm().withName("Vm_destroy").build();
         VirtualMachine[] virtualMachineArr = {virtualMachine};
-        when(mockInventoryNavigator.searchManagedEntity(eq("Folder"), anyString())).thenReturn(mock(Folder.class));
         when(mockInventoryNavigator.searchManagedEntities("VirtualMachine")).thenReturn(virtualMachineArr);
         when(virtualMachine.powerOffVM_Task()).thenReturn(mock(Task.class));
         when(virtualMachine.destroy_Task()).thenReturn(mock(Task.class));
         vsphereClient.terminateVirtualMachines(Arrays.asList("Vm_destroy"));
         verify(virtualMachine, times(1)).destroy_Task();
     }
+
+    @Test
+    public void testPendingMachines() {
+        List<String> pendingMachines = vsphereClient.pendingVirtualMachines();
+    }
+
 
 }
