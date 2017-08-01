@@ -24,6 +24,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 public class StandardVsphereClient implements VsphereClient {
 
@@ -36,7 +37,7 @@ public class StandardVsphereClient implements VsphereClient {
     private ServiceInstance serviceInstance;
     private CustomAttributeTagger tagger;
 
-    private ConcurrentHashSet<Future<TaskInfo>> pendingMachines = new ConcurrentHashSet<>();
+    private ConcurrentHashSet<Foo> pendingMachines = new ConcurrentHashSet<>();
 
     @Override
     public void configure(VsphereApiSettings vsphereApiSettings, VsphereProvisioningTemplate vsphereProvisioningTemplate)
@@ -55,6 +56,7 @@ public class StandardVsphereClient implements VsphereClient {
 
     @Override
     public List<VirtualMachine> getVirtualMachines(List<Tag> tags) throws RemoteException {
+
         Folder rootFolder = serviceInstance.getRootFolder();
         List<VirtualMachine> vms = Lists.newArrayList();
         ManagedEntity[] meArr = createInventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine");
@@ -68,6 +70,15 @@ public class StandardVsphereClient implements VsphereClient {
             }
         }
         return vms;
+    }
+
+    public List<String> pendingVirtualMachines(){
+        for(Foo foo : pendingMachines){
+            if(foo.future.isDone()) {
+                pendingMachines.remove(foo);
+            }
+        }
+        return pendingMachines.stream().map(Foo::getName).collect(Collectors.toList());
     }
 
     @Override
@@ -88,18 +99,26 @@ public class StandardVsphereClient implements VsphereClient {
 
         // create CloneTasks
         List<String> names = Lists.newArrayList();
-        List<CloneTask> cloneTasks = Lists.newArrayList();
         for (int i = 0; i < count; i++) {
             String name = UUID.randomUUID().toString();
             names.add(name);
             Task task = template.cloneVM_Task(folder, name, cloneSpec);
-            cloneTasks.add(new CloneTask(task, tags));
+            CloneTask cloneTask = new CloneTask(task, tags);
+            pendingMachines.add(new Foo(executor.submit(cloneTask), name));
         }
-
-        // start CloneTasks
-        cloneTasks.forEach(cloneTask -> pendingMachines.add(executor.submit(cloneTask)));
-
         return names;
+    }
+
+    public class Foo {
+        Future future;
+        String name;
+        public Foo(Future future, String name) {
+            this.future = future;
+            this.name = name;
+        }
+        public String getName() {
+            return this.name;
+        }
     }
 
     public class CloneTask implements Callable {
