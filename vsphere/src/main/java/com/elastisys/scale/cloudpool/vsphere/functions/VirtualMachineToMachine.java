@@ -5,9 +5,7 @@ import com.elastisys.scale.cloudpool.vsphere.tagger.Tagger;
 import com.elastisys.scale.cloudpool.vsphere.tagger.TaggerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.vmware.vim25.GuestInfo;
-import com.vmware.vim25.VirtualHardware;
-import com.vmware.vim25.VirtualMachinePowerState;
+import com.vmware.vim25.*;
 import com.vmware.vim25.mo.VirtualMachine;
 import jersey.repackaged.com.google.common.base.Function;
 import org.joda.time.DateTime;
@@ -68,7 +66,11 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
     }
 
     private DateTime extractDateTime(VirtualMachine vm) {
-        Calendar calendar = vm.getRuntime().getBootTime();
+        VirtualMachineRuntimeInfo runtime = vm.getRuntime();
+        if (runtime == null) {
+            return null;
+        }
+        Calendar calendar = runtime.getBootTime();
         if(calendar != null){
             return DateTime.parse(calendar.toInstant().toString());
         }
@@ -77,7 +79,11 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
 
     private MachineState extractMachineState(VirtualMachine vm) {
         MachineState state;
-        VirtualMachinePowerState powerState = vm.getRuntime().getPowerState();
+        VirtualMachineRuntimeInfo runtime = vm.getRuntime();
+        if (runtime == null) {
+            return MachineState.REQUESTED;
+        }
+        VirtualMachinePowerState powerState = runtime.getPowerState();
 
         if (powerState.equals(VirtualMachinePowerState.poweredOn)) {
             state = MachineState.RUNNING;
@@ -103,7 +109,14 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
 
     private String extractMachineSize(VirtualMachine vm) {
         String machineSize;
-        VirtualHardware hardware = vm.getConfig().getHardware();
+        VirtualMachineConfigInfo configInfo = vm.getConfig();
+        if (configInfo == null) {
+            return "unknown";
+        }
+        VirtualHardware hardware = configInfo.getHardware();
+        if (hardware == null) {
+            return "unknown";
+        }
         machineSize = String.format("%dvCPU %dMB RAM", hardware.getNumCPU(), hardware.getMemoryMB());
         return machineSize;
     }

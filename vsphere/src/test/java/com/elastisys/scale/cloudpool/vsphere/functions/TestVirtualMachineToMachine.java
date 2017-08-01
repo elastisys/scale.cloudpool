@@ -4,6 +4,7 @@ import com.elastisys.scale.cloudpool.api.types.*;
 import com.elastisys.scale.cloudpool.vsphere.util.MockedVm;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.vmware.vim25.GuestInfo;
+import com.vmware.vim25.VirtualMachineConfigInfo;
 import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.mo.VirtualMachine;
 import org.joda.time.DateTime;
@@ -150,6 +151,32 @@ public class TestVirtualMachineToMachine {
         when(vm.getResourcePool()).thenThrow(RemoteException.class);
         Machine result = new VirtualMachineToMachine().apply(vm);
         assertThat(result.getRegion(), is("unknown"));
+    }
+
+    @Test
+    public void requestedMachine() throws RemoteException {
+        String name = "vm1";
+        VirtualMachine vm = new MockedVm().withName(name)
+                .withPowerState(poweredOn)
+                .withResourcePool(region)
+                .withMachineSize(machineSize)
+                .build();
+
+        when(vm.getGuest()).thenReturn(null);
+        when(vm.getRuntime()).thenReturn(null);
+        when(vm.getConfig()).thenReturn(null);
+
+        Machine result = new VirtualMachineToMachine().apply(vm);
+        assertThat(result.getId(), is(name));
+        assertThat(result.getMachineSize(), is("unknown"));
+
+        VirtualMachineConfigInfo configInfo = mock(VirtualMachineConfigInfo.class);
+        when(configInfo.getHardware()).thenReturn(null);
+        when(vm.getConfig()).thenReturn(configInfo);
+
+        result = new VirtualMachineToMachine().apply(vm);
+        assertThat(result.getId(), is(name));
+        assertThat(result.getMachineSize(), is("unknown"));
     }
 
 }
