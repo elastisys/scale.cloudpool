@@ -8,9 +8,9 @@ import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
 import com.elastisys.scale.cloudpool.vsphere.tagger.TaggerFactory;
 import com.elastisys.scale.cloudpool.vsphere.tagger.impl.CustomAttributeTagger;
 import com.google.common.collect.Lists;
-import com.vmware.vim25.VirtualMachineCloneSpec;
-import com.vmware.vim25.VirtualMachineRelocateSpec;
+import com.vmware.vim25.*;
 import com.vmware.vim25.mo.*;
+import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,15 +20,23 @@ import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class StandardVsphereClient implements VsphereClient {
 
     Logger logger = LoggerFactory.getLogger(StandardVsphereClient.class);
 
+    private ExecutorService executor = Executors.newFixedThreadPool(5);
+
     private VsphereApiSettings vsphereApiSettings;
     private VsphereProvisioningTemplate vsphereProvisioningTemplate;
     private ServiceInstance serviceInstance;
     private CustomAttributeTagger tagger;
+
+    private ConcurrentHashSet<Future<TaskInfo>> pendingMachines = new ConcurrentHashSet<>();
 
     @Override
     public void configure(VsphereApiSettings vsphereApiSettings, VsphereProvisioningTemplate vsphereProvisioningTemplate)
@@ -63,7 +71,7 @@ public class StandardVsphereClient implements VsphereClient {
     }
 
     @Override
-    public List<VirtualMachine> launchVirtualMachines(int count, List<Tag> tags) throws RemoteException {
+    public List<String> launchVirtualMachines(int count, List<Tag> tags) throws RemoteException {
         Folder rootFolder = this.serviceInstance.getRootFolder();
         VirtualMachine template = (VirtualMachine) searchManagedEntity(rootFolder, VirtualMachine.class.getSimpleName(),
                 vsphereProvisioningTemplate.getTemplate());
@@ -78,40 +86,48 @@ public class StandardVsphereClient implements VsphereClient {
         cloneSpec.setTemplate(false);
         cloneSpec.setPowerOn(true);
 
-        // Initiate cloning tasks on the Vcenter server
-        List<Task> tasks = Lists.newArrayList();
+        // create CloneTasks
         List<String> names = Lists.newArrayList();
+        List<CloneTask> cloneTasks = Lists.newArrayList();
         for (int i = 0; i < count; i++) {
             String name = UUID.randomUUID().toString();
             names.add(name);
-            tasks.add(template.cloneVM_Task(folder, name, cloneSpec));
+            Task task = template.cloneVM_Task(folder, name, cloneSpec);
+            cloneTasks.add(new CloneTask(task, tags));
         }
 
-        // Wait for the Vcenter server to finish cloning VirtualMachines
-        for (Task task : tasks) {
-            try {
-                task.waitForTask();
-            } catch (InterruptedException e) {
-                logger.error("Failed to create new VirtualMachine: cloneVM_task was interrupted");
-            }
+        // start CloneTasks
+        cloneTasks.forEach(cloneTask -> pendingMachines.add(executor.submit(cloneTask)));
+
+        return names;
+    }
+
+    public class CloneTask implements Callable {
+
+        Task task;
+        List<Tag> tags;
+
+        public CloneTask(Task task, List<Tag> tags) {
+            this.task = task;
         }
 
-        // Find the references to created VirtualMachines in order to return them
-        List<VirtualMachine> vms = Lists.newArrayList();
-        for (String name : names) {
-            VirtualMachine vm = (VirtualMachine) searchManagedEntity(folder, VirtualMachine.class.getSimpleName(), name);
-            for (Tag tag : tags) {
-                tagger.tag(vm, tag);
+        @Override
+        public VirtualMachine call() throws RemoteException, InterruptedException {
+            task.waitForTask();
+            ManagedObjectReference mor = (ManagedObjectReference) task.getTaskInfo().getResult();
+            VirtualMachine virtualMachine = new VirtualMachine(task.getServerConnection(), mor);
+            for(Tag tag : tags){
+                tagger.tag(virtualMachine, tag);
             }
-            vms.add(vm);
+            return virtualMachine;
         }
-        return vms;
     }
 
     @Override
     public void terminateVirtualMachines(List<String> ids) throws RemoteException {
         Folder rootFolder = serviceInstance.getRootFolder();
         List<ManagedEntity> managedEntities = Arrays.asList(createInventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine"));
+
 
         // Initiate and wait for powerOff tasks
         List<Task> powerOffTasks = Lists.newArrayList();
