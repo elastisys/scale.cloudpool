@@ -85,7 +85,6 @@ public class IntegrationTestClient {
         List<Tag> tags = Lists.newArrayList();
         tags.add(new VsphereTag(ScalingTag.CLOUD_POOL, testTagValue));
         int startingSize = vsphereClient.getVirtualMachines(tags).size();
-        System.err.println("startingSize: " + startingSize);
         List<String> names = vsphereClient.launchVirtualMachines(1, tags);
         while(!vsphereClient.pendingVirtualMachines().isEmpty()) {
             sleep(100);
