@@ -104,21 +104,23 @@ public class TestVspherePoolDriverOperations {
     @Test
     public void startSingleMachine() throws RemoteException {
         int count = 1;
-        List<VirtualMachine> vms = getMockedVMs("vm1");
-        when(mockedClient.launchVirtualMachines(anyInt(), any())).thenReturn(vms);
+        List<String> names = Lists.newArrayList("vm1");
+        List<VirtualMachine> vms = getMockedVMs(names);
+        when(mockedClient.launchVirtualMachines(anyInt(), any())).thenReturn(names);
 
         List<Machine> result = driver.startMachines(count);
-        assertThat(result, is(new MachinesMatcher("vm1")));
+        assertThat(result, is(new MachinesMatcher(names)));
     }
 
     @Test
     public void startTwoMachines() throws RemoteException {
         int count = 2;
-        List<VirtualMachine> vms = getMockedVMs("vm1", "vm2");
-        when(mockedClient.launchVirtualMachines(anyInt(), any())).thenReturn(vms);
+        List<String> names = Lists.newArrayList("vm1", "vm2");
+        List<VirtualMachine> vms = getMockedVMs(names);
+        when(mockedClient.launchVirtualMachines(anyInt(), any())).thenReturn(names);
 
         List<Machine> result = driver.startMachines(count);
-        assertThat(result, is(new MachinesMatcher("vm1", "vm2")));
+        assertThat(result, is(new MachinesMatcher(names)));
     }
 
     @Test(expected = StartMachinesException.class)

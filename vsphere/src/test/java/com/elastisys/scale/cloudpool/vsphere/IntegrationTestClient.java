@@ -72,8 +72,8 @@ public class IntegrationTestClient {
     public void shouldLaunchNewMachines() throws RemoteException {
         List<Tag> tags = Lists.newArrayList();
         tags.add(new VsphereTag(ScalingTag.CLOUD_POOL, testTagValue));
-        List<VirtualMachine> virtualMachines = vsphereClient.launchVirtualMachines(1, tags);
-        assertEquals(virtualMachines.size(), 1);
+        List<String> names = vsphereClient.launchVirtualMachines(1, tags);
+        assertEquals(names.size(), 1);
     }
 
     @Test
@@ -81,9 +81,9 @@ public class IntegrationTestClient {
         List<Tag> tags = Lists.newArrayList();
         tags.add(new VsphereTag(ScalingTag.CLOUD_POOL, testTagValue));
         int startingSize = vsphereClient.getVirtualMachines(tags).size();
-        List<VirtualMachine> virtualMachines = vsphereClient.launchVirtualMachines(1, tags);
+        List<String> names = vsphereClient.launchVirtualMachines(1, tags);
         assertEquals(vsphereClient.getVirtualMachines(tags).size(), (startingSize+1));
-        vsphereClient.terminateVirtualMachines(Arrays.asList(virtualMachines.get(0).getName()));
+        vsphereClient.terminateVirtualMachines(Arrays.asList(names.get(0)));
         assertEquals(vsphereClient.getVirtualMachines(tags).size(), startingSize);
     }
 }

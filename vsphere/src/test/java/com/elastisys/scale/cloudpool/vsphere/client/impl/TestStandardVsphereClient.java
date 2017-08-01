@@ -109,9 +109,9 @@ public class TestStandardVsphereClient {
         when(mockInventoryNavigator.searchManagedEntity(eq("Folder"), anyString())).thenReturn(mock(Folder.class));
         when(mockInventoryNavigator.searchManagedEntity(eq("ResourcePool"), anyString())).thenReturn(mock(ResourcePool.class));
         when(vm.cloneVM_Task(any(), anyString(), any())).thenReturn(mock(Task.class));
-        List<VirtualMachine> virtualMachines = vsphereClient.launchVirtualMachines(2, tags);
+        List<String> names = vsphereClient.launchVirtualMachines(2, tags);
         verify(vm, times(2)).cloneVM_Task(any(Folder.class), anyString(), any(VirtualMachineCloneSpec.class));
-        assertEquals(virtualMachines.size(), 2);
+        assertEquals(names.size(), 2);
     }
 
     @Test
