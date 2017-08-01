@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.vsphere.client.impl;
 import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
 import com.elastisys.scale.cloudpool.vsphere.tagger.Tagger;
 import com.vmware.vim25.ManagedObjectReference;
+import com.vmware.vim25.TaskInfoState;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 
@@ -23,13 +24,16 @@ public class CloneTask implements Callable {
     }
 
     @Override
-    public VirtualMachine call() throws RemoteException, InterruptedException {
-        task.waitForTask();
-        ManagedObjectReference mor = (ManagedObjectReference) task.getTaskInfo().getResult();
-        VirtualMachine virtualMachine = new VirtualMachine(task.getServerConnection(), mor);
-        for (Tag tag : tags) {
-            tagger.tag(virtualMachine, tag);
+    public String call() throws RemoteException, InterruptedException {
+        String result = task.waitForTask();
+        if (result.equals(TaskInfoState.success.name())) {
+            ManagedObjectReference mor = (ManagedObjectReference) task.getTaskInfo().getResult();
+            VirtualMachine virtualMachine = new VirtualMachine(task.getServerConnection(), mor);
+            for (Tag tag : tags) {
+                tagger.tag(virtualMachine, tag);
+            }
+
         }
-        return virtualMachine;
+        return result;
     }
 }

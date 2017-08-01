@@ -71,11 +71,7 @@ public class StandardVsphereClient implements VsphereClient {
     }
 
     public List<String> pendingVirtualMachines(){
-        for(FutureNamePair futureNamePair : pendingMachines){
-            if(futureNamePair.future.isDone()) {
-                pendingMachines.remove(futureNamePair);
-            }
-        }
+        pendingMachines.removeIf(futureNamePair -> futureNamePair.future.isDone());
         return pendingMachines.stream().map(FutureNamePair::getName).collect(Collectors.toList());
     }
 

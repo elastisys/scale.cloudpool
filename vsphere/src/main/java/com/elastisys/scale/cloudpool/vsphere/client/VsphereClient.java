@@ -12,7 +12,7 @@ public interface VsphereClient {
 
     void configure(VsphereApiSettings vsphereApiSettings, VsphereProvisioningTemplate vsphereProvisioningTemplate) throws RemoteException;
 
-    public List<String> pendingVirtualMachines();
+    List<String> pendingVirtualMachines();
 
     List<VirtualMachine> getVirtualMachines(List<Tag> tags) throws RemoteException;
 
