@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.vsphere.driver;
 
+import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
@@ -155,15 +156,22 @@ public class TestVspherePoolDriverOperations {
     @Test
     public void terminateMachine() throws RemoteException {
         String name = "vm1";
+        doReturn(getMockedVMs(name)).when(mockedClient).getVirtualMachines(any());
         driver.terminateMachine(name);
-        verify(mockedClient).terminateVirtualMachines(Lists.newArrayList(name));
-        verify(mockedClient, times(1)).terminateVirtualMachines(any());
+        verify(mockedClient, times(1)).terminateVirtualMachines(Lists.newArrayList(name));
     }
 
     @Test(expected = CloudPoolDriverException.class)
     public void failToTerminateMachine() throws RemoteException {
+        doReturn(getMockedVMs("vm1")).when(mockedClient).getVirtualMachines(any());
         doThrow(RemoteException.class).when(mockedClient).terminateVirtualMachines(any());
         driver.terminateMachine("vm1");
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void terminateNotFoundMachine() throws RemoteException {
+        doReturn(getMockedVMs("vm1")).when(mockedClient).getVirtualMachines(any());
+        driver.terminateMachine("vm2");
     }
 
     @Test

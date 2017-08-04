@@ -91,6 +91,7 @@ public class VspherePoolDriver implements CloudPoolDriver {
     public void terminateMachine(String machineId)
             throws IllegalStateException, NotFoundException, CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
+        getMachineOrFail(machineId);
         try {
             vsphereClient.terminateVirtualMachines(Arrays.asList(machineId));
         } catch (RemoteException e) {
@@ -164,5 +165,23 @@ public class VspherePoolDriver implements CloudPoolDriver {
     private void removeDoubles(List<Machine> machines, List<String> pendingNames) {
         List<String> runningNames = machines.stream().map(Machine::getId).collect(Collectors.toList());
         pendingNames.removeIf(name -> runningNames.contains(name));
+    }
+
+    /**
+     * Retrieves a particular machine from the pool or throws an
+     * exception if it could not be found.
+     *
+     * @param machineId
+     *            The id of the machine of interest.
+     * @return The machine with the given ID
+     * @throws NotFoundException
+     */
+    private Machine getMachineOrFail(String machineId) {
+        for (Machine machine : listMachines()) {
+            if (machine.getId().equals(machineId)) {
+                return machine;
+            }
+        }
+        throw new NotFoundException(String.format("no machine with id '%s' found in cloud pool", machineId));
     }
 }
