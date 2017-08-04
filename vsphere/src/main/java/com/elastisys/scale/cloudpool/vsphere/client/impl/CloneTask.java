@@ -11,6 +11,8 @@ import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class CloneTask implements Callable {
 
     private Tagger tagger;
@@ -18,6 +20,9 @@ public class CloneTask implements Callable {
     private List<Tag> tags;
 
     public CloneTask(Tagger tagger, Task task, List<Tag> tags) {
+        checkNotNull(tagger);
+        checkNotNull(task);
+        checkNotNull(tags);
         this.tagger = tagger;
         this.task = task;
         this.tags = tags;

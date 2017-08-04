@@ -151,7 +151,7 @@ public class TestStandardVsphereClient {
         when(virtualMachine.powerOffVM_Task()).thenReturn(mock(Task.class));
         when(virtualMachine.destroy_Task()).thenReturn(mock(Task.class));
         vsphereClient.terminateVirtualMachines(Arrays.asList("Vm_destroy"));
-        verify(virtualMachine, times(1)).destroy_Task();
+        verify(vsphereClient, times(1)).createDestroyTask(virtualMachine);
     }
 
     @Test

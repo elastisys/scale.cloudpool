@@ -8,7 +8,8 @@ import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
 import com.elastisys.scale.cloudpool.vsphere.tagger.TaggerFactory;
 import com.elastisys.scale.cloudpool.vsphere.tagger.impl.CustomAttributeTagger;
 import com.google.common.collect.Lists;
-import com.vmware.vim25.*;
+import com.vmware.vim25.VirtualMachineCloneSpec;
+import com.vmware.vim25.VirtualMachineRelocateSpec;
 import com.vmware.vim25.mo.*;
 import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.slf4j.Logger;
@@ -70,7 +71,7 @@ public class StandardVsphereClient implements VsphereClient {
         return vms;
     }
 
-    public List<String> pendingVirtualMachines(){
+    public List<String> pendingVirtualMachines() {
         pendingMachines.removeIf(futureNamePair -> futureNamePair.future.isDone());
         return pendingMachines.stream().map(FutureNamePair::getName).collect(Collectors.toList());
     }
@@ -108,35 +109,10 @@ public class StandardVsphereClient implements VsphereClient {
         Folder rootFolder = serviceInstance.getRootFolder();
         List<ManagedEntity> managedEntities = Arrays.asList(createInventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine"));
 
-
-        // Initiate and wait for powerOff tasks
-        List<Task> powerOffTasks = Lists.newArrayList();
-        for (ManagedEntity managedEntity : managedEntities) {
-            if (ids.contains(managedEntity.getName())) {
-                VirtualMachine virtualMachine = (VirtualMachine) managedEntity;
-                powerOffTasks.add(virtualMachine.powerOffVM_Task());
-            }
-        }
-        for (Task task : powerOffTasks) {
-            try {
-                task.waitForTask();
-            } catch (InterruptedException e) {
-                logger.error("Failed to power off VirtualMachine: powerOffVM_Task was interrupted");
-            }
-        }
-
-        // Initiate and wait for destroy tasks
-        List<Task> destroyTasks = Lists.newArrayList();
-        for (ManagedEntity managedEntity : managedEntities) {
-            if (ids.contains(managedEntity.getName())) {
-                destroyTasks.add(managedEntity.destroy_Task());
-            }
-        }
-        for (Task task : destroyTasks) {
-            try {
-                task.waitForTask();
-            } catch (InterruptedException e) {
-                logger.error("Failed to destroy VirtualMachine: destroy_Task was interrupted");
+        for (ManagedEntity me : managedEntities) {
+            VirtualMachine virtualMachine = (VirtualMachine) me;
+            if (ids.contains(virtualMachine.getName())) {
+                executor.submit(createDestroyTask(virtualMachine));
             }
         }
     }
@@ -149,6 +125,10 @@ public class StandardVsphereClient implements VsphereClient {
     @Override
     public void untag(String id, List<Tag> tags) {
 
+    }
+
+    DestroyTask createDestroyTask(VirtualMachine virtualMachine) {
+        return new DestroyTask(virtualMachine);
     }
 
     ServiceInstance createServiceInstance(URL url, String username, String password, boolean ignoreSsl) throws
