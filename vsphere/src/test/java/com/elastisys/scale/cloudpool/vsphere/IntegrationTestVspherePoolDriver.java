@@ -69,8 +69,9 @@ public class IntegrationTestVspherePoolDriver {
         waitUntilRunning();
 
         vspherePoolDriver.terminateMachine(result.get(0).getId());
+        waitForTermination(result.get(0).getId());
         result = vspherePoolDriver.listMachines();
-        assertTrue(result.isEmpty());
+        assertTrue(onlyTerminatedMachines(result));
     }
 
     @Test
@@ -95,12 +96,14 @@ public class IntegrationTestVspherePoolDriver {
         // Scale 3 -> 1
         vspherePoolDriver.terminateMachine(result.get(0).getId());
         vspherePoolDriver.terminateMachine(result.get(1).getId());
+        waitForTermination(result.get(0).getId(), result.get(1).getId());
         result = vspherePoolDriver.listMachines();
-        assertThat(result.size(), is(1));
+        assertThat(numberOfRunningMachines(result), is(1));
         // Scale 1 -> 0
         vspherePoolDriver.terminateMachine(result.get(0).getId());
+        waitForTermination(result.get(0).getId());
         result = vspherePoolDriver.listMachines();
-        assertTrue(result.isEmpty());
+        assertTrue(onlyTerminatedMachines(result));
     }
 
     private static void waitUntilRunning() throws InterruptedException {
@@ -110,10 +113,46 @@ public class IntegrationTestVspherePoolDriver {
             for (Machine machine : vspherePoolDriver.listMachines()) {
                 if (!machine.getMachineState().equals(MachineState.RUNNING)) {
                     running = false;
-                    sleep(10);
+                    sleep(100);
                 }
             }
         } while (!running);
+    }
+
+    private static void waitForTermination(String... ids) throws InterruptedException {
+        boolean terminated;
+
+        do {
+            terminated = true;
+            List<Machine> machines = vspherePoolDriver.listMachines();
+            for (String id : ids) {
+                for (Machine machine : machines) {
+                    if (machine.getId().equals(id) && !machine.getMachineState().equals(MachineState.TERMINATED)) {
+                        terminated = false;
+                    }
+                }
+            }
+            sleep(100);
+        } while (!terminated);
+    }
+
+    private int numberOfRunningMachines(List<Machine> machines) {
+        int num = 0;
+        for (Machine machine : machines) {
+            if (machine.getMachineState().equals(MachineState.RUNNING)) {
+                num++;
+            }
+        }
+        return num;
+    }
+
+    private boolean onlyTerminatedMachines(List<Machine> machines) {
+        for (Machine machine : machines) {
+            if (!machine.getMachineState().equals(MachineState.TERMINATED)) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }
