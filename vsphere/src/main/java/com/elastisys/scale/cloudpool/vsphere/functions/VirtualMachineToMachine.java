@@ -44,7 +44,7 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
                 throw e;
             }
             LOG.debug("ManagedObjectNotFound: VM is gone");
-            id = "terminatedVm";
+            id = "unknown";
             launchTime = null;
             state = MachineState.TERMINATED;
             region = "unknown";

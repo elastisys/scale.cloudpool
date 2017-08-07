@@ -16,6 +16,7 @@ import java.rmi.RemoteException;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -177,6 +178,29 @@ public class TestVirtualMachineToMachine {
         result = new VirtualMachineToMachine().apply(vm);
         assertThat(result.getId(), is(name));
         assertThat(result.getMachineSize(), is("unknown"));
+    }
+
+    @Test
+    public void convertTerminatingMachine() {
+        VirtualMachine vm = new MockedVm().build();
+        when(vm.getName()).thenThrow(new RuntimeException("ManagedObjectNotFound"));
+
+        Machine result = new VirtualMachineToMachine().apply(vm);
+        assertThat(result.getId(), is("unknown"));
+        assertThat(result.getLaunchTime(), is(nullValue()));
+        assertThat(result.getMachineState(), is(MachineState.TERMINATED));
+        assertThat(result.getCloudProvider(), is(CloudProviders.VSPHERE));
+        assertThat(result.getRegion(), is("unknown"));
+        assertThat(result.getMachineSize(), is("unknown"));
+        assertTrue(result.getPublicIps().isEmpty());
+        assertTrue(result.getPrivateIps().isEmpty());
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void failingConvertion() {
+        VirtualMachine vm = new MockedVm().build();
+        when(vm.getName()).thenThrow(new RuntimeException("Strange exception"));
+        new VirtualMachineToMachine().apply(vm);
     }
 
 }
