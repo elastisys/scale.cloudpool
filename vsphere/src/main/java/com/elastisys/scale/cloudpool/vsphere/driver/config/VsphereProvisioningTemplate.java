@@ -28,10 +28,12 @@ public class VsphereProvisioningTemplate {
      */
     public void validate() {
         checkArgument(this.template != null, "missing template");
+        checkArgument(this.resourcePool != null, "missing resource pool");
+        checkArgument(this.folder != null, "missing folder");
     }
 
     /**
-     * @return The name of the vSphere template.
+     * @return The name of the Vsphere template.
      */
     public String getTemplate() {
         return template;

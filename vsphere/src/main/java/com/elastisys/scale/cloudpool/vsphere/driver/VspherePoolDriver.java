@@ -30,9 +30,6 @@ import static java.lang.String.format;
  */
 public class VspherePoolDriver implements CloudPoolDriver {
 
-    /**
-     * Client used to communicate with the Vsphere API.
-     */
     private VsphereClient vsphereClient;
     private DriverConfig driverConfig;
 
@@ -115,28 +112,24 @@ public class VspherePoolDriver implements CloudPoolDriver {
     public void attachMachine(String machineId)
             throws IllegalStateException, NotFoundException, CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
-
     }
 
     @Override
     public void detachMachine(String machineId)
             throws IllegalStateException, NotFoundException, CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
-
     }
 
     @Override
     public void setServiceState(String machineId, ServiceState serviceState)
             throws IllegalStateException, NotFoundException, CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
-
     }
 
     @Override
     public void setMembershipStatus(String machineId, MembershipStatus membershipStatus)
             throws IllegalStateException, NotFoundException, CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
-
     }
 
     @Override
@@ -193,7 +186,7 @@ public class VspherePoolDriver implements CloudPoolDriver {
      *
      * @param machineId The id of the machine of interest.
      * @return The machine with the given ID
-     * @throws NotFoundException
+     * @throws NotFoundException if the machine cannot be found.
      */
     private Machine getMachineOrFail(String machineId) {
         for (Machine machine : listMachines()) {
