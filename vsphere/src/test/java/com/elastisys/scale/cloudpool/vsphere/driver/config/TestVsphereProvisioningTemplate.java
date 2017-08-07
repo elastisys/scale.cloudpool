@@ -1,12 +1,9 @@
 package com.elastisys.scale.cloudpool.vsphere.driver.config;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import org.junit.Test;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.*;
 
 public class TestVsphereProvisioningTemplate {
     private String template = "template";
@@ -21,16 +18,6 @@ public class TestVsphereProvisioningTemplate {
         assertThat(config.getTemplate(), is(template));
         assertThat(config.getResourcePool(), is(resourcePool));
         assertThat(config.getFolder(), is(folder));
-    }
-
-    @Test
-    public void onlyMandatoryArguments() {
-        VsphereProvisioningTemplate config = new VsphereProvisioningTemplate(template, null, null);
-        config.validate();
-
-        assertThat(config.getTemplate(), is(template));
-        assertThat(config.getResourcePool(), is(nullValue()));
-        assertThat(config.getFolder(), is(nullValue()));
     }
 
     @Test

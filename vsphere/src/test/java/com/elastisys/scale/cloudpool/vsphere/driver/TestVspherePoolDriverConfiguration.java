@@ -21,7 +21,6 @@ public class TestVspherePoolDriverConfiguration {
 
     private VspherePoolDriver driver;
     private VsphereClient mockedClient = mock(VsphereClient.class);
-    private String minimalConfigPath = "config/minimal-valid-vsphere-config.json";
     private String specificConfigPath = "config/valid-vsphere-config.json";
     private String missingUrlConfig = "config/missing-url-vsphere-config.json";
     private String missingUsernameConfig = "config/missing-username-vsphere-config.json";
@@ -44,17 +43,8 @@ public class TestVspherePoolDriverConfiguration {
     }
 
     @Test
-    public void minimalDriverConfiguration() throws RemoteException {
-        DriverConfig configuration = TestUtils.loadDriverConfig(minimalConfigPath);
-        assertFalse(driver.isConfigured());
-        driver.configure(configuration);
-        assertTrue(driver.isConfigured());
-        verify(mockedClient).configure(any(VsphereApiSettings.class), any(VsphereProvisioningTemplate.class));
-    }
-
-    @Test
     public void reconfigure() throws RemoteException {
-        DriverConfig configuration1 = TestUtils.loadDriverConfig(minimalConfigPath);
+        DriverConfig configuration1 = TestUtils.loadDriverConfig(specificConfigPath);
         DriverConfig configuration2 = TestUtils.loadDriverConfig(specificConfigPath);
 
         assertFalse(driver.isConfigured());
@@ -162,7 +152,7 @@ public class TestVspherePoolDriverConfiguration {
 
     @Test
     public void testGetPoolName() {
-        DriverConfig configuration = TestUtils.loadDriverConfig(minimalConfigPath);
+        DriverConfig configuration = TestUtils.loadDriverConfig(specificConfigPath);
         driver.configure(configuration);
         assertEquals(configuration.getPoolName(), driver.getPoolName());
     }
