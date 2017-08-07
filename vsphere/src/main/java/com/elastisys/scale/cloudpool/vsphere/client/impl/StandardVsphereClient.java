@@ -80,6 +80,7 @@ public class StandardVsphereClient implements VsphereClient {
         return vms;
     }
 
+    @Override
     public List<String> pendingVirtualMachines() {
         pendingMachines.removeIf(futureNamePair -> futureNamePair.future.isDone());
         return pendingMachines.stream().map(FutureNamePair::getName).collect(Collectors.toList());
@@ -101,7 +102,6 @@ public class StandardVsphereClient implements VsphereClient {
         cloneSpec.setTemplate(false);
         cloneSpec.setPowerOn(true);
 
-        // create CloneTasks
         List<String> names = Lists.newArrayList();
         for (int i = 0; i < count; i++) {
             String name = UUID.randomUUID().toString();
@@ -116,10 +116,8 @@ public class StandardVsphereClient implements VsphereClient {
     @Override
     public void terminateVirtualMachines(List<String> ids) throws RemoteException {
         Folder rootFolder = serviceInstance.getRootFolder();
-        //List<ManagedEntity> managedEntities = Arrays.asList(createInventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine"));
-
         List<VirtualMachine> virtualMachines = Lists.newArrayList();
-        for(String id : ids) {
+        for (String id : ids) {
             VirtualMachine vm = (VirtualMachine) searchManagedEntity(rootFolder, "VirtualMachine", id);
             virtualMachines.add(vm);
         }
@@ -155,6 +153,16 @@ public class StandardVsphereClient implements VsphereClient {
         return new InventoryNavigator(folder);
     }
 
+    /**
+     * Wrapper for InventoryNavigator.searchManagedEntity(). An unchecked NotFoundException will be thrown if the
+     * specific entity which was searched for was not found.
+     *
+     * @param folder Location in which to search.
+     * @param type   Type of entity to search for (e.g. {@link VirtualMachine}.
+     * @param name   Name (id) of the specific entity.
+     * @return The ManagedEntity if it was found successfully.
+     * @throws RemoteException This exception is thrown if an error occurred in communication with Vcenter.
+     */
     ManagedEntity searchManagedEntity(Folder folder, String type, String name) throws RemoteException {
         ManagedEntity me = createInventoryNavigator(folder).searchManagedEntity(type, name);
         if (me == null) {
@@ -163,6 +171,14 @@ public class StandardVsphereClient implements VsphereClient {
         return me;
     }
 
+    /**
+     * Auxiliary function which will check if a ManagedEntity is associated which each {@link Tag} in a list.
+     *
+     * @param me   ManagedEntity to inspect.
+     * @param tags List of tags to check.
+     * @return True if the ManagedEntity held each Tag, otherwise false.
+     * @throws RemoteException This exception is thrown if an error occurred in communication with Vcenter.
+     */
     private boolean hasAllTags(ManagedEntity me, List<Tag> tags) throws RemoteException {
         for (Tag tag : tags) {
             if (!tagger.isTagged(me, tag)) {
