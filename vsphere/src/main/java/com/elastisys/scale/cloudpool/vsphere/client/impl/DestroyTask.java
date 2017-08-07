@@ -1,6 +1,7 @@
 package com.elastisys.scale.cloudpool.vsphere.client.impl;
 
 import com.vmware.vim25.TaskInfoState;
+import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 
@@ -19,10 +20,14 @@ public class DestroyTask implements Callable {
 
     @Override
     public String call() throws RemoteException, InterruptedException {
-        Task powerOffTask = virtualMachine.powerOffVM_Task();
-        String result = powerOffTask.waitForTask();
-        if (!result.equals(TaskInfoState.success.name())) {
-            return result;
+        VirtualMachinePowerState powerState = virtualMachine.getRuntime().getPowerState();
+        String result;
+        if(powerState == VirtualMachinePowerState.poweredOn) {
+            Task powerOffTask = virtualMachine.powerOffVM_Task();
+            result = powerOffTask.waitForTask();
+            if (!result.equals(TaskInfoState.success.name())) {
+                return result;
+            }
         }
         Task destroyTask = virtualMachine.destroy_Task();
         result = destroyTask.waitForTask();

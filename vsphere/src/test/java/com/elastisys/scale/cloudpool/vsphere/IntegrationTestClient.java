@@ -22,8 +22,7 @@ import java.util.stream.Collectors;
 
 import static java.lang.Thread.sleep;
 import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class IntegrationTestClient {
 
@@ -32,6 +31,7 @@ public class IntegrationTestClient {
     private static VsphereClient vsphereClient;
 
     private static String testTagValue = "VsphereClientIntegrationTest";
+    private static int terminationTimeout = 5;
 
     @BeforeClass
     public static void setUpBeforeClass() {
@@ -44,11 +44,14 @@ public class IntegrationTestClient {
     public static void tearDownAfterClass() throws Exception {
         List<Tag> tags = Lists.newArrayList();
         tags.add(new VsphereTag(ScalingTag.CLOUD_POOL, testTagValue));
-        while(!vsphereClient.pendingVirtualMachines().isEmpty()){
+        while (!vsphereClient.pendingVirtualMachines().isEmpty()) {
             sleep(100);
         }
         List<VirtualMachine> machines = vsphereClient.getVirtualMachines(tags);
         vsphereClient.terminateVirtualMachines(machines.stream().map(VirtualMachine::getName).collect(Collectors.toList()));
+        while(!vsphereClient.getVirtualMachines(tags).isEmpty()){
+            sleep(100);
+        }
     }
 
     @Before
@@ -86,11 +89,18 @@ public class IntegrationTestClient {
         tags.add(new VsphereTag(ScalingTag.CLOUD_POOL, testTagValue));
         int startingSize = vsphereClient.getVirtualMachines(tags).size();
         List<String> names = vsphereClient.launchVirtualMachines(1, tags);
-        while(!vsphereClient.pendingVirtualMachines().isEmpty()) {
+        while (!vsphereClient.pendingVirtualMachines().isEmpty()) {
             sleep(100);
         }
-        assertEquals(vsphereClient.getVirtualMachines(tags).size(), (startingSize+1));
+        assertEquals(vsphereClient.getVirtualMachines(tags).size(), (startingSize + 1));
         vsphereClient.terminateVirtualMachines(names);
-        assertEquals(vsphereClient.getVirtualMachines(tags).size(), startingSize);
+        int numberOfMsWaited = 0;
+        while(vsphereClient.getVirtualMachines(tags).size() != startingSize) {
+            sleep(100);
+            numberOfMsWaited += 100;
+            if(numberOfMsWaited > 1000*terminationTimeout) {
+                fail("Termination took too long");
+            }
+        }
     }
 }

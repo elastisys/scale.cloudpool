@@ -1,6 +1,8 @@
 package com.elastisys.scale.cloudpool.vsphere.client.impl;
 
+import com.elastisys.scale.cloudpool.vsphere.util.MockedVm;
 import com.vmware.vim25.TaskInfoState;
+import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 import org.junit.Before;
@@ -17,7 +19,7 @@ public class TestDestroyTask {
 
     @Before
     public void setUp() throws Exception{
-        this.virtualMachine = mock(VirtualMachine.class);
+        this.virtualMachine = new MockedVm().withPowerState(VirtualMachinePowerState.poweredOn).build();
         this.powerOffTask = mock(Task.class);
         this.destroyVmTask = mock(Task.class);
         when(virtualMachine.powerOffVM_Task()).thenReturn(powerOffTask);

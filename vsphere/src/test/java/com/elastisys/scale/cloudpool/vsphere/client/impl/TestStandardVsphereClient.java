@@ -22,8 +22,9 @@ import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.hamcrest.CoreMatchers.is;
 import static com.elastisys.scale.cloudpool.vsphere.util.TestUtils.loadDriverConfig;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class TestStandardVsphereClient {
@@ -157,6 +158,7 @@ public class TestStandardVsphereClient {
     @Test
     public void testPendingMachines() {
         List<String> pendingMachines = vsphereClient.pendingVirtualMachines();
+
     }
 
     /**
@@ -184,6 +186,52 @@ public class TestStandardVsphereClient {
 
         when(destroyTask.waitForTask()).thenThrow(InterruptedException.class);
         vsphereClient.terminateVirtualMachines(Arrays.asList("Vm_destroy"));
+    }
+
+    @Test
+    public void tryListTerminatingMachine() throws RemoteException {
+        Tag existingTag = new VsphereTag(ScalingTag.CLOUD_POOL, "TestCloudPool");
+        VirtualMachine terminatingVm = new MockedVm().withTag(existingTag).build();
+        ManagedEntity[] vms = {terminatingVm};
+
+        when(terminatingVm.getCustomValue()).thenThrow(new RuntimeException("ManagedObjectNotFound"));
+        doReturn(vms).when(mockInventoryNavigator).searchManagedEntities(anyString());
+
+        vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
+        List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines(Lists.newArrayList(existingTag));
+
+        verify(terminatingVm, times(1)).getCustomValue();
+        assertTrue(virtualMachines.isEmpty());
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void failToListMachines() throws RemoteException {
+        Tag existingTag = new VsphereTag(ScalingTag.CLOUD_POOL, "TestCloudPool");
+        VirtualMachine terminatingVm = new MockedVm().withTag(existingTag).build();
+        ManagedEntity[] vms = {terminatingVm};
+
+        when(terminatingVm.getCustomValue()).thenThrow(new RuntimeException("NotTheExceptionYourWereLookingFor"));
+        doReturn(vms).when(mockInventoryNavigator).searchManagedEntities(anyString());
+
+        vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
+        vsphereClient.getVirtualMachines(Lists.newArrayList(existingTag));
+    }
+
+    @Test
+    public void listMachinesWithOneTerminating() throws RemoteException {
+        Tag existingTag = new VsphereTag(ScalingTag.CLOUD_POOL, "TestCloudPool");
+        VirtualMachine terminatingVm = new MockedVm().withTag(existingTag).withName("terminatingVm").build();
+        VirtualMachine normalVm = new MockedVm().withTag(existingTag).withName("normalVm").build();
+        ManagedEntity[] vms = {terminatingVm, normalVm};
+
+        when(terminatingVm.getCustomValue()).thenThrow(new RuntimeException("ManagedObjectNotFound"));
+        doReturn(vms).when(mockInventoryNavigator).searchManagedEntities(anyString());
+
+        vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
+        List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines(Lists.newArrayList(existingTag));
+
+        assertThat(virtualMachines.size(), is(1));
+        assertThat(virtualMachines.get(0).getName(), is("normalVm"));
     }
 
 }

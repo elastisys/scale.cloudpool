@@ -62,12 +62,21 @@ public class StandardVsphereClient implements VsphereClient {
         if (meArr == null) {
             return vms;
         }
-        List<ManagedEntity> meList = Arrays.asList(meArr);
-        for (ManagedEntity me : meList) {
-            if (hasAllTags(me, tags)) {
-                vms.add((VirtualMachine) me);
+
+        for (int i = 0; i < meArr.length; i++) {
+            try {
+                ManagedEntity me = meArr[i];
+                if (hasAllTags(me, tags)) {
+                    vms.add((VirtualMachine) me);
+                }
+            } catch (RuntimeException e) {
+                if (!e.getMessage().contains("ManagedObjectNotFound")) {
+                    throw e;
+                }
+                logger.debug("ManagedObjectNotFound: an object in getVirtualMachines was already removed");
             }
         }
+
         return vms;
     }
 
