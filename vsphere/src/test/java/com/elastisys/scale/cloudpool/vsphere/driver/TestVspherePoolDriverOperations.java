@@ -127,7 +127,6 @@ public class TestVspherePoolDriverOperations {
     public void startSingleMachine() throws RemoteException {
         int count = 1;
         List<String> names = Lists.newArrayList("vm1");
-        List<VirtualMachine> vms = getMockedVMs(names);
         when(mockedClient.launchVirtualMachines(anyInt(), any())).thenReturn(names);
 
         List<Machine> result = driver.startMachines(count);
@@ -138,7 +137,6 @@ public class TestVspherePoolDriverOperations {
     public void startTwoMachines() throws RemoteException {
         int count = 2;
         List<String> names = Lists.newArrayList("vm1", "vm2");
-        List<VirtualMachine> vms = getMockedVMs(names);
         when(mockedClient.launchVirtualMachines(anyInt(), any())).thenReturn(names);
 
         List<Machine> result = driver.startMachines(count);
@@ -199,16 +197,15 @@ public class TestVspherePoolDriverOperations {
         DateTime launchTime = UtcTime.now();
         int numCpu = 2;
         int ram = 1024;
-        String machineSize = String.format("%dvCPU %dMB RAM", numCpu, ram);
+        String machineSize = String.format("cpu-%d-mem-%d", numCpu, ram);
         VirtualMachinePowerState poweredOn = VirtualMachinePowerState.poweredOn;
 
-        VirtualMachine vm = new MockedVm().withName(name)
+        return new MockedVm().withName(name)
                 .withLaunchTime(launchTime)
                 .withPowerState(poweredOn)
                 .withResourcePool(region)
                 .withMachineSize(machineSize)
                 .build();
-        return vm;
     }
 
     private List<VirtualMachine> getMockedVMs(String... names) throws RemoteException {
