@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.rmi.RemoteException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -63,6 +62,7 @@ public class StandardVsphereClient implements VsphereClient {
             return vms;
         }
 
+        // array is useful here as some ManagedEntities may be in a volatile state (under termination by vcenter)
         for (int i = 0; i < meArr.length; i++) {
             try {
                 ManagedEntity me = meArr[i];
@@ -116,12 +116,18 @@ public class StandardVsphereClient implements VsphereClient {
     @Override
     public void terminateVirtualMachines(List<String> ids) throws RemoteException {
         Folder rootFolder = serviceInstance.getRootFolder();
-        List<ManagedEntity> managedEntities = Arrays.asList(createInventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine"));
+        //List<ManagedEntity> managedEntities = Arrays.asList(createInventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine"));
 
-        for (ManagedEntity me : managedEntities) {
-            VirtualMachine virtualMachine = (VirtualMachine) me;
-            if (ids.contains(virtualMachine.getName())) {
-                executor.submit(createDestroyTask(virtualMachine));
+        List<VirtualMachine> virtualMachines = Lists.newArrayList();
+        for(String id : ids) {
+            VirtualMachine vm = (VirtualMachine) searchManagedEntity(rootFolder, "VirtualMachine", id);
+            virtualMachines.add(vm);
+        }
+
+        for (VirtualMachine vm : virtualMachines) {
+
+            if (ids.contains(vm.getName())) {
+                executor.submit(createDestroyTask(vm));
             }
         }
     }
