@@ -24,14 +24,33 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
     public Machine apply(VirtualMachine vm) {
         Preconditions.checkArgument(vm != null, "received null instance");
 
-        String id = vm.getName();
-        DateTime launchTime = extractDateTime(vm);
-        MachineState state = extractMachineState(vm);
+        String id;
+        DateTime launchTime;
+        MachineState state;
         String cloudProvider = CloudProviders.VSPHERE;
-        String region = extractRegion(vm);
-        String machineSize = extractMachineSize(vm);
+        String region;
+        String machineSize;
+        Collection<String> publicIps;
 
-        Collection<String> publicIps = extractPublicIps(vm);
+        try {
+            id = vm.getName();
+            launchTime = extractDateTime(vm);
+            state = extractMachineState(vm);
+            region = extractRegion(vm);
+            machineSize = extractMachineSize(vm);
+            publicIps = extractPublicIps(vm);
+        } catch (RuntimeException e) {
+            if (!e.getMessage().contains("ManagedObjectNotFound")) {
+                throw e;
+            }
+            LOG.debug("ManagedObjectNotFound: VM is gone");
+            id = "terminatedVm";
+            launchTime = null;
+            state = MachineState.TERMINATED;
+            region = "unknown";
+            machineSize = "unknown";
+            publicIps = Lists.newArrayList();
+        }
 
         // TODO: Only partially implemented
         MembershipStatus membershipStatus = MembershipStatus.defaultStatus();

@@ -7,11 +7,12 @@ import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.client.impl.StandardVsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.driver.VspherePoolDriver;
 import com.elastisys.scale.cloudpool.vsphere.util.TestUtils;
-import org.junit.AfterClass;
+import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.lang.Thread.sleep;
 import static org.hamcrest.CoreMatchers.is;
@@ -29,13 +30,6 @@ public class IntegrationTestVspherePoolDriver {
         vspherePoolDriver = new VspherePoolDriver(vsphereClient);
     }
 
-    @AfterClass
-    public static void tearDown() throws InterruptedException {
-        List<Machine> machines = vspherePoolDriver.listMachines();
-        waitUntilRunning();
-        machines.forEach(machine -> vspherePoolDriver.terminateMachine(machine.getId()));
-    }
-
     @Test
     public void testConfiguration() {
         vspherePoolDriver.configure(driverConfig);
@@ -51,25 +45,25 @@ public class IntegrationTestVspherePoolDriver {
     public void listNoMachines() {
         vspherePoolDriver.configure(driverConfig);
         List<Machine> result = vspherePoolDriver.listMachines();
-        assertTrue(result.isEmpty());
+        assertTrue(onlyTerminatedMachines(result));
     }
 
     @Test
     public void simpleScale() throws InterruptedException {
         vspherePoolDriver.configure(driverConfig);
         List<Machine> result = vspherePoolDriver.listMachines();
-        assertTrue(result.isEmpty());
+        assertTrue(onlyTerminatedMachines(result));
 
-        result = vspherePoolDriver.startMachines(1);
-        assertThat(result.size(), is(1));
+        List<Machine> started = vspherePoolDriver.startMachines(1);
+        assertThat(started.size(), is(1));
 
         result = vspherePoolDriver.listMachines();
-        assertThat(result.size(), is(1));
+        assertTrue(containsAllById(result, started));
 
-        waitUntilRunning();
+        waitUntilRunning(started);
 
-        vspherePoolDriver.terminateMachine(result.get(0).getId());
-        waitForTermination(result.get(0).getId());
+        vspherePoolDriver.terminateMachine(started.get(0).getId());
+        waitForTermination(started.get(0).getId());
         result = vspherePoolDriver.listMachines();
         assertTrue(onlyTerminatedMachines(result));
     }
@@ -79,44 +73,74 @@ public class IntegrationTestVspherePoolDriver {
         vspherePoolDriver.configure(driverConfig);
 
         // Scale 0 -> 1
-        List<Machine> result = vspherePoolDriver.startMachines(1);
-        assertThat(result.size(), is(1));
+        List<Machine> started = vspherePoolDriver.startMachines(1);
+        assertThat(started.size(), is(1));
         // Check size
-        result = vspherePoolDriver.listMachines();
-        assertThat(result.size(), is(1));
+        List<Machine> result = vspherePoolDriver.listMachines();
+        assertTrue(containsAllById(result, started));
         // Scale 1 -> 3
-        result = vspherePoolDriver.startMachines(2);
-        assertThat(result.size(), is(2));
+        started.addAll(vspherePoolDriver.startMachines(2));
+        assertThat(started.size(), is(3));
 
         result = vspherePoolDriver.listMachines();
-        assertThat(result.size(), is(3));
+        assertTrue(containsAllById(result, started));
 
-        waitUntilRunning();
+        waitUntilRunning(started);
 
         // Scale 3 -> 1
-        vspherePoolDriver.terminateMachine(result.get(0).getId());
-        vspherePoolDriver.terminateMachine(result.get(1).getId());
-        waitForTermination(result.get(0).getId(), result.get(1).getId());
+        vspherePoolDriver.terminateMachine(started.get(0).getId());
+        vspherePoolDriver.terminateMachine(started.get(1).getId());
+        waitForTermination(started.get(0).getId(), started.get(1).getId());
         result = vspherePoolDriver.listMachines();
-        assertThat(numberOfRunningMachines(result), is(1));
+
+        assertTrue(isTerminated(started.get(0), result));
+        assertTrue(isTerminated(started.get(1), result));
         // Scale 1 -> 0
-        vspherePoolDriver.terminateMachine(result.get(0).getId());
-        waitForTermination(result.get(0).getId());
+        vspherePoolDriver.terminateMachine(started.get(2).getId());
+        waitForTermination(started.get(2).getId());
         result = vspherePoolDriver.listMachines();
         assertTrue(onlyTerminatedMachines(result));
     }
 
-    private static void waitUntilRunning() throws InterruptedException {
+    private boolean isTerminated(Machine machine, List<Machine> machineList) {
+        String id = machine.getId();
+        for (Machine m : machineList) {
+            if (m.getId().equals(id) && !m.getMachineState().equals(MachineState.TERMINATED)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean containsAllById(List<Machine> superSet, List<Machine> subSet) {
+        List<String> superIds = superSet.stream().map(Machine::getId).collect(Collectors.toList());
+        List<String> subIds = subSet.stream().map(Machine::getId).collect(Collectors.toList());
+
+        return superIds.containsAll(subIds);
+    }
+
+    private static void waitUntilRunning(List<Machine> startedMachines) throws InterruptedException {
         boolean running;
         do {
             running = true;
-            for (Machine machine : vspherePoolDriver.listMachines()) {
+            for (Machine machine : getMachinesById(startedMachines)) {
                 if (!machine.getMachineState().equals(MachineState.RUNNING)) {
                     running = false;
                     sleep(100);
                 }
             }
         } while (!running);
+    }
+
+    private static List<Machine> getMachinesById(List<Machine> machines) {
+        List<String> ids = machines.stream().map(Machine::getId).collect(Collectors.toList());
+        List<Machine> result = Lists.newArrayList();
+        for(Machine m : vspherePoolDriver.listMachines()) {
+            if(ids.contains(m.getId())){
+                result.add(m);
+            }
+        }
+        return result;
     }
 
     private static void waitForTermination(String... ids) throws InterruptedException {
@@ -134,16 +158,6 @@ public class IntegrationTestVspherePoolDriver {
             }
             sleep(100);
         } while (!terminated);
-    }
-
-    private int numberOfRunningMachines(List<Machine> machines) {
-        int num = 0;
-        for (Machine machine : machines) {
-            if (machine.getMachineState().equals(MachineState.RUNNING)) {
-                num++;
-            }
-        }
-        return num;
     }
 
     private boolean onlyTerminatedMachines(List<Machine> machines) {
