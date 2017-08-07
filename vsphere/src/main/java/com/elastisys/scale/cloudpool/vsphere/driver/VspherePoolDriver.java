@@ -25,11 +25,22 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 
+/**
+ * A {@link CloudPoolDriver} implementation that operates against Vsphere.
+ */
 public class VspherePoolDriver implements CloudPoolDriver {
 
+    /**
+     * Client used to communicate with the Vsphere API.
+     */
     private VsphereClient vsphereClient;
     private DriverConfig driverConfig;
 
+    /**
+     * Create a new {@link VspherePoolDriver} that needs to be configured before use.
+     *
+     * @param vsphereClient The client that communicates with the Vsphere API.
+     */
     public VspherePoolDriver(VsphereClient vsphereClient) {
         this.vsphereClient = vsphereClient;
     }
@@ -143,12 +154,20 @@ public class VspherePoolDriver implements CloudPoolDriver {
         return Lists.newArrayList(new VsphereTag(ScalingTag.CLOUD_POOL, driverConfig.getPoolName()));
     }
 
+    /**
+     * Create a list of machines to use as placeholders for pending machines.
+     *
+     * @param names A list of names to set for the created machines.
+     * @return  A list of pending machines.
+     */
     private List<Machine> placeholderMachines(List<String> names) {
         List<Machine> placeholderMachines = Lists.newArrayListWithCapacity(names.size());
         VsphereProvisioningTemplate provisioningTemplate = driverConfig.parseProvisioningTemplate(VsphereProvisioningTemplate.class);
+
         for (String name : names) {
             placeholderMachines
-                    .add(Machine.builder().id(name)
+                    .add(Machine.builder()
+                            .id(name)
                             .cloudProvider(CloudProviders.VSPHERE)
                             .machineSize("unknown")
                             .region(provisioningTemplate.getResourcePool())
@@ -159,7 +178,8 @@ public class VspherePoolDriver implements CloudPoolDriver {
 
     /**
      * Remove pending machines that are already running.
-     * @param machines running machines
+     *
+     * @param machines     running machines
      * @param pendingNames names of pending machines
      */
     private void removeDoubles(List<Machine> machines, List<String> pendingNames) {
@@ -171,8 +191,7 @@ public class VspherePoolDriver implements CloudPoolDriver {
      * Retrieves a particular machine from the pool or throws an
      * exception if it could not be found.
      *
-     * @param machineId
-     *            The id of the machine of interest.
+     * @param machineId The id of the machine of interest.
      * @return The machine with the given ID
      * @throws NotFoundException
      */

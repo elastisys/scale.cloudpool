@@ -16,8 +16,12 @@ import java.rmi.RemoteException;
 import java.util.Calendar;
 import java.util.Collection;
 
+/**
+ * Convert a VirtualMachine to a {@link Machine}.
+ */
 public class VirtualMachineToMachine implements Function<VirtualMachine, Machine> {
     private static final Logger LOG = LoggerFactory.getLogger(VirtualMachineToMachine.class);
+    // To be used for MembershipStatus and ServiceState
     private Tagger tagger = TaggerFactory.getTagger();
 
     @Override
@@ -32,6 +36,7 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
         String machineSize;
         Collection<String> publicIps;
 
+        // A terminating VM can disappear at any time, so we need to check for this RuntimeException
         try {
             id = vm.getName();
             launchTime = extractDateTime(vm);
