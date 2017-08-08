@@ -288,4 +288,10 @@ public class TestStandardVsphereClient {
         assertThat(pending.size(), is(1));
     }
 
+    @Test
+    public void testCreateInventoryNavigator() throws RemoteException {
+        reset(vsphereClient);
+        assertNotNull(vsphereClient.createInventoryNavigator(root));
+    }
+
 }

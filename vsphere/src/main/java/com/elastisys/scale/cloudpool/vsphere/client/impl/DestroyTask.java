@@ -12,6 +12,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Auxiliary class that is responsible for synchronously waiting on Vcenter to power off and destroy a VirtualMachine.
+ * This class implements the Callable interface and may be delegated to an Executor.
  */
 public class DestroyTask implements Callable {
     VirtualMachine virtualMachine;
@@ -21,11 +22,18 @@ public class DestroyTask implements Callable {
         this.virtualMachine = virtualMachine;
     }
 
+    /**
+     * This method contains the synchronous work necessary to power off and remove a VirtualMachine.
+     *
+     * @return A String signifying the final status of the task.
+     * @throws RemoteException      This exception is thrown if an error occurred in communication with Vcenter.
+     * @throws InterruptedException This exception will be thrown if the waiting thread was interrupted.
+     */
     @Override
     public String call() throws RemoteException, InterruptedException {
         VirtualMachinePowerState powerState = virtualMachine.getRuntime().getPowerState();
         String result;
-        if(powerState == VirtualMachinePowerState.poweredOn) {
+        if (powerState == VirtualMachinePowerState.poweredOn) {
             Task powerOffTask = virtualMachine.powerOffVM_Task();
             result = powerOffTask.waitForTask();
             if (!result.equals(TaskInfoState.success.name())) {

@@ -14,7 +14,9 @@ import java.util.concurrent.Callable;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Auxiliary class that is responsible for synchronously waiting on Vcenter to clone a VirtualMachine.
+ * Auxiliary class that is responsible for synchronously waiting on Vcenter to clone a VirtualMachine. When the cloning
+ * is complete the VirtualMachine will be tagged with all provided tags using the provided tagger. This class implements
+ * the Callable interface and may be delegated to an Executor.
  */
 public class CloneTask implements Callable {
 
@@ -31,6 +33,13 @@ public class CloneTask implements Callable {
         this.tags = tags;
     }
 
+    /**
+     * This method contains the synchronous work necessary to clone a VirtualMachine.
+     *
+     * @return A String signifying the final status of the task.
+     * @throws RemoteException      This exception is thrown if an error occurred in communication with Vcenter.
+     * @throws InterruptedException This exception will be thrown if the waiting thread was interrupted.
+     */
     @Override
     public String call() throws RemoteException, InterruptedException {
         String result = task.waitForTask();
@@ -40,7 +49,6 @@ public class CloneTask implements Callable {
             for (Tag tag : tags) {
                 tagger.tag(virtualMachine, tag);
             }
-
         }
         return result;
     }
