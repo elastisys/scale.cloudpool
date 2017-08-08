@@ -1,4 +1,4 @@
-package com.elastisys.scale.cloudpool.vsphere;
+package com.elastisys.scale.cloudpool.vsphere.client.impl;
 
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;

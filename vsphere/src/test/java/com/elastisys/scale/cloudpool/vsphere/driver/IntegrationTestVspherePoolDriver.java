@@ -1,4 +1,4 @@
-package com.elastisys.scale.cloudpool.vsphere;
+package com.elastisys.scale.cloudpool.vsphere.driver;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
