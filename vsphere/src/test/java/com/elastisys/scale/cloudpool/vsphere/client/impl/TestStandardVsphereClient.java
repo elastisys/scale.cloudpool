@@ -22,8 +22,8 @@ import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.is;
 import static com.elastisys.scale.cloudpool.vsphere.util.TestUtils.loadDriverConfig;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -37,6 +37,7 @@ public class TestStandardVsphereClient {
     private static InventoryNavigator mockInventoryNavigator;
     private static CustomFieldsManager mockCustomFieldsManager;
     private VirtualMachine template;
+    private static Folder root;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -44,6 +45,7 @@ public class TestStandardVsphereClient {
         vsphereApiSettings = driverConfig.parseCloudApiSettings(VsphereApiSettings.class);
         vsphereProvisioningTemplate = driverConfig.parseProvisioningTemplate(VsphereProvisioningTemplate.class);
         vsphereClient = spy(new StandardVsphereClient());
+        root = mock(Folder.class);
     }
 
     @Before
@@ -52,15 +54,14 @@ public class TestStandardVsphereClient {
         mockServiceInstance = mock(ServiceInstance.class);
         mockCustomFieldsManager = mock(CustomFieldsManager.class);
         mockInventoryNavigator = mock(InventoryNavigator.class);
+
         doReturn(mockServiceInstance).when(vsphereClient).createServiceInstance(any(URL.class), anyString(),
                 anyString(), anyBoolean());
         when(mockServiceInstance.getCustomFieldsManager()).thenReturn(mockCustomFieldsManager);
         when(mockCustomFieldsManager.getField()).thenReturn(new CustomFieldDef[0]);
         doReturn(mockInventoryNavigator).when(vsphereClient).createInventoryNavigator(any(Folder.class));
-
-        doReturn(mock(Folder.class)).when(mockServiceInstance).getRootFolder();
-        Folder root = mockServiceInstance.getRootFolder();
-
+        doReturn(root).when(mockServiceInstance).getRootFolder();
+        // Make it possible to search for template, folder and resource pool defined in the settings.
         doReturn(template).when(vsphereClient).searchManagedEntity(root, VirtualMachine.class.getSimpleName(),
                 vsphereProvisioningTemplate.getTemplate());
         doReturn(mock(Folder.class)).when(vsphereClient).searchManagedEntity(root, Folder.class.getSimpleName(),
@@ -139,32 +140,30 @@ public class TestStandardVsphereClient {
     @Test(expected = NotFoundException.class)
     public void launchWithWrongTemplate() throws RemoteException {
         vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
-        Task task = mock(Task.class);
 
         Folder root = mockServiceInstance.getRootFolder();
         doThrow(NotFoundException.class).when(vsphereClient).searchManagedEntity(root,
                 VirtualMachine.class.getSimpleName(), vsphereProvisioningTemplate.getTemplate());
-        when(template.cloneVM_Task(any(), anyString(), any())).thenReturn(task);
 
         vsphereClient.launchVirtualMachines(1, Lists.newArrayList());
     }
 
     @Test
     public void terminateMachinesShouldRemoveVms() throws Exception {
-        VirtualMachine virtualMachine = new MockedVm().withName("Vm_destroy").build();
+        String name = "Vm_destroy";
+        VirtualMachine virtualMachine = new MockedVm().withName(name).build();
 
-        doReturn(virtualMachine).when(vsphereClient).searchManagedEntity(any(), anyString(), anyString());
+        doReturn(virtualMachine).when(vsphereClient).searchManagedEntity(root, VirtualMachine.class.getSimpleName(), name);
         when(virtualMachine.powerOffVM_Task()).thenReturn(mock(Task.class));
         when(virtualMachine.destroy_Task()).thenReturn(mock(Task.class));
 
-        vsphereClient.terminateVirtualMachines(Arrays.asList("Vm_destroy"));
+        vsphereClient.terminateVirtualMachines(Arrays.asList(name));
         verify(vsphereClient, times(1)).createDestroyTask(virtualMachine);
     }
 
     @Test
     public void testPendingMachines() {
-        List<String> pendingMachines = vsphereClient.pendingVirtualMachines();
-
+        vsphereClient.pendingVirtualMachines();
     }
 
     /**
@@ -173,22 +172,23 @@ public class TestStandardVsphereClient {
      */
     @Test
     public void interruptedPowerOff() throws RemoteException, InterruptedException {
-        VirtualMachine vm = new MockedVm().withName("Vm_destroy").build();
+        String name = "Vm_destroy";
+        VirtualMachine vm = new MockedVm().withName(name).build();
         Task powerOffTask = mock(Task.class);
         Task destroyTask = mock(Task.class);
 
         vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
 
-        doReturn(vm).when(vsphereClient).searchManagedEntity(any(), anyString(), anyString());
+        doReturn(vm).when(vsphereClient).searchManagedEntity(root, VirtualMachine.class.getSimpleName(), name);
         when(vm.powerOffVM_Task()).thenReturn(powerOffTask);
         when(vm.destroy_Task()).thenReturn(destroyTask);
 
         when(powerOffTask.waitForTask()).thenThrow(InterruptedException.class);
-        vsphereClient.terminateVirtualMachines(Arrays.asList("Vm_destroy"));
+        vsphereClient.terminateVirtualMachines(Arrays.asList(name));
         reset(powerOffTask);
 
         when(destroyTask.waitForTask()).thenThrow(InterruptedException.class);
-        vsphereClient.terminateVirtualMachines(Arrays.asList("Vm_destroy"));
+        vsphereClient.terminateVirtualMachines(Arrays.asList(name));
     }
 
     @Test
