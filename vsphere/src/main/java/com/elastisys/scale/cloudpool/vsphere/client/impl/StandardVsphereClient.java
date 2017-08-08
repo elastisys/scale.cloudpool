@@ -5,6 +5,7 @@ import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
 import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
+import com.elastisys.scale.cloudpool.vsphere.tagger.Tagger;
 import com.elastisys.scale.cloudpool.vsphere.tagger.TaggerFactory;
 import com.elastisys.scale.cloudpool.vsphere.tagger.impl.CustomAttributeTagger;
 import com.google.common.collect.Lists;
@@ -109,7 +110,7 @@ public class StandardVsphereClient implements VsphereClient {
             String name = UUID.randomUUID().toString();
             names.add(name);
             Task task = template.cloneVM_Task(folder, name, cloneSpec);
-            CloneTask cloneTask = new CloneTask(tagger, task, tags);
+            CloneTask cloneTask = createCloneTask(tagger, task, tags);
             pendingMachines.add(new FutureNamePair(executor.submit(cloneTask), name));
         }
         return names;
@@ -139,6 +140,10 @@ public class StandardVsphereClient implements VsphereClient {
     @Override
     public void untag(String id, List<Tag> tags) {
 
+    }
+
+    CloneTask createCloneTask (Tagger tagger, Task task, List<Tag> tags){
+        return new CloneTask(tagger, task, tags);
     }
 
     DestroyTask createDestroyTask(VirtualMachine virtualMachine) {

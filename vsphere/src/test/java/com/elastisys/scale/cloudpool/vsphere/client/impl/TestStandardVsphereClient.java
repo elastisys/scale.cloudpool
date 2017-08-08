@@ -15,6 +15,8 @@ import com.vmware.vim25.mo.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -23,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.elastisys.scale.cloudpool.vsphere.util.TestUtils.loadDriverConfig;
+import static java.lang.Thread.sleep;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -55,8 +58,8 @@ public class TestStandardVsphereClient {
         mockCustomFieldsManager = mock(CustomFieldsManager.class);
         mockInventoryNavigator = mock(InventoryNavigator.class);
 
-        doReturn(mockServiceInstance).when(vsphereClient).createServiceInstance(any(URL.class), anyString(),
-                anyString(), anyBoolean());
+        doReturn(mockServiceInstance).when(vsphereClient)
+                .createServiceInstance(any(URL.class), anyString(), anyString(), anyBoolean());
         when(mockServiceInstance.getCustomFieldsManager()).thenReturn(mockCustomFieldsManager);
         when(mockCustomFieldsManager.getField()).thenReturn(new CustomFieldDef[0]);
         doReturn(mockInventoryNavigator).when(vsphereClient).createInventoryNavigator(any(Folder.class));
@@ -64,10 +67,11 @@ public class TestStandardVsphereClient {
         // Make it possible to search for template, folder and resource pool defined in the settings.
         doReturn(template).when(vsphereClient).searchManagedEntity(root, VirtualMachine.class.getSimpleName(),
                 vsphereProvisioningTemplate.getTemplate());
-        doReturn(mock(Folder.class)).when(vsphereClient).searchManagedEntity(root, Folder.class.getSimpleName(),
-                vsphereProvisioningTemplate.getFolder());
-        doReturn(mock(ResourcePool.class)).when(vsphereClient).searchManagedEntity(root, ResourcePool.class.getSimpleName(),
-                vsphereProvisioningTemplate.getResourcePool());
+        doReturn(mock(Folder.class)).when(vsphereClient)
+                .searchManagedEntity(root, Folder.class.getSimpleName(), vsphereProvisioningTemplate.getFolder());
+        doReturn(mock(ResourcePool.class)).when(vsphereClient)
+                .searchManagedEntity(root, ResourcePool.class.getSimpleName(),
+                        vsphereProvisioningTemplate.getResourcePool());
     }
 
     @Test
@@ -77,9 +81,10 @@ public class TestStandardVsphereClient {
 
     // URL is already checked when we get to the client, but we want coverage :P
     @Test(expected = RemoteException.class)
-    public void configureWithMalformedUrl() throws RemoteException, MalformedURLException {
-        doThrow(MalformedURLException.class).when(vsphereClient).createServiceInstance(any(), anyString(),
-                anyString(), anyBoolean());
+    public void configureWithMalformedUrl()
+            throws RemoteException, MalformedURLException {
+        doThrow(MalformedURLException.class).when(vsphereClient)
+                .createServiceInstance(any(), anyString(), anyString(), anyBoolean());
         vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
     }
 
@@ -108,7 +113,8 @@ public class TestStandardVsphereClient {
         Tag noSuchTag = new VsphereTag(ScalingTag.CLOUD_POOL, "NoSuchThing");
         doReturn(vms).when(mockInventoryNavigator).searchManagedEntities(anyString());
         vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
-        List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines(Lists.newArrayList(existingTag, noSuchTag));
+        List<VirtualMachine> virtualMachines = vsphereClient
+                .getVirtualMachines(Lists.newArrayList(existingTag, noSuchTag));
         assertEquals(virtualMachines.size(), 0);
     }
 
@@ -142,8 +148,9 @@ public class TestStandardVsphereClient {
         vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
 
         Folder root = mockServiceInstance.getRootFolder();
-        doThrow(NotFoundException.class).when(vsphereClient).searchManagedEntity(root,
-                VirtualMachine.class.getSimpleName(), vsphereProvisioningTemplate.getTemplate());
+        doThrow(NotFoundException.class).when(vsphereClient)
+                .searchManagedEntity(root, VirtualMachine.class.getSimpleName(),
+                        vsphereProvisioningTemplate.getTemplate());
 
         vsphereClient.launchVirtualMachines(1, Lists.newArrayList());
     }
@@ -153,17 +160,13 @@ public class TestStandardVsphereClient {
         String name = "Vm_destroy";
         VirtualMachine virtualMachine = new MockedVm().withName(name).build();
 
-        doReturn(virtualMachine).when(vsphereClient).searchManagedEntity(root, VirtualMachine.class.getSimpleName(), name);
+        doReturn(virtualMachine).when(vsphereClient)
+                .searchManagedEntity(root, VirtualMachine.class.getSimpleName(), name);
         when(virtualMachine.powerOffVM_Task()).thenReturn(mock(Task.class));
         when(virtualMachine.destroy_Task()).thenReturn(mock(Task.class));
 
         vsphereClient.terminateVirtualMachines(Arrays.asList(name));
         verify(vsphereClient, times(1)).createDestroyTask(virtualMachine);
-    }
-
-    @Test
-    public void testPendingMachines() {
-        vsphereClient.pendingVirtualMachines();
     }
 
     /**
@@ -245,7 +248,7 @@ public class TestStandardVsphereClient {
         assertThat(me, is(virtualMachine));
     }
 
-    @Test (expected = NotFoundException.class)
+    @Test(expected = NotFoundException.class)
     public void searchForMissingEntity() throws RemoteException {
         when(mockInventoryNavigator.searchManagedEntity("VirtualMachine", "vm1")).thenReturn(null);
         vsphereClient.searchManagedEntity(root, "VirtualMachine", "vm1");
@@ -259,6 +262,29 @@ public class TestStandardVsphereClient {
     @Test
     public void testUntag() {
         fail("Not implemented");
+    }
+
+    @Test
+    public void testPendingMachines() throws Exception {
+        vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
+        CloneTask t = mock(CloneTask.class);
+        doReturn(t).when(vsphereClient).createCloneTask(any(), any(), any());
+        doAnswer(new Answer<Void>() {
+            public Void answer(InvocationOnMock invocation) {
+                try {
+                    while (true) {
+                        sleep(1);
+                    }
+                } catch (Exception e) {
+                    fail("Mocked CloneTask callback failed to block");
+                }
+                return null;
+            }
+        }).when(t).call();
+        List<String> virtualMachines = vsphereClient.launchVirtualMachines(1, Lists.newArrayList());
+        List<String> pending = vsphereClient.pendingVirtualMachines();
+        assertThat(virtualMachines, is(pending));
+        assertThat(pending.size(), is(1));
     }
 
 }

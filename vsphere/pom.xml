@@ -13,6 +13,8 @@
   </description>
 
   <properties>
+      <!-- <docker.image>elastisys/ec2pool</docker.image> -->
+      <shade.mainClass>com.elastisys.scale.cloudpool.vsphere.server.Main</shade.mainClass>
   </properties>
 
   <build>
@@ -29,6 +31,10 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
@@ -82,5 +88,6 @@
       <artifactId>yavijava</artifactId>
       <version>6.0.01</version>
     </dependency>
+
   </dependencies>
 </project>
