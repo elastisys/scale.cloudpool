@@ -237,4 +237,28 @@ public class TestStandardVsphereClient {
         assertThat(virtualMachines.get(0).getName(), is("normalVm"));
     }
 
+    @Test
+    public void searchForExistingEntity() throws RemoteException {
+        VirtualMachine virtualMachine = new MockedVm().withName("vm1").build();
+        when(mockInventoryNavigator.searchManagedEntity("VirtualMachine", "vm1")).thenReturn(virtualMachine);
+        ManagedEntity me = vsphereClient.searchManagedEntity(root, "VirtualMachine", "vm1");
+        assertThat(me, is(virtualMachine));
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void searchForMissingEntity() throws RemoteException {
+        when(mockInventoryNavigator.searchManagedEntity("VirtualMachine", "vm1")).thenReturn(null);
+        vsphereClient.searchManagedEntity(root, "VirtualMachine", "vm1");
+    }
+
+    @Test
+    public void testTag() {
+        fail("Not implemented");
+    }
+
+    @Test
+    public void testUntag() {
+        fail("Not implemented");
+    }
+
 }
