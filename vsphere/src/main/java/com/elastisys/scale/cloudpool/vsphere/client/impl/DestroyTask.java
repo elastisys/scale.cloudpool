@@ -10,6 +10,9 @@ import java.util.concurrent.Callable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * Auxiliary class that is responsible for synchronously waiting on Vcenter to power off and destroy a VirtualMachine.
+ */
 public class DestroyTask implements Callable {
     VirtualMachine virtualMachine;
 

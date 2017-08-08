@@ -46,9 +46,9 @@ public class CustomAttributeTagger implements Tagger {
     }
 
     @Override
-    public boolean isTagged(ManagedEntity me, Tag vsphereTag) throws RemoteException {
+    public boolean isTagged(ManagedEntity me, Tag tag) throws RemoteException {
         try {
-            return getCustomValue(me, vsphereTag.getKey()).equals(vsphereTag.getValue());
+            return getCustomValue(me, tag.getKey()).equals(tag.getValue());
         } catch (NotFoundException e) {
             return false;
         }

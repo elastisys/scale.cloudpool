@@ -13,6 +13,9 @@ import java.util.concurrent.Callable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * Auxiliary class that is responsible for synchronously waiting on Vcenter to clone a VirtualMachine.
+ */
 public class CloneTask implements Callable {
 
     private Tagger tagger;

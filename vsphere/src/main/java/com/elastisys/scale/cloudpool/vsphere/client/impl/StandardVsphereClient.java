@@ -125,7 +125,6 @@ public class StandardVsphereClient implements VsphereClient {
         }
 
         for (VirtualMachine vm : virtualMachines) {
-
             if (ids.contains(vm.getName())) {
                 executor.submit(createDestroyTask(vm));
             }
@@ -157,7 +156,7 @@ public class StandardVsphereClient implements VsphereClient {
 
     /**
      * Wrapper for InventoryNavigator.searchManagedEntity(). An unchecked NotFoundException will be thrown if the
-     * specific entity which was searched for was not found.
+     * specific entity which was requested did not exist.
      *
      * @param folder Location in which to search.
      * @param type   Type of entity to search for (e.g. {@link VirtualMachine}.

@@ -23,7 +23,7 @@ public interface VsphereClient {
     void configure(VsphereApiSettings vsphereApiSettings, VsphereProvisioningTemplate vsphereProvisioningTemplate) throws RemoteException;
 
     /**
-     * Contains information about virtual machines that have been requested but may not yet be visible in the API.
+     * Contains a list of ids of virtual machines that have been requested but may not yet be visible in the API.
      *
      * @return A list of pending virtual machines which may not yet be visible through getVirtualMachines.
      */
