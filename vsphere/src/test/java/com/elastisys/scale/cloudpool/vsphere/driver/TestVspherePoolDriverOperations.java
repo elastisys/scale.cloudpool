@@ -3,6 +3,8 @@ package com.elastisys.scale.cloudpool.vsphere.driver;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
+import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
+import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
@@ -36,11 +38,6 @@ public class TestVspherePoolDriverOperations {
         DriverConfig configuration = TestUtils.loadDriverConfig(specificConfigPath);
         driver = new VspherePoolDriver(mockedClient);
         driver.configure(configuration);
-    }
-
-    @Test
-    public void testVspherePoolDriver() {
-        fail("Not yet implemented");
     }
 
     @Test
@@ -117,6 +114,27 @@ public class TestVspherePoolDriverOperations {
         assertThat(result.get(0).getMachineState(), is(MachineState.PENDING));
     }
 
+    /**
+     * There is a race condition when listing machines so that a pending
+     * machine may also be listed as running. We need to make sure that
+     * these machines are not listed twice.
+     */
+    @Test
+    public void machineBothPendingAndRunning() throws RemoteException {
+        String name = "vm1";
+        List<String> nameList = Lists.newArrayList(name);
+
+        List<VirtualMachine> runningVms = Lists.newArrayList(getMockedVM(name));
+
+        when(mockedClient.getVirtualMachines(any())).thenReturn(runningVms);
+        when(mockedClient.pendingVirtualMachines()).thenReturn(nameList);
+
+        List<Machine> result = driver.listMachines();
+        assertThat(result.size(), is(1));
+        assertThat(result, is(MachinesMatcher.machines(name)));
+        assertThat(result.get(0).getMachineState(), is(MachineState.RUNNING));
+    }
+
     @Test(expected = CloudPoolDriverException.class)
     public void failToGetMachines() throws CloudPoolDriverException, RemoteException {
         when(this.mockedClient.getVirtualMachines(any())).thenThrow(new RemoteException("API unreachable"));
@@ -172,24 +190,24 @@ public class TestVspherePoolDriverOperations {
         driver.terminateMachine("vm2");
     }
 
-    @Test
+    @Test(expected = UnsupportedOperationException.class)
     public void testAttachMachine() {
-        fail("Not yet implemented");
+        driver.attachMachine("vm1");
     }
 
-    @Test
+    @Test(expected = UnsupportedOperationException.class)
     public void testDetachMachine() {
-        fail("Not yet implemented");
+        driver.detachMachine("vm1");
     }
 
-    @Test
+    @Test(expected = UnsupportedOperationException.class)
     public void testSetServiceState() {
-        fail("Not yet implemented");
+        driver.setServiceState("vm1", ServiceState.UNHEALTHY);
     }
 
-    @Test
+    @Test(expected = UnsupportedOperationException.class)
     public void testSetMembershipStatus() {
-        fail("Not yet implemented");
+        driver.setMembershipStatus("vm1", MembershipStatus.disposable());
     }
 
     private VirtualMachine getMockedVM(String name) throws RemoteException {

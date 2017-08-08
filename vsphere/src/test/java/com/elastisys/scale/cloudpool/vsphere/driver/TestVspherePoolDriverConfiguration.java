@@ -1,7 +1,5 @@
 package com.elastisys.scale.cloudpool.vsphere.driver;
 
-import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
@@ -123,26 +121,6 @@ public class TestVspherePoolDriverConfiguration {
     @Test(expected = IllegalStateException.class)
     public void terminateMachineWithoutConfig() {
         driver.terminateMachine("machine-id");
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void attachMachineWithoutConfig() {
-        driver.attachMachine("machine-id");
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void detachMachineWithoutConfig() {
-        driver.detachMachine("machine-id");
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void setServiceStateWithoutConfig() {
-        driver.setServiceState("machine-id", ServiceState.IN_SERVICE);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void setMembershipStatusWithoutConfig() {
-        driver.setMembershipStatus("machine-id", MembershipStatus.defaultStatus());
     }
 
     @Test(expected = IllegalStateException.class)

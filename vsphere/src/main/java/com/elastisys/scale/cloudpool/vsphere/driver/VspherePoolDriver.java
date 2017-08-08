@@ -111,25 +111,25 @@ public class VspherePoolDriver implements CloudPoolDriver {
     @Override
     public void attachMachine(String machineId)
             throws IllegalStateException, NotFoundException, CloudPoolDriverException {
-        checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
+        throw new UnsupportedOperationException("This operation is not implemented for " + getClass().getSimpleName());
     }
 
     @Override
     public void detachMachine(String machineId)
             throws IllegalStateException, NotFoundException, CloudPoolDriverException {
-        checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
+        throw new UnsupportedOperationException("This operation is not implemented for " + getClass().getSimpleName());
     }
 
     @Override
     public void setServiceState(String machineId, ServiceState serviceState)
             throws IllegalStateException, NotFoundException, CloudPoolDriverException {
-        checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
+        throw new UnsupportedOperationException("This operation is not implemented for " + getClass().getSimpleName());
     }
 
     @Override
     public void setMembershipStatus(String machineId, MembershipStatus membershipStatus)
             throws IllegalStateException, NotFoundException, CloudPoolDriverException {
-        checkState(isConfigured(), "attempt to use unconfigured VspherePoolDriver");
+        throw new UnsupportedOperationException("This operation is not implemented for " + getClass().getSimpleName());
     }
 
     @Override
