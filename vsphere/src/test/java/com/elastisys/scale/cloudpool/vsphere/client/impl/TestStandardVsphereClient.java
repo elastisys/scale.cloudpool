@@ -47,16 +47,16 @@ public class TestStandardVsphereClient {
         DriverConfig driverConfig = loadDriverConfig("config/valid-vsphere-config.json");
         vsphereApiSettings = driverConfig.parseCloudApiSettings(VsphereApiSettings.class);
         vsphereProvisioningTemplate = driverConfig.parseProvisioningTemplate(VsphereProvisioningTemplate.class);
-        vsphereClient = spy(new StandardVsphereClient());
-        root = mock(Folder.class);
     }
 
     @Before
     public void setUp() throws Exception {
+        vsphereClient = spy(new StandardVsphereClient());
         template = mock(VirtualMachine.class);
         mockServiceInstance = mock(ServiceInstance.class);
         mockCustomFieldsManager = mock(CustomFieldsManager.class);
         mockInventoryNavigator = mock(InventoryNavigator.class);
+        root = mock(Folder.class);
 
         doReturn(mockServiceInstance).when(vsphereClient)
                 .createServiceInstance(any(URL.class), anyString(), anyString(), anyBoolean());
@@ -157,6 +157,7 @@ public class TestStandardVsphereClient {
 
     @Test
     public void terminateMachinesShouldRemoveVms() throws Exception {
+        vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
         String name = "Vm_destroy";
         VirtualMachine virtualMachine = new MockedVm().withName(name).build();
 
@@ -254,14 +255,14 @@ public class TestStandardVsphereClient {
         vsphereClient.searchManagedEntity(root, "VirtualMachine", "vm1");
     }
 
-    @Test
-    public void testTag() {
-        fail("Not implemented");
+    @Test(expected = UnsupportedOperationException.class)
+    public void testUnsupportedOperationTag() {
+        vsphereClient.tag("vm1", Lists.newArrayList());
     }
 
-    @Test
-    public void testUntag() {
-        fail("Not implemented");
+    @Test(expected = UnsupportedOperationException.class)
+    public void testUnsupportedOperationUntag() {
+        vsphereClient.untag("vm1", Lists.newArrayList());
     }
 
     @Test

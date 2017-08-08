@@ -134,12 +134,12 @@ public class StandardVsphereClient implements VsphereClient {
 
     @Override
     public void tag(String id, List<Tag> tags) {
-
+        throw new UnsupportedOperationException("This operation is not implemented by " + getClass().getSimpleName());
     }
 
     @Override
     public void untag(String id, List<Tag> tags) {
-
+        throw new UnsupportedOperationException("This operation is not implemented by " + getClass().getSimpleName());
     }
 
     CloneTask createCloneTask (Tagger tagger, Task task, List<Tag> tags){
