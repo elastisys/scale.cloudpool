@@ -89,12 +89,14 @@ public class StandardVsphereClient implements VsphereClient {
     @Override
     public List<String> launchVirtualMachines(int count, List<Tag> tags) throws RemoteException {
         Folder rootFolder = this.serviceInstance.getRootFolder();
+
         VirtualMachine template = (VirtualMachine) searchManagedEntity(rootFolder, VirtualMachine.class.getSimpleName(),
                 vsphereProvisioningTemplate.getTemplate());
         Folder folder = (Folder) searchManagedEntity(rootFolder, Folder.class.getSimpleName(),
                 vsphereProvisioningTemplate.getFolder());
         ResourcePool resourcePool = (ResourcePool) searchManagedEntity(rootFolder, ResourcePool.class.getSimpleName(),
                 vsphereProvisioningTemplate.getResourcePool());
+
         VirtualMachineCloneSpec cloneSpec = new VirtualMachineCloneSpec();
         VirtualMachineRelocateSpec relocateSpec = new VirtualMachineRelocateSpec();
         relocateSpec.setPool(resourcePool.getMOR());
