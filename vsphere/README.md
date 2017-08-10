@@ -55,6 +55,16 @@ The configuration keys have the following meaning:
 
 
 
+## Limitations
+The following API methods are unsupported
+
+- Set membership status
+- Set service state
+- Detach machine
+- Attach machine
+
+
+
 ## Usage
 This module produces an executable jar file for the cloud pool server.
 The simplest way of starting the server is to run
