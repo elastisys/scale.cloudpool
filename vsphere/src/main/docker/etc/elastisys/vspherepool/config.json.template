@@ -1,0 +1,62 @@
+{
+    "name": "${CLOUD_POOL_NAME}",
+
+	"cloudApiSettings": {
+		"url": "${VSPHERE_SDK_URL}",
+		"username": "${VSPHERE_USERNAME}",
+		"password": "${VSPHERE_PASSWORD}"
+	},
+	"provisioningTemplate": {
+		"template": "minimal-template",
+		"folder": "Discovered Virtual Machine",
+		"resourcePool": "development"
+	},
+
+    "scaleInConfig": {
+        "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
+        "instanceHourMargin": 300
+    },
+
+    "alerts": {
+        "duplicateSuppression": { "time": 5, "unit": "minutes" },
+        "smtp": [
+            {
+                "subject": "[elastisys:scale] cloud pool alert for ${CLOUD_POOL_NAME}",
+                "recipients": ["${EMAIL_ADDRESS}"],
+                "sender": "noreply@elastisys.com",
+                "severityFilter": "INFO|NOTICE|WARN|ERROR|FATAL",
+                "smtpClientConfig": {
+                    "smtpHost": "${EMAIL_SERVER}",
+                    "smtpPort": 465,
+                    "authentication": {
+                        "userName": "${EMAIL_USER}",
+                        "password": "${EMAIL_PASSWORD}"
+                    },
+                    "useSsl": true
+                }
+            }
+        ],
+        "http": [
+            {
+                "destinationUrls": ["${WEBHOOK_URL}"],
+                "severityFilter": "INFO|WARN|ERROR|FATAL",
+                "auth": {
+                    "basicCredentials": { "username": "${USERNAME}", "password": "${PASSWORD}" }
+                }
+            }
+        ]
+    },
+
+    "poolFetch": {
+        "retries": {
+            "maxRetries": 3,
+            "initialBackoffDelay": {"time": 3, "unit": "seconds"}
+        },
+        "refreshInterval": {"time": 30, "unit": "seconds"},
+        "reachabilityTimeout": {"time": 5, "unit": "minutes"}
+    },
+
+    "poolUpdate": {
+        "updateInterval": {"time": 60, "unit": "seconds"}
+    }
+}
