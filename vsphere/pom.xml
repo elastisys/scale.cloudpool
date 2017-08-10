@@ -63,6 +63,12 @@
 	  <artifactId>cloudpool.commons</artifactId>
       <version>${project.version}</version>
 	</dependency>
+    <!-- https://mvnrepository.com/artifact/com.toastcoders/yavijava -->
+    <dependency>
+      <groupId>com.toastcoders</groupId>
+      <artifactId>yavijava</artifactId>
+      <version>6.0.01</version>
+    </dependency>
 
     <!-- Logging -->
     <dependency>
@@ -86,12 +92,6 @@
       <artifactId>sshd-core</artifactId>
       <version>0.10.1</version>
       <scope>test</scope>
-    </dependency>
-    <!-- https://mvnrepository.com/artifact/com.toastcoders/yavijava -->
-    <dependency>
-      <groupId>com.toastcoders</groupId>
-      <artifactId>yavijava</artifactId>
-      <version>6.0.01</version>
     </dependency>
 
   </dependencies>
