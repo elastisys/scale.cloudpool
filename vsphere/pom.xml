@@ -13,7 +13,7 @@
   </description>
 
   <properties>
-      <!-- <docker.image>elastisys/ec2pool</docker.image> -->
+      <docker.image>elastisys/vspherepool</docker.image>
       <shade.mainClass>com.elastisys.scale.cloudpool.vsphere.server.Main</shade.mainClass>
   </properties>
 
@@ -35,6 +35,11 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
+      </plugin>
+      <!-- Builds a Docker image -->
+      <plugin>
+        <groupId>com.spotify</groupId>
+        <artifactId>docker-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
