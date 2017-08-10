@@ -55,7 +55,7 @@ public class VspherePoolDriver implements CloudPoolDriver {
         try {
             vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
         } catch (RemoteException e) {
-            throw new CloudPoolDriverException();
+            throw new CloudPoolDriverException("Failed to configure VspherePoolDriver: "+e.getMessage());
         }
 
         driverConfig = configuration;
