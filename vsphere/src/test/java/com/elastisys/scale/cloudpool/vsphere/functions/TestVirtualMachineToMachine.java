@@ -59,14 +59,14 @@ public class TestVirtualMachineToMachine {
     @Test
     public void convertVmWithIp() throws RemoteException {
         String name = "vm1";
-        String publicIp = "192.168.104.230";
+        String privateIp = "192.168.104.230";
 
         VirtualMachine vm = new MockedVm().withName(name)
                 .withLaunchTime(launchTime)
                 .withPowerState(poweredOn)
                 .withResourcePool(region)
                 .withMachineSize(machineSize)
-                .withPublicIps(publicIp)
+                .withPrivateIp(privateIp)
                 .build();
         Machine result = new VirtualMachineToMachine().apply(vm);
         assertThat(result.getId(), is(vm.getName()));
@@ -77,9 +77,9 @@ public class TestVirtualMachineToMachine {
         assertThat(result.getMachineSize(), is(machineSize));
         assertThat(result.getMembershipStatus(), is(MembershipStatus.defaultStatus()));
         assertThat(result.getServiceState(), is(ServiceState.UNKNOWN));
-        assertThat(result.getPublicIps().size(), is(1));
-        assertThat(result.getPublicIps().get(0), is(publicIp));
-        assertThat(result.getPrivateIps().size(), is(0));
+        assertThat(result.getPrivateIps().size(), is(1));
+        assertThat(result.getPrivateIps().get(0), is(privateIp));
+        assertThat(result.getPublicIps().size(), is(0));
     }
 
     @Test

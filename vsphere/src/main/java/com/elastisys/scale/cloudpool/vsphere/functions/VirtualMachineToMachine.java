@@ -34,7 +34,7 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
         String cloudProvider = CloudProviders.VSPHERE;
         String region;
         String machineSize;
-        Collection<String> publicIps;
+        Collection<String> privateIps;
 
         // A terminating VM can disappear at any time, so we need to check for this RuntimeException
         try {
@@ -43,7 +43,7 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
             state = extractMachineState(vm);
             region = extractRegion(vm);
             machineSize = extractMachineSize(vm);
-            publicIps = extractPublicIps(vm);
+            privateIps = extractPrivateIps(vm);
         } catch (RuntimeException e) {
             if (!e.getMessage().contains("ManagedObjectNotFound")) {
                 throw e;
@@ -54,7 +54,7 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
             state = MachineState.TERMINATED;
             region = "unknown";
             machineSize = "unknown";
-            publicIps = Lists.newArrayList();
+            privateIps = Lists.newArrayList();
         }
 
         // TODO: Only partially implemented
@@ -70,23 +70,23 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
                 .cloudProvider(cloudProvider)
                 .region(region)
                 .machineSize(machineSize)
-                .publicIps(publicIps)
+                .privateIps(privateIps)
                 .build();
 
         return machine;
     }
 
-    private Collection<String> extractPublicIps(VirtualMachine vm) {
+    private Collection<String> extractPrivateIps(VirtualMachine vm) {
         GuestInfo guestInfo = vm.getGuest();
-        Collection<String> publicIps = Lists.newArrayList();
+        Collection<String> privateIps = Lists.newArrayList();
         if (guestInfo != null) {
             String ip = guestInfo.getIpAddress();
             if (ip != null) {
-                publicIps.add(ip);
+                privateIps.add(ip);
             }
         }
 
-        return publicIps;
+        return privateIps;
     }
 
     private DateTime extractDateTime(VirtualMachine vm) {

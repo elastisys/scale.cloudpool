@@ -55,10 +55,10 @@ public class MockedVm {
         return this;
     }
 
-    public MockedVm withPublicIps(String publicIp) {
+    public MockedVm withPrivateIp(String privateIp) {
         GuestInfo guestInfo = mock(GuestInfo.class);
         when(vm.getGuest()).thenReturn(guestInfo);
-        when(guestInfo.getIpAddress()).thenReturn(publicIp);
+        when(guestInfo.getIpAddress()).thenReturn(privateIp);
         return this;
     }
 
