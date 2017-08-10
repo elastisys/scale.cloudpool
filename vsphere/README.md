@@ -26,7 +26,7 @@ to the following:
 ```javascript
     ...
     "cloudApiSettings": {
-        "url": "http://172.16.0.1",
+        "url": "http://172.16.0.1/sdk",
         "username": "username",
         "password": "password"
     },
@@ -44,7 +44,7 @@ to the following:
 The configuration keys have the following meaning:
 
 - `cloudApiSettings`: API access credentials and settings.
-    - `url`: Endpoint URL of Vcenter. For example http://172.16.0.1.
+    - `url`: Endpoint URL of Vcenter. For example http://172.16.0.1/sdk.
     - `username`: Vcenter account user.
     - `password`: Vcenter account password.
 
