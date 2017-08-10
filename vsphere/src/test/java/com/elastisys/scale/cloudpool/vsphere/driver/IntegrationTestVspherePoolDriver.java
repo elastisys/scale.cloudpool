@@ -5,7 +5,6 @@ import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.client.impl.StandardVsphereClient;
-import com.elastisys.scale.cloudpool.vsphere.driver.VspherePoolDriver;
 import com.elastisys.scale.cloudpool.vsphere.util.TestUtils;
 import com.google.common.collect.Lists;
 import org.junit.Before;
@@ -135,8 +134,8 @@ public class IntegrationTestVspherePoolDriver {
     private static List<Machine> getMachinesById(List<Machine> machines) {
         List<String> ids = machines.stream().map(Machine::getId).collect(Collectors.toList());
         List<Machine> result = Lists.newArrayList();
-        for(Machine m : vspherePoolDriver.listMachines()) {
-            if(ids.contains(m.getId())){
+        for (Machine m : vspherePoolDriver.listMachines()) {
+            if (ids.contains(m.getId())) {
                 result.add(m);
             }
         }

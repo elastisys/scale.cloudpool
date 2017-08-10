@@ -77,15 +77,14 @@ public class IntegrationTestTagger {
         CustomFieldsManager customFieldsManager = serviceInstance.getCustomFieldsManager();
         CustomFieldDef[] cfdArr = customFieldsManager.getField();
         int key = -1;
-        for(CustomFieldDef cfd : cfdArr) {
-            if (cfd.getName().equals(testDef)){
+        for (CustomFieldDef cfd : cfdArr) {
+            if (cfd.getName().equals(testDef)) {
                 key = cfd.getKey();
             }
         }
-        if(key != -1) {
+        if (key != -1) {
             customFieldsManager.removeCustomFieldDef(key);
-        }
-        else {
+        } else {
             System.err.println("IntegrationTestTagger failed to remove CustomAttribute testing definition");
         }
         serviceInstance.getServerConnection().logout();
@@ -111,8 +110,8 @@ public class IntegrationTestTagger {
         CustomFieldsManager customFieldsManager = serviceInstance.getCustomFieldsManager();
         List<CustomFieldDef> cfdList = Arrays.asList(customFieldsManager.getField());
         List<String> tagDefinitions = cfdList.stream().map(CustomFieldDef::getName).collect(Collectors.toList());
-        for(String tag : mockTags) {
-            if(!tagDefinitions.contains(tag)) {
+        for (String tag : mockTags) {
+            if (!tagDefinitions.contains(tag)) {
                 fail("Expected to find tag definition");
             }
         }

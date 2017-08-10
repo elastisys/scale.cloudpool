@@ -27,7 +27,7 @@ public class TestCustomAttributeTagger {
     private Tag mockTag;
 
     @Before
-    public void setup() throws Exception{
+    public void setup() throws Exception {
         customAttributeTagger = new CustomAttributeTagger();
         mockTag = new VsphereTag(ScalingTag.CLOUD_POOL, "MockedTag");
     }

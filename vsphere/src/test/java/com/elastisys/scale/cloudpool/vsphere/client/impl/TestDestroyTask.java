@@ -18,7 +18,7 @@ public class TestDestroyTask {
     Task destroyVmTask;
 
     @Before
-    public void setUp() throws Exception{
+    public void setUp() throws Exception {
         this.virtualMachine = new MockedVm().withPowerState(VirtualMachinePowerState.poweredOn).build();
         this.powerOffTask = mock(Task.class);
         this.destroyVmTask = mock(Task.class);
@@ -29,7 +29,7 @@ public class TestDestroyTask {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testWithNoVirtualMachine(){
+    public void testWithNoVirtualMachine() {
         new DestroyTask(null);
     }
 

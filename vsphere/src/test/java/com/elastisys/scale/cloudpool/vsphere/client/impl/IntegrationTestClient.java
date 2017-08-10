@@ -2,7 +2,6 @@ package com.elastisys.scale.cloudpool.vsphere.client.impl;
 
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.vsphere.client.VsphereClient;
-import com.elastisys.scale.cloudpool.vsphere.client.impl.StandardVsphereClient;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereApiSettings;
 import com.elastisys.scale.cloudpool.vsphere.driver.config.VsphereProvisioningTemplate;
 import com.elastisys.scale.cloudpool.vsphere.tag.Tag;
@@ -49,7 +48,7 @@ public class IntegrationTestClient {
         }
         List<VirtualMachine> machines = vsphereClient.getVirtualMachines(tags);
         vsphereClient.terminateVirtualMachines(machines.stream().map(VirtualMachine::getName).collect(Collectors.toList()));
-        while(!vsphereClient.getVirtualMachines(tags).isEmpty()){
+        while (!vsphereClient.getVirtualMachines(tags).isEmpty()) {
             sleep(100);
         }
     }
@@ -95,10 +94,10 @@ public class IntegrationTestClient {
         assertEquals(vsphereClient.getVirtualMachines(tags).size(), (startingSize + 1));
         vsphereClient.terminateVirtualMachines(names);
         int numberOfMsWaited = 0;
-        while(vsphereClient.getVirtualMachines(tags).size() != startingSize) {
+        while (vsphereClient.getVirtualMachines(tags).size() != startingSize) {
             sleep(100);
             numberOfMsWaited += 100;
-            if(numberOfMsWaited > 1000*terminationTimeout) {
+            if (numberOfMsWaited > 1000 * terminationTimeout) {
                 fail("Termination took too long");
             }
         }
