@@ -142,7 +142,7 @@ public class StandardVsphereClient implements VsphereClient {
         throw new UnsupportedOperationException("This operation is not implemented by " + getClass().getSimpleName());
     }
 
-    CloneTask createCloneTask (Tagger tagger, Task task, List<Tag> tags){
+    CloneTask createCloneTask(Tagger tagger, Task task, List<Tag> tags) {
         return new CloneTask(tagger, task, tags);
     }
 
@@ -163,11 +163,15 @@ public class StandardVsphereClient implements VsphereClient {
      * Wrapper for InventoryNavigator.searchManagedEntity(). An unchecked NotFoundException will be thrown if the
      * specific entity which was requested did not exist.
      *
-     * @param folder Location in which to search.
-     * @param type   Type of entity to search for (e.g. {@link VirtualMachine}.
-     * @param name   Name (id) of the specific entity.
+     * @param folder
+     *            Location in which to search.
+     * @param type
+     *            Type of entity to search for (e.g. {@link VirtualMachine}.
+     * @param name
+     *            Name (id) of the specific entity.
      * @return The ManagedEntity if it was found successfully.
-     * @throws RemoteException This exception is thrown if an error occurred in communication with Vcenter.
+     * @throws RemoteException
+     *             This exception is thrown if an error occurred in communication with Vcenter.
      */
     ManagedEntity searchManagedEntity(Folder folder, String type, String name) throws RemoteException {
         ManagedEntity me = createInventoryNavigator(folder).searchManagedEntity(type, name);
@@ -180,10 +184,13 @@ public class StandardVsphereClient implements VsphereClient {
     /**
      * Auxiliary function which will check if a ManagedEntity is associated which each {@link Tag} in a list.
      *
-     * @param me   ManagedEntity to inspect.
-     * @param tags List of tags to check.
+     * @param me
+     *            ManagedEntity to inspect.
+     * @param tags
+     *            List of tags to check.
      * @return True if the ManagedEntity held each Tag, otherwise false.
-     * @throws RemoteException This exception is thrown if an error occurred in communication with Vcenter.
+     * @throws RemoteException
+     *             This exception is thrown if an error occurred in communication with Vcenter.
      */
     private boolean hasAllTags(ManagedEntity me, List<Tag> tags) throws RemoteException {
         for (Tag tag : tags) {

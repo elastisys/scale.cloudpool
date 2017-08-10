@@ -26,8 +26,10 @@ public class DestroyTask implements Callable {
      * This method contains the synchronous work necessary to power off and remove a VirtualMachine.
      *
      * @return A String signifying the final status of the task.
-     * @throws RemoteException      This exception is thrown if an error occurred in communication with Vcenter.
-     * @throws InterruptedException This exception will be thrown if the waiting thread was interrupted.
+     * @throws RemoteException
+     *             This exception is thrown if an error occurred in communication with Vcenter.
+     * @throws InterruptedException
+     *             This exception will be thrown if the waiting thread was interrupted.
      */
     @Override
     public String call() throws RemoteException, InterruptedException {
