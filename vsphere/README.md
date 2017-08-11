@@ -55,6 +55,28 @@ The configuration keys have the following meaning:
 
 
 
+## Vsphere 
+In order to use the `vspherepool` it is important to be familiar with its terminology and abstractions.
+In particular `template`, `folder` and `resourcePool` is used to perform the provisioning. 
+
+In order to clone a virtual machine an existing image is necessary. 
+An image which purpose is to act as the source for cloning operations is referred to as a `template`.
+[See the vmware documentation for more details about templates](https://pubs.vmware.com/vsphere-51/index.jsp?topic=%2Fcom.vmware.vsphere.vm_admin.doc%2FGUID-F40130B0-0194-4A41-91FA-1A967721924B.html).
+
+Vcenter manages its logical inventory using `folder` objects.
+The `folder` used for provisioning is the name of the folder virtual machines cloned from the `template` will be stored in.
+This `folder` needs to exist in Vcenters directory structure.
+[See the vmware documentation for more details about folders](https://pubs.vmware.com/vsphere-51/index.jsp?topic=%2Fcom.vmware.vsphere.vcenterhost.doc%2FGUID-031BDB12-D3B2-4E2D-80E6-604F304B4D0C.html).
+
+In order to manage computing resources Vcenter employs one or more `resourcePools`.
+This represents some distribution of resources among the hosts and can be used to structure or prioritize virtual machine resources.
+The provisioning template refers to the `resourcePool` cloned virtual machines will be associated with.
+[See the vmware documentation for more details about resourcePools](https://pubs.vmware.com/vsphere-4-esx-vcenter/index.jsp?topic=/com.vmware.vsphere.resourcemanagement.doc_41/managing_resource_pools/c_why_use_resource_pools.html).
+
+When fetching the machine pool from the REST API Vsphere has a unique representation of some properties.
+The `region` of the machine refers to the `resourcePool` the machine belongs to.
+The `machineSize` is of the format "cpu-{number of virtual cpus}-ram-{memory in MB}" or "unknown" if the virtual hardware is inaccessible (when the machine is starting for example). 
+
 ## Limitations
 The following API methods are unsupported
 
