@@ -115,9 +115,9 @@ public class TestVspherePoolDriverOperations {
     }
 
     /**
-     * There is a race condition when listing machines so that a pending
-     * machine may also be listed as running. We need to make sure that
-     * these machines are not listed twice.
+     * There is a race condition when listing machines so that a pending machine
+     * may also be listed as running. We need to make sure that these machines
+     * are not listed twice.
      */
     @Test
     public void machineBothPendingAndRunning() throws RemoteException {
@@ -218,12 +218,8 @@ public class TestVspherePoolDriverOperations {
         String machineSize = String.format("cpu-%d-mem-%d", numCpu, ram);
         VirtualMachinePowerState poweredOn = VirtualMachinePowerState.poweredOn;
 
-        return new MockedVm().withName(name)
-                .withLaunchTime(launchTime)
-                .withPowerState(poweredOn)
-                .withResourcePool(region)
-                .withMachineSize(machineSize)
-                .build();
+        return new MockedVm().withName(name).withLaunchTime(launchTime).withPowerState(poweredOn)
+                .withResourcePool(region).withMachineSize(machineSize).build();
     }
 
     private List<VirtualMachine> getMockedVMs(String... names) throws RemoteException {

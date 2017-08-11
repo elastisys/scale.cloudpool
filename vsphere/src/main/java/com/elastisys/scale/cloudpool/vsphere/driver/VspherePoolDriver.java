@@ -34,9 +34,11 @@ public class VspherePoolDriver implements CloudPoolDriver {
     private DriverConfig driverConfig;
 
     /**
-     * Create a new {@link VspherePoolDriver} that needs to be configured before use.
+     * Create a new {@link VspherePoolDriver} that needs to be configured before
+     * use.
      *
-     * @param vsphereClient The client that communicates with the Vsphere API.
+     * @param vsphereClient
+     *            The client that communicates with the Vsphere API.
      */
     public VspherePoolDriver(VsphereClient vsphereClient) {
         this.vsphereClient = vsphereClient;
@@ -55,7 +57,7 @@ public class VspherePoolDriver implements CloudPoolDriver {
         try {
             vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
         } catch (RemoteException e) {
-            throw new CloudPoolDriverException("Failed to configure VspherePoolDriver: "+e.getMessage());
+            throw new CloudPoolDriverException("Failed to configure VspherePoolDriver: " + e.getMessage());
         }
 
         driverConfig = configuration;
@@ -150,21 +152,19 @@ public class VspherePoolDriver implements CloudPoolDriver {
     /**
      * Create a list of machines to use as placeholders for pending machines.
      *
-     * @param names A list of names to set for the created machines.
-     * @return  A list of pending machines.
+     * @param names
+     *            A list of names to set for the created machines.
+     * @return A list of pending machines.
      */
     private List<Machine> placeholderMachines(List<String> names) {
         List<Machine> placeholderMachines = Lists.newArrayListWithCapacity(names.size());
-        VsphereProvisioningTemplate provisioningTemplate = driverConfig.parseProvisioningTemplate(VsphereProvisioningTemplate.class);
+        VsphereProvisioningTemplate provisioningTemplate = driverConfig
+                .parseProvisioningTemplate(VsphereProvisioningTemplate.class);
 
         for (String name : names) {
-            placeholderMachines
-                    .add(Machine.builder()
-                            .id(name)
-                            .cloudProvider(CloudProviders.VSPHERE)
-                            .machineSize("unknown")
-                            .region(provisioningTemplate.getResourcePool())
-                            .machineState(MachineState.PENDING).launchTime(UtcTime.now()).build());
+            placeholderMachines.add(Machine.builder().id(name).cloudProvider(CloudProviders.VSPHERE)
+                    .machineSize("unknown").region(provisioningTemplate.getResourcePool())
+                    .machineState(MachineState.PENDING).launchTime(UtcTime.now()).build());
         }
         return placeholderMachines;
     }
@@ -172,8 +172,10 @@ public class VspherePoolDriver implements CloudPoolDriver {
     /**
      * Remove pending machines that are already running.
      *
-     * @param machines     running machines
-     * @param pendingNames names of pending machines
+     * @param machines
+     *            running machines
+     * @param pendingNames
+     *            names of pending machines
      */
     private void removeDoubles(List<Machine> machines, List<String> pendingNames) {
         List<String> runningNames = machines.stream().map(Machine::getId).collect(Collectors.toList());
@@ -181,12 +183,14 @@ public class VspherePoolDriver implements CloudPoolDriver {
     }
 
     /**
-     * Retrieves a particular machine from the pool or throws an
-     * exception if it could not be found.
+     * Retrieves a particular machine from the pool or throws an exception if it
+     * could not be found.
      *
-     * @param machineId The id of the machine of interest.
+     * @param machineId
+     *            The id of the machine of interest.
      * @return The machine with the given ID
-     * @throws NotFoundException if the machine cannot be found.
+     * @throws NotFoundException
+     *             if the machine cannot be found.
      */
     private Machine getMachineOrFail(String machineId) {
         for (Machine machine : listMachines()) {

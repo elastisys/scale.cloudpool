@@ -18,9 +18,13 @@ public class VsphereApiSettings {
 
     /**
      * Create VsphereApiSettings.
-     * @param url   The url to the Vcenter Server.
-     * @param username  The username for logging in to Vcenter.
-     * @param password  The password for logging in to Vcenter.
+     * 
+     * @param url
+     *            The url to the Vcenter Server.
+     * @param username
+     *            The username for logging in to Vcenter.
+     * @param password
+     *            The password for logging in to Vcenter.
      * @throws MalformedURLException
      */
     public VsphereApiSettings(String url, String username, String password) throws MalformedURLException {
@@ -30,7 +34,9 @@ public class VsphereApiSettings {
     }
 
     /**
-     * Do basic validation of the VsphereApiSettings and throw an exception if validation fails.
+     * Do basic validation of the VsphereApiSettings and throw an exception if
+     * validation fails.
+     * 
      * @throws IllegalArgumentException
      */
     public void validate() throws IllegalArgumentException {
@@ -41,7 +47,8 @@ public class VsphereApiSettings {
 
     /**
      * The URL to the Vcenter Server.
-     * @return
+     * 
+     * @return the URL
      */
     public URL getUrl() {
         return this.url;
@@ -49,7 +56,8 @@ public class VsphereApiSettings {
 
     /**
      * The username for logging in to Vcenter.
-     * @return
+     * 
+     * @return the username
      */
     public String getUsername() {
         return username;
@@ -57,7 +65,8 @@ public class VsphereApiSettings {
 
     /**
      * The password for logging in to Vcenter.
-     * @return
+     * 
+     * @return the password
      */
     public String getPassword() {
         return password;

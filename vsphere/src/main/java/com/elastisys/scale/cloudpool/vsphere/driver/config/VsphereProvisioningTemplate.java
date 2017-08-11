@@ -13,9 +13,13 @@ public class VsphereProvisioningTemplate {
 
     /**
      * Create a new VsphereProvisioningTemplate.
-     * @param template  The name of the vSphere template to use.
-     * @param resourcePool  ResourcePool to put new VMs in.
-     * @param folder    Folder to put new VMs in.
+     * 
+     * @param template
+     *            The name of the vSphere template to use.
+     * @param resourcePool
+     *            ResourcePool to put new VMs in.
+     * @param folder
+     *            Folder to put new VMs in.
      */
     public VsphereProvisioningTemplate(String template, String resourcePool, String folder) {
         this.template = template;
@@ -47,7 +51,7 @@ public class VsphereProvisioningTemplate {
     }
 
     /**
-     * @return  Folder to put new VMs in.
+     * @return Folder to put new VMs in.
      */
     public String getFolder() {
         return folder;

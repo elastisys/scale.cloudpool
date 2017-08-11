@@ -66,11 +66,11 @@ public class MockedVm {
         CustomFieldDef cfd = new CustomFieldDef();
         cfd.setName(tag.getKey());
         cfd.setKey(key);
-        CustomFieldDef[] cfdArr = {cfd};
+        CustomFieldDef[] cfdArr = { cfd };
         CustomFieldStringValue cfsv = new CustomFieldStringValue();
         cfsv.setKey(key);
         cfsv.setValue(tag.getValue());
-        CustomFieldStringValue[] cfsvArr = {cfsv};
+        CustomFieldStringValue[] cfsvArr = { cfsv };
         when(vm.getAvailableField()).thenReturn(cfdArr);
         when(vm.getCustomValue()).thenReturn(cfsvArr);
         return this;

@@ -34,7 +34,8 @@ public class IntegrationTestClient {
 
     @BeforeClass
     public static void setUpBeforeClass() {
-        DriverConfig driverConfig = JsonUtils.toObject(JsonUtils.parseJsonResource("myconfig.json"), DriverConfig.class);
+        DriverConfig driverConfig = JsonUtils.toObject(JsonUtils.parseJsonResource("myconfig.json"),
+                DriverConfig.class);
         vsphereApiSettings = driverConfig.parseCloudApiSettings(VsphereApiSettings.class);
         vsphereProvisioningTemplate = driverConfig.parseProvisioningTemplate(VsphereProvisioningTemplate.class);
     }
@@ -47,7 +48,8 @@ public class IntegrationTestClient {
             sleep(100);
         }
         List<VirtualMachine> machines = vsphereClient.getVirtualMachines(tags);
-        vsphereClient.terminateVirtualMachines(machines.stream().map(VirtualMachine::getName).collect(Collectors.toList()));
+        vsphereClient
+                .terminateVirtualMachines(machines.stream().map(VirtualMachine::getName).collect(Collectors.toList()));
         while (!vsphereClient.getVirtualMachines(tags).isEmpty()) {
             sleep(100);
         }
@@ -69,7 +71,8 @@ public class IntegrationTestClient {
 
     @Test
     public void shouldGetVirtualMachineWithoutTagRequirements() throws RemoteException {
-        // this test assumes that there is at least one virtual machine or template ManagedEntity on the server
+        // this test assumes that there is at least one virtual machine or
+        // template ManagedEntity on the server
         List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines(Lists.newArrayList());
         assertFalse(virtualMachines.isEmpty());
     }

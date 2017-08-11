@@ -36,12 +36,8 @@ public class TestVirtualMachineToMachine {
     @Test
     public void convertSimpleVm() throws RemoteException {
         String name = "vm1";
-        VirtualMachine vm = new MockedVm().withName(name)
-                .withLaunchTime(launchTime)
-                .withPowerState(poweredOn)
-                .withResourcePool(region)
-                .withMachineSize(machineSize)
-                .build();
+        VirtualMachine vm = new MockedVm().withName(name).withLaunchTime(launchTime).withPowerState(poweredOn)
+                .withResourcePool(region).withMachineSize(machineSize).build();
 
         Machine result = new VirtualMachineToMachine().apply(vm);
         assertThat(result.getId(), is(vm.getName()));
@@ -61,13 +57,8 @@ public class TestVirtualMachineToMachine {
         String name = "vm1";
         String privateIp = "192.168.104.230";
 
-        VirtualMachine vm = new MockedVm().withName(name)
-                .withLaunchTime(launchTime)
-                .withPowerState(poweredOn)
-                .withResourcePool(region)
-                .withMachineSize(machineSize)
-                .withPrivateIp(privateIp)
-                .build();
+        VirtualMachine vm = new MockedVm().withName(name).withLaunchTime(launchTime).withPowerState(poweredOn)
+                .withResourcePool(region).withMachineSize(machineSize).withPrivateIp(privateIp).build();
         Machine result = new VirtualMachineToMachine().apply(vm);
         assertThat(result.getId(), is(vm.getName()));
         assertThat(result.getLaunchTime(), is(launchTime));
@@ -85,12 +76,8 @@ public class TestVirtualMachineToMachine {
     @Test
     public void convertWithGuestInfoButNullIp() throws RemoteException {
         String name = "vm1";
-        VirtualMachine vm = new MockedVm().withName(name)
-                .withLaunchTime(launchTime)
-                .withPowerState(poweredOn)
-                .withResourcePool(region)
-                .withMachineSize(machineSize)
-                .build();
+        VirtualMachine vm = new MockedVm().withName(name).withLaunchTime(launchTime).withPowerState(poweredOn)
+                .withResourcePool(region).withMachineSize(machineSize).build();
 
         // Mock guest info in order to detect a specific bug where
         // the ip address "null" is returned
@@ -105,11 +92,8 @@ public class TestVirtualMachineToMachine {
     @Test
     public void withoutLaunchTime() throws RemoteException {
         String name = "vm1";
-        VirtualMachine vm = new MockedVm().withName(name)
-                .withPowerState(poweredOn)
-                .withResourcePool(region)
-                .withMachineSize(machineSize)
-                .build();
+        VirtualMachine vm = new MockedVm().withName(name).withPowerState(poweredOn).withResourcePool(region)
+                .withMachineSize(machineSize).build();
 
         Machine result = new VirtualMachineToMachine().apply(vm);
         assertThat(result.getLaunchTime(), is(nullValue()));
@@ -122,17 +106,11 @@ public class TestVirtualMachineToMachine {
         VirtualMachinePowerState poweredOff = VirtualMachinePowerState.poweredOff;
         VirtualMachinePowerState suspended = VirtualMachinePowerState.suspended;
 
-        VirtualMachine vmOff = new MockedVm().withName(name1)
-                .withPowerState(poweredOff)
-                .withResourcePool(region)
-                .withMachineSize(machineSize)
-                .build();
+        VirtualMachine vmOff = new MockedVm().withName(name1).withPowerState(poweredOff).withResourcePool(region)
+                .withMachineSize(machineSize).build();
 
-        VirtualMachine vmSuspended = new MockedVm().withName(name2)
-                .withPowerState(suspended)
-                .withResourcePool(region)
-                .withMachineSize(machineSize)
-                .build();
+        VirtualMachine vmSuspended = new MockedVm().withName(name2).withPowerState(suspended).withResourcePool(region)
+                .withMachineSize(machineSize).build();
 
         Machine result = new VirtualMachineToMachine().apply(vmOff);
         assertThat(result.getMachineState(), is(MachineState.TERMINATED));
@@ -143,11 +121,8 @@ public class TestVirtualMachineToMachine {
     @Test
     public void unableToGetRegion() throws RemoteException {
         String name = "vm1";
-        VirtualMachine vm = new MockedVm().withName(name)
-                .withPowerState(poweredOn)
-                .withResourcePool(region)
-                .withMachineSize(machineSize)
-                .build();
+        VirtualMachine vm = new MockedVm().withName(name).withPowerState(poweredOn).withResourcePool(region)
+                .withMachineSize(machineSize).build();
 
         when(vm.getResourcePool()).thenThrow(RemoteException.class);
         Machine result = new VirtualMachineToMachine().apply(vm);
@@ -157,11 +132,8 @@ public class TestVirtualMachineToMachine {
     @Test
     public void requestedMachine() throws RemoteException {
         String name = "vm1";
-        VirtualMachine vm = new MockedVm().withName(name)
-                .withPowerState(poweredOn)
-                .withResourcePool(region)
-                .withMachineSize(machineSize)
-                .build();
+        VirtualMachine vm = new MockedVm().withName(name).withPowerState(poweredOn).withResourcePool(region)
+                .withMachineSize(machineSize).build();
 
         when(vm.getGuest()).thenReturn(null);
         when(vm.getRuntime()).thenReturn(null);

@@ -39,8 +39,8 @@ public class StandardVsphereClient implements VsphereClient {
     private ConcurrentHashSet<FutureNamePair> pendingMachines = new ConcurrentHashSet<>();
 
     @Override
-    public void configure(VsphereApiSettings vsphereApiSettings, VsphereProvisioningTemplate vsphereProvisioningTemplate)
-            throws RemoteException {
+    public void configure(VsphereApiSettings vsphereApiSettings,
+            VsphereProvisioningTemplate vsphereProvisioningTemplate) throws RemoteException {
         this.vsphereApiSettings = vsphereApiSettings;
         this.vsphereProvisioningTemplate = vsphereProvisioningTemplate;
         try {
@@ -63,7 +63,8 @@ public class StandardVsphereClient implements VsphereClient {
             return vms;
         }
 
-        // array is useful here as some ManagedEntities may be in a volatile state (under termination by vcenter)
+        // array is useful here as some ManagedEntities may be in a volatile
+        // state (under termination by vcenter)
         for (int i = 0; i < meArr.length; i++) {
             try {
                 ManagedEntity me = meArr[i];
@@ -150,8 +151,8 @@ public class StandardVsphereClient implements VsphereClient {
         return new DestroyTask(virtualMachine);
     }
 
-    ServiceInstance createServiceInstance(URL url, String username, String password, boolean ignoreSsl) throws
-            MalformedURLException, RemoteException {
+    ServiceInstance createServiceInstance(URL url, String username, String password, boolean ignoreSsl)
+            throws MalformedURLException, RemoteException {
         return new ServiceInstance(url, username, password, ignoreSsl);
     }
 
@@ -160,8 +161,9 @@ public class StandardVsphereClient implements VsphereClient {
     }
 
     /**
-     * Wrapper for InventoryNavigator.searchManagedEntity(). An unchecked NotFoundException will be thrown if the
-     * specific entity which was requested did not exist.
+     * Wrapper for InventoryNavigator.searchManagedEntity(). An unchecked
+     * NotFoundException will be thrown if the specific entity which was
+     * requested did not exist.
      *
      * @param folder
      *            Location in which to search.
@@ -171,7 +173,8 @@ public class StandardVsphereClient implements VsphereClient {
      *            Name (id) of the specific entity.
      * @return The ManagedEntity if it was found successfully.
      * @throws RemoteException
-     *             This exception is thrown if an error occurred in communication with Vcenter.
+     *             This exception is thrown if an error occurred in
+     *             communication with Vcenter.
      */
     ManagedEntity searchManagedEntity(Folder folder, String type, String name) throws RemoteException {
         ManagedEntity me = createInventoryNavigator(folder).searchManagedEntity(type, name);
@@ -182,7 +185,8 @@ public class StandardVsphereClient implements VsphereClient {
     }
 
     /**
-     * Auxiliary function which will check if a ManagedEntity is associated which each {@link Tag} in a list.
+     * Auxiliary function which will check if a ManagedEntity is associated
+     * which each {@link Tag} in a list.
      *
      * @param me
      *            ManagedEntity to inspect.
@@ -190,7 +194,8 @@ public class StandardVsphereClient implements VsphereClient {
      *            List of tags to check.
      * @return True if the ManagedEntity held each Tag, otherwise false.
      * @throws RemoteException
-     *             This exception is thrown if an error occurred in communication with Vcenter.
+     *             This exception is thrown if an error occurred in
+     *             communication with Vcenter.
      */
     private boolean hasAllTags(ManagedEntity me, List<Tag> tags) throws RemoteException {
         for (Tag tag : tags) {

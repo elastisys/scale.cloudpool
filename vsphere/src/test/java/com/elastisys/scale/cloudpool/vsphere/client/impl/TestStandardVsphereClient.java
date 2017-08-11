@@ -58,20 +58,20 @@ public class TestStandardVsphereClient {
         mockInventoryNavigator = mock(InventoryNavigator.class);
         root = mock(Folder.class);
 
-        doReturn(mockServiceInstance).when(vsphereClient)
-                .createServiceInstance(any(URL.class), anyString(), anyString(), anyBoolean());
+        doReturn(mockServiceInstance).when(vsphereClient).createServiceInstance(any(URL.class), anyString(),
+                anyString(), anyBoolean());
         when(mockServiceInstance.getCustomFieldsManager()).thenReturn(mockCustomFieldsManager);
         when(mockCustomFieldsManager.getField()).thenReturn(new CustomFieldDef[0]);
         doReturn(mockInventoryNavigator).when(vsphereClient).createInventoryNavigator(any(Folder.class));
         doReturn(root).when(mockServiceInstance).getRootFolder();
-        // Make it possible to search for template, folder and resource pool defined in the settings.
+        // Make it possible to search for template, folder and resource pool
+        // defined in the settings.
         doReturn(template).when(vsphereClient).searchManagedEntity(root, VirtualMachine.class.getSimpleName(),
                 vsphereProvisioningTemplate.getTemplate());
-        doReturn(mock(Folder.class)).when(vsphereClient)
-                .searchManagedEntity(root, Folder.class.getSimpleName(), vsphereProvisioningTemplate.getFolder());
-        doReturn(mock(ResourcePool.class)).when(vsphereClient)
-                .searchManagedEntity(root, ResourcePool.class.getSimpleName(),
-                        vsphereProvisioningTemplate.getResourcePool());
+        doReturn(mock(Folder.class)).when(vsphereClient).searchManagedEntity(root, Folder.class.getSimpleName(),
+                vsphereProvisioningTemplate.getFolder());
+        doReturn(mock(ResourcePool.class)).when(vsphereClient).searchManagedEntity(root,
+                ResourcePool.class.getSimpleName(), vsphereProvisioningTemplate.getResourcePool());
     }
 
     @Test
@@ -81,10 +81,9 @@ public class TestStandardVsphereClient {
 
     // URL is already checked when we get to the client, but we want coverage :P
     @Test(expected = RemoteException.class)
-    public void configureWithMalformedUrl()
-            throws RemoteException, MalformedURLException {
-        doThrow(MalformedURLException.class).when(vsphereClient)
-                .createServiceInstance(any(), anyString(), anyString(), anyBoolean());
+    public void configureWithMalformedUrl() throws RemoteException, MalformedURLException {
+        doThrow(MalformedURLException.class).when(vsphereClient).createServiceInstance(any(), anyString(), anyString(),
+                anyBoolean());
         vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
     }
 
@@ -99,7 +98,7 @@ public class TestStandardVsphereClient {
 
     @Test
     public void listMachinesShouldReturnListOfVms() throws Exception {
-        ManagedEntity[] vms = {new MockedVm().build()};
+        ManagedEntity[] vms = { new MockedVm().build() };
         doReturn(vms).when(mockInventoryNavigator).searchManagedEntities(anyString());
         vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
         List<VirtualMachine> virtualMachines = vsphereClient.getVirtualMachines(Lists.newArrayList());
@@ -109,7 +108,7 @@ public class TestStandardVsphereClient {
     @Test
     public void getMachinesWithWrongTag() throws RemoteException {
         Tag existingTag = new VsphereTag(ScalingTag.CLOUD_POOL, "TestCloudPool");
-        ManagedEntity[] vms = {new MockedVm().withTag(existingTag).build()};
+        ManagedEntity[] vms = { new MockedVm().withTag(existingTag).build() };
         Tag noSuchTag = new VsphereTag(ScalingTag.CLOUD_POOL, "NoSuchThing");
         doReturn(vms).when(mockInventoryNavigator).searchManagedEntities(anyString());
         vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
@@ -148,9 +147,8 @@ public class TestStandardVsphereClient {
         vsphereClient.configure(vsphereApiSettings, vsphereProvisioningTemplate);
 
         Folder root = mockServiceInstance.getRootFolder();
-        doThrow(NotFoundException.class).when(vsphereClient)
-                .searchManagedEntity(root, VirtualMachine.class.getSimpleName(),
-                        vsphereProvisioningTemplate.getTemplate());
+        doThrow(NotFoundException.class).when(vsphereClient).searchManagedEntity(root,
+                VirtualMachine.class.getSimpleName(), vsphereProvisioningTemplate.getTemplate());
 
         vsphereClient.launchVirtualMachines(1, Lists.newArrayList());
     }
@@ -161,8 +159,8 @@ public class TestStandardVsphereClient {
         String name = "Vm_destroy";
         VirtualMachine virtualMachine = new MockedVm().withName(name).build();
 
-        doReturn(virtualMachine).when(vsphereClient)
-                .searchManagedEntity(root, VirtualMachine.class.getSimpleName(), name);
+        doReturn(virtualMachine).when(vsphereClient).searchManagedEntity(root, VirtualMachine.class.getSimpleName(),
+                name);
         when(virtualMachine.powerOffVM_Task()).thenReturn(mock(Task.class));
         when(virtualMachine.destroy_Task()).thenReturn(mock(Task.class));
 
@@ -171,8 +169,8 @@ public class TestStandardVsphereClient {
     }
 
     /**
-     * This test does not test much, just that the client does not crash in case of
-     * interruptions when trying to terminate a machine.
+     * This test does not test much, just that the client does not crash in case
+     * of interruptions when trying to terminate a machine.
      */
     @Test
     public void interruptedPowerOff() throws RemoteException, InterruptedException {
@@ -199,7 +197,7 @@ public class TestStandardVsphereClient {
     public void tryListTerminatingMachine() throws RemoteException {
         Tag existingTag = new VsphereTag(ScalingTag.CLOUD_POOL, "TestCloudPool");
         VirtualMachine terminatingVm = new MockedVm().withTag(existingTag).build();
-        ManagedEntity[] vms = {terminatingVm};
+        ManagedEntity[] vms = { terminatingVm };
 
         when(terminatingVm.getCustomValue()).thenThrow(new RuntimeException("ManagedObjectNotFound"));
         doReturn(vms).when(mockInventoryNavigator).searchManagedEntities(anyString());
@@ -215,7 +213,7 @@ public class TestStandardVsphereClient {
     public void failToListMachines() throws RemoteException {
         Tag existingTag = new VsphereTag(ScalingTag.CLOUD_POOL, "TestCloudPool");
         VirtualMachine terminatingVm = new MockedVm().withTag(existingTag).build();
-        ManagedEntity[] vms = {terminatingVm};
+        ManagedEntity[] vms = { terminatingVm };
 
         when(terminatingVm.getCustomValue()).thenThrow(new RuntimeException("NotTheExceptionYourWereLookingFor"));
         doReturn(vms).when(mockInventoryNavigator).searchManagedEntities(anyString());
@@ -229,7 +227,7 @@ public class TestStandardVsphereClient {
         Tag existingTag = new VsphereTag(ScalingTag.CLOUD_POOL, "TestCloudPool");
         VirtualMachine terminatingVm = new MockedVm().withTag(existingTag).withName("terminatingVm").build();
         VirtualMachine normalVm = new MockedVm().withTag(existingTag).withName("normalVm").build();
-        ManagedEntity[] vms = {terminatingVm, normalVm};
+        ManagedEntity[] vms = { terminatingVm, normalVm };
 
         when(terminatingVm.getCustomValue()).thenThrow(new RuntimeException("ManagedObjectNotFound"));
         doReturn(vms).when(mockInventoryNavigator).searchManagedEntities(anyString());

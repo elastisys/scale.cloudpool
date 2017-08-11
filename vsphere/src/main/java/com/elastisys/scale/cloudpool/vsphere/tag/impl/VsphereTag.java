@@ -12,8 +12,11 @@ public class VsphereTag implements Tag {
 
     /**
      * Create a VsphereTag with the given key and value.
-     * @param key the tag key
-     * @param value the tag value
+     * 
+     * @param key
+     *            the tag key
+     * @param value
+     *            the tag value
      */
     public VsphereTag(ScalingTag key, String value) {
         this.key = key;

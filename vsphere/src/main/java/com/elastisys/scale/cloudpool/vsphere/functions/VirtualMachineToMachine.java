@@ -36,7 +36,8 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
         String machineSize;
         Collection<String> privateIps;
 
-        // A terminating VM can disappear at any time, so we need to check for this RuntimeException
+        // A terminating VM can disappear at any time, so we need to check for
+        // this RuntimeException
         try {
             id = vm.getName();
             launchTime = extractLaunchTime(vm);
@@ -61,24 +62,18 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
         MembershipStatus membershipStatus = MembershipStatus.defaultStatus();
         ServiceState serviceState = ServiceState.UNKNOWN;
 
-        Machine machine = Machine.builder()
-                .id(id)
-                .launchTime(launchTime)
-                .machineState(state)
-                .membershipStatus(membershipStatus)
-                .serviceState(serviceState)
-                .cloudProvider(cloudProvider)
-                .region(region)
-                .machineSize(machineSize)
-                .privateIps(privateIps)
-                .build();
+        Machine machine = Machine.builder().id(id).launchTime(launchTime).machineState(state)
+                .membershipStatus(membershipStatus).serviceState(serviceState).cloudProvider(cloudProvider)
+                .region(region).machineSize(machineSize).privateIps(privateIps).build();
 
         return machine;
     }
 
     /**
      * Get the private Ip for a VM as a collection.
-     * @param vm the VM to get IP for
+     * 
+     * @param vm
+     *            the VM to get IP for
      * @return the private IP as a collection of strings
      */
     private Collection<String> extractPrivateIps(VirtualMachine vm) {
@@ -96,7 +91,9 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
 
     /**
      * Try to get the launch time for a VM
-     * @param vm the vm to get launch time for
+     * 
+     * @param vm
+     *            the vm to get launch time for
      * @return the launch time or null if no launch time exists
      */
     private DateTime extractLaunchTime(VirtualMachine vm) {
@@ -105,7 +102,7 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
             return null;
         }
         Calendar calendar = runtime.getBootTime();
-        if(calendar != null){
+        if (calendar != null) {
             return DateTime.parse(calendar.toInstant().toString());
         }
         return null;
@@ -113,7 +110,9 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
 
     /**
      * Get the machine state for a VM.
-     * @param vm the VM to get machine state for
+     * 
+     * @param vm
+     *            the VM to get machine state for
      * @return the machine state
      */
     private MachineState extractMachineState(VirtualMachine vm) {
@@ -137,8 +136,11 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
 
     /**
      * Try to get the region (resource pool name) for a VM.
-     * @param vm the VM for which to get the region
-     * @return the name of the resource pool or "unknown" if unable to get the pool name
+     * 
+     * @param vm
+     *            the VM for which to get the region
+     * @return the name of the resource pool or "unknown" if unable to get the
+     *         pool name
      */
     private String extractRegion(VirtualMachine vm) {
         String region;
@@ -152,12 +154,15 @@ public class VirtualMachineToMachine implements Function<VirtualMachine, Machine
     }
 
     /**
-     * Translate the virtual hardware of a VM into a machine size.
-     * The machine size is given as a string of the following format: "cpu-{num-cpu}-mem-{ram}",
-     * where {num-cpu} is the number of virtual CPUs and {ram} is the amount of RAM in MB.
+     * Translate the virtual hardware of a VM into a machine size. The machine
+     * size is given as a string of the following format:
+     * "cpu-{num-cpu}-mem-{ram}", where {num-cpu} is the number of virtual CPUs
+     * and {ram} is the amount of RAM in MB.
      *
-     * @param vm the VM to get machine size for
-     * @return a string describing the machine size or "unknown" if unable to get the information
+     * @param vm
+     *            the VM to get machine size for
+     * @return a string describing the machine size or "unknown" if unable to
+     *         get the information
      */
     private String extractMachineSize(VirtualMachine vm) {
         String machineSize;

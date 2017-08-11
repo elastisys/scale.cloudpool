@@ -215,7 +215,7 @@ Here are some examples illustrating basic interactions with the cloud pool
 1. Retrieve the currently set configuration document:
 
         curl -X GET http://localhost:8080/config
-    
+
 
 2. Set configuration:
 
@@ -230,10 +230,9 @@ Here are some examples illustrating basic interactions with the cloud pool
 
 4. Retrieve the current machine pool:
 
-        curl -X POST http://localhost:8080/pool
+        curl -X GET http://localhost:8080/pool
 
 5. Request the machine pool to be resized to size ``4``:
 
         curl --header "Content-Type:application/json" \
-                    -X POST -d '{"desiredCapacity": 4}' http://localhost:8080/config
-
+                    -X POST -d '{"desiredSize": 4}' http://localhost:8080/pool/size

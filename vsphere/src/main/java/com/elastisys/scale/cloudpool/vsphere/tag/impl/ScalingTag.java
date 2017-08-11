@@ -9,10 +9,8 @@ import java.util.stream.Collectors;
  */
 public enum ScalingTag {
 
-    CLOUD_POOL("elastisys:cloudPool"),
-    SERVICE_STATE("elastisys:serviceState"),
-    MEMBERSHIP_STATUS("elastisys:membershipStatus"),
-    INSTANCE_NAME("Name");
+    CLOUD_POOL("elastisys:cloudPool"), SERVICE_STATE("elastisys:serviceState"), MEMBERSHIP_STATUS(
+            "elastisys:membershipStatus"), INSTANCE_NAME("Name");
 
     public final String value;
 
@@ -21,7 +19,8 @@ public enum ScalingTag {
     }
 
     /**
-     * This method may be used to check which tag definitions should be defined on Vcenter.
+     * This method may be used to check which tag definitions should be defined
+     * on Vcenter.
      *
      * @return A collection of tag definitions.
      */
