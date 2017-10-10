@@ -12,6 +12,7 @@ import javax.ws.rs.core.Response;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.restapi.CloudPoolRestApi;
+import com.elastisys.scale.cloudpool.api.restapi.types.AttachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.DetachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetDesiredSizeRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetMembershipStatusRequest;
@@ -132,26 +133,22 @@ public interface MultiCloudPoolRestApi {
     Response getPoolSize(@PathParam("cloudPoolName") String cloudPoolName);
 
     @POST
-    @Path("/cloudpools/{cloudPoolName}/{machine}/terminate")
-    Response terminateMachine(@PathParam("cloudPoolName") String cloudPoolName, @PathParam("machine") String machineId,
-            TerminateMachineRequest request);
+    @Path("/cloudpools/{cloudPoolName}/terminate")
+    Response terminateMachine(@PathParam("cloudPoolName") String cloudPoolName, TerminateMachineRequest request);
 
     @POST
-    @Path("/cloudpools/{cloudPoolName}/{machine}/detach")
-    Response detachMachine(@PathParam("cloudPoolName") String cloudPoolName, @PathParam("machine") String machineId,
-            DetachMachineRequest request);
+    @Path("/cloudpools/{cloudPoolName}/detach")
+    Response detachMachine(@PathParam("cloudPoolName") String cloudPoolName, DetachMachineRequest request);
 
     @POST
-    @Path("/cloudpools/{cloudPoolName}/{machine}/attach")
-    Response attachMachine(@PathParam("cloudPoolName") String cloudPoolName, @PathParam("machine") String machineId);
+    @Path("/cloudpools/{cloudPoolName}/attach")
+    Response attachMachine(@PathParam("cloudPoolName") String cloudPoolName, AttachMachineRequest request);
 
     @POST
-    @Path("/cloudpools/{cloudPoolName}/{machine}/serviceState")
-    Response setServiceState(@PathParam("cloudPoolName") String cloudPoolName, @PathParam("machine") String machineId,
-            SetServiceStateRequest request);
+    @Path("/cloudpools/{cloudPoolName}/serviceState")
+    Response setServiceState(@PathParam("cloudPoolName") String cloudPoolName, SetServiceStateRequest request);
 
     @POST
-    @Path("/cloudpools/{cloudPoolName}/{machine}/membershipStatus")
-    Response setMembershipStatus(@PathParam("cloudPoolName") String cloudPoolName,
-            @PathParam("machine") String machineId, SetMembershipStatusRequest request);
+    @Path("/cloudpools/{cloudPoolName}/membershipStatus")
+    Response setMembershipStatus(@PathParam("cloudPoolName") String cloudPoolName, SetMembershipStatusRequest request);
 }

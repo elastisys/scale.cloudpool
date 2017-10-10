@@ -31,6 +31,7 @@ import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotConfiguredException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.NotStartedException;
+import com.elastisys.scale.cloudpool.api.restapi.types.AttachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.DetachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetDesiredSizeRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetMembershipStatusRequest;
@@ -763,7 +764,7 @@ public class TestRestApi {
     }
 
     /**
-     * {@code POST /cloudpools/<pool>/<machine>/terminate} should call
+     * {@code POST /cloudpools/<pool>/terminate} should call
      * {@link CloudPool#terminateMachine(String, boolean)} on the right
      * {@link CloudPoolInstance}.
      */
@@ -775,8 +776,8 @@ public class TestRestApi {
         when(multiCloudPool.get("pool-2")).thenReturn(instance2);
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/terminate")).request()
-                .post(Entity.json(new TerminateMachineRequest(true)));
+        Response response = client.target(url("/cloudpools/pool-1/terminate")).request()
+                .post(Entity.json(new TerminateMachineRequest("vm1", true)));
 
         assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 
@@ -794,8 +795,8 @@ public class TestRestApi {
         when(multiCloudPool.get("pool-1")).thenThrow(new NotFoundException("no such pool"));
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/terminate")).request()
-                .post(Entity.json(new TerminateMachineRequest(true)));
+        Response response = client.target(url("/cloudpools/pool-1/terminate")).request()
+                .post(Entity.json(new TerminateMachineRequest("vm1", true)));
 
         assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("no such pool")));
@@ -811,8 +812,8 @@ public class TestRestApi {
         doThrow(new NotStartedException("not started")).when(instance1).terminateMachine("vm1", true);
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/terminate")).request()
-                .post(Entity.json(new TerminateMachineRequest(true)));
+        Response response = client.target(url("/cloudpools/pool-1/terminate")).request()
+                .post(Entity.json(new TerminateMachineRequest("vm1", true)));
 
         assertThat(response.getStatus(), is(Status.BAD_REQUEST.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("not started")));
@@ -829,8 +830,8 @@ public class TestRestApi {
         doThrow(new CloudPoolException("cloud api error")).when(instance1).terminateMachine("vm1", true);
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/terminate")).request()
-                .post(Entity.json(new TerminateMachineRequest(true)));
+        Response response = client.target(url("/cloudpools/pool-1/terminate")).request()
+                .post(Entity.json(new TerminateMachineRequest("vm1", true)));
 
         assertThat(response.getStatus(), is(Status.BAD_GATEWAY.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("cloud api error")));
@@ -846,15 +847,15 @@ public class TestRestApi {
         when(multiCloudPool.get("pool-1")).thenReturn(instance1);
         doThrow(new RuntimeException("weirdness!")).when(instance1).terminateMachine("vm1", true);
 
-        Response response = RestClients.httpNoAuth().target(url("/cloudpools/pool-1/vm1/terminate")).request()
-                .post(Entity.json(new TerminateMachineRequest(true)));
+        Response response = RestClients.httpNoAuth().target(url("/cloudpools/pool-1/terminate")).request()
+                .post(Entity.json(new TerminateMachineRequest("vm1", true)));
 
         assertThat(response.getStatus(), is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("weirdness!")));
     }
 
     /**
-     * {@code POST /cloudpools/<pool>/<machine>/detach} should call
+     * {@code POST /cloudpools/<pool>/detach} should call
      * {@link CloudPool#detachMachine(String, boolean)} on the right
      * {@link CloudPoolInstance}.
      */
@@ -866,8 +867,8 @@ public class TestRestApi {
         when(multiCloudPool.get("pool-2")).thenReturn(instance2);
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/detach")).request()
-                .post(Entity.json(new DetachMachineRequest(true)));
+        Response response = client.target(url("/cloudpools/pool-1/detach")).request()
+                .post(Entity.json(new DetachMachineRequest("vm1", true)));
 
         assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 
@@ -885,8 +886,8 @@ public class TestRestApi {
         when(multiCloudPool.get("pool-1")).thenThrow(new NotFoundException("no such pool"));
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/detach")).request()
-                .post(Entity.json(new DetachMachineRequest(true)));
+        Response response = client.target(url("/cloudpools/pool-1/detach")).request()
+                .post(Entity.json(new DetachMachineRequest("vm1", true)));
 
         assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("no such pool")));
@@ -902,8 +903,8 @@ public class TestRestApi {
         doThrow(new NotStartedException("not started")).when(instance1).detachMachine("vm1", true);
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/detach")).request()
-                .post(Entity.json(new DetachMachineRequest(true)));
+        Response response = client.target(url("/cloudpools/pool-1/detach")).request()
+                .post(Entity.json(new DetachMachineRequest("vm1", true)));
 
         assertThat(response.getStatus(), is(Status.BAD_REQUEST.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("not started")));
@@ -920,8 +921,8 @@ public class TestRestApi {
         doThrow(new CloudPoolException("cloud api error")).when(instance1).detachMachine("vm1", true);
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/detach")).request()
-                .post(Entity.json(new DetachMachineRequest(true)));
+        Response response = client.target(url("/cloudpools/pool-1/detach")).request()
+                .post(Entity.json(new DetachMachineRequest("vm1", true)));
 
         assertThat(response.getStatus(), is(Status.BAD_GATEWAY.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("cloud api error")));
@@ -937,15 +938,15 @@ public class TestRestApi {
         when(multiCloudPool.get("pool-1")).thenReturn(instance1);
         doThrow(new RuntimeException("weirdness!")).when(instance1).detachMachine("vm1", true);
 
-        Response response = RestClients.httpNoAuth().target(url("/cloudpools/pool-1/vm1/detach")).request()
-                .post(Entity.json(new DetachMachineRequest(true)));
+        Response response = RestClients.httpNoAuth().target(url("/cloudpools/pool-1/detach")).request()
+                .post(Entity.json(new DetachMachineRequest("vm1", true)));
 
         assertThat(response.getStatus(), is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("weirdness!")));
     }
 
     /**
-     * {@code POST /cloudpools/<pool>/<machine>/attach} should call
+     * {@code POST /cloudpools/<pool>/attach} should call
      * {@link CloudPool#attachMachine(String)} on the right
      * {@link CloudPoolInstance}.
      */
@@ -957,7 +958,8 @@ public class TestRestApi {
         when(multiCloudPool.get("pool-2")).thenReturn(instance2);
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/attach")).request().post(null);
+        Entity<AttachMachineRequest> request = Entity.json(new AttachMachineRequest("vm1"));
+        Response response = client.target(url("/cloudpools/pool-1/attach")).request().post(request);
 
         assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 
@@ -975,7 +977,8 @@ public class TestRestApi {
         when(multiCloudPool.get("pool-1")).thenThrow(new NotFoundException("no such pool"));
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/attach")).request().post(null);
+        Entity<AttachMachineRequest> request = Entity.json(new AttachMachineRequest("vm1"));
+        Response response = client.target(url("/cloudpools/pool-1/attach")).request().post(request);
 
         assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("no such pool")));
@@ -991,7 +994,8 @@ public class TestRestApi {
         doThrow(new NotStartedException("not started")).when(instance1).attachMachine("vm1");
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/attach")).request().post(null);
+        Entity<AttachMachineRequest> request = Entity.json(new AttachMachineRequest("vm1"));
+        Response response = client.target(url("/cloudpools/pool-1/attach")).request().post(request);
 
         assertThat(response.getStatus(), is(Status.BAD_REQUEST.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("not started")));
@@ -1008,7 +1012,8 @@ public class TestRestApi {
         doThrow(new CloudPoolException("cloud api error")).when(instance1).attachMachine("vm1");
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/attach")).request().post(null);
+        Entity<AttachMachineRequest> request = Entity.json(new AttachMachineRequest("vm1"));
+        Response response = client.target(url("/cloudpools/pool-1/attach")).request().post(request);
 
         assertThat(response.getStatus(), is(Status.BAD_GATEWAY.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("cloud api error")));
@@ -1024,16 +1029,17 @@ public class TestRestApi {
         when(multiCloudPool.get("pool-1")).thenReturn(instance1);
         doThrow(new RuntimeException("weirdness!")).when(instance1).attachMachine("vm1");
 
-        Response response = RestClients.httpNoAuth().target(url("/cloudpools/pool-1/vm1/attach")).request().post(null);
+        Entity<AttachMachineRequest> request = Entity.json(new AttachMachineRequest("vm1"));
+        Response response = RestClients.httpNoAuth().target(url("/cloudpools/pool-1/attach")).request().post(request);
 
         assertThat(response.getStatus(), is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("weirdness!")));
     }
 
     /**
-     * {@code POST /cloudpools/<pool>/<machine>/serviceState} should call
-     * {@link CloudPool#setServiceState(String, com.elastisys.scale.cloudpool.api.types.ServiceState)}
-     * on the right {@link CloudPoolInstance}.
+     * {@code POST /cloudpools/<pool>/serviceState} should call
+     * {@link CloudPool#setServiceState(String, ServiceState)} on the right
+     * {@link CloudPoolInstance}.
      */
     @Test
     public void setServiceState() {
@@ -1043,8 +1049,8 @@ public class TestRestApi {
         when(multiCloudPool.get("pool-2")).thenReturn(instance2);
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/serviceState")).request()
-                .post(Entity.json(new SetServiceStateRequest(ServiceState.IN_SERVICE)));
+        Response response = client.target(url("/cloudpools/pool-1/serviceState")).request()
+                .post(Entity.json(new SetServiceStateRequest("vm1", ServiceState.IN_SERVICE)));
 
         assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 
@@ -1062,8 +1068,8 @@ public class TestRestApi {
         when(multiCloudPool.get("pool-1")).thenThrow(new NotFoundException("no such pool"));
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/serviceState")).request()
-                .post(Entity.json(new SetServiceStateRequest(ServiceState.IN_SERVICE)));
+        Response response = client.target(url("/cloudpools/pool-1/serviceState")).request()
+                .post(Entity.json(new SetServiceStateRequest("vm1", ServiceState.IN_SERVICE)));
 
         assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("no such pool")));
@@ -1079,8 +1085,8 @@ public class TestRestApi {
         doThrow(new NotStartedException("not started")).when(instance1).setServiceState("vm1", ServiceState.BOOTING);
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/serviceState")).request()
-                .post(Entity.json(new SetServiceStateRequest(ServiceState.BOOTING)));
+        Response response = client.target(url("/cloudpools/pool-1/serviceState")).request()
+                .post(Entity.json(new SetServiceStateRequest("vm1", ServiceState.BOOTING)));
 
         assertThat(response.getStatus(), is(Status.BAD_REQUEST.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("not started")));
@@ -1097,8 +1103,8 @@ public class TestRestApi {
         doThrow(new CloudPoolException("cloud api error")).when(instance1).setServiceState("vm1", ServiceState.BOOTING);
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/serviceState")).request()
-                .post(Entity.json(new SetServiceStateRequest(ServiceState.BOOTING)));
+        Response response = client.target(url("/cloudpools/pool-1/serviceState")).request()
+                .post(Entity.json(new SetServiceStateRequest("vm1", ServiceState.BOOTING)));
 
         assertThat(response.getStatus(), is(Status.BAD_GATEWAY.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("cloud api error")));
@@ -1114,15 +1120,15 @@ public class TestRestApi {
         when(multiCloudPool.get("pool-1")).thenReturn(instance1);
         doThrow(new RuntimeException("weirdness!")).when(instance1).setServiceState("vm1", ServiceState.BOOTING);
 
-        Response response = RestClients.httpNoAuth().target(url("/cloudpools/pool-1/vm1/serviceState")).request()
-                .post(Entity.json(new SetServiceStateRequest(ServiceState.BOOTING)));
+        Response response = RestClients.httpNoAuth().target(url("/cloudpools/pool-1/serviceState")).request()
+                .post(Entity.json(new SetServiceStateRequest("vm1", ServiceState.BOOTING)));
 
         assertThat(response.getStatus(), is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("weirdness!")));
     }
 
     /**
-     * {@code POST /cloudpools/<pool>/<machine>/membershipStatus} should call
+     * {@code POST /cloudpools/<pool>/membershipStatus} should call
      * {@link CloudPool#setMembershipStatus(String, com.elastisys.scale.cloudpool.api.types.MembershipStatus)}
      * on the right {@link CloudPoolInstance}.
      */
@@ -1134,8 +1140,8 @@ public class TestRestApi {
         when(multiCloudPool.get("pool-2")).thenReturn(instance2);
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/membershipStatus")).request()
-                .post(Entity.json(new SetMembershipStatusRequest(MembershipStatus.awaitingService())));
+        Response response = client.target(url("/cloudpools/pool-1/membershipStatus")).request()
+                .post(Entity.json(new SetMembershipStatusRequest("vm1", MembershipStatus.awaitingService())));
 
         assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 
@@ -1153,8 +1159,8 @@ public class TestRestApi {
         when(multiCloudPool.get("pool-1")).thenThrow(new NotFoundException("no such pool"));
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/membershipStatus")).request()
-                .post(Entity.json(new SetMembershipStatusRequest(MembershipStatus.blessed())));
+        Response response = client.target(url("/cloudpools/pool-1/membershipStatus")).request()
+                .post(Entity.json(new SetMembershipStatusRequest("vm1", MembershipStatus.blessed())));
 
         assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("no such pool")));
@@ -1171,8 +1177,8 @@ public class TestRestApi {
                 MembershipStatus.blessed());
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/membershipStatus")).request()
-                .post(Entity.json(new SetMembershipStatusRequest(MembershipStatus.blessed())));
+        Response response = client.target(url("/cloudpools/pool-1/membershipStatus")).request()
+                .post(Entity.json(new SetMembershipStatusRequest("vm1", MembershipStatus.blessed())));
 
         assertThat(response.getStatus(), is(Status.BAD_REQUEST.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("not started")));
@@ -1190,8 +1196,8 @@ public class TestRestApi {
                 MembershipStatus.blessed());
 
         Client client = RestClients.httpNoAuth();
-        Response response = client.target(url("/cloudpools/pool-1/vm1/membershipStatus")).request()
-                .post(Entity.json(new SetMembershipStatusRequest(MembershipStatus.blessed())));
+        Response response = client.target(url("/cloudpools/pool-1/membershipStatus")).request()
+                .post(Entity.json(new SetMembershipStatusRequest("vm1", MembershipStatus.blessed())));
 
         assertThat(response.getStatus(), is(Status.BAD_GATEWAY.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("cloud api error")));
@@ -1208,8 +1214,8 @@ public class TestRestApi {
         doThrow(new RuntimeException("weirdness!")).when(instance1).setMembershipStatus("vm1",
                 MembershipStatus.blessed());
 
-        Response response = RestClients.httpNoAuth().target(url("/cloudpools/pool-1/vm1/membershipStatus")).request()
-                .post(Entity.json(new SetMembershipStatusRequest(MembershipStatus.blessed())));
+        Response response = RestClients.httpNoAuth().target(url("/cloudpools/pool-1/membershipStatus")).request()
+                .post(Entity.json(new SetMembershipStatusRequest("vm1", MembershipStatus.blessed())));
 
         assertThat(response.getStatus(), is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
         assertThat(response.readEntity(ErrorType.class), is(new ErrorType("weirdness!")));

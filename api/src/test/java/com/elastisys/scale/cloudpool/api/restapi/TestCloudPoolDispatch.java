@@ -30,6 +30,7 @@ import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotConfiguredException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.restapi.impl.CloudPoolRestApiImpl;
+import com.elastisys.scale.cloudpool.api.restapi.types.AttachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.DetachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetDesiredSizeRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetMembershipStatusRequest;
@@ -454,7 +455,7 @@ public class TestCloudPoolDispatch {
         doNothing().when(this.cloudPoolMock).terminateMachine("i-1", false);
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.terminateMachine("i-1", new TerminateMachineRequest(false));
+        Response response = this.restEndpoint.terminateMachine(new TerminateMachineRequest("i-1", false));
         assertEquals(response.getStatus(), Status.OK.getStatusCode());
     }
 
@@ -469,7 +470,7 @@ public class TestCloudPoolDispatch {
         doThrow(NotFoundException.class).when(this.cloudPoolMock).terminateMachine("i-X", false);
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.terminateMachine("i-X", new TerminateMachineRequest(false));
+        Response response = this.restEndpoint.terminateMachine(new TerminateMachineRequest("i-X", false));
         assertEquals(response.getStatus(), Status.NOT_FOUND.getStatusCode());
         assertThat(response.getEntity(), instanceOf(ErrorType.class));
     }
@@ -485,7 +486,7 @@ public class TestCloudPoolDispatch {
         doThrow(new CloudPoolException("cloud api outage")).when(this.cloudPoolMock).terminateMachine("i-1", false);
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.terminateMachine("i-1", new TerminateMachineRequest(false));
+        Response response = this.restEndpoint.terminateMachine(new TerminateMachineRequest("i-1", false));
         assertEquals(response.getStatus(), Status.BAD_GATEWAY.getStatusCode());
         assertThat(response.getEntity(), instanceOf(ErrorType.class));
     }
@@ -501,7 +502,7 @@ public class TestCloudPoolDispatch {
         doThrow(new RuntimeException("buggy code")).when(this.cloudPoolMock).terminateMachine("i-1", false);
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.terminateMachine("i-1", new TerminateMachineRequest(false));
+        Response response = this.restEndpoint.terminateMachine(new TerminateMachineRequest("i-1", false));
         assertEquals(response.getStatus(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
         assertThat(response.getEntity(), instanceOf(ErrorType.class));
     }
@@ -516,7 +517,7 @@ public class TestCloudPoolDispatch {
         doNothing().when(this.cloudPoolMock).detachMachine("i-1", false);
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.detachMachine("i-1", new DetachMachineRequest(false));
+        Response response = this.restEndpoint.detachMachine(new DetachMachineRequest("i-1", false));
         assertEquals(response.getStatus(), Status.OK.getStatusCode());
     }
 
@@ -531,7 +532,7 @@ public class TestCloudPoolDispatch {
         doThrow(NotFoundException.class).when(this.cloudPoolMock).detachMachine("i-X", false);
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.detachMachine("i-X", new DetachMachineRequest(false));
+        Response response = this.restEndpoint.detachMachine(new DetachMachineRequest("i-X", false));
         assertEquals(response.getStatus(), Status.NOT_FOUND.getStatusCode());
         assertThat(response.getEntity(), instanceOf(ErrorType.class));
     }
@@ -547,7 +548,7 @@ public class TestCloudPoolDispatch {
         doThrow(new CloudPoolException("cloud api outage")).when(this.cloudPoolMock).detachMachine("i-1", false);
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.detachMachine("i-1", new DetachMachineRequest(false));
+        Response response = this.restEndpoint.detachMachine(new DetachMachineRequest("i-1", false));
         assertEquals(response.getStatus(), Status.BAD_GATEWAY.getStatusCode());
         assertThat(response.getEntity(), instanceOf(ErrorType.class));
     }
@@ -563,7 +564,7 @@ public class TestCloudPoolDispatch {
         doThrow(new RuntimeException("buggy code")).when(this.cloudPoolMock).detachMachine("i-1", false);
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.detachMachine("i-1", new DetachMachineRequest(false));
+        Response response = this.restEndpoint.detachMachine(new DetachMachineRequest("i-1", false));
         assertEquals(response.getStatus(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
         assertThat(response.getEntity(), instanceOf(ErrorType.class));
     }
@@ -578,7 +579,7 @@ public class TestCloudPoolDispatch {
         doNothing().when(this.cloudPoolMock).attachMachine("i-1");
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.attachMachine("i-1");
+        Response response = this.restEndpoint.attachMachine(new AttachMachineRequest("i-1"));
         assertEquals(response.getStatus(), Status.OK.getStatusCode());
     }
 
@@ -593,7 +594,7 @@ public class TestCloudPoolDispatch {
         doThrow(NotFoundException.class).when(this.cloudPoolMock).attachMachine("i-X");
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.attachMachine("i-X");
+        Response response = this.restEndpoint.attachMachine(new AttachMachineRequest("i-X"));
         assertEquals(response.getStatus(), Status.NOT_FOUND.getStatusCode());
         assertThat(response.getEntity(), instanceOf(ErrorType.class));
     }
@@ -609,7 +610,7 @@ public class TestCloudPoolDispatch {
         doThrow(new CloudPoolException("cloud api outage")).when(this.cloudPoolMock).attachMachine("i-1");
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.attachMachine("i-1");
+        Response response = this.restEndpoint.attachMachine(new AttachMachineRequest("i-1"));
         assertEquals(response.getStatus(), Status.BAD_GATEWAY.getStatusCode());
         assertThat(response.getEntity(), instanceOf(ErrorType.class));
     }
@@ -625,7 +626,7 @@ public class TestCloudPoolDispatch {
         doThrow(new RuntimeException("buggy code")).when(this.cloudPoolMock).attachMachine("i-1");
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.attachMachine("i-1");
+        Response response = this.restEndpoint.attachMachine(new AttachMachineRequest("i-1"));
         assertEquals(response.getStatus(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
         assertThat(response.getEntity(), instanceOf(ErrorType.class));
     }
@@ -640,8 +641,8 @@ public class TestCloudPoolDispatch {
         doNothing().when(this.cloudPoolMock).setServiceState("i-1", ServiceState.IN_SERVICE);
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.setServiceState("i-1",
-                new SetServiceStateRequest(ServiceState.IN_SERVICE));
+        Response response = this.restEndpoint
+                .setServiceState(new SetServiceStateRequest("i-1", ServiceState.IN_SERVICE));
         assertEquals(response.getStatus(), Status.OK.getStatusCode());
     }
 
@@ -656,8 +657,8 @@ public class TestCloudPoolDispatch {
         doThrow(NotFoundException.class).when(this.cloudPoolMock).setServiceState("i-X", ServiceState.IN_SERVICE);
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.setServiceState("i-X",
-                new SetServiceStateRequest(ServiceState.IN_SERVICE));
+        Response response = this.restEndpoint
+                .setServiceState(new SetServiceStateRequest("i-X", ServiceState.IN_SERVICE));
         assertEquals(response.getStatus(), Status.NOT_FOUND.getStatusCode());
         assertThat(response.getEntity(), instanceOf(ErrorType.class));
     }
@@ -674,8 +675,8 @@ public class TestCloudPoolDispatch {
                 ServiceState.IN_SERVICE);
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.setServiceState("i-1",
-                new SetServiceStateRequest(ServiceState.IN_SERVICE));
+        Response response = this.restEndpoint
+                .setServiceState(new SetServiceStateRequest("i-1", ServiceState.IN_SERVICE));
         assertEquals(response.getStatus(), Status.BAD_GATEWAY.getStatusCode());
         assertThat(response.getEntity(), instanceOf(ErrorType.class));
     }
@@ -692,8 +693,8 @@ public class TestCloudPoolDispatch {
                 ServiceState.IN_SERVICE);
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.setServiceState("i-1",
-                new SetServiceStateRequest(ServiceState.IN_SERVICE));
+        Response response = this.restEndpoint
+                .setServiceState(new SetServiceStateRequest("i-1", ServiceState.IN_SERVICE));
         assertEquals(response.getStatus(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
         assertThat(response.getEntity(), instanceOf(ErrorType.class));
     }
@@ -708,8 +709,8 @@ public class TestCloudPoolDispatch {
         doNothing().when(this.cloudPoolMock).setMembershipStatus("i-1", MembershipStatus.awaitingService());
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.setMembershipStatus("i-1",
-                new SetMembershipStatusRequest(MembershipStatus.awaitingService()));
+        Response response = this.restEndpoint
+                .setMembershipStatus(new SetMembershipStatusRequest("i-1", MembershipStatus.awaitingService()));
         assertEquals(response.getStatus(), Status.OK.getStatusCode());
     }
 
@@ -725,8 +726,8 @@ public class TestCloudPoolDispatch {
                 MembershipStatus.awaitingService());
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.setMembershipStatus("i-X",
-                new SetMembershipStatusRequest(MembershipStatus.awaitingService()));
+        Response response = this.restEndpoint
+                .setMembershipStatus(new SetMembershipStatusRequest("i-X", MembershipStatus.awaitingService()));
         assertEquals(response.getStatus(), Status.NOT_FOUND.getStatusCode());
         assertThat(response.getEntity(), instanceOf(ErrorType.class));
     }
@@ -743,8 +744,8 @@ public class TestCloudPoolDispatch {
                 MembershipStatus.awaitingService());
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.setMembershipStatus("i-X",
-                new SetMembershipStatusRequest(MembershipStatus.awaitingService()));
+        Response response = this.restEndpoint
+                .setMembershipStatus(new SetMembershipStatusRequest("i-X", MembershipStatus.awaitingService()));
         assertEquals(response.getStatus(), Status.BAD_GATEWAY.getStatusCode());
         assertThat(response.getEntity(), instanceOf(ErrorType.class));
     }
@@ -761,8 +762,8 @@ public class TestCloudPoolDispatch {
                 MembershipStatus.awaitingService());
 
         // call rest endpoint and verify proper dispatching to mock
-        Response response = this.restEndpoint.setMembershipStatus("i-X",
-                new SetMembershipStatusRequest(MembershipStatus.awaitingService()));
+        Response response = this.restEndpoint
+                .setMembershipStatus(new SetMembershipStatusRequest("i-X", MembershipStatus.awaitingService()));
         assertEquals(response.getStatus(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
         assertThat(response.getEntity(), instanceOf(ErrorType.class));
     }

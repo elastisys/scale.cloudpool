@@ -20,6 +20,7 @@ import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotConfiguredException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.NotStartedException;
+import com.elastisys.scale.cloudpool.api.restapi.types.AttachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.DetachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetDesiredSizeRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetMembershipStatusRequest;
@@ -149,45 +150,44 @@ public class MultiCloudPoolRestApiImpl implements MultiCloudPoolRestApi {
     }
 
     @Override
-    public Response terminateMachine(final String cloudPoolName, final String machineId,
-            final TerminateMachineRequest request) {
+    public Response terminateMachine(final String cloudPoolName, final TerminateMachineRequest request) {
         return handleRequest(() -> {
-            getMultiCloudPool().get(cloudPoolName).terminateMachine(machineId, request.isDecrementDesiredSize());
+            getMultiCloudPool().get(cloudPoolName).terminateMachine(request.getMachineId(),
+                    request.isDecrementDesiredSize());
             return Response.ok().build();
         });
     }
 
     @Override
-    public Response detachMachine(final String cloudPoolName, final String machineId,
-            final DetachMachineRequest request) {
+    public Response detachMachine(final String cloudPoolName, final DetachMachineRequest request) {
         return handleRequest(() -> {
-            getMultiCloudPool().get(cloudPoolName).detachMachine(machineId, request.isDecrementDesiredSize());
+            getMultiCloudPool().get(cloudPoolName).detachMachine(request.getMachineId(),
+                    request.isDecrementDesiredSize());
             return Response.ok().build();
         });
     }
 
     @Override
-    public Response attachMachine(final String cloudPoolName, final String machineId) {
+    public Response attachMachine(final String cloudPoolName, final AttachMachineRequest request) {
         return handleRequest(() -> {
-            getMultiCloudPool().get(cloudPoolName).attachMachine(machineId);
+            getMultiCloudPool().get(cloudPoolName).attachMachine(request.getMachineId());
             return Response.ok().build();
         });
     }
 
     @Override
-    public Response setServiceState(final String cloudPoolName, final String machineId,
-            final SetServiceStateRequest request) {
+    public Response setServiceState(final String cloudPoolName, final SetServiceStateRequest request) {
         return handleRequest(() -> {
-            getMultiCloudPool().get(cloudPoolName).setServiceState(machineId, request.getServiceState());
+            getMultiCloudPool().get(cloudPoolName).setServiceState(request.getMachineId(), request.getServiceState());
             return Response.ok().build();
         });
     }
 
     @Override
-    public Response setMembershipStatus(final String cloudPoolName, final String machineId,
-            final SetMembershipStatusRequest request) {
+    public Response setMembershipStatus(final String cloudPoolName, final SetMembershipStatusRequest request) {
         return handleRequest(() -> {
-            getMultiCloudPool().get(cloudPoolName).setMembershipStatus(machineId, request.getMembershipStatus());
+            getMultiCloudPool().get(cloudPoolName).setMembershipStatus(request.getMachineId(),
+                    request.getMembershipStatus());
             return Response.ok().build();
         });
     }

@@ -4,12 +4,12 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
+import com.elastisys.scale.cloudpool.api.restapi.types.AttachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.DetachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetDesiredSizeRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetMembershipStatusRequest;
@@ -172,8 +172,6 @@ public interface CloudPoolRestApi {
      * "http://cloudpoolrestapi.readthedocs.io/en/latest/api.html">official API
      * documentation</a>.
      *
-     * @param machineId
-     *            The identifier of the machine to terminate.
      * @param request
      *            A {@link TerminateMachineRequest}.
      * @return A response message as per the
@@ -181,8 +179,8 @@ public interface CloudPoolRestApi {
      *         REST API</a>.
      */
     @POST
-    @Path("/pool/{machine}/terminate")
-    Response terminateMachine(@PathParam("machine") String machineId, TerminateMachineRequest request);
+    @Path("/pool/terminate")
+    Response terminateMachine(TerminateMachineRequest request);
 
     /**
      * Removes a member from the pool without terminating it. The machine keeps
@@ -194,8 +192,6 @@ public interface CloudPoolRestApi {
      * "http://cloudpoolrestapi.readthedocs.io/en/latest/api.html">official API
      * documentation</a>.
      *
-     * @param machineId
-     *            The identifier of the machine to detach from the pool.
      * @param request
      *            A {@link DetachMachineRequest}.
      * @return A response message as per the
@@ -203,8 +199,8 @@ public interface CloudPoolRestApi {
      *         REST API</a>.
      */
     @POST
-    @Path("/pool/{machine}/detach")
-    Response detachMachine(@PathParam("machine") String machineId, DetachMachineRequest request);
+    @Path("/pool/detach")
+    Response detachMachine(DetachMachineRequest request);
 
     /**
      * Attaches an already running machine instance to the pool, growing the
@@ -215,18 +211,18 @@ public interface CloudPoolRestApi {
      * "http://cloudpoolrestapi.readthedocs.io/en/latest/api.html">official API
      * documentation</a>.
      *
-     * @param machineId
-     *            The identifier of the machine to attach to the pool.
+     * @param request
+     *            An {@link AttachMachineRequest}.
      * @return A response message as per the
      *         <a href="http://cloudpoolrestapi.readthedocs.org/">cloud pool
      *         REST API</a>.
      */
     @POST
-    @Path("/pool/{machine}/attach")
-    Response attachMachine(@PathParam("machine") String machineId);
+    @Path("/pool/attach")
+    Response attachMachine(AttachMachineRequest request);
 
     /**
-     * Sets the service state of a given machine pool member. Setting the
+     * Sets the service state for a given machine pool member. Setting the
      * service state does not have any functional implications on the pool
      * member, but should be seen as way to supply operational information about
      * the service running on the machine to third-party services (such as load
@@ -236,8 +232,6 @@ public interface CloudPoolRestApi {
      * "http://cloudpoolrestapi.readthedocs.io/en/latest/api.html">official API
      * documentation</a>.
      *
-     * @param machineId
-     *            The machine whose service state is to be set.
      * @param request
      *            A {@link SetServiceStateRequest}.
      * @return A response message as per the
@@ -245,11 +239,11 @@ public interface CloudPoolRestApi {
      *         REST API</a>.
      */
     @POST
-    @Path("/pool/{machine}/serviceState")
-    Response setServiceState(@PathParam("machine") String machineId, SetServiceStateRequest request);
+    @Path("/pool/serviceState")
+    Response setServiceState(SetServiceStateRequest request);
 
     /**
-     * Sets the membership status of a given pool member. The membership status
+     * Sets the membership status for a given pool member. The membership status
      * for a machine can be set to protect the machine from being terminated (by
      * setting its evictability status) and/or to mark a machine as being in
      * need of replacement by flagging it as an inactive pool member.
@@ -258,8 +252,6 @@ public interface CloudPoolRestApi {
      * "http://cloudpoolrestapi.readthedocs.io/en/latest/api.html">official API
      * documentation</a>.
      *
-     * @param machineId
-     *            The machine whose service state is to be set.
      * @param request
      *            A {@link SetMembershipStatusRequest}.
      * @return A response message as per the
@@ -267,6 +259,6 @@ public interface CloudPoolRestApi {
      *         REST API</a>.
      */
     @POST
-    @Path("/pool/{machine}/membershipStatus")
-    Response setMembershipStatus(@PathParam("machine") String machineId, SetMembershipStatusRequest request);
+    @Path("/pool/membershipStatus")
+    Response setMembershipStatus(SetMembershipStatusRequest request);
 }

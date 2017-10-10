@@ -19,6 +19,7 @@ import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotConfiguredException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.restapi.CloudPoolRestApi;
+import com.elastisys.scale.cloudpool.api.restapi.types.AttachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.DetachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetDesiredSizeRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetMembershipStatusRequest;
@@ -268,89 +269,87 @@ public class CloudPoolRestApiImpl implements CloudPoolRestApi {
     }
 
     @Override
-    public Response terminateMachine(String machineId, TerminateMachineRequest request) {
+    public Response terminateMachine(TerminateMachineRequest request) {
         requireStartedCloudPool();
 
         try {
-            this.cloudPool.terminateMachine(machineId, request.isDecrementDesiredSize());
+            this.cloudPool.terminateMachine(request.getMachineId(), request.isDecrementDesiredSize());
             return Response.ok().build();
         } catch (NotFoundException e) {
             String message = "unrecognized machine: " + e.getMessage();
             return Response.status(Status.NOT_FOUND).entity(new ErrorType(message, e)).build();
         } catch (CloudPoolException e) {
-            return cloudErrorResponse(String.format("failure to process POST /pool/%s/terminate", machineId), e);
+            return cloudErrorResponse(String.format("failure to process POST /pool/terminate"), e);
         } catch (Exception e) {
-            return internalErrorResponse(String.format("internal error on POST /pool/%s/terminate", machineId), e);
+            return internalErrorResponse(String.format("internal error on POST /pool/terminate"), e);
         }
     }
 
     @Override
-    public Response detachMachine(String machineId, DetachMachineRequest request) {
+    public Response detachMachine(DetachMachineRequest request) {
         requireStartedCloudPool();
 
         try {
-            this.cloudPool.detachMachine(machineId, request.isDecrementDesiredSize());
+            this.cloudPool.detachMachine(request.getMachineId(), request.isDecrementDesiredSize());
             return Response.ok().build();
         } catch (NotFoundException e) {
             String message = "unrecognized machine: " + e.getMessage();
             return Response.status(Status.NOT_FOUND).entity(new ErrorType(message, e)).build();
         } catch (CloudPoolException e) {
-            return cloudErrorResponse(String.format("failure to process POST /pool/%s/detach", machineId), e);
+            return cloudErrorResponse(String.format("failure to process POST /pool/detach"), e);
         } catch (Exception e) {
-            return internalErrorResponse(String.format("internal error on POST /pool/%s/detach", machineId), e);
+            return internalErrorResponse(String.format("internal error on POST /pool/detach"), e);
         }
     }
 
     @Override
-    public Response attachMachine(String machineId) {
+    public Response attachMachine(AttachMachineRequest request) {
         requireStartedCloudPool();
 
         try {
-            this.cloudPool.attachMachine(machineId);
+            this.cloudPool.attachMachine(request.getMachineId());
             return Response.ok().build();
         } catch (NotFoundException e) {
             String message = "unrecognized machine: " + e.getMessage();
             return Response.status(Status.NOT_FOUND).entity(new ErrorType(message, e)).build();
         } catch (CloudPoolException e) {
-            return cloudErrorResponse(String.format("failure to process POST /pool/%s/attach", machineId), e);
+            return cloudErrorResponse(String.format("failure to process POST /pool/attach"), e);
         } catch (Exception e) {
-            return internalErrorResponse(String.format("internal error on POST /pool/%s/attach", machineId), e);
+            return internalErrorResponse(String.format("internal error on POST /pool/attach"), e);
         }
     }
 
     @Override
-    public Response setServiceState(String machineId, SetServiceStateRequest request) {
+    public Response setServiceState(SetServiceStateRequest request) {
         requireStartedCloudPool();
 
         try {
-            this.cloudPool.setServiceState(machineId, request.getServiceState());
+            this.cloudPool.setServiceState(request.getMachineId(), request.getServiceState());
             return Response.ok().build();
         } catch (NotFoundException e) {
             String message = "unrecognized machine: " + e.getMessage();
             return Response.status(Status.NOT_FOUND).entity(new ErrorType(message, e)).build();
         } catch (CloudPoolException e) {
-            return cloudErrorResponse(String.format("failure to process POST /pool/%s/serviceState", machineId), e);
+            return cloudErrorResponse(String.format("failure to process POST /pool/serviceState"), e);
         } catch (Exception e) {
-            return internalErrorResponse(String.format("internal error on POST /pool/%s/serviceState", machineId), e);
+            return internalErrorResponse(String.format("internal error on POST /pool/serviceState"), e);
         }
     }
 
     @Override
-    public Response setMembershipStatus(String machineId, SetMembershipStatusRequest request) {
+    public Response setMembershipStatus(SetMembershipStatusRequest request) {
         requireStartedCloudPool();
 
         try {
-            this.cloudPool.setMembershipStatus(machineId, request.getMembershipStatus());
+            this.cloudPool.setMembershipStatus(request.getMachineId(), request.getMembershipStatus());
             return Response.ok().build();
         } catch (NotFoundException e) {
             String message = "unrecognized machine: " + e.getMessage();
             return Response.status(Status.NOT_FOUND).entity(new ErrorType(message, e)).build();
         } catch (CloudPoolException e) {
-            return cloudErrorResponse(String.format("failure to process POST /pool/%s/setMembershipStatus", machineId),
-                    e);
+            return cloudErrorResponse(String.format("failure to process POST /pool/membershipStatus"), e);
         } catch (Exception e) {
-            return internalErrorResponse(String.format("internal error on POST /pool/%s/membershipStatus", machineId),
-                    e);
+            return internalErrorResponse(String.format("internal error on POST /pool/membershipStatus"), e);
         }
     }
 

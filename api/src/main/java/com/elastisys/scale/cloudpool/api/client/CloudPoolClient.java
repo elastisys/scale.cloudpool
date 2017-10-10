@@ -16,6 +16,7 @@ import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotConfiguredException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.NotStartedException;
+import com.elastisys.scale.cloudpool.api.restapi.types.AttachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.DetachMachineRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetDesiredSizeRequest;
 import com.elastisys.scale.cloudpool.api.restapi.types.SetMembershipStatusRequest;
@@ -196,19 +197,18 @@ public class CloudPoolClient implements CloudPool {
     @Override
     public void terminateMachine(String machineId, boolean decrementDesiredSize)
             throws NotFoundException, CloudPoolException, NotStartedException {
-        String url = fullUrl("/pool") + "/" + machineId + "/terminate";
+        String url = fullUrl("/pool/terminate");
         try {
             HttpPost request = new HttpPost(url);
             request.setEntity(new StringEntity(
-                    JsonUtils.toPrettyString(JsonUtils.toJson(new TerminateMachineRequest(decrementDesiredSize))),
+                    JsonUtils.toPrettyString(
+                            JsonUtils.toJson(new TerminateMachineRequest(machineId, decrementDesiredSize))),
                     ContentType.APPLICATION_JSON));
             this.httpClient.execute(request);
         } catch (HttpResponseException e) {
             if (e.getStatusCode() == Status.NOT_FOUND.getStatusCode()) {
-                throw new NotFoundException(
-                        format("failed to terminate machine %s in cloud pool %s: " + "bad request: %s", machineId, url,
-                                e.getMessage()),
-                        e);
+                throw new NotFoundException(format("failed to terminate machine %s in cloud pool %s: bad request: %s",
+                        machineId, url, e.getMessage()), e);
             }
             throw new CloudPoolException(
                     format("failed to terminate machine %s in cloud pool %s: %s", machineId, url, e.getMessage()), e);
@@ -221,11 +221,11 @@ public class CloudPoolClient implements CloudPool {
     @Override
     public void setServiceState(String machineId, ServiceState serviceState)
             throws NotFoundException, CloudPoolException, NotStartedException {
-        String url = fullUrl("/pool") + "/" + machineId + "/serviceState";
+        String url = fullUrl("/pool/serviceState");
         try {
             HttpPost request = new HttpPost(url);
             request.setEntity(new StringEntity(
-                    JsonUtils.toPrettyString(JsonUtils.toJson(new SetServiceStateRequest(serviceState))),
+                    JsonUtils.toPrettyString(JsonUtils.toJson(new SetServiceStateRequest(machineId, serviceState))),
                     ContentType.APPLICATION_JSON));
             this.httpClient.execute(request);
         } catch (HttpResponseException e) {
@@ -247,11 +247,12 @@ public class CloudPoolClient implements CloudPool {
     @Override
     public void setMembershipStatus(String machineId, MembershipStatus membershipStatus)
             throws NotFoundException, CloudPoolException, NotStartedException {
-        String url = fullUrl("/pool") + "/" + machineId + "/membershipStatus";
+        String url = fullUrl("/pool/membershipStatus");
         try {
             HttpPost request = new HttpPost(url);
             request.setEntity(new StringEntity(
-                    JsonUtils.toPrettyString(JsonUtils.toJson(new SetMembershipStatusRequest(membershipStatus))),
+                    JsonUtils.toPrettyString(
+                            JsonUtils.toJson(new SetMembershipStatusRequest(machineId, membershipStatus))),
                     ContentType.APPLICATION_JSON));
             this.httpClient.execute(request);
         } catch (HttpResponseException e) {
@@ -275,9 +276,12 @@ public class CloudPoolClient implements CloudPool {
 
     @Override
     public void attachMachine(String machineId) throws NotFoundException, CloudPoolException, NotStartedException {
-        String url = fullUrl("/pool") + "/" + machineId + "/attach";
+        String url = fullUrl("/pool/attach");
         try {
             HttpPost request = new HttpPost(url);
+            request.setEntity(
+                    new StringEntity(JsonUtils.toPrettyString(JsonUtils.toJson(new AttachMachineRequest(machineId))),
+                            ContentType.APPLICATION_JSON));
             this.httpClient.execute(request);
         } catch (HttpResponseException e) {
             if (e.getStatusCode() == Status.NOT_FOUND.getStatusCode()) {
@@ -295,11 +299,12 @@ public class CloudPoolClient implements CloudPool {
     @Override
     public void detachMachine(String machineId, boolean decrementDesiredSize)
             throws NotFoundException, CloudPoolException, NotStartedException {
-        String url = fullUrl("/pool") + "/" + machineId + "/detach";
+        String url = fullUrl("/pool/detach");
         try {
             HttpPost request = new HttpPost(url);
             request.setEntity(new StringEntity(
-                    JsonUtils.toPrettyString(JsonUtils.toJson(new DetachMachineRequest(decrementDesiredSize))),
+                    JsonUtils.toPrettyString(
+                            JsonUtils.toJson(new DetachMachineRequest(machineId, decrementDesiredSize))),
                     ContentType.APPLICATION_JSON));
             this.httpClient.execute(request);
         } catch (HttpResponseException e) {
@@ -310,12 +315,10 @@ public class CloudPoolClient implements CloudPool {
                         e);
             }
             throw new CloudPoolException(
-                    format("failed to detach " + "machine %s from cloud pool %s: %s", machineId, url, e.getMessage()),
-                    e);
+                    format("failed to detach machine %s from cloud pool %s: %s", machineId, url, e.getMessage()), e);
         } catch (Exception e) {
             throw new CloudPoolException(
-                    format("failed to detach " + "machine %s from cloud pool %s: %s", machineId, url, e.getMessage()),
-                    e);
+                    format("failed to detach machine %s from cloud pool %s: %s", machineId, url, e.getMessage()), e);
         }
     }
 

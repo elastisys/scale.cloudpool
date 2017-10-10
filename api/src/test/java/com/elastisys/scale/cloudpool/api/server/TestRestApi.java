@@ -428,8 +428,8 @@ public class TestRestApi {
 
         // run test
         Client client = RestClients.httpsNoAuth();
-        Entity<String> request = Entity.json("{\"decrementDesiredSize\": true}");
-        Response response = client.target(url("/pool/i-1/terminate")).request().post(request);
+        Entity<String> request = Entity.json("{\"machineId\": \"i-1\", \"decrementDesiredSize\": true}");
+        Response response = client.target(url("/pool/terminate")).request().post(request);
         assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 
         // verify dispatch from REST server to cloud pool
@@ -444,8 +444,8 @@ public class TestRestApi {
 
         // run test
         Client client = RestClients.httpsNoAuth();
-        Entity<String> request = Entity.json("{\"decrementDesiredSize\": true}");
-        Response response = client.target(url("/pool/i-1/terminate")).request().post(request);
+        Entity<String> request = Entity.json("{\"machineId\": \"i-1\", \"decrementDesiredSize\": true}");
+        Response response = client.target(url("/pool/terminate")).request().post(request);
         assertThat(response.getStatus(), is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
         assertThat(response.readEntity(String.class),
                 containsString("attempt to invoke cloudpool before being started"));
@@ -455,8 +455,8 @@ public class TestRestApi {
     }
 
     /**
-     * Verifies a {@code 404} response on a {@code POST /pool/
-     * <machine>/terminate} request for an unrecognized member.
+     * Verifies a {@code 404} response on a {@code POST /pool/terminate} request
+     * for an unrecognized member.
      */
     @Test
     public void testTerminateMachineOnNotFoundError() {
@@ -465,8 +465,8 @@ public class TestRestApi {
 
         // run test
         Client client = RestClients.httpsNoAuth();
-        Entity<String> request = Entity.json("{\"decrementDesiredSize\": true}");
-        Response response = client.target(url("/pool/i-1/terminate")).request().post(request);
+        Entity<String> request = Entity.json("{\"machineId\": \"i-1\", \"decrementDesiredSize\": true}");
+        Response response = client.target(url("/pool/terminate")).request().post(request);
         assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
 
         // verify dispatch from REST server to cloud pool
@@ -475,7 +475,7 @@ public class TestRestApi {
 
     /**
      * Verifies a {@code 500} response on a cloud pool error when doing a
-     * {@code POST /pool/<machine>/terminate} request.
+     * {@code POST /pool/terminate} request.
      */
     @Test
     public void testTerminateMachineOnCloudPoolError() {
@@ -484,8 +484,8 @@ public class TestRestApi {
 
         // run test
         Client client = RestClients.httpsNoAuth();
-        Entity<String> request = Entity.json("{\"decrementDesiredSize\": true}");
-        Response response = client.target(url("/pool/i-1/terminate")).request().post(request);
+        Entity<String> request = Entity.json("{\"machineId\": \"i-1\", \"decrementDesiredSize\": true}");
+        Response response = client.target(url("/pool/terminate")).request().post(request);
         assertThat(response.getStatus(), is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
 
         // verify dispatch from REST server to cloud pool
@@ -493,8 +493,8 @@ public class TestRestApi {
     }
 
     /**
-     * Verifies a {@code 200} response on a successful {@code POST /pool/
-     * <machine>/detach} request.
+     * Verifies a {@code 200} response on a successful {@code POST /pool/detach}
+     * request.
      */
     @Test
     public void testDetachMachine() {
@@ -503,8 +503,8 @@ public class TestRestApi {
 
         // run test
         Client client = RestClients.httpsNoAuth();
-        Entity<String> request = Entity.json("{\"decrementDesiredSize\": true}");
-        Response response = client.target(url("/pool/i-1/detach")).request().post(request);
+        Entity<String> request = Entity.json("{\"machineId\": \"i-1\", \"decrementDesiredSize\": true}");
+        Response response = client.target(url("/pool/detach")).request().post(request);
         assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 
         // verify dispatch from REST server to cloud pool
@@ -519,8 +519,8 @@ public class TestRestApi {
 
         // run test
         Client client = RestClients.httpsNoAuth();
-        Entity<String> request = Entity.json("{\"decrementDesiredSize\": true}");
-        Response response = client.target(url("/pool/i-1/detach")).request().post(request);
+        Entity<String> request = Entity.json("{\"machineId\": \"i-1\", \"decrementDesiredSize\": true}");
+        Response response = client.target(url("/pool/detach")).request().post(request);
         assertThat(response.getStatus(), is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
         assertThat(response.readEntity(String.class),
                 containsString("attempt to invoke cloudpool before being started"));
@@ -530,8 +530,8 @@ public class TestRestApi {
     }
 
     /**
-     * Verifies a {@code 404} response on a {@code POST /pool/<machine>/detach}
-     * request for an unrecognized member.
+     * Verifies a {@code 404} response on a {@code POST /pool/detach} request
+     * for an unrecognized member.
      */
     @Test
     public void testDetachMachineOnNotFoundError() {
@@ -540,8 +540,8 @@ public class TestRestApi {
 
         // run test
         Client client = RestClients.httpsNoAuth();
-        Entity<String> request = Entity.json("{\"decrementDesiredSize\": true}");
-        Response response = client.target(url("/pool/i-1/detach")).request().post(request);
+        Entity<String> request = Entity.json("{\"machineId\": \"i-1\", \"decrementDesiredSize\": true}");
+        Response response = client.target(url("/pool/detach")).request().post(request);
         assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
 
         // verify dispatch from REST server to cloud pool
@@ -549,8 +549,8 @@ public class TestRestApi {
     }
 
     /**
-     * Verifies a {@code 500} response on a {@code POST /pool/<machine>/detach}
-     * request when the cloud pool fails unexpectedly.
+     * Verifies a {@code 500} response on a {@code POST /pool/detach} request
+     * when the cloud pool fails unexpectedly.
      */
     @Test
     public void testDetachMachineOnCloudPoolError() {
@@ -559,8 +559,8 @@ public class TestRestApi {
 
         // run test
         Client client = RestClients.httpsNoAuth();
-        Entity<String> request = Entity.json("{\"decrementDesiredSize\": true}");
-        Response response = client.target(url("/pool/i-1/detach")).request().post(request);
+        Entity<String> request = Entity.json("{\"machineId\": \"i-1\", \"decrementDesiredSize\": true}");
+        Response response = client.target(url("/pool/detach")).request().post(request);
         assertThat(response.getStatus(), is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
 
         // verify dispatch from REST server to cloud pool
@@ -568,8 +568,8 @@ public class TestRestApi {
     }
 
     /**
-     * Verifies a {@code 200} response on a successful {@code POST /pool/
-     * <machine>/attach} request.
+     * Verifies a {@code 200} response on a successful {@code POST /pool/attach}
+     * request.
      */
     @Test
     public void testAttachMachine() {
@@ -578,7 +578,8 @@ public class TestRestApi {
 
         // run test
         Client client = RestClients.httpsNoAuth();
-        Response response = client.target(url("/pool/i-1/attach")).request().post(null);
+        Entity<String> request = Entity.json("{\"machineId\": \"i-1\"}");
+        Response response = client.target(url("/pool/attach")).request().post(request);
         assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 
         // verify dispatch from REST server to cloud pool
@@ -593,7 +594,8 @@ public class TestRestApi {
 
         // run test
         Client client = RestClients.httpsNoAuth();
-        Response response = client.target(url("/pool/i-1/attach")).request().post(null);
+        Entity<String> request = Entity.json("{\"machineId\": \"i-1\"}");
+        Response response = client.target(url("/pool/attach")).request().post(request);
         assertThat(response.getStatus(), is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
         assertThat(response.readEntity(String.class),
                 containsString("attempt to invoke cloudpool before being started"));
@@ -603,8 +605,8 @@ public class TestRestApi {
     }
 
     /**
-     * Verifies a {@code 404} response on a {@code POST /pool/<machine>/attach}
-     * request for an unrecognized machine.
+     * Verifies a {@code 404} response on a {@code POST /pool/attach} request
+     * for an unrecognized machine.
      */
     @Test
     public void testAttachMachineOnNotFoundError() {
@@ -613,7 +615,8 @@ public class TestRestApi {
 
         // run test
         Client client = RestClients.httpsNoAuth();
-        Response response = client.target(url("/pool/i-1/attach")).request().post(null);
+        Entity<String> request = Entity.json("{\"machineId\": \"i-1\"}");
+        Response response = client.target(url("/pool/attach")).request().post(request);
         assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
 
         // verify dispatch from REST server to cloud pool
@@ -621,8 +624,8 @@ public class TestRestApi {
     }
 
     /**
-     * Verifies a {@code 500} response on a {@code POST /pool/<machine>/attach}
-     * request to a cloud pool that unexpectedly fails.
+     * Verifies a {@code 500} response on a {@code POST /pool/attach} request to
+     * a cloud pool that unexpectedly fails.
      */
     @Test
     public void testAttachMachineOnCloudPoolError() {
@@ -631,7 +634,8 @@ public class TestRestApi {
 
         // run test
         Client client = RestClients.httpsNoAuth();
-        Response response = client.target(url("/pool/i-1/attach")).request().post(null);
+        Entity<String> request = Entity.json("{\"machineId\": \"i-1\"}");
+        Response response = client.target(url("/pool/attach")).request().post(request);
         assertThat(response.getStatus(), is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
 
         // verify dispatch from REST server to cloud pool
@@ -639,8 +643,8 @@ public class TestRestApi {
     }
 
     /**
-     * Verifies a {@code 200} response on a successful {@code POST /pool/
-     * <machine>/serviceState} request.
+     * Verifies a {@code 200} response on a successful
+     * {@code POST /pool/serviceState} request.
      */
     @Test
     public void testSetServiceState() {
@@ -649,8 +653,8 @@ public class TestRestApi {
 
         // run test
         Client client = RestClients.httpsNoAuth();
-        Entity<String> request = Entity.json("{\"serviceState\": \"OUT_OF_SERVICE\"}");
-        Response response = client.target(url("/pool/i-1/serviceState")).request().post(request);
+        Entity<String> request = Entity.json("{\"machineId\": \"i-1\", \"serviceState\": \"OUT_OF_SERVICE\"}");
+        Response response = client.target(url("/pool/serviceState")).request().post(request);
         assertThat(response.getStatus(), is(Status.OK.getStatusCode()));
 
         // verify dispatch from REST server to cloud pool
@@ -665,8 +669,8 @@ public class TestRestApi {
 
         // run test
         Client client = RestClients.httpsNoAuth();
-        Entity<String> request = Entity.json("{\"serviceState\": \"OUT_OF_SERVICE\"}");
-        Response response = client.target(url("/pool/i-1/serviceState")).request().post(request);
+        Entity<String> request = Entity.json("{\"machineId\": \"i-1\", \"serviceState\": \"OUT_OF_SERVICE\"}");
+        Response response = client.target(url("/pool/serviceState")).request().post(request);
         assertThat(response.getStatus(), is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
         assertThat(response.readEntity(String.class),
                 containsString("attempt to invoke cloudpool before being started"));
@@ -676,8 +680,8 @@ public class TestRestApi {
     }
 
     /**
-     * Verifies a {@code 404} response on a {@code POST /pool/
-     * <machine>/serviceState} request for an unrecognized machine.
+     * Verifies a {@code 404} response on a {@code POST /pool/serviceState}
+     * request for an unrecognized machine.
      */
     @Test
     public void testSetServiceStateOnNotFoundError() {
@@ -687,8 +691,8 @@ public class TestRestApi {
 
         // run test
         Client client = RestClients.httpsNoAuth();
-        Entity<String> request = Entity.json("{\"serviceState\": \"OUT_OF_SERVICE\"}");
-        Response response = client.target(url("/pool/i-1/serviceState")).request().post(request);
+        Entity<String> request = Entity.json("{\"machineId\": \"i-1\", \"serviceState\": \"OUT_OF_SERVICE\"}");
+        Response response = client.target(url("/pool/serviceState")).request().post(request);
         assertThat(response.getStatus(), is(Status.NOT_FOUND.getStatusCode()));
 
         // verify dispatch from REST server to cloud pool
@@ -696,8 +700,8 @@ public class TestRestApi {
     }
 
     /**
-     * Verifies a {@code 404} response on a {@code POST /pool/
-     * <machine>/serviceState} request to a cloud pool that unexpectedly fails.
+     * Verifies a {@code 404} response on a {@code POST /pool/serviceState}
+     * request to a cloud pool that unexpectedly fails.
      */
     @Test
     public void testSetServiceStateOnCloudPoolError() {
@@ -706,8 +710,8 @@ public class TestRestApi {
 
         // run test
         Client client = RestClients.httpsNoAuth();
-        Entity<String> request = Entity.json("{\"serviceState\": \"OUT_OF_SERVICE\"}");
-        Response response = client.target(url("/pool/i-1/serviceState")).request().post(request);
+        Entity<String> request = Entity.json("{\"machineId\": \"i-1\", \"serviceState\": \"OUT_OF_SERVICE\"}");
+        Response response = client.target(url("/pool/serviceState")).request().post(request);
         assertThat(response.getStatus(), is(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
 
         // verify dispatch from REST server to cloud pool

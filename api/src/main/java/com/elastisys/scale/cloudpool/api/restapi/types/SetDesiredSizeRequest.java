@@ -11,13 +11,10 @@ import com.google.common.base.Objects;
  */
 public class SetDesiredSizeRequest {
 
-    private int desiredSize;
+    /** The desired size to set. */
+    private final int desiredSize;
 
     public SetDesiredSizeRequest(int desiredSize) {
-        this.desiredSize = desiredSize;
-    }
-
-    public void setDesiredSize(int desiredSize) {
         this.desiredSize = desiredSize;
     }
 
