@@ -147,9 +147,8 @@ A common structure of a cloudpool configuration is illustrated below:
                 "sender": "noreply@elastisys.com",
                 "smtpClientConfig": {
                     "smtpHost": "mail.server.com",
-                    "smtpPort": 465,
-                    "authentication": {"userName": "john", "password": "secret"},
-                    "useSsl": True
+                    "smtpPort": 587,
+                    "authentication": {"userName": "john", "password": "secret"}
                 }
             }
         ],
