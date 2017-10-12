@@ -273,17 +273,23 @@ public class StandardPoolUpdater implements PoolUpdater {
      */
     void updateMachinePool(BaseCloudPoolConfig config) throws CloudPoolException {
         LOG.debug("updating machine pool ...");
-        // we need to make use of fresh pool data since cached pool data could
-        // make us start an excessive amount of machines (for example if the
-        // pool fetcher haven't seen our latest started machines yet)
-        MachinePool pool = this.poolFetcher.get(FetchOption.FORCE_REFRESH);
-        // check if we need to determine desired size (it may not have been
-        // possible on startup, e.g., due to cloud API being unreachable)
-        setDesiredSizeIfUnset(pool);
-        int targetSize = getDesiredSize();
 
         // prevent multiple threads from concurrently updating pool
         synchronized (this.poolUpdateLock) {
+            // it is possible that while waiting for the lock, a different pool
+            // update operation changed the pool members and modified the
+            // desired size (for example, a terminateMachine call). we should
+            // therefore get a fresh pool snapshot and read the present
+            // desiredSize value
+            MachinePool pool = this.poolFetcher.get(FetchOption.FORCE_REFRESH);
+            // check if we need to determine desired size (it may not have been
+            // possible on startup, e.g., due to cloud API being unreachable)
+            int targetSize = 0;
+            synchronized (this.desiredSizeLock) {
+                setDesiredSizeIfUnset(pool);
+                targetSize = getDesiredSize();
+            }
+
             doPoolUpdate(pool, config, targetSize);
         }
     }
