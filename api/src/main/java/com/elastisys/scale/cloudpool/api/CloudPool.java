@@ -170,6 +170,9 @@ public interface CloudPool {
      * Terminates a particular machine pool member. The caller can control if a
      * replacement machine is to be provisioned via the
      * {@code decrementDesiredSize} parameter.
+     * <p/>
+     * <b>Note</b>: a machine that is protected from removal by a membership
+     * status with {@code evictable: false} can not be terminated.
      *
      * @param machineId
      *            The machine to terminate.
@@ -179,13 +182,16 @@ public interface CloudPool {
      *
      * @throws NotFoundException
      *             If the specified machine is not a member of the pool.
+     * @throws NotEvictableException
+     *             If the specified machine has a {@link MembershipStatus} that
+     *             prevents it from being removed.
      * @throws CloudPoolException
      *             If the operation could not be completed.
      * @throws NotStartedException
      *             If the {@link CloudPool} is not started.
      */
     void terminateMachine(String machineId, boolean decrementDesiredSize)
-            throws NotFoundException, CloudPoolException, NotStartedException;
+            throws NotFoundException, NotEvictableException, CloudPoolException, NotStartedException;
 
     /**
      * Sets the service state of a given machine pool member. Setting the
@@ -250,6 +256,10 @@ public interface CloudPool {
      * to be managed independently. The caller can control if a replacement
      * machine is to be provisioned via the {@code decrementDesiredSize}
      * parameter.
+     * <p/>
+     * <b>Note</b>: a machine that is protected from removal by a membership
+     * status with {@code evictable: false} can not be terminated.
+     *
      *
      * @param machineId
      *            The identifier of the machine to detach from the pool.
@@ -258,11 +268,14 @@ public interface CloudPool {
      *            or left at its current size ({@code false}).
      * @throws NotFoundException
      *             If the specified machine is not a member of the pool.
+     * @throws NotEvictableException
+     *             If the specified machine has a {@link MembershipStatus} that
+     *             prevents it from being removed.
      * @throws CloudPoolException
      *             If the operation could not be completed.
      * @throws NotStartedException
      *             If the {@link CloudPool} is not started.
      */
     void detachMachine(String machineId, boolean decrementDesiredSize)
-            throws NotFoundException, CloudPoolException, NotStartedException;
+            throws NotFoundException, NotEvictableException, CloudPoolException, NotStartedException;
 }

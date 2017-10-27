@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
+import com.elastisys.scale.cloudpool.api.NotEvictableException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
@@ -145,6 +147,8 @@ public class StandardPoolUpdater implements PoolUpdater {
             throws NotFoundException, CloudPoolException {
         ensurePoolReachable();
         ensureDesiredSizeSet();
+        Machine machine = ensurePoolMember(machineId);
+        ensureEvictable(machine);
 
         // prevent concurrent pool modifications
         synchronized (this.poolUpdateLock) {
@@ -222,6 +226,8 @@ public class StandardPoolUpdater implements PoolUpdater {
             throws NotFoundException, CloudPoolException {
         ensurePoolReachable();
         ensureDesiredSizeSet();
+        Machine machine = ensurePoolMember(machineId);
+        ensureEvictable(machine);
 
         // prevent concurrent pool modifications
         synchronized (this.poolUpdateLock) {
@@ -274,7 +280,41 @@ public class StandardPoolUpdater implements PoolUpdater {
             throw new CloudPoolException(
                     String.format("Cannot complete operation: cloud pool is unreachable: %s", e.getMessage()), e);
         }
+    }
 
+    /**
+     * Ensures that a given machine is recognized as a pool member. It it is a
+     * pool member, the {@link Machine} is returned. If it is not a pool member,
+     * a {@link NotFoundException} is thrown.
+     *
+     * @param machineId
+     *            A machine id.
+     * @return The {@link Machine} metadata.
+     * @throws NotFoundException
+     */
+    private Machine ensurePoolMember(final String machineId) throws NotFoundException {
+        MachinePool pool = this.poolFetcher.get();
+        Optional<Machine> match = pool.getAllocatedMachines().stream().filter(m -> m.getId().equals(machineId))
+                .findFirst();
+        if (!match.isPresent()) {
+            throw new NotFoundException(String.format("machine %s is not a pool member", machineId));
+        }
+        return match.get();
+    }
+
+    /**
+     * Ensures that the given machine is evictable (according to its
+     * {@link MembershipStatus}). If not, a {@link NotEvictableException} is
+     * thrown.
+     *
+     * @param machineId
+     * @throws NotEvictableException
+     */
+    private void ensureEvictable(Machine machine) throws NotEvictableException {
+        if (machine.getMembershipStatus() != null && !machine.getMembershipStatus().isEvictable()) {
+            throw new NotEvictableException(
+                    String.format("machine %s cannot be evicted: prevented by its membership status", machine.getId()));
+        }
     }
 
     /**

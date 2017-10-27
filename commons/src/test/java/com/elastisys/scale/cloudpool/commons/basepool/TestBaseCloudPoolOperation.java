@@ -55,6 +55,8 @@ import org.slf4j.LoggerFactory;
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotConfiguredException;
+import com.elastisys.scale.cloudpool.api.NotEvictableException;
+import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.NotStartedException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
@@ -1121,6 +1123,102 @@ public class TestBaseCloudPoolOperation {
         verify(this.driverMock).terminateMachine("i-1");
         // verify event posted on event bus
         verify(this.eventBusMock).post(argThat(isTerminationAlert("i-1")));
+    }
+
+    /**
+     * It should not be possible to terminate a non-member machine. That should
+     * result in a {@link NotFoundException}.
+     */
+    @Test
+    public void terminateNonMemberMachine() {
+        // set up initial pool
+        DateTime now = UtcTime.now();
+        Machine running1 = machine("i-1", RUNNING, MembershipStatus.defaultStatus(), now.minus(1));
+        when(this.driverMock.listMachines()).thenReturn(machines(running1));
+        this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
+        this.cloudPool.start();
+
+        try {
+            this.cloudPool.terminateMachine("i-X", true);
+            fail("call expected to fail");
+        } catch (NotFoundException e) {
+            // expected
+        }
+
+        assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(1));
+    }
+
+    /**
+     * It should not be possible to terminate a machine that is not evictable.
+     * It should result in a {@link NotEvictableException}.
+     */
+    @Test
+    public void terminateMachineThatIsNotEvictable() {
+        // set up initial pool
+        DateTime now = UtcTime.now();
+        // note: machine is not evictable
+        Machine running1 = machine("i-1", RUNNING, MembershipStatus.blessed(), now.minus(1));
+        when(this.driverMock.listMachines()).thenReturn(machines(running1));
+        this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
+        this.cloudPool.start();
+        assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(1));
+
+        try {
+            this.cloudPool.terminateMachine("i-1", true);
+            fail("call expected to fail");
+        } catch (NotEvictableException e) {
+            // expected
+        }
+
+        assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(1));
+    }
+
+    /**
+     * It should not be possible to detach a non-member machine. That should
+     * result in a {@link NotFoundException}.
+     */
+    @Test
+    public void detachNonMemberMachine() {
+        // set up initial pool
+        DateTime now = UtcTime.now();
+        Machine running1 = machine("i-1", RUNNING, MembershipStatus.defaultStatus(), now.minus(1));
+        when(this.driverMock.listMachines()).thenReturn(machines(running1));
+        this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
+        this.cloudPool.start();
+
+        try {
+            this.cloudPool.detachMachine("i-X", true);
+            fail("call expected to fail");
+        } catch (NotFoundException e) {
+            // expected
+        }
+
+        assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(1));
+    }
+
+    /**
+     * It should not be possible to detach a machine that is not evictable. It
+     * should result in a {@link NotEvictableException}.
+     */
+    @Test
+    public void detachMachineThatIsNotEvictable() {
+        // set up initial pool
+        DateTime now = UtcTime.now();
+        // note: machine is not evictable
+        Machine running1 = machine("i-1", RUNNING, MembershipStatus.blessed(), now.minus(1));
+        when(this.driverMock.listMachines()).thenReturn(machines(running1));
+        this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
+        this.cloudPool.start();
+        assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(1));
+
+        try {
+            this.cloudPool.detachMachine("i-1", true);
+            fail("call expected to fail");
+        } catch (NotEvictableException e) {
+            // expected
+        }
+
+        assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(1));
     }
 
     /**

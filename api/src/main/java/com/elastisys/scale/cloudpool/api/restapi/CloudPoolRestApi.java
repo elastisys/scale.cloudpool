@@ -168,6 +168,10 @@ public interface CloudPoolRestApi {
      * Terminates a particular machine pool member. The caller can control if a
      * replacement machine is to be provisioned.
      * <p/>
+     * <b>Note</b>: a machine that is protected from removal by a membership
+     * status with {@code evictable: false} can not be terminated.
+     *
+     * <p/>
      * More details can be found in the <a href=
      * "http://cloudpoolrestapi.readthedocs.io/en/latest/api.html">official API
      * documentation</a>.
@@ -187,6 +191,9 @@ public interface CloudPoolRestApi {
      * running but is no longer considered a pool member and, therefore, needs
      * to be managed independently. The caller can control if a replacement
      * machine is to be provisioned.
+     * <p/>
+     * <b>Note</b>: a machine that is protected from removal by a membership
+     * status with {@code evictable: false} can not be detached.
      * <p/>
      * More details can be found in the <a href=
      * "http://cloudpoolrestapi.readthedocs.io/en/latest/api.html">official API
