@@ -18,6 +18,8 @@ public class TestAzurePoolDriverConfig {
     private static final String resourceGroup = "testpool";
     /** Sample Azure region. */
     private static final String region = "northeurope";
+    /** Sample Azure region label. */
+    private static final String regionLabel = "North Europe";
 
     /**
      * Appropriate configuration values should pass validation and set values
@@ -30,7 +32,7 @@ public class TestAzurePoolDriverConfig {
 
         assertThat(driverConfig.getApiAccess(), is(validApiAccess()));
         assertThat(driverConfig.getResourceGroup(), is(resourceGroup));
-        assertThat(driverConfig.getRegion(), is(region));
+        assertThat(driverConfig.getRegion().name(), is(region));
     }
 
     /**
@@ -86,6 +88,32 @@ public class TestAzurePoolDriverConfig {
             fail("should fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("apiAccess"));
+        }
+    }
+
+    /**
+     * Both region names and labels are allowed.
+     */
+    @Test
+    public void onRegionLabel() {
+        CloudApiSettings driverConfig = new CloudApiSettings(validApiAccess(), resourceGroup, regionLabel);
+        driverConfig.validate();
+
+        assertThat(driverConfig.getApiAccess(), is(validApiAccess()));
+        assertThat(driverConfig.getResourceGroup(), is(resourceGroup));
+        assertThat(driverConfig.getRegion().name(), is(region));
+    }
+
+    /**
+     * Unrecognized region should fail.
+     */
+    @Test
+    public void onRegionUnrecognized() {
+        try {
+            new CloudApiSettings(validApiAccess(), resourceGroup, "notaregion").validate();
+            fail("should fail");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("not recognized"));
         }
     }
 

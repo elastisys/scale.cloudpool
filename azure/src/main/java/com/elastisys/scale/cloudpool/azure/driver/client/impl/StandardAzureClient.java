@@ -75,7 +75,7 @@ public class StandardAzureClient implements AzureClient {
 
         // filter out VMs in wrong region and with wrong tag set
         List<VirtualMachine> filteredVms = vms.stream()//
-                .filter(vm -> vm.regionName().equals(this.config.getRegion())) //
+                .filter(vm -> vm.region().equals(this.config.getRegion())) //
                 .filter(vm -> vm.tags().entrySet().containsAll(withTags.entrySet()))//
                 .collect(Collectors.toList());
         return filteredVms;

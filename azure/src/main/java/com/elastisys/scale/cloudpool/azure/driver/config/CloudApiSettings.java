@@ -7,6 +7,7 @@ import java.util.Objects;
 import com.elastisys.scale.cloudpool.azure.driver.AzurePoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
@@ -88,8 +89,8 @@ public class CloudApiSettings {
      *
      * @return
      */
-    public String getRegion() {
-        return this.region;
+    public Region getRegion() {
+        return Region.findByLabelOrName(this.region);
     }
 
     @Override
@@ -112,6 +113,8 @@ public class CloudApiSettings {
         checkArgument(this.apiAccess != null, "driverConfig: no apiAccess given");
         checkArgument(this.resourceGroup != null, "driverConfig: no resourceGroup given");
         checkArgument(this.region != null, "driverConfig: no region given");
+
+        checkArgument(this.getRegion() != null, "driverConfig: region '%s' not recognized", this.region);
 
         try {
             this.apiAccess.validate();
