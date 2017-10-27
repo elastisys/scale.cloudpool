@@ -148,19 +148,40 @@ public class StandardPoolUpdater implements PoolUpdater {
 
         // prevent concurrent pool modifications
         synchronized (this.poolUpdateLock) {
+            // if decrementDesiredSize is true, the intent of this call is to
+            // set the desiredSize to (preDesiredSize - 1) on completion.
+            // however, setDesiredSize calls during the termination may cause
+            // the desiredSize to change, so let's remember the original intent.
+            int preDesiredSize;
+            synchronized (this.desiredSizeLock) {
+                preDesiredSize = getDesiredSize();
+            }
+
             LOG.info("terminating {}", machineId);
             this.cloudDriver.terminateMachine(machineId);
-            if (decrementDesiredSize) {
-                synchronized (this.desiredSizeLock) {
-                    // note: decrement unless desiredSize has been set to 0
-                    // (without having been effectuated yet)
-                    int newSize = max(this.desiredSize - 1, 0);
-                    LOG.debug("decrementing desiredSize to {}", newSize);
-                    setDesiredSize(newSize);
+            terminationAlert(machineId);
+
+            if (!decrementDesiredSize) {
+                return;
+            }
+
+            // at this point, the desiredSize may have been updated by
+            // setDesiredSize calls made after this call. if so, those calls
+            // should reflect the most recent intent of the client and we should
+            // respect that. if the situation is unchanged compared to the start
+            // of this call, we carry through the original intent and decrement.
+            synchronized (this.desiredSizeLock) {
+                int postDesiredSize = getDesiredSize();
+                if (postDesiredSize != preDesiredSize) {
+                    LOG.debug("desiredSize changed during operation (was: {}, is: {}). skipping decrement.",
+                            preDesiredSize, postDesiredSize);
+                    return;
                 }
+                int newSize = max(preDesiredSize - 1, 0);
+                LOG.debug("decrementing desiredSize to {}", newSize);
+                setDesiredSize(newSize);
             }
         }
-        terminationAlert(machineId);
     }
 
     @Override
@@ -204,19 +225,40 @@ public class StandardPoolUpdater implements PoolUpdater {
 
         // prevent concurrent pool modifications
         synchronized (this.poolUpdateLock) {
+            // if decrementDesiredSize is true, the intent of this call is to
+            // set the desiredSize to (preDesiredSize - 1) on completion.
+            // however, setDesiredSize calls during the termination may cause
+            // the desiredSize to change, so let's remember the original intent.
+            int preDesiredSize;
+            synchronized (this.desiredSizeLock) {
+                preDesiredSize = getDesiredSize();
+            }
+
             LOG.info("detaching {} from pool", machineId);
             this.cloudDriver.detachMachine(machineId);
-            if (decrementDesiredSize) {
-                synchronized (this.desiredSizeLock) {
-                    // note: decrement unless desiredSize has been set to 0
-                    // (without having been effectuated yet)
-                    int newSize = max(this.desiredSize - 1, 0);
-                    LOG.debug("decrementing desiredSize to {}", newSize);
-                    setDesiredSize(newSize);
+            detachAlert(machineId);
+
+            if (!decrementDesiredSize) {
+                return;
+            }
+
+            // at this point, the desiredSize may have been updated by
+            // setDesiredSize calls made after this call. if so, those calls
+            // should reflect the most recent intent of the client and we should
+            // respect that. if the situation is unchanged compared to the start
+            // of this call, we carry through the original intent and decrement.
+            synchronized (this.desiredSizeLock) {
+                int postDesiredSize = getDesiredSize();
+                if (postDesiredSize != preDesiredSize) {
+                    LOG.debug("desiredSize changed during operation (was: {}, is: {}). skipping decrement.",
+                            preDesiredSize, postDesiredSize);
+                    return;
                 }
+                int newSize = max(preDesiredSize - 1, 0);
+                LOG.debug("decrementing desiredSize to {}", newSize);
+                setDesiredSize(newSize);
             }
         }
-        detachAlert(machineId);
     }
 
     /**

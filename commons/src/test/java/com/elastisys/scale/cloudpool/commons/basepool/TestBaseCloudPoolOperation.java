@@ -29,6 +29,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -1120,6 +1121,140 @@ public class TestBaseCloudPoolOperation {
         verify(this.driverMock).terminateMachine("i-1");
         // verify event posted on event bus
         verify(this.eventBusMock).post(argThat(isTerminationAlert("i-1")));
+    }
+
+    /**
+     * When a terminate machine call is made and no replacement machine is
+     * desired ({@code decrementDesiredSize} true) and the desiredSize is
+     * modified by a concurrent setDesiredSize call that is executed while the
+     * termination is in progress, we want the terminate machine call to respect
+     * the (most recent) intent of the client and *not* decrement the
+     * desiredSize after it has terminated the machine.
+     * <p/>
+     * Otherwise, we could end up with the following situation: the pool size is
+     * 2 and a call is made to terminate a machine and decrement the pool size
+     * (to 1). This is the client intent on the terminateMachine call. While the
+     * time-consuming terminate operation runs, a setDesiredSize(1) call is
+     * made. Client intent is still desiredSize == 1. Now, we don't want
+     * terminateMachine to decrement the desired size when it completes, since
+     * that would bring the desiredSize to 0, which was never the intent of the
+     * caller.
+     *
+     * <code>
+     * +--------------------------+----------------------+
+     * |                desiredSize is 2                 |
+     * |                          |                      |
+     * | -> terminateMachine(vm1) |                      |
+     * | deleting  ...            |                      |
+     * | deleting  ...            | -> setDesiredsize(1) |
+     * |                          |    desiredSize = 1;  |
+     * | deleting  ...            |                      |
+     * | desiredSize--;           |                      |
+     * |                          |                      |
+     * |           now desiredSize would be 0!           |
+     * +--------------------------+----------------------+
+     * </code>
+     */
+    @Test
+    public void terminateWithoutReplacementOnConcurrentDesiredSizeUpdate() throws InterruptedException {
+        // set up initial pool
+        when(this.driverMock.listMachines()).thenReturn(machines(machine("i-1", RUNNING), machine("i-2", RUNNING)));
+        this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
+        this.cloudPool.start();
+
+        // simulate cloudDriver.terminateMachine taking some time to complete
+        doAnswer(invocation -> {
+            Thread.sleep(200);
+            return null;
+        }).when(this.driverMock).terminateMachine("i-1");
+
+        assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(2));
+
+        // terminateMachine client
+        boolean decrementDesiredSize = true;
+        Thread client1 = new Thread(() -> {
+            this.cloudPool.terminateMachine("i-1", decrementDesiredSize);
+        });
+        // setDesiredSize client
+        Thread client2 = new Thread(() -> {
+            this.cloudPool.setDesiredSize(1);
+        });
+        client1.start();
+        Thread.sleep(50);
+        client2.start();
+        client1.join();
+        client2.join();
+
+        // at this point, we *don't* want the terminateMachine call to have
+        // decremented desiredSize further (to 0).
+        assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(1));
+    }
+
+    /**
+     * When a detach machine call is made and no replacement machine is desired
+     * ({@code decrementDesiredSize} true) and the desiredSize is modified by a
+     * concurrent setDesiredSize call that is executed while the detach is in
+     * progress, we want the detach machine call to respect the (most recent)
+     * intent of the client and *not* decrement the desiredSize after it has
+     * terminated the machine.
+     * <p/>
+     * Otherwise, we could end up with the following situation: the pool size is
+     * 2 and a call is made to detach a machine and decrement the pool size (to
+     * 1). This is the client intent on the terminateMachine call. While the
+     * time-consuming detach operation runs, a setDesiredSize(1) call is made.
+     * Client intent is still desiredSize == 1. Now, we don't want
+     * terminateMachine to decrement the desired size when it completes, since
+     * that would bring the desiredSize to 0, which was never the intent of the
+     * caller.
+     *
+     * <code>
+     * +--------------------------+----------------------+
+     * |                desiredSize is 2                 |
+     * |                          |                      |
+     * | -> detachMachine(vm1)    |                      |
+     * | detaching ...            |                      |
+     * | detaching ...            | -> setDesiredsize(1) |
+     * |                          |    desiredSize = 1;  |
+     * | detaching ...            |                      |
+     * | desiredSize--;           |                      |
+     * |                          |                      |
+     * |           now desiredSize would be 0!           |
+     * +--------------------------+----------------------+
+     * </code>
+     */
+    @Test
+    public void detachWithoutReplacementOnConcurrentDesiredSizeUpdate() throws InterruptedException {
+        // set up initial pool
+        when(this.driverMock.listMachines()).thenReturn(machines(machine("i-1", RUNNING), machine("i-2", RUNNING)));
+        this.cloudPool.configure(poolConfig(OLDEST_INSTANCE, 0));
+        this.cloudPool.start();
+
+        // simulate cloudDriver.terminateMachine taking some time to complete
+        doAnswer(invocation -> {
+            Thread.sleep(200);
+            return null;
+        }).when(this.driverMock).detachMachine("i-1");
+
+        assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(2));
+
+        // detachMachine client
+        boolean decrementDesiredSize = true;
+        Thread client1 = new Thread(() -> {
+            this.cloudPool.detachMachine("i-1", decrementDesiredSize);
+        });
+        // setDesiredSize client
+        Thread client2 = new Thread(() -> {
+            this.cloudPool.setDesiredSize(1);
+        });
+        client1.start();
+        Thread.sleep(50);
+        client2.start();
+        client1.join();
+        client2.join();
+
+        // at this point, we *don't* want the terminateMachine call to have
+        // decremented desiredSize further (to 0).
+        assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(1));
     }
 
     /**
