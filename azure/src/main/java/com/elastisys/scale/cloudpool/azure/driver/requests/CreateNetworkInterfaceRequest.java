@@ -7,6 +7,7 @@ import com.microsoft.azure.management.network.Network;
 import com.microsoft.azure.management.network.NetworkInterface;
 import com.microsoft.azure.management.network.NetworkInterface.DefinitionStages.WithCreate;
 import com.microsoft.azure.management.network.NetworkSecurityGroup;
+import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 
 /**
  * An Azure request that, when called, creates a {@link NetworkInterface} in a
@@ -20,7 +21,7 @@ public class CreateNetworkInterfaceRequest extends AzureRequest<NetworkInterface
     /** The resource group under which to create the network interface. */
     private final String resourceGroup;
     /** The region in which to create the network interface. */
-    private final String region;
+    private final Region region;
     /** The name of the network interface to create. */
     private final String nicName;
 
@@ -46,7 +47,7 @@ public class CreateNetworkInterfaceRequest extends AzureRequest<NetworkInterface
      *            network and subnet it belongs to, if it should have an
      *            associated public IP and network security groups.
      */
-    public CreateNetworkInterfaceRequest(AzureApiAccess apiAccess, String resourceGroup, String region, String nicName,
+    public CreateNetworkInterfaceRequest(AzureApiAccess apiAccess, String resourceGroup, Region region, String nicName,
             NetworkSettings networkSettings) {
         super(apiAccess);
 

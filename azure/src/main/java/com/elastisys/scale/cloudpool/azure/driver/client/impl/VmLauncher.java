@@ -30,6 +30,7 @@ import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.Wi
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithFromImageCreateOptionsUnmanaged;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithOS;
 import com.microsoft.azure.management.network.NetworkInterface;
+import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 import com.microsoft.azure.management.resources.fluentcore.model.Creatable;
 import com.microsoft.azure.management.resources.fluentcore.model.CreatedResources;
 import com.microsoft.azure.management.storage.StorageAccount;
@@ -50,11 +51,11 @@ public class VmLauncher {
 
     private final AzureApiAccess apiAccess;
     private final String resourceGroup;
-    private final String region;
+    private final Region region;
 
     // private final Azure api;
 
-    public VmLauncher(AzureApiAccess apiAccess, String resourceGroup, String region) {
+    public VmLauncher(AzureApiAccess apiAccess, String resourceGroup, Region region) {
         this.apiAccess = apiAccess;
         this.resourceGroup = resourceGroup;
         this.region = region;

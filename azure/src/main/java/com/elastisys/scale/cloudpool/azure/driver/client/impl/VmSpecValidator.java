@@ -18,6 +18,7 @@ import com.elastisys.scale.cloudpool.azure.driver.requests.GetVmSizesRequest;
 import com.microsoft.azure.management.compute.VirtualMachineSize;
 import com.microsoft.azure.management.network.Network;
 import com.microsoft.azure.management.network.NetworkSecurityGroup;
+import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 
 /**
  * Validates {@link VmSpec}s prior to launch to make sure referenced Azure
@@ -33,7 +34,7 @@ public class VmSpecValidator {
      * Azure region where referenced assets are assume to be located. For
      * example, "northeurope".
      */
-    private final String region;
+    private final Region region;
     /** Azure resource group where referenced assets are assumed to exist. */
     private final String resourceGroup;
 
@@ -49,7 +50,7 @@ public class VmSpecValidator {
      *            Azure resource group where referenced assets are assumed to
      *            exist.
      */
-    public VmSpecValidator(AzureApiAccess apiAccess, String region, String resourceGroup) {
+    public VmSpecValidator(AzureApiAccess apiAccess, Region region, String resourceGroup) {
         this.apiAccess = apiAccess;
         this.region = region;
         this.resourceGroup = resourceGroup;

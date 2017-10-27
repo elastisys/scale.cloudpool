@@ -32,6 +32,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.microsoft.azure.management.compute.VirtualMachine;
+import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 
 /**
  * The {@link AzurePoolDriver} is a management interface towards the Azure API.
@@ -249,8 +250,8 @@ public class AzurePoolDriver implements CloudPoolDriver {
      * @throws NotFoundException
      */
     private void ensureRightRegionAndResouceGroup(VirtualMachine vm) throws NotFoundException {
-        String cloudpoolRegion = cloudApiSettings().getRegion();
-        if (!vm.regionName().equalsIgnoreCase(cloudpoolRegion)) {
+        Region cloudpoolRegion = cloudApiSettings().getRegion();
+        if (!vm.region().equals(cloudpoolRegion)) {
             throw new NotFoundException(String.format("the specified vm is located region %s, cloudpool uses region %s",
                     vm.regionName(), cloudpoolRegion));
         }

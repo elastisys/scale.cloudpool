@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import com.microsoft.azure.CloudException;
 import com.microsoft.azure.management.compute.VirtualMachine;
+import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 import com.microsoft.rest.LogLevel;
 
 /**
@@ -33,7 +34,7 @@ public class CreateLinuxVirtualMachine extends BaseLabProgram {
 
     public static void main(String[] args) throws CloudException, IOException {
         String resourceGroup = "itest";
-        String region = "northeurope";
+        Region region = Region.findByLabelOrName("northeurope");
         String storageAccountName = "itestdisks";
 
         AzureApiAccess apiAccess = new AzureApiAccess(SUBSCRIPTION_ID, AZURE_AUTH,
