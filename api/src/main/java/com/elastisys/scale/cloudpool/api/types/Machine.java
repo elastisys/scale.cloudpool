@@ -9,16 +9,15 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.joda.time.DateTime;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.JsonElement;
@@ -424,26 +423,6 @@ public class Machine {
     }
 
     /**
-     * Returns a transformation {@link Function} that given a {@link Machine}
-     * extracts its {@link MachineState}.
-     *
-     * @return
-     */
-    public static Function<? super Machine, MachineState> toState() {
-        return new MachineStateExtractor();
-    }
-
-    /**
-     * Returns a transformation {@link Function} that given a {@link Machine}
-     * extracts its identifier.
-     *
-     * @return
-     */
-    public static Function<? super Machine, String> toId() {
-        return new MachineIdExtractor();
-    }
-
-    /**
      * Returns a {@link Predicate} that returns <code>true</code> when passed a
      * {@link Machine} in a given {@link MachineState}.
      *
@@ -469,53 +448,8 @@ public class Machine {
         }
 
         @Override
-        public boolean apply(Machine machine) {
+        public boolean test(Machine machine) {
             return machine.getMachineState() == this.state;
-        }
-    }
-
-    /**
-     * A transformation {@link Function} that when applied to a {@link Machine}
-     * extracts the {@link Machine}'s state.
-     * <p/>
-     * Can be used to transform a collection of {@link Machine}s to a collection
-     * of {@link MachineState}. See
-     * {@link Iterables#transform(Iterable, Function)}.
-     *
-     * @see http://code.google.com/p/guava-libraries/wiki/FunctionalExplained
-     */
-    public static class MachineStateExtractor implements Function<Machine, MachineState> {
-        /**
-         * Extracts the state of a {@link Machine}.
-         *
-         * @see Function#apply(Object)
-         */
-        @Override
-        public MachineState apply(Machine machine) {
-            return machine.getMachineState();
-        }
-    }
-
-    /**
-     * A transformation {@link Function} that when applied to a {@link Machine}
-     * extracts the {@link Machine}'s id.
-     * <p/>
-     * Can be used to transform a collection of {@link Machine}s to a collection
-     * of {@link String}. See {@link Iterables#transform(Iterable, Function)}.
-     *
-     * @see http://code.google.com/p/guava-libraries/wiki/FunctionalExplained
-     *
-     *
-     */
-    public static class MachineIdExtractor implements Function<Machine, String> {
-        /**
-         * Extracts the id of a {@link Machine}.
-         *
-         * @see Function#apply(Object)
-         */
-        @Override
-        public String apply(Machine machine) {
-            return machine.getId();
         }
     }
 
@@ -571,8 +505,9 @@ public class Machine {
      * {@link Machine} with an evictable {@link MembershipStatus}.
      */
     public static class EvictableMemberPredicate implements Predicate<Machine> {
+
         @Override
-        public boolean apply(Machine machine) {
+        public boolean test(Machine machine) {
             return machine.getMembershipStatus().isEvictable();
         }
     }
@@ -586,8 +521,8 @@ public class Machine {
      */
     public static class ActiveMemberPredicate implements Predicate<Machine> {
         @Override
-        public boolean apply(Machine machine) {
-            return isAllocated().apply(machine) && machine.getMembershipStatus().isActive();
+        public boolean test(Machine machine) {
+            return isAllocated().test(machine) && machine.getMembershipStatus().isActive();
         }
     }
 
@@ -602,7 +537,7 @@ public class Machine {
                 MachineState.PENDING, MachineState.RUNNING);
 
         @Override
-        public boolean apply(Machine machine) {
+        public boolean test(Machine machine) {
             return allocatedStates.contains(machine.getMachineState());
         }
     }
@@ -620,7 +555,7 @@ public class Machine {
                 MachineState.RUNNING);
 
         @Override
-        public boolean apply(Machine machine) {
+        public boolean test(Machine machine) {
             return startedStates.contains(machine.getMachineState());
         }
     }

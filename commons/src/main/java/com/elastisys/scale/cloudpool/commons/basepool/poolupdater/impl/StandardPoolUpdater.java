@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -381,7 +382,8 @@ public class StandardPoolUpdater implements PoolUpdater {
     private void doPoolUpdate(MachinePool pool, BaseCloudPoolConfig config, int targetSize) throws CloudPoolException {
         LOG.info("updating pool size to desired size {}", targetSize);
 
-        LOG.debug("current pool members: {}", Lists.transform(pool.getMachines(), Machine.toShortString()));
+        LOG.debug("current pool members: {}",
+                pool.getMachines().stream().map(Machine.toShortString()).collect(Collectors.toList()));
         ResizePlanner resizePlanner = new ResizePlanner(pool, config.getScaleInConfig().getVictimSelectionPolicy());
         int activeSize = resizePlanner.getActiveSize();
 
@@ -427,7 +429,8 @@ public class StandardPoolUpdater implements PoolUpdater {
         }
 
         List<Machine> terminated = Lists.newArrayList();
-        LOG.info("terminating {} machine(s): {}", victims.size(), Lists.transform(victims, Machine.toId()));
+        LOG.info("terminating {} machine(s): {}", victims.size(),
+                victims.stream().map(Machine::getId).collect(Collectors.toList()));
         for (Machine victim : victims) {
             try {
                 this.cloudDriver.terminateMachine(victim.getId());
@@ -465,7 +468,7 @@ public class StandardPoolUpdater implements PoolUpdater {
         String message = String.format("%d machine(s) were requested from cloud pool", startedMachines.size());
         LOG.info(message);
         Map<String, JsonElement> tags = Maps.newHashMap();
-        List<String> startedMachineIds = Lists.transform(startedMachines, Machine.toId());
+        List<String> startedMachineIds = startedMachines.stream().map(Machine::getId).collect(Collectors.toList());
         tags.put("requestedMachines", JsonUtils.toJson(startedMachineIds));
         tags.put("poolMembers", poolMembersTag());
         this.eventBus
@@ -521,7 +524,8 @@ public class StandardPoolUpdater implements PoolUpdater {
         String message = String.format("%d machine(s) were terminated in cloud pool", terminatedMachines.size());
         LOG.info(message);
         Map<String, JsonElement> tags = Maps.newHashMap();
-        List<String> terminatedMachineIds = Lists.transform(terminatedMachines, Machine.toId());
+        List<String> terminatedMachineIds = terminatedMachines.stream().map(Machine::getId)
+                .collect(Collectors.toList());
         tags.put("terminatedMachines", JsonUtils.toJson(terminatedMachineIds));
         tags.put("poolMembers", poolMembersTag());
         this.eventBus
@@ -584,7 +588,8 @@ public class StandardPoolUpdater implements PoolUpdater {
         try {
             List<Machine> poolMembers = this.poolFetcher.get().getMachines();
             // exclude metadata field (noisy)
-            List<Machine> shortFormatMembers = Lists.transform(poolMembers, Machine.toShortFormat());
+            List<Machine> shortFormatMembers = poolMembers.stream().map(Machine.toShortFormat())
+                    .collect(Collectors.toList());
             return JsonUtils.toJson(shortFormatMembers);
         } catch (Exception e) {
             LOG.warn("failed to retrieve pool members: {}", e.getMessage());

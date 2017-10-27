@@ -2,12 +2,11 @@ package com.elastisys.scale.cloudpool.api.types;
 
 import static com.elastisys.scale.cloudpool.api.types.Machine.toShortString;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Iterables.filter;
-import static com.google.common.collect.Lists.transform;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.joda.time.DateTime;
 
@@ -77,8 +76,7 @@ public class MachinePool {
      * @return
      */
     public List<Machine> getActiveMachines() {
-        Iterable<Machine> activeMachines = filter(getMachines(), Machine.isActiveMember());
-        return Lists.newArrayList(activeMachines);
+        return getMachines().stream().filter(Machine.isActiveMember()).collect(Collectors.toList());
     }
 
     /**
@@ -88,8 +86,7 @@ public class MachinePool {
      * @return
      */
     public List<Machine> getAllocatedMachines() {
-        Iterable<Machine> allocatedMachines = filter(getMachines(), Machine.isAllocated());
-        return Lists.newArrayList(allocatedMachines);
+        return getMachines().stream().filter(Machine.isAllocated()).collect(Collectors.toList());
     }
 
     /**
@@ -99,8 +96,7 @@ public class MachinePool {
      * @return
      */
     public List<Machine> getStartedMachines() {
-        Iterable<Machine> startedMachines = filter(getMachines(), Machine.isStarted());
-        return Lists.newArrayList(startedMachines);
+        return getMachines().stream().filter(Machine.isStarted()).collect(Collectors.toList());
     }
 
     /**
@@ -149,7 +145,7 @@ public class MachinePool {
 
     @Override
     public String toString() {
-        List<String> shortPool = transform(this.machines, toShortString());
+        List<String> shortPool = this.machines.stream().map(toShortString()).collect(Collectors.toList());
         return MoreObjects.toStringHelper(this).add("timestamp", this.timestamp).add("machines", shortPool).toString();
     }
 

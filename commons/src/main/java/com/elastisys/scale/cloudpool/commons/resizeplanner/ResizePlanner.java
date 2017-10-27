@@ -5,13 +5,11 @@ import static com.elastisys.scale.cloudpool.api.types.Machine.isActiveMember;
 import static com.elastisys.scale.cloudpool.api.types.Machine.isEvictable;
 import static com.elastisys.scale.cloudpool.api.types.MachineState.REQUESTED;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Predicates.and;
-import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Collections2.filter;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +19,6 @@ import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelector;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 /**
@@ -121,11 +118,11 @@ public class ResizePlanner {
         }
         // also remove machines that are disposable (inactive, evictable) so
         // that they can be replaced
-        Collection<Machine> disposables = disposableMachines();
+        List<Machine> disposables = disposableMachines();
         if (!disposables.isEmpty()) {
             LOG.info(
                     "adding disposable (inactive, evictable) machines for termination so that they can be replaced: {}",
-                    Iterables.transform(disposables, Machine.toShortString()));
+                    disposables.stream().map(Machine.toShortString()).iterator());
             toTerminate.addAll(disposables);
         }
 
@@ -144,7 +141,7 @@ public class ResizePlanner {
     private List<Machine> selectVictims(int excessMachines) {
         LOG.debug("need {} victim(s) to reach desired size", excessMachines);
         List<Machine> victims = Lists.newArrayList();
-        Collection<Machine> candidates = getTerminationCandidates();
+        List<Machine> candidates = getTerminationCandidates();
         LOG.debug("there are {} evictable candidate(s)", candidates.size());
         // the evictable candidate set can be smaller than excessMachines
         excessMachines = Math.min(excessMachines, candidates.size());
@@ -152,7 +149,7 @@ public class ResizePlanner {
 
         // favor termination of REQUESTED machines (since these are likely
         // to not yet be useful). Terminate them immediately.
-        Iterable<Machine> requested = filter(candidates, inState(REQUESTED));
+        List<Machine> requested = candidates.stream().filter(inState(REQUESTED)).collect(Collectors.toList());
         Iterator<Machine> requestedMachines = requested.iterator();
         while (excessMachines > 0 && requestedMachines.hasNext()) {
             victims.add(requestedMachines.next());
@@ -161,7 +158,7 @@ public class ResizePlanner {
 
         // use victim selection policy to pick victims from any remaining
         // candidates
-        candidates.removeAll(Lists.newArrayList(requested));
+        candidates.removeAll(requested);
         victims.addAll(victimSelector().selectVictims(candidates, excessMachines));
 
         return victims;
@@ -173,12 +170,11 @@ public class ResizePlanner {
      *
      * @return
      */
-    private Collection<Machine> getTerminationCandidates() {
+    private List<Machine> getTerminationCandidates() {
         // only consider active pool members
         Collection<Machine> candidates = this.machinePool.getActiveMachines();
         // filter out blessed pool members (marked as not being evictable)
-        candidates = filter(candidates, Machine.isEvictable());
-        return candidates;
+        return candidates.stream().filter(Machine.isEvictable()).collect(Collectors.toList());
     }
 
     /**
@@ -187,11 +183,12 @@ public class ResizePlanner {
      *
      * @return
      */
-    private Collection<Machine> disposableMachines() {
+    private List<Machine> disposableMachines() {
         // consider all allocated pool members ...
         List<Machine> disposables = this.machinePool.getAllocatedMachines();
         // ... that are inactive, evictable and not already termination-marked
-        return filter(disposables, and(not(isActiveMember()), isEvictable()));
+
+        return disposables.stream().filter(isActiveMember().negate().and(isEvictable())).collect(Collectors.toList());
     }
 
     private VictimSelector victimSelector() {

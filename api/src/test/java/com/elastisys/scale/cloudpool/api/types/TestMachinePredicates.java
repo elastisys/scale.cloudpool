@@ -40,9 +40,9 @@ public class TestMachinePredicates {
         Machine m2 = machine("id", MachineState.RUNNING, now, ips("1.2.3.4"), ips("1.2.3.5"));
         Machine m3 = machineNoIp("id", MachineState.PENDING, now);
 
-        assertFalse(Machine.inState(MachineState.RUNNING).apply(m1));
-        assertTrue(Machine.inState(MachineState.RUNNING).apply(m2));
-        assertFalse(Machine.inState(MachineState.RUNNING).apply(m3));
+        assertFalse(Machine.inState(MachineState.RUNNING).test(m1));
+        assertTrue(Machine.inState(MachineState.RUNNING).test(m2));
+        assertFalse(Machine.inState(MachineState.RUNNING).test(m3));
     }
 
     /**
@@ -75,9 +75,9 @@ public class TestMachinePredicates {
                             MachineState.RUNNING);
                     if (allocatedStates.contains(machine.getMachineState())) {
                         allocatedFound = true;
-                        assertTrue(combo, isAllocated().apply(machine));
+                        assertTrue(combo, isAllocated().test(machine));
                     } else {
-                        assertFalse(combo, isAllocated().apply(machine));
+                        assertFalse(combo, isAllocated().test(machine));
                     }
                 }
             }
@@ -115,9 +115,9 @@ public class TestMachinePredicates {
                     Set<MachineState> startedStates = Sets.newHashSet(MachineState.PENDING, MachineState.RUNNING);
                     if (startedStates.contains(machine.getMachineState())) {
                         startedFound = true;
-                        assertTrue(combo, isStarted().apply(machine));
+                        assertTrue(combo, isStarted().test(machine));
                     } else {
-                        assertFalse(combo, isStarted().apply(machine));
+                        assertFalse(combo, isStarted().test(machine));
                     }
                 }
             }
@@ -156,9 +156,9 @@ public class TestMachinePredicates {
                     if (allocatedStates.contains(machine.getMachineState())
                             && machine.getMembershipStatus().isActive()) {
                         activeFound = true;
-                        assertTrue(combo, isActiveMember().apply(machine));
+                        assertTrue(combo, isActiveMember().test(machine));
                     } else {
-                        assertFalse(combo, isActiveMember().apply(machine));
+                        assertFalse(combo, isActiveMember().test(machine));
                     }
                 }
             }
@@ -192,9 +192,9 @@ public class TestMachinePredicates {
                 .requestTime(UtcTime.now()).launchTime(UtcTime.now()).publicIps(ips("1.2.3.4"))
                 .privateIps(ips("1.2.3.5")).build();
 
-        assertTrue(Machine.isEvictable().apply(m1));
-        assertFalse(Machine.isEvictable().apply(m2));
-        assertTrue(Machine.isEvictable().apply(m3));
-        assertFalse(Machine.isEvictable().apply(m4));
+        assertTrue(Machine.isEvictable().test(m1));
+        assertFalse(Machine.isEvictable().test(m2));
+        assertTrue(Machine.isEvictable().test(m3));
+        assertFalse(Machine.isEvictable().test(m4));
     }
 }

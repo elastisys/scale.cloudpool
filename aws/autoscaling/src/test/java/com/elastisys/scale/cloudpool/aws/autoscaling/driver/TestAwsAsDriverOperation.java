@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -620,7 +621,7 @@ public class TestAwsAsDriverOperation {
      * @return
      */
     private static List<String> groupIds(CloudPoolDriver scalingGroup) {
-        return Lists.transform(scalingGroup.listMachines(), Machine.toId());
+        return scalingGroup.listMachines().stream().map(Machine::getId).collect(Collectors.toList());
     }
 
 }

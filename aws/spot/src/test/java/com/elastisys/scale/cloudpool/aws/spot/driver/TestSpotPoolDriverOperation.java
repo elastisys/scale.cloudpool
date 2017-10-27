@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.stream.Collectors;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -585,7 +586,7 @@ public class TestSpotPoolDriverOperation {
 
     private void assertRequestIds(List<Machine> spotRequests, List<String> expectedIds) {
         assertThat(spotRequests.size(), is(expectedIds.size()));
-        List<String> machineIds = Lists.transform(spotRequests, Machine.toId());
+        List<String> machineIds = spotRequests.stream().map(Machine::getId).collect(Collectors.toList());
         assertTrue("not all expected machine ids were present", machineIds.containsAll(expectedIds));
     }
 

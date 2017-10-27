@@ -8,6 +8,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.types.Machine;
@@ -15,7 +16,6 @@ import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
 
 /**
  * A utility class that can be used to exercise a given {@link CloudPool} from
@@ -132,7 +132,8 @@ public class CloudPoolCommandLineDriver {
                 System.out.println(Joiner.on("\n").join(machines));
             } else {
                 // exclude metadata
-                System.out.println(Joiner.on("\n").join(Lists.transform(machines, Machine.toShortString())));
+
+                System.out.println(machines.stream().map(Machine.toShortString()).collect(Collectors.joining("\n")));
             }
             break;
         }
