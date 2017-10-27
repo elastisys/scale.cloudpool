@@ -134,8 +134,7 @@ A common structure of a cloudpool configuration is illustrated below:
     },
 
     "scaleInConfig": {
-        "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
-        "instanceHourMargin": 300
+        "victimSelectionPolicy": "NEWEST"
     },
 
     "alerts": {
