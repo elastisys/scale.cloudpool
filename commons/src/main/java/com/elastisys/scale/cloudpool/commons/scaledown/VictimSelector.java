@@ -36,14 +36,8 @@ public class VictimSelector {
     }
 
     /**
-     * Selects victim instances to terminate from a set of candidate machines.
-     * The selection is performed as follows:
-     * <ol>
-     * <li>Filter out already termination marked instances (i.e., instances in
-     * the termination queue).</li>
-     * <li>Use the {@link VictimSelectionStrategy} to select an instance from
-     * the candidate set.</li>
-     * </ol>
+     * Selects victim machines to terminate from a set of candidate machines
+     * using the configured {@link VictimSelectionStrategy}.
      *
      * @param candidates
      *            The collection of candidate machine instances.
@@ -57,7 +51,9 @@ public class VictimSelector {
         checkArgument(numVictims >= 0, "negative number of victims");
         checkArgument(candidates.size() >= numVictims, "more victims than termination candidates");
 
+        // defensive copy
         List<Machine> terminationCandidates = Lists.newArrayList(candidates);
+
         List<Machine> victims = Lists.newArrayList();
         for (int i = 0; i < numVictims; i++) {
             // use victim selection strategy to pick a victim

@@ -100,8 +100,7 @@ public class TestBaseCloudPoolConfiguration {
         assertEquals(this.cloudPool.getConfiguration().get(), loadedConfig);
 
         assertThat(this.cloudPool.config().getScaleInConfig().getVictimSelectionPolicy(),
-                is(VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR));
-        assertThat(this.cloudPool.config().getScaleInConfig().getInstanceHourMargin(), is(300));
+                is(VictimSelectionPolicy.OLDEST));
     }
 
     /**

@@ -9,13 +9,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import org.joda.time.DateTime;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
@@ -446,41 +444,6 @@ public class Machine {
     }
 
     /**
-     * Returns a {@link Function} that given a {@link Machine} returns the
-     * remaining time (in seconds) to the start of its next hour.
-     *
-     * @return
-     */
-    public static Function<? super Machine, Long> remainingInstanceHourTime() {
-        return new RemainingInstanceHourTime();
-    }
-
-    /**
-     * Optionally returns how many milliseconds ago a request was made.
-     *
-     * @param now
-     *            The time to regard as the current time.
-     * @return A {@link Function} that given a {@link Machine} and the current
-     *         time returns how many milliseconds ago it was requested from the
-     *         underlying cloud infrastructure. Since not all clouds support
-     *         reporting how old a request is, the return value is optional.
-     */
-    public static Function<? super Machine, Optional<Long>> requestAge(final DateTime now) {
-        return new RequestAge(now);
-    }
-
-    /**
-     * Returns a {@link Function} that given a {@link Machine} (with a launch
-     * time set) returns the starting point of the {@link Machine}'s most
-     * recently started hour.
-     *
-     * @return
-     */
-    public static Function<? super Machine, DateTime> instanceHourStart() {
-        return new InstanceHourStart();
-    }
-
-    /**
      * Returns a {@link Predicate} that returns <code>true</code> when passed a
      * {@link Machine} in a given {@link MachineState}.
      *
@@ -659,105 +622,6 @@ public class Machine {
         @Override
         public boolean apply(Machine machine) {
             return startedStates.contains(machine.getMachineState());
-        }
-    }
-
-    /**
-     * A {@link Function} that for a given {@link Machine} calculates when the
-     * started its most recent hour.
-     * <p/>
-     * The {@link Machine} must have its launch time set.
-     */
-    public static class InstanceHourStart implements Function<Machine, DateTime> {
-
-        /**
-         * Calculates the starting point of the machine's current hour.
-         *
-         * @param machine
-         * @return
-         */
-        @Override
-        public DateTime apply(Machine machine) {
-            checkArgument(machine != null, "null machine");
-            checkArgument(machine.getLaunchTime() != null, "null launch time for machine");
-            DateTime now = UtcTime.now();
-            DateTime launchtime = machine.getLaunchTime();
-            long secondsPerHour = TimeUnit.SECONDS.convert(1, TimeUnit.HOURS);
-            long millisPerSecond = TimeUnit.MILLISECONDS.convert(1, TimeUnit.SECONDS);
-            long millisPerHour = secondsPerHour * millisPerSecond;
-
-            // millis from epoch machine was launched
-            long epochMillis = launchtime.getMillis();
-            // millis into wall-clock hour machine was launched
-            long wallclockhourOffset = epochMillis % millisPerHour;
-            // apply the wallclock hour offset to the current hour
-            DateTime currentHour = now.withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(0);
-            DateTime HourStart = currentHour.plus(wallclockhourOffset);
-            // if that results in a time instant that lies in the future, the
-            // start of the current billing hour was in the previous
-            // wall-clock hour
-            if (now.isBefore(HourStart)) {
-                HourStart = HourStart.minusHours(1);
-            }
-            return HourStart;
-        }
-    }
-
-    /**
-     * A {@link Function} that optionally returns the number of milliseconds of
-     * how long ago the request to start a given {@link Machine} was made. Since
-     * not all cloud infrastructures support returning this value, the return
-     * value from the function is {@link Optional}.
-     */
-    public static class RequestAge implements Function<Machine, Optional<Long>> {
-        private final DateTime now;
-
-        /**
-         * Creates a new instance that sets the current time to a particular
-         * value.
-         *
-         * @param now
-         *            The time to regard as the current time.
-         */
-        public RequestAge(DateTime now) {
-            this.now = now;
-        }
-
-        @Override
-        public Optional<Long> apply(Machine machine) {
-            if (machine.getRequestTime() != null) {
-                return Optional.of(this.now.minus(machine.getRequestTime().getMillis()).getMillis());
-            } else {
-                return Optional.absent();
-            }
-        }
-    }
-
-    /**
-     * A {@link Function} that for a given {@link Machine} calculates the
-     * remaining time (in seconds) of the machine's current hour.
-     *
-     *
-     */
-    public static class RemainingInstanceHourTime implements Function<Machine, Long> {
-
-        /**
-         * Calculates the remaining time (in seconds) of the machine's last
-         * started billing hour.
-         *
-         * @param machine
-         * @return
-         */
-        @Override
-        public Long apply(Machine machine) {
-            checkArgument(machine != null, "null machine");
-            checkArgument(machine.getLaunchTime() != null, "null launch time for machine");
-
-            DateTime HourStart = instanceHourStart().apply(machine);
-            DateTime nextHourStart = HourStart.plusHours(1);
-
-            long millisToNextHour = nextHourStart.getMillis() - UtcTime.now().getMillis();
-            return millisToNextHour / 1000;
         }
     }
 

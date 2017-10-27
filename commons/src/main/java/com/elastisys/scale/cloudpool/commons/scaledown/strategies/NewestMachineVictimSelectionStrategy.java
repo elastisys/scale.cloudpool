@@ -15,7 +15,7 @@ import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionStrategy;
  *
  *
  */
-public enum NewestInstanceVictimSelectionStrategy implements VictimSelectionStrategy {
+public enum NewestMachineVictimSelectionStrategy implements VictimSelectionStrategy {
 
     /** The single instance of this class. */
     INSTANCE;
@@ -30,15 +30,21 @@ public enum NewestInstanceVictimSelectionStrategy implements VictimSelectionStra
 
     /**
      * {@link Comparator} that orders {@link Machine} instances in order of
-     * increasing age (youngest instance first).
-     *
-     *
-     *
+     * increasing age (youngest instance first). A <code>null</code> requestTime
+     * is considered youngest (rationale: a very recently requested machine may
+     * not have had all metadata initialized). In case no request time is set or
+     * they are equal, a comparison is made on the {@link Machine} id.
      */
     public class NewestFirstOrder implements Comparator<Machine> {
         @Override
-        public int compare(Machine instance1, Machine instance2) {
-            return instance2.getLaunchTime().compareTo(instance1.getLaunchTime());
+        public int compare(Machine m1, Machine m2) {
+
+            Comparator<Machine> launchTimeComparator = Comparator.comparing(Machine::getLaunchTime,
+                    Comparator.nullsFirst(Comparator.reverseOrder()));
+
+            Comparator<Machine> idComparator = Comparator.comparing(Machine::getId, Comparator.reverseOrder());
+            return launchTimeComparator.thenComparing(idComparator).compare(m1, m2);
         }
     }
+
 }

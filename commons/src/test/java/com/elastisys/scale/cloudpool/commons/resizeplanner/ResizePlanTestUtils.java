@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.commons.resizeplanner;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.joda.time.DateTime;
@@ -8,7 +9,6 @@ import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.commons.termqueue.ScheduledTermination;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.collect.Lists;
 
@@ -140,33 +140,14 @@ public class ResizePlanTestUtils {
         return UtcTime.now().plusSeconds(secondsOffset);
     }
 
-    public static ScheduledTermination termination(String instanceId, DateTime terminationTime) {
+    public static Machine victim(String instanceId) {
         Machine machine = Machine.builder().id(instanceId).machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")
                 .region("us-east-1").machineSize("m1.small").launchTime(UtcTime.now()).build();
-        return new ScheduledTermination(machine, terminationTime);
+        return machine;
     }
 
-    public static List<ScheduledTermination> toTerminate(ScheduledTermination... scheduledTerminations) {
-        List<ScheduledTermination> list = Lists.newArrayList();
-        for (ScheduledTermination scheduledTermination : scheduledTerminations) {
-            list.add(scheduledTermination);
-        }
-        return list;
+    public static List<Machine> toTerminate(Machine... victims) {
+        return Arrays.asList(victims);
     }
 
-    /**
-     * Returns all {@link Machine} instances that are to be scheduled for
-     * termination in a certain {@link ResizePlan}.
-     *
-     * @param plan
-     * @return
-     */
-    public static List<Machine> terminationMarked(ResizePlan plan) {
-        List<Machine> terminationMarkedMachines = Lists.newArrayList();
-        List<ScheduledTermination> scheduledTerminations = plan.getToTerminate();
-        for (ScheduledTermination scheduledTermination : scheduledTerminations) {
-            terminationMarkedMachines.add(scheduledTermination.getInstance());
-        }
-        return terminationMarkedMachines;
-    }
 }

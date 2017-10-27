@@ -16,16 +16,13 @@
         }
     },
 
-    "provisioningTemplate": {
+    "cluster": {
+        "name": "my-cluster",
         "project": "my-project",
-        "zone": "europe-west1-d",
-        "clusterName": "my-cluster"
+        "zone": "europe-west1-d"
     },
 
-    "scaleInConfig": {
-        "victimSelectionPolicy": "NEWEST_INSTANCE",
-        "instanceHourMargin": 0
-    },
+    "scalingPolicy": "Balanced",
 
     "alerts": {
         "duplicateSuppression": { "time": 5, "unit": "minutes" },
@@ -48,16 +45,5 @@
         ]
     },
 
-    "poolFetch": {
-        "retries": {
-            "maxRetries": 3,
-            "initialBackoffDelay": {"time": 3, "unit": "seconds"}
-        },
-        "refreshInterval": {"time": 30, "unit": "seconds"},
-        "reachabilityTimeout": {"time": 5, "unit": "minutes"}
-    },
-
-    "poolUpdate": {
-        "updateInterval": {"time": 60, "unit": "seconds"}
-    }
+    "poolUpdateInterval": {"time": 15, "unit": "seconds"}
 }

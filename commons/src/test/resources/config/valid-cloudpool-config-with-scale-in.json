@@ -1,21 +1,20 @@
 {
     "name": "my-cloud-pool",
 
-    "cloudApiSettings": { 
+    "cloudApiSettings": {
         "keystoneEndpoint": "http://openstack.nova.com:5000/v2.0",
         "region": "RegionOne",
         "tenantName": "tenant",
         "userName": "clouduser",
         "password": "cloudpass"
     },
-    
+
     "provisioningTemplate": {
-        "size": "m1.small", 
+        "size": "m1.small",
         "image": "Ubuntu Server 12.04"
     },
 
     "scaleInConfig": {
-        "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
-        "instanceHourMargin": 300
+        "victimSelectionPolicy": "OLDEST"
     }
-}  
+}

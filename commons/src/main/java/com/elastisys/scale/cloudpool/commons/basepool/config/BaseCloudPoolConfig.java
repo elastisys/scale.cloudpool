@@ -12,7 +12,6 @@ import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
-import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.Alert;
@@ -42,9 +41,8 @@ public class BaseCloudPoolConfig {
     public static final PoolUpdateConfig DEFAULT_POOL_UPDATE_CONFIG = new PoolUpdateConfig(
             new TimeInterval(60L, TimeUnit.SECONDS));
 
-    /** Default scale-in policy is to immediately terminate newest instance. */
-    public static final ScaleInConfig DEFAULT_SCALE_IN_CONFIG = new ScaleInConfig(VictimSelectionPolicy.NEWEST_INSTANCE,
-            0);
+    /** Default scale-in policy is to terminate the newest machines first. */
+    public static final ScaleInConfig DEFAULT_SCALE_IN_CONFIG = new ScaleInConfig(null);
 
     /**
      * The logical name of the managed group of machines. The exact way of

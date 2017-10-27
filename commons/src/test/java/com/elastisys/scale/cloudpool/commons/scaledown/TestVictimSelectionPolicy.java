@@ -5,10 +5,8 @@ import static org.junit.Assert.assertThat;
 
 import org.junit.Test;
 
-import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
-import com.elastisys.scale.cloudpool.commons.scaledown.strategies.ClosestToInstanceHourVictimSelectionStrategy;
-import com.elastisys.scale.cloudpool.commons.scaledown.strategies.NewestInstanceVictimSelectionStrategy;
-import com.elastisys.scale.cloudpool.commons.scaledown.strategies.OldestInstanceVictimSelectionStrategy;
+import com.elastisys.scale.cloudpool.commons.scaledown.strategies.NewestMachineVictimSelectionStrategy;
+import com.elastisys.scale.cloudpool.commons.scaledown.strategies.OldestMachineVictimSelectionStrategy;
 
 /**
  * Exercises the {@link VictimSelectionPolicy} class.
@@ -17,14 +15,11 @@ public class TestVictimSelectionPolicy {
 
     @Test
     public void testPolicyStrategyAssociations() {
-        assertThat(VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR.getVictimSelectionStrategy(),
-                instanceOf(ClosestToInstanceHourVictimSelectionStrategy.class));
+        assertThat(VictimSelectionPolicy.NEWEST.getVictimSelectionStrategy(),
+                instanceOf(NewestMachineVictimSelectionStrategy.class));
 
-        assertThat(VictimSelectionPolicy.NEWEST_INSTANCE.getVictimSelectionStrategy(),
-                instanceOf(NewestInstanceVictimSelectionStrategy.class));
-
-        assertThat(VictimSelectionPolicy.OLDEST_INSTANCE.getVictimSelectionStrategy(),
-                instanceOf(OldestInstanceVictimSelectionStrategy.class));
+        assertThat(VictimSelectionPolicy.OLDEST.getVictimSelectionStrategy(),
+                instanceOf(OldestMachineVictimSelectionStrategy.class));
 
     }
 }

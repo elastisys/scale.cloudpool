@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.commons.resizeplanner;
 
-import static com.elastisys.scale.cloudpool.commons.resizeplanner.ResizePlanTestUtils.termination;
 import static com.elastisys.scale.cloudpool.commons.resizeplanner.ResizePlanTestUtils.toTerminate;
+import static com.elastisys.scale.cloudpool.commons.resizeplanner.ResizePlanTestUtils.victim;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -11,14 +11,10 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.elastisys.scale.cloudpool.commons.termqueue.ScheduledTermination;
-import com.elastisys.scale.commons.util.time.UtcTime;
+import com.elastisys.scale.cloudpool.api.types.Machine;
 
 /**
  * Exercises the {@link ResizePlan} class.
- *
- *
- *
  */
 public class TestResizePlan {
 
@@ -27,48 +23,43 @@ public class TestResizePlan {
      */
     @Test
     public void testScaleUpPlans() {
-        List<ScheduledTermination> victimList = toTerminate();
-        ResizePlan plan = new ResizePlan(1, 0, victimList);
+        List<Machine> victimList = toTerminate();
+        ResizePlan plan = new ResizePlan(1, victimList);
         assertFalse(plan.hasScaleInActions());
         assertTrue(plan.hasScaleOutActions());
         assertThat(plan.getToRequest(), is(1));
-        assertThat(plan.getToSpare(), is(0));
         assertThat(plan.getToTerminate(), is(victimList));
 
-        plan = new ResizePlan(1, 1, victimList);
+        plan = new ResizePlan(1, victimList);
         assertFalse(plan.hasScaleInActions());
         assertTrue(plan.hasScaleOutActions());
         assertThat(plan.getToRequest(), is(1));
-        assertThat(plan.getToSpare(), is(1));
         assertThat(plan.getToTerminate(), is(victimList));
 
-        plan = new ResizePlan(2, 3, victimList);
+        plan = new ResizePlan(2, victimList);
         assertFalse(plan.hasScaleInActions());
         assertTrue(plan.hasScaleOutActions());
         assertThat(plan.getToRequest(), is(2));
-        assertThat(plan.getToSpare(), is(3));
         assertThat(plan.getToTerminate(), is(victimList));
     }
 
     /**
-     * Verify proper behavior for plans representing scale-up decisions.
+     * Verify proper behavior for plans representing scale-down decisions.
      */
     @Test
     public void testScaleDownPlans() {
-        List<ScheduledTermination> victimList = toTerminate(termination("i-1", UtcTime.now()));
-        ResizePlan plan = new ResizePlan(0, 0, victimList);
+        List<Machine> victimList = toTerminate(victim("i-1"));
+        ResizePlan plan = new ResizePlan(0, victimList);
         assertTrue(plan.hasScaleInActions());
         assertFalse(plan.hasScaleOutActions());
         assertThat(plan.getToRequest(), is(0));
-        assertThat(plan.getToSpare(), is(0));
         assertThat(plan.getToTerminate(), is(victimList));
 
-        victimList = toTerminate(termination("i-1", UtcTime.now()), termination("i-2", UtcTime.now()));
-        plan = new ResizePlan(0, 0, victimList);
+        victimList = toTerminate(victim("i-1"), victim("i-2"));
+        plan = new ResizePlan(0, victimList);
         assertTrue(plan.hasScaleInActions());
         assertFalse(plan.hasScaleOutActions());
         assertThat(plan.getToRequest(), is(0));
-        assertThat(plan.getToSpare(), is(0));
         assertThat(plan.getToTerminate(), is(victimList));
     }
 
@@ -80,12 +71,11 @@ public class TestResizePlan {
      */
     @Test
     public void testMixedPlans() {
-        List<ScheduledTermination> victimList = toTerminate(termination("i-1", UtcTime.now()));
-        ResizePlan plan = new ResizePlan(1, 1, victimList);
+        List<Machine> victimList = toTerminate(victim("i-1"));
+        ResizePlan plan = new ResizePlan(1, victimList);
         assertTrue(plan.hasScaleInActions());
         assertTrue(plan.hasScaleOutActions());
         assertThat(plan.getToRequest(), is(1));
-        assertThat(plan.getToSpare(), is(1));
         assertThat(plan.getToTerminate(), is(victimList));
     }
 
@@ -95,24 +85,19 @@ public class TestResizePlan {
      */
     @Test
     public void testNoChangePlans() {
-        ResizePlan noChangePlan = new ResizePlan(0, 0, toTerminate());
+        ResizePlan noChangePlan = new ResizePlan(0, toTerminate());
         assertFalse(noChangePlan.hasScaleInActions());
         assertFalse(noChangePlan.hasScaleOutActions());
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void createWithIllegalToSpareValue() {
-        new ResizePlan(0, -1, toTerminate());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
     public void createWithIllegalToRequestValue() {
-        new ResizePlan(-1, 0, toTerminate());
+        new ResizePlan(-1, toTerminate());
     }
 
     @Test
     public void createWithNullToTerminateValue() {
-        ResizePlan plan = new ResizePlan(0, 0, null);
+        ResizePlan plan = new ResizePlan(0, null);
         assertThat(plan.getToTerminate().size(), is(0));
     }
 

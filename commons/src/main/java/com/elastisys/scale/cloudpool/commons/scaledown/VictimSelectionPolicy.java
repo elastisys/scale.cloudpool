@@ -1,33 +1,26 @@
 package com.elastisys.scale.cloudpool.commons.scaledown;
 
-import com.elastisys.scale.cloudpool.commons.scaledown.strategies.ClosestToInstanceHourVictimSelectionStrategy;
-import com.elastisys.scale.cloudpool.commons.scaledown.strategies.NewestInstanceVictimSelectionStrategy;
-import com.elastisys.scale.cloudpool.commons.scaledown.strategies.OldestInstanceVictimSelectionStrategy;
+import com.elastisys.scale.cloudpool.api.types.Machine;
+import com.elastisys.scale.cloudpool.commons.scaledown.strategies.NewestMachineVictimSelectionStrategy;
+import com.elastisys.scale.cloudpool.commons.scaledown.strategies.OldestMachineVictimSelectionStrategy;
 
 /**
  * The collection of valid victim selection policies that governs how to select
- * a machine instance to be terminated when a scale-down has been ordered.
+ * a {@link Machine} to be terminated when a scale-down has been ordered.
  * <p/>
  * Each policy is paired with a {@link VictimSelectionStrategy} that implements
  * the selection algorithm for the policy.
- * 
+ *
  * @see VictimSelectionStrategy
- * 
- * 
  */
 public enum VictimSelectionPolicy {
     /**
      * Specify this if you want the oldest instance in your Auto Scaling group
      * to be terminated.
      */
-    OLDEST_INSTANCE(OldestInstanceVictimSelectionStrategy.INSTANCE),
+    OLDEST(OldestMachineVictimSelectionStrategy.INSTANCE),
     /** Specify this if you want the last launched instance to be terminated. */
-    NEWEST_INSTANCE(NewestInstanceVictimSelectionStrategy.INSTANCE),
-    /**
-     * Specify this if you want the instance that is closest to completing its
-     * most recently started instance hour to be terminated.
-     */
-    CLOSEST_TO_INSTANCE_HOUR(ClosestToInstanceHourVictimSelectionStrategy.INSTANCE);
+    NEWEST(NewestMachineVictimSelectionStrategy.INSTANCE);
 
     /**
      * The {@link VictimSelectionStrategy} associated with this
@@ -37,7 +30,7 @@ public enum VictimSelectionPolicy {
 
     /**
      * Constructs a new {@link VictimSelectionPolicy}.
-     * 
+     *
      * @param victimSelectionStrategy
      *            the {@link VictimSelectionStrategy} associated with this
      *            {@link VictimSelectionPolicy}.
@@ -49,7 +42,7 @@ public enum VictimSelectionPolicy {
     /**
      * Returns the {@link VictimSelectionStrategy} associated with this
      * {@link VictimSelectionPolicy}.
-     * 
+     *
      * @return
      */
     public VictimSelectionStrategy getVictimSelectionStrategy() {

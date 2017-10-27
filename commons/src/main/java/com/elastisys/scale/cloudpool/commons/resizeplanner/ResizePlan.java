@@ -2,12 +2,11 @@ package com.elastisys.scale.cloudpool.commons.resizeplanner;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
-import com.elastisys.scale.cloudpool.commons.termqueue.ScheduledTermination;
-import com.google.common.base.MoreObjects;
+import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 
@@ -24,34 +23,24 @@ public class ResizePlan {
     /** Number of additional machines to request. */
     private final int toRequest;
     /**
-     * Number of machines currently in termination queue that shall be spared,
-     * rather than terminated
+     * The {@link Machine}s that are to be terminated.
      */
-    private final int toSpare;
-    /**
-     * The {@link Machine}s that are to be terminated, together with their
-     * scheduled termination time.
-     */
-    private final List<ScheduledTermination> toTerminate;
+    private final List<Machine> toTerminate;
 
     /**
      * Creates a new {@link ResizePlan}.
      *
      * @param toRequest
      *            Number of additional machines to request.
-     * @param toSpare
-     *            Number of machines currently in termination queue that shall
-     *            be spared, rather than terminated
      * @param toTerminate
      *            The pool {@link Machine}s that are to be terminated, together
      *            with their scheduled termination time. Can be set to
      *            <code>null</code>, which has the same effect as setting an
      *            empty list.
      */
-    public ResizePlan(int toRequest, int toSpare, List<ScheduledTermination> toTerminate) {
-        this.toSpare = toSpare;
+    public ResizePlan(int toRequest, List<Machine> toTerminate) {
         this.toRequest = toRequest;
-        this.toTerminate = Optional.fromNullable(toTerminate).or(new ArrayList<ScheduledTermination>());
+        this.toTerminate = Optional.fromNullable(toTerminate).or(Collections.emptyList());
         validate();
     }
 
@@ -63,18 +52,7 @@ public class ResizePlan {
      * @throws IllegalArgumentException
      */
     public void validate() throws IllegalArgumentException {
-        checkArgument(this.toSpare >= 0, "negative number of machines to spare");
         checkArgument(this.toRequest >= 0, "negative number of additional machines to request");
-    }
-
-    /**
-     * Returns the number of machines currently in termination queue that shall
-     * be spared, rather than terminated.
-     *
-     * @return
-     */
-    public int getToSpare() {
-        return this.toSpare;
     }
 
     /**
@@ -87,12 +65,11 @@ public class ResizePlan {
     }
 
     /**
-     * Returns the {@link Machine}s that are to be terminated, together with
-     * their scheduled termination time.
+     * Returns the {@link Machine}s that are to be terminated.
      *
      * @return
      */
-    public List<ScheduledTermination> getToTerminate() {
+    public List<Machine> getToTerminate() {
         return this.toTerminate;
     }
 
@@ -103,7 +80,7 @@ public class ResizePlan {
      *         scale-out actions are to be taken.
      */
     public boolean hasScaleOutActions() {
-        return (this.toRequest > 0) || (this.toSpare > 0);
+        return this.toRequest > 0;
     }
 
     /**
@@ -128,22 +105,20 @@ public class ResizePlan {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.toRequest, this.toSpare, this.toTerminate);
+        return Objects.hashCode(this.toRequest, this.toTerminate);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof ResizePlan) {
             ResizePlan that = (ResizePlan) obj;
-            return Objects.equal(this.toRequest, that.toRequest) && Objects.equal(this.toSpare, that.toSpare)
-                    && Objects.equal(this.toTerminate, that.toTerminate);
+            return Objects.equal(this.toRequest, that.toRequest) && Objects.equal(this.toTerminate, that.toTerminate);
         }
         return super.equals(obj);
     }
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this).add("toRequest", this.toRequest).add("toSpare", this.toSpare)
-                .add("toTerminate", this.toTerminate).toString();
+        return JsonUtils.toString(JsonUtils.toJson(this));
     }
 }

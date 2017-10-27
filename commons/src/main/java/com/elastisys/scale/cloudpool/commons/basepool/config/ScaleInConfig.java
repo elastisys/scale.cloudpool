@@ -6,7 +6,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Objects;
-import com.google.common.collect.Range;
 
 /**
  * The section of a {@link BaseCloudPoolConfig} that describes how to
@@ -15,34 +14,19 @@ import com.google.common.collect.Range;
  * @see BaseCloudPoolConfig
  */
 public class ScaleInConfig {
+    public static final VictimSelectionPolicy DEFAULT_VICTIM_SELECTION_POLICY = VictimSelectionPolicy.NEWEST;
+
     /** Policy for selecting which server to terminate. */
     private final VictimSelectionPolicy victimSelectionPolicy;
-
-    /**
-     * How many seconds prior to the next instance hour an acquired machine
-     * instance should be scheduled for termination. This should be set to a
-     * conservative and safe value to prevent the machine from being billed for
-     * an additional hour. A value of zero is used to specify immediate
-     * termination when a scale-down is ordered.
-     */
-    private final Integer instanceHourMargin;
 
     /**
      * Creates a new {@link ScaleInConfig}.
      *
      * @param victimSelectionPolicy
      *            Policy for selecting which server to terminate.
-     * @param instanceHourMargin
-     *            How many seconds prior to the next instance hour an acquired
-     *            machine instance should be scheduled for termination. This
-     *            should be set to a conservative and safe value to prevent the
-     *            machine from being billed for an additional hour. A value of
-     *            zero is used to specify immediate termination when a
-     *            scale-down is ordered.
      */
-    public ScaleInConfig(VictimSelectionPolicy victimSelectionPolicy, int instanceHourMargin) {
+    public ScaleInConfig(VictimSelectionPolicy victimSelectionPolicy) {
         this.victimSelectionPolicy = victimSelectionPolicy;
-        this.instanceHourMargin = instanceHourMargin;
     }
 
     /**
@@ -54,36 +38,20 @@ public class ScaleInConfig {
         return this.victimSelectionPolicy;
     }
 
-    /**
-     * How many seconds prior to the next instance hour an acquired machine
-     * instance should be scheduled for termination. This should be set to a
-     * conservative and safe value to prevent the machine from being billed for
-     * an additional hour. A value of zero is used to specify immediate
-     * termination when a scale-down is ordered.
-     *
-     * @return
-     */
-    public Integer getInstanceHourMargin() {
-        return this.instanceHourMargin;
-    }
-
     public void validate() throws IllegalArgumentException {
-        checkArgument(this.victimSelectionPolicy != null, "victim selection policy cannot be null");
-        checkArgument(Range.closedOpen(0, 3600).contains(this.instanceHourMargin),
-                "instance hour margin must be in interval [0, 3600)");
+        checkArgument(this.victimSelectionPolicy != null, "scaleInConfig: missing victimSelectionPolicy");
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.victimSelectionPolicy, this.instanceHourMargin);
+        return Objects.hashCode(this.victimSelectionPolicy);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof ScaleInConfig) {
             ScaleInConfig that = (ScaleInConfig) obj;
-            return equal(this.victimSelectionPolicy, that.victimSelectionPolicy)
-                    && equal(this.instanceHourMargin, that.instanceHourMargin);
+            return equal(this.victimSelectionPolicy, that.victimSelectionPolicy);
         }
         return false;
     }

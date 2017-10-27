@@ -9,12 +9,5 @@
 
     "provisioningTemplate": {
         "autoScalingGroup": "mygroup"
-    },
-    
-    "scaleInConfig": {
-      "victimSelectionPolicy": "OLDEST_INSTANCE",
-      "instanceHourMargin": 600
-    },
-    
-    "poolUpdatePeriod": 60            
+    }            
 }  

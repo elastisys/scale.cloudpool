@@ -11,7 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
-import com.elastisys.scale.cloudpool.commons.scaledown.strategies.OldestInstanceVictimSelectionStrategy;
+import com.elastisys.scale.cloudpool.commons.scaledown.strategies.OldestMachineVictimSelectionStrategy;
 
 /**
  * Exercises the {@link VictimSelector}.
@@ -27,7 +27,7 @@ public class TestVictimSelector extends AbstractScaledownTest {
 
     @Before
     public void onSetup() {
-        this.victimSelector = new VictimSelector(OldestInstanceVictimSelectionStrategy.INSTANCE);
+        this.victimSelector = new VictimSelector(OldestMachineVictimSelectionStrategy.INSTANCE);
     }
 
     @Test(expected = NullPointerException.class)

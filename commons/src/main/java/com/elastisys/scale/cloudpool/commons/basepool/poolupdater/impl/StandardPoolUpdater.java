@@ -32,8 +32,6 @@ import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.PoolFetcher;
 import com.elastisys.scale.cloudpool.commons.basepool.poolupdater.PoolUpdater;
 import com.elastisys.scale.cloudpool.commons.resizeplanner.ResizePlan;
 import com.elastisys.scale.cloudpool.commons.resizeplanner.ResizePlanner;
-import com.elastisys.scale.cloudpool.commons.termqueue.ScheduledTermination;
-import com.elastisys.scale.cloudpool.commons.termqueue.TerminationQueue;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.Alert;
@@ -73,12 +71,6 @@ public class StandardPoolUpdater implements PoolUpdater {
     /** Lock to prevent concurrent modification of {@link #desiredSize}. */
     private final Object desiredSizeLock = new Object();
 
-    /**
-     * The queue of already termination-marked instances (these will be used to
-     * filter out instances already scheduled for termination from the candidate
-     * set).
-     */
-    private final TerminationQueue terminationQueue;
     /** Lock to protect the machine pool from concurrent modifications. */
     private final Object poolUpdateLock = new Object();
 
@@ -92,7 +84,6 @@ public class StandardPoolUpdater implements PoolUpdater {
         this.eventBus = eventBus;
         this.config = config;
 
-        this.terminationQueue = new TerminationQueue();
         this.desiredSize = null;
 
         // start periodical cache update task
@@ -391,37 +382,23 @@ public class StandardPoolUpdater implements PoolUpdater {
         LOG.info("updating pool size to desired size {}", targetSize);
 
         LOG.debug("current pool members: {}", Lists.transform(pool.getMachines(), Machine.toShortString()));
-        this.terminationQueue.filter(pool.getActiveMachines());
-        ResizePlanner resizePlanner = new ResizePlanner(pool, this.terminationQueue,
-                config.getScaleInConfig().getVictimSelectionPolicy(),
-                config.getScaleInConfig().getInstanceHourMargin());
-        int netSize = resizePlanner.getNetSize();
+        ResizePlanner resizePlanner = new ResizePlanner(pool, config.getScaleInConfig().getVictimSelectionPolicy());
+        int activeSize = resizePlanner.getActiveSize();
 
         ResizePlan resizePlan = resizePlanner.calculateResizePlan(targetSize);
         if (resizePlan.hasScaleOutActions()) {
             scaleOut(resizePlan);
         }
         if (resizePlan.hasScaleInActions()) {
-            List<ScheduledTermination> terminations = resizePlan.getToTerminate();
-            LOG.info("scheduling {} machine(s) for termination", terminations.size());
-            for (ScheduledTermination termination : terminations) {
-                this.terminationQueue.add(termination);
-                LOG.debug("scheduling machine {} for termination at {}", termination.getInstance().getId(),
-                        termination.getTerminationTime());
-            }
-            LOG.debug("termination queue: {}", this.terminationQueue);
+            terminateMachines(resizePlan.getToTerminate());
         }
         if (resizePlan.noChanges()) {
-            LOG.info("pool is already properly sized ({})", netSize);
+            LOG.info("pool is already properly sized ({})", activeSize);
         }
-        // effectuate scheduled terminations that are (over)due
-        terminateOverdueMachines();
     }
 
     private List<Machine> scaleOut(ResizePlan resizePlan) throws StartMachinesException {
-        LOG.info("sparing {} machine(s) from termination, " + "placing {} new request(s)", resizePlan.getToSpare(),
-                resizePlan.getToRequest());
-        this.terminationQueue.spare(resizePlan.getToSpare());
+        LOG.info("placing {} new machine requests", resizePlan.getToRequest());
 
         try {
             List<Machine> startedMachines = this.cloudDriver.startMachines(resizePlan.getToRequest());
@@ -435,26 +412,32 @@ public class StandardPoolUpdater implements PoolUpdater {
         }
     }
 
-    private List<Machine> terminateOverdueMachines() {
-        LOG.debug("checking termination queue for overdue machines: {}", this.terminationQueue);
-        List<ScheduledTermination> overdueInstances = this.terminationQueue.popOverdueInstances();
-        if (overdueInstances.isEmpty()) {
+    /**
+     * Attempts to terminate the given collection of victim {@link Machine}s.
+     * The collection of {@link Machine}s that were successfully terminated are
+     * returned. Any failed terminations results in an {@link Alert} being
+     * posted on the {@link EventBus}.
+     *
+     * @param victims
+     * @return
+     */
+    private List<Machine> terminateMachines(List<Machine> victims) {
+        if (victims.isEmpty()) {
             return Collections.emptyList();
         }
 
         List<Machine> terminated = Lists.newArrayList();
-        LOG.info("terminating {} overdue machine(s): {}", overdueInstances.size(), overdueInstances);
-        for (ScheduledTermination overdueInstance : overdueInstances) {
-            String victimId = overdueInstance.getInstance().getId();
+        LOG.info("terminating {} machine(s): {}", victims.size(), Lists.transform(victims, Machine.toId()));
+        for (Machine victim : victims) {
             try {
-                this.cloudDriver.terminateMachine(victimId);
-                terminated.add(overdueInstance.getInstance());
+                this.cloudDriver.terminateMachine(victim.getId());
+                terminated.add(victim);
             } catch (Exception e) {
-                // only warn, since a failure to terminate an instance is not
+                // only warn, since a failure to terminate a machine is not
                 // necessarily an error condition, as the machine, e.g., may
                 // have been terminated by external means since we last checked
                 // the pool members
-                String message = format("failed to terminate instance '%s': %s", victimId, e.getMessage());
+                String message = format("failed to terminate machine '%s': %s", victim.getId(), e.getMessage());
                 Alert alert = AlertBuilder.create().topic(RESIZE.name()).severity(AlertSeverity.WARN).message(message)
                         .build();
                 this.eventBus.post(alert);

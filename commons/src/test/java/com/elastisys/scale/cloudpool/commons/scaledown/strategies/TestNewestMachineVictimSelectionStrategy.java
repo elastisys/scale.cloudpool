@@ -13,14 +13,13 @@ import org.junit.Test;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.commons.scaledown.AbstractScaledownTest;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionStrategy;
-import com.elastisys.scale.cloudpool.commons.scaledown.strategies.OldestInstanceVictimSelectionStrategy;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
 
-public class TestOldestInstanceVictimSelectionStrategy extends AbstractScaledownTest {
+public class TestNewestMachineVictimSelectionStrategy extends AbstractScaledownTest {
 
     /** Object under test. */
-    private final VictimSelectionStrategy strategy = OldestInstanceVictimSelectionStrategy.INSTANCE;
+    private final VictimSelectionStrategy strategy = NewestMachineVictimSelectionStrategy.INSTANCE;
 
     @Test(expected = NullPointerException.class)
     public void onNullCandidateSet() {
@@ -44,10 +43,10 @@ public class TestOldestInstanceVictimSelectionStrategy extends AbstractScaledown
     public void onMultiCandidateSet() {
         FrozenTime.setFixed(UtcTime.parse("2012-06-01T10:00:00"));
 
-        Machine instance1 = instance("i-1", "2012-06-01T09:45:00");
-        Machine instance2 = instance("i-2", "2012-06-01T09:30:00");
         // oldest instance
-        Machine instance3 = instance("i-3", "2012-06-01T09:15:00");
+        Machine instance1 = instance("i-1", "2012-06-01T09:15:00");
+        Machine instance2 = instance("i-2", "2012-06-01T09:30:00");
+        Machine instance3 = instance("i-3", "2012-06-01T09:45:00");
 
         // two candidates
         List<Machine> set = asList(instance1, instance2);
@@ -63,4 +62,40 @@ public class TestOldestInstanceVictimSelectionStrategy extends AbstractScaledown
         set = asList(instance3, instance1, instance2);
         assertThat(this.strategy.selectVictim(set), is(instance3));
     }
+
+    /**
+     * At times when no launch time is decided for a certain machine, such
+     * machines are considered first.
+     */
+    @Test
+    public void onCandidatesWithNullLaunchTime() {
+        FrozenTime.setFixed(UtcTime.parse("2012-06-01T10:00:00"));
+
+        // oldest instance
+        Machine instance1 = instance("i-1", "2012-06-01T09:15:00");
+        Machine instance2 = instance("i-2", "2012-06-01T09:30:00");
+        Machine instance3 = instance("i-3", null);
+
+        // two candidates
+        List<Machine> set = asList(instance1, instance2);
+        assertThat(this.strategy.selectVictim(set), is(instance2));
+
+        // three candidates
+        set = asList(instance1, instance2, instance3);
+        assertThat(this.strategy.selectVictim(set), is(instance3));
+
+        // candidate order should not matter
+        set = asList(instance2, instance3, instance1);
+        assertThat(this.strategy.selectVictim(set), is(instance3));
+        set = asList(instance3, instance1, instance2);
+        assertThat(this.strategy.selectVictim(set), is(instance3));
+
+        // if all are launchTimes are null, the comparison is made on id
+        instance1 = instance("i-1", null);
+        instance2 = instance("i-2", null);
+        instance3 = instance("i-3", null);
+        set = asList(instance3, instance1, instance2);
+        assertThat(this.strategy.selectVictim(set), is(instance3));
+    }
+
 }

@@ -18,8 +18,7 @@
     },
     
     "scaleInConfig": {
-        "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
-        "instanceHourMargin": 0
+        "victimSelectionPolicy": "OLDEST"
     },
     
     "alerts": { 

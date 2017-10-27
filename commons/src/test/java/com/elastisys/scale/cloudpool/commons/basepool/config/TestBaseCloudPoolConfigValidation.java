@@ -258,7 +258,7 @@ public class TestBaseCloudPoolConfigValidation {
     }
 
     private ScaleInConfig scaleInConfig() {
-        return new ScaleInConfig(VictimSelectionPolicy.CLOSEST_TO_INSTANCE_HOUR, 300);
+        return new ScaleInConfig(VictimSelectionPolicy.OLDEST);
     }
 
     private PoolFetchConfig poolFetch() {

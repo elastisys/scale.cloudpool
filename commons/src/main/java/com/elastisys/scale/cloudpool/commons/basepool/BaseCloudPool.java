@@ -83,8 +83,7 @@ import com.google.gson.JsonObject;
  *     },
  *
  *     "scaleInConfig": {
- *         "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
- *         "instanceHourMargin": 300
+ *         "victimSelectionPolicy": "NEWEST"
  *     },
  *
  *     "alerts": {
@@ -164,16 +163,12 @@ import com.google.gson.JsonObject;
  * needs to grow or shrink.
  *
  * <ul>
- * <li><i>scale out</i>: start by sparing machines from termination if the
- * termination queue is non-empty. For any remaining instances: request them to
- * be started by the {@link CloudPoolDriver} via
- * {@link CloudPoolDriver#startMachines}.</li>
+ * <li><i>scale out</i>: request machines to be started by the
+ * {@link CloudPoolDriver} via {@link CloudPoolDriver#startMachines}.</li>
  * <li><i>scale in</i>: start by terminating any machines in
- * {@link MachineState#REQUESTED} state, since these are likely to not yet incur
- * cost. Any such machines are terminated immediately. If additional capacity is
- * to be removed, select a victim according to the configured
- * {@code victimSelectionPolicy} and schedule it for termination according to
- * the configured {@code instanceHourMargin}. Each instance termination is
+ * {@link MachineState#REQUESTED} state, since these are likely to not yet be
+ * useful. If additional machines are to be removed, select a victim according
+ * to the configured {@code victimSelectionPolicy}. Each instance termination is
  * delegated to {@link CloudPoolDriver#terminateMachine(String)}.</li>
  * </ul>
  *

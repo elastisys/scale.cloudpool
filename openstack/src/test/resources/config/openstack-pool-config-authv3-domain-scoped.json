@@ -23,10 +23,5 @@
         "encodedUserData": "YXB0LWdldCB1cGRhdGUgLXF5ICYmIGFwdC1nZXQgaW5zdGFsbCBhcGFjaGUyCg==",
         "networks": ["private-net"],
         "assignFloatingIp": true
-    },
-
-    "scaleInConfig": {
-        "victimSelectionPolicy": "CLOSEST_TO_INSTANCE_HOUR",
-        "instanceHourMargin": 0
     }
 }  

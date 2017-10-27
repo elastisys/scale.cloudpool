@@ -12,8 +12,7 @@
     },
 
     "scaleInConfig": {
-        "victimSelectionPolicy": "NEWEST_INSTANCE",
-        "instanceHourMargin": 0
+        "victimSelectionPolicy": "NEWEST"
     },
 
     "alerts": {
