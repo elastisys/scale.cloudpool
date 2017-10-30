@@ -5,13 +5,18 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Lists.transform;
 import static java.lang.String.format;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
 import com.amazonaws.services.autoscaling.model.LaunchConfiguration;
 import com.amazonaws.services.ec2.model.Instance;
@@ -32,6 +37,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -211,31 +217,63 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
     }
 
     @Override
-    public void terminateMachine(String machineId) throws CloudPoolDriverException {
+    public void terminateMachines(List<String> machineIds)
+            throws IllegalStateException, TerminateMachinesException, CloudPoolDriverException {
+        checkState(isConfigured(), "attempt to use unconfigured driver");
+        List<String> victimIds = new ArrayList<>(machineIds);
+        LOG.info("request to terminate instances: {}", machineIds);
+
+        List<Machine> poolMembers = listMachines();
+
+        // track termination failures
+        Map<String, Throwable> failures = new HashMap<>();
+
+        // only terminate pool members (error mark others)
+        nonPoolMembers(machineIds, poolMembers).stream().forEach(machineId -> {
+            failures.put(machineId,
+                    new NotFoundException(String.format("machine %s is not a member of the pool", machineId)));
+            victimIds.remove(machineId);
+        });
+
+        List<String> terminated = new ArrayList<>();
+        for (String machineId : victimIds) {
+            try {
+                terminateMachine(machineId);
+                terminated.add(machineId);
+            } catch (Exception e) {
+                failures.put(machineId, e);
+            }
+        }
+
+        if (!failures.isEmpty()) {
+            throw new TerminateMachinesException(terminated, failures);
+        }
+    }
+
+    /**
+     * Terminates a single machine from the Auto Scaling Group.
+     *
+     * @param machineId
+     *
+     * @throws NotFoundException
+     * @throws AmazonClientException
+     */
+    private void terminateMachine(String machineId) throws NotFoundException, AmazonClientException {
         checkState(isConfigured(), "attempt to use unconfigured driver");
 
-        try {
-            if (machineId.startsWith(REQUESTED_ID_PREFIX)) {
-                // we were asked to terminate a placeholder instance (a
-                // requested, but not yet assigned, instance). just decrement
-                // desiredCapacity of the group.
-                AutoScalingGroup group = this.client.getAutoScalingGroup(scalingGroupName());
-                int desiredSize = group.getDesiredCapacity();
-                int newSize = desiredSize - 1;
-                LOG.debug(
-                        "termination request for placeholder instance {}, " + "reducing desiredCapacity from {} to {}",
-                        machineId, desiredSize, newSize);
-                this.client.setDesiredSize(scalingGroupName(), newSize);
-            } else {
-                // verify that machine exists in group
-                getMachineOrFail(machineId);
-                LOG.info("terminating instance {}", machineId);
-                this.client.terminateInstance(scalingGroupName(), machineId);
-            }
-        } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, NotFoundException.class);
-            String message = format("failed to terminate instance \"%s\": %s", machineId, e.getMessage());
-            throw new CloudPoolDriverException(message, e);
+        if (machineId.startsWith(REQUESTED_ID_PREFIX)) {
+            // we were asked to terminate a placeholder instance (a
+            // requested, but not yet assigned, instance). just decrement
+            // desiredCapacity of the group.
+            AutoScalingGroup group = this.client.getAutoScalingGroup(scalingGroupName());
+            int desiredSize = group.getDesiredCapacity();
+            int newSize = desiredSize - 1;
+            LOG.debug("termination request for placeholder instance {}, " + "reducing desiredCapacity from {} to {}",
+                    machineId, desiredSize, newSize);
+            this.client.setDesiredSize(scalingGroupName(), newSize);
+        } else {
+            LOG.info("terminating instance {}", machineId);
+            this.client.terminateInstance(scalingGroupName(), machineId);
         }
     }
 
@@ -246,7 +284,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
         try {
             this.client.attachInstance(scalingGroupName(), machineId);
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, NotFoundException.class);
+            Throwables.throwIfInstanceOf(e, NotFoundException.class);
             String message = format("failed to attach instance \"%s\": %s", machineId, e.getMessage());
             throw new CloudPoolDriverException(message, e);
         }
@@ -279,7 +317,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
             Tag tag = new Tag().withKey(ScalingTags.SERVICE_STATE_TAG).withValue(serviceState.name());
             this.client.tagInstance(machineId, Arrays.asList(tag));
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
+            Throwables.throwIfInstanceOf(e, CloudPoolDriverException.class);
             String message = format("failed to tag service state on server \"%s\": %s", machineId, e.getMessage());
             throw new CloudPoolDriverException(message, e);
         }
@@ -298,7 +336,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
                     .withValue(JsonUtils.toString(toJson(membershipStatus)));
             this.client.tagInstance(machineId, Arrays.asList(tag));
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
+            Throwables.throwIfInstanceOf(e, CloudPoolDriverException.class);
             String message = format("failed to tag membership status on server \"%s\": %s", machineId, e.getMessage());
             throw new CloudPoolDriverException(message, e);
         }
@@ -322,6 +360,30 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
         }
 
         throw new NotFoundException(String.format("no machine with id '%s' found in cloud pool", machineId));
+    }
+
+    /**
+     * Returns the list of machine ids (from a given list of machine ids) that
+     * are *not* members of the given pool.
+     *
+     * @param machineIds
+     * @param pool
+     * @return
+     */
+    private static List<String> nonPoolMembers(List<String> machineIds, List<Machine> pool) {
+        return machineIds.stream().filter(machineId -> !member(machineId, pool)).collect(Collectors.toList());
+    }
+
+    /**
+     * Returns <code>true</code> if the given instance id is found in the given
+     * machine pool.
+     *
+     * @param machineId
+     * @param pool
+     * @return
+     */
+    private static boolean member(String machineId, List<Machine> pool) {
+        return pool.stream().anyMatch(m -> m.getId().equals(machineId));
     }
 
     @Override

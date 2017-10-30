@@ -42,7 +42,8 @@ public class BaseCloudPoolConfig {
             new TimeInterval(60L, TimeUnit.SECONDS));
 
     /** Default scale-in policy is to terminate the newest machines first. */
-    public static final ScaleInConfig DEFAULT_SCALE_IN_CONFIG = new ScaleInConfig(null);
+    public static final ScaleInConfig DEFAULT_SCALE_IN_CONFIG = new ScaleInConfig(
+            ScaleInConfig.DEFAULT_VICTIM_SELECTION_POLICY);
 
     /**
      * The logical name of the managed group of machines. The exact way of

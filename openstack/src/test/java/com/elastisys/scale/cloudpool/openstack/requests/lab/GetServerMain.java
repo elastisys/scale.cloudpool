@@ -14,8 +14,7 @@ public class GetServerMain {
     private static final String serverId = "47d3376e-e6e0-4ebd-8ba5-add5d67a6c8e";
 
     public static void main(String[] args) {
-        Server server = new GetServerRequest(new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig()),
-                serverId).call();
+        Server server = new GetServerRequest(new OSClientFactory(DriverConfigLoader.loadDefault()), serverId).call();
         LOG.info("got server: {}", server);
     }
 }

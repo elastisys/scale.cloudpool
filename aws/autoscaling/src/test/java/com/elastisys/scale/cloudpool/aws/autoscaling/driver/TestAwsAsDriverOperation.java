@@ -9,6 +9,7 @@ import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.TestUtils.gro
 import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.TestUtils.spotInstance;
 import static com.elastisys.scale.cloudpool.aws.commons.ScalingTags.SERVICE_STATE_TAG;
 import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -20,6 +21,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,6 +52,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.collect.Lists;
 
@@ -270,25 +273,25 @@ public class TestAwsAsDriverOperation {
     }
 
     /**
-     * Verifies behavior when terminating an actual group member.
+     * Verifies behavior when terminating a single scaling group instance.
      */
     @Test
-    public void terminate() throws Exception {
+    public void terminateSingleInstance() throws Exception {
         DriverConfig config = driverConfig(GROUP_NAME);
 
         int desiredCapacity = 2;
         this.driver = new AwsAsPoolDriver(new FakeAutoScalingClient(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, desiredCapacity,
                 ec2Instances(ec2Instance("i-1", "running"), ec2Instance("i-2", "pending"))));
         this.driver.configure(config);
-        this.driver.terminateMachine("i-1");
+        this.driver.terminateMachines(Arrays.asList("i-1"));
         assertThat(this.driver.listMachines(), is(MachinesMatcher.machines("i-2")));
 
-        this.driver.terminateMachine("i-2");
+        this.driver.terminateMachines(Arrays.asList("i-2"));
         assertThat(this.driver.listMachines(), is(MachinesMatcher.machines()));
     }
 
     /**
-     * Verifies behavior when terminating an group member that has only been
+     * Verifies behavior when terminating a group member that has only been
      * requested but not yet been acquired by the Auto Scaling Group (and has a
      * placeholder id such as 'i-requested1').
      */
@@ -314,31 +317,46 @@ public class TestAwsAsDriverOperation {
         // now ask scaling group to terminate the requested instance (this
         // should only result in the desired capacity being decremented, not
         // attempting to actually terminate the fake instance)
-        this.driver.terminateMachine(requestedMachineId);
+        this.driver.terminateMachines(asList(requestedMachineId));
         assertThat(client.getAutoScalingGroup(GROUP_NAME).getDesiredCapacity(), is(2));
         assertThat(this.driver.listMachines(), is(MachinesMatcher.machines("i-1", "i-2")));
+    }
+
+    /**
+     * Verifies behavior when terminating multiple scaling group instances.
+     */
+    @Test
+    public void terminateMultipleInstances() throws Exception {
+        DriverConfig config = driverConfig(GROUP_NAME);
+
+        int desiredCapacity = 2;
+        this.driver = new AwsAsPoolDriver(new FakeAutoScalingClient(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, desiredCapacity,
+                ec2Instances(ec2Instance("i-1", "running"), ec2Instance("i-2", "pending"))));
+        this.driver.configure(config);
+        this.driver.terminateMachines(Arrays.asList("i-1", "i-2"));
+        assertThat(this.driver.listMachines(), is(MachinesMatcher.machines()));
     }
 
     /**
      * On a client error, a {@link CloudPoolDriverException} should be raised.
      */
     @Test(expected = CloudPoolDriverException.class)
-    public void terminateOnError() throws Exception {
+    public void terminateOnClientError() throws Exception {
         // set up mock to throw an error whenever terminateInstance is called
         int desiredCapacity = 1;
         setUpMockedAutoScalingGroup(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, desiredCapacity,
                 ec2Instances(ec2Instance("i-1", "running")));
-        doThrow(new AmazonClientException("API unreachable")).when(this.mockAwsClient).terminateInstance(GROUP_NAME,
-                "i-1");
+        doThrow(new AmazonClientException("API unreachable")).when(this.mockAwsClient).getAutoScalingGroup(GROUP_NAME);
 
-        this.driver.terminateMachine("i-1");
+        this.driver.terminateMachines(asList("i-1"));
     }
 
     /**
      * It should not be possible to terminate a machine instance that is not
-     * recognized as a group member.
+     * recognized as a group member. Any such attempt must fail and be reported
+     * in a {@link TerminateMachinesException}.
      */
-    @Test(expected = NotFoundException.class)
+    @Test
     public void terminateOnNonGroupMember() throws Exception {
         int desiredCapacity = 1;
         List<Instance> members = ec2Instances(ec2Instance("i-1", "running"));
@@ -347,7 +365,39 @@ public class TestAwsAsDriverOperation {
                 new FakeAutoScalingClient(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, desiredCapacity, members, nonMembers));
         this.driver.configure(TestUtils.driverConfig(GROUP_NAME));
 
-        this.driver.terminateMachine("i-2");
+        try {
+            this.driver.terminateMachines(asList("i-2"));
+        } catch (TerminateMachinesException e) {
+            // expected
+            assertTrue(e.getTerminationErrors().keySet().contains("i-2"));
+            assertThat(e.getTerminationErrors().get("i-2"), instanceOf(NotFoundException.class));
+            assertThat(e.getTerminatedMachines(), is(Collections.emptyList()));
+        }
+    }
+
+    /**
+     * When some terminations were successful and some failed, a
+     * {@link TerminateMachinesException} should be thrown which indicates which
+     * instances were terminated and which instance terminations failed.
+     */
+    @Test
+    public void terminateOnPartialFailure() {
+        int desiredCapacity = 2;
+        List<Instance> members = ec2Instances(ec2Instance("i-1", "running"), ec2Instance("i-2", "running"));
+        // i-3 is not a member of the Auto Scaling Group
+        List<Instance> nonMembers = ec2Instances(ec2Instance("i-3", "running"));
+        this.driver = new AwsAsPoolDriver(
+                new FakeAutoScalingClient(GROUP_NAME, ONDEMAND_LAUNCH_CONFIG, desiredCapacity, members, nonMembers));
+        this.driver.configure(TestUtils.driverConfig(GROUP_NAME));
+
+        try {
+            this.driver.terminateMachines(asList("i-1", "i-2", "i-3"));
+        } catch (TerminateMachinesException e) {
+            // expected
+            assertTrue(e.getTerminationErrors().keySet().contains("i-3"));
+            assertThat(e.getTerminationErrors().get("i-3"), instanceOf(NotFoundException.class));
+            assertThat(e.getTerminatedMachines(), is(asList("i-1", "i-2")));
+        }
     }
 
     /**

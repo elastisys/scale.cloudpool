@@ -56,6 +56,8 @@ public class TestBaseCloudPoolConfig {
         config.validate();
 
         assertThat(config.getScaleInConfig(), is(BaseCloudPoolConfig.DEFAULT_SCALE_IN_CONFIG));
+        assertThat(config.getScaleInConfig().getVictimSelectionPolicy(),
+                is(ScaleInConfig.DEFAULT_VICTIM_SELECTION_POLICY));
     }
 
     /**

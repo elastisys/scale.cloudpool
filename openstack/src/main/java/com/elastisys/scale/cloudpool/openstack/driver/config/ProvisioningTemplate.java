@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.openstack.driver.config;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -9,6 +10,7 @@ import java.util.Optional;
 
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.google.gson.JsonObject;
 
 /**
  * OpenStack-specific server provisioning template.
@@ -248,5 +250,62 @@ public class ProvisioningTemplate {
     @Override
     public String toString() {
         return JsonUtils.toPrettyString(JsonUtils.toJson(this));
+    }
+
+    public JsonObject toJson() {
+        return JsonUtils.toJson(this).getAsJsonObject();
+    }
+
+    public static Builder builder(String size, String image) {
+        return new Builder(size, image);
+    }
+
+    /**
+     * A builder for constructing {@link ProvisioningTemplate}s.
+     */
+    public static class Builder {
+        private final String size;
+        private final String image;
+        private String keyPair;
+        private List<String> securityGroups = new ArrayList<>();
+        private String encodedUserData;
+        private List<String> networks = new ArrayList<>();
+        private Boolean assignFloatingIp;
+
+        public Builder(String size, String image) {
+            this.size = size;
+            this.image = image;
+        }
+
+        public Builder keyPair(String keyPair) {
+            this.keyPair = keyPair;
+            return this;
+        }
+
+        public Builder securityGroup(String securityGroup) {
+            this.securityGroups.add(securityGroup);
+            return this;
+        }
+
+        public Builder userData(String encodedUserData) {
+            this.encodedUserData = encodedUserData;
+            return this;
+        }
+
+        public Builder network(String network) {
+            this.networks.add(network);
+            return this;
+        }
+
+        public Builder floatingIp(boolean shouldBeAssigned) {
+            this.assignFloatingIp = shouldBeAssigned;
+            return this;
+        }
+
+        public ProvisioningTemplate build() {
+            return new ProvisioningTemplate(this.size, this.image, this.keyPair, this.securityGroups,
+                    this.encodedUserData, this.networks, this.assignFloatingIp);
+        }
+
     }
 }

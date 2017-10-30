@@ -21,6 +21,7 @@
     "provisioningTemplate": {
         "vmSize": "Standard_DS1_v2",
         "vmImage": "Canonical:UbuntuServer:16.04.0-LTS:latest",
+        "osDiskType": "Premium_LRS",
         "linuxSettings": {
             "rootUserName": "ubuntu",
             "publicSshKey": "ssh-rsa XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX foo@bar",
@@ -28,7 +29,6 @@
                 "encodedCommand": "c2ggLWMgJ2FwdCB1cGRhdGUgLXF5ICYmIGFwdCBpbnN0YWxsIC1xeSBhcGFjaGUyJwo="
             }
         },
-        "storageAccountName": "testpooldisks",
         "network": {
             "virtualNetwork": "testnet",
             "subnetName": "default",

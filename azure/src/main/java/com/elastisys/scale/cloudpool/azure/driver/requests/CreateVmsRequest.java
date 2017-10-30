@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.azure.driver.requests;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.elastisys.scale.cloudpool.azure.driver.client.AzureException;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.VirtualMachine;
@@ -30,10 +31,17 @@ public class CreateVmsRequest extends AzureRequest<CreatedResources<VirtualMachi
     }
 
     @Override
-    public CreatedResources<VirtualMachine> doRequest(Azure api) throws RuntimeException {
+    public CreatedResources<VirtualMachine> doRequest(Azure api) throws AzureException {
         List<String> vmNames = this.vmDefinitions.stream().map(Creatable::name).collect(Collectors.toList());
         LOG.debug("creating VMs {} ...", vmNames);
-        CreatedResources<VirtualMachine> created = api.virtualMachines().create(this.vmDefinitions);
+
+        CreatedResources<VirtualMachine> created;
+        try {
+            created = api.virtualMachines().create(this.vmDefinitions);
+        } catch (Exception e) {
+            throw new AzureException(String.format("failed to create vms: %s: %s", vmNames, e.getMessage()), e);
+        }
+
         LOG.debug("done creating VMs {}.", vmNames);
         return created;
     }

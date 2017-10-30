@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.openstack4j.api.OSClient;
 import org.openstack4j.api.compute.ServerService;
+import org.openstack4j.api.exceptions.ResponseException;
 import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
@@ -47,12 +48,12 @@ public class DeleteServerMetadataRequest extends AbstractOpenstackRequest<Void> 
     }
 
     @Override
-    public Void doRequest(OSClient api) throws NotFoundException {
+    public Void doRequest(OSClient api) throws NotFoundException, ResponseException {
         ServerService serverApi = api.compute().servers();
         Server server = serverApi.get(this.serverId);
         if (server == null) {
             throw new NotFoundException(
-                    format("failed to update meta data on server '%s': " + "server not found", this.serverId));
+                    format("failed to update meta data on server '%s': server not found", this.serverId));
         }
         // delete tags
         for (String metadataKey : this.metadataKeysToDelete) {

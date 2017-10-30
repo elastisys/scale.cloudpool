@@ -6,10 +6,11 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.LaunchSpecification;
 import com.amazonaws.services.ec2.model.RequestSpotInstancesRequest;
 import com.amazonaws.services.ec2.model.RequestSpotInstancesResult;
@@ -26,10 +27,9 @@ public class PlaceMultiInstanceRequest extends BaseClient {
         String region = "us-east-1";
 
         AWSCredentials credentials = new BasicAWSCredentials(awsAccessKeyId, awsSecretAccessKey);
-        AmazonEC2Client api = new AmazonEC2Client(credentials, new ClientConfiguration());
 
-        String ec2Endpoint = "ec2." + region + ".amazonaws.com";
-        api.setEndpoint(ec2Endpoint);
+        AmazonEC2 api = AmazonEC2ClientBuilder.standard().withRegion(region)
+                .withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
 
         // no particular availability zone
         String availabilityZone = null;

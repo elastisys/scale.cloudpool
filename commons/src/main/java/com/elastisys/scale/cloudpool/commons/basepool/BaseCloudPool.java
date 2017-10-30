@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.commons.basepool;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.lang.management.ManagementFactory;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -448,7 +449,19 @@ public class BaseCloudPool implements CloudPool {
     private Map<String, JsonElement> standardAlertMetadata() {
         Map<String, JsonElement> standardTags = Maps.newHashMap();
         standardTags.put("cloudPoolName", JsonUtils.toJson(config().getName()));
+        // typically a string of form: pid@hostname
+        standardTags.put("jvmId", JsonUtils.toJson(jvmId()));
         return standardTags;
+    }
+
+    /**
+     * Returns a (platform-dependent) identifier for the JVM. Typically of form
+     * {@code pid@hostname}.
+     * 
+     * @return
+     */
+    private String jvmId() {
+        return ManagementFactory.getRuntimeMXBean().getName();
     }
 
     BaseCloudPoolConfig config() {

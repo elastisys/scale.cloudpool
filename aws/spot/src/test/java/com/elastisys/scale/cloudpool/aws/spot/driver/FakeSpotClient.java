@@ -14,13 +14,19 @@ import org.slf4j.LoggerFactory;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.ClientConfiguration;
+import com.amazonaws.services.ec2.model.CancelSpotInstanceRequestState;
+import com.amazonaws.services.ec2.model.CancelSpotInstanceRequestsResult;
+import com.amazonaws.services.ec2.model.CancelledSpotInstanceRequest;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceState;
+import com.amazonaws.services.ec2.model.InstanceStateChange;
+import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.amazonaws.services.ec2.model.LaunchSpecification;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.SpotInstanceState;
 import com.amazonaws.services.ec2.model.Tag;
+import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTemplate;
@@ -170,7 +176,9 @@ public class FakeSpotClient implements SpotClient {
     }
 
     @Override
-    public void terminateInstances(List<String> instanceIds) throws NotFoundException, AmazonClientException {
+    public TerminateInstancesResult terminateInstances(List<String> instanceIds)
+            throws NotFoundException, AmazonClientException {
+        TerminateInstancesResult result = new TerminateInstancesResult();
         for (String instanceId : instanceIds) {
             if (!this.instances.containsKey(instanceId)) {
                 throw new AmazonServiceException(String.format(
@@ -179,7 +187,12 @@ public class FakeSpotClient implements SpotClient {
                         instanceId));
             }
             this.instances.remove(instanceId);
+
+            result.withTerminatingInstances(new InstanceStateChange().withInstanceId(instanceId)
+                    .withCurrentState(new InstanceState().withName(InstanceStateName.ShuttingDown)));
+
         }
+        return result;
     }
 
     @Override
@@ -214,8 +227,8 @@ public class FakeSpotClient implements SpotClient {
     }
 
     @Override
-    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, Ec2ProvisioningTemplate instanceTemplate, int count,
-            List<Tag> tags) throws AmazonClientException {
+    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, Ec2ProvisioningTemplate instanceTemplate,
+            int count, List<Tag> tags) throws AmazonClientException {
         List<SpotInstanceRequest> requests = Lists.newArrayList();
         for (int i = 0; i < count; i++) {
             String id = "sir-" + (System.currentTimeMillis() + count);
@@ -229,10 +242,17 @@ public class FakeSpotClient implements SpotClient {
     }
 
     @Override
-    public void cancelSpotRequests(List<String> spotInstanceRequestIds) throws AmazonClientException {
+    public CancelSpotInstanceRequestsResult cancelSpotRequests(List<String> spotInstanceRequestIds)
+            throws AmazonClientException {
+        CancelSpotInstanceRequestsResult result = new CancelSpotInstanceRequestsResult();
         for (String spotInstanceRequestId : spotInstanceRequestIds) {
             getSpotInstanceRequest(spotInstanceRequestId).setState(SpotInstanceState.Cancelled);
+
+            result.withCancelledSpotInstanceRequests(
+                    new CancelledSpotInstanceRequest().withSpotInstanceRequestId(spotInstanceRequestId)
+                            .withState(CancelSpotInstanceRequestState.Cancelled));
         }
+        return result;
     }
 
     private boolean matches(Filter filter, SpotInstanceRequest spotRequest) {

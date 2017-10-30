@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.azure.driver;
 
 import static com.elastisys.scale.cloudpool.azure.driver.AzureTestUtils.driverConfig;
 import static com.elastisys.scale.cloudpool.azure.driver.AzureTestUtils.loadPoolConfig;
+import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
@@ -9,6 +10,9 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -22,18 +26,20 @@ import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig
 import com.elastisys.scale.commons.json.JsonUtils;
 
 /**
- * Exercise {@link AzurePoolDriver}.
+ * Exercises the configuration aspects of the {@link AzurePoolDriver}.
  */
-public class TestAzurePoolDriver {
+public class TestAzurePoolDriverConfiguration {
 
     /** Mock azure client being used by driver. */
     private AzureClient clientMock = mock(AzureClient.class);
+    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
+
     /** Object under test. */
     private AzurePoolDriver driver;
 
     @Before
     public void beforeTestMethod() {
-        this.driver = new AzurePoolDriver(this.clientMock);
+        this.driver = new AzurePoolDriver(this.clientMock, this.executor);
     }
 
     /**
@@ -79,14 +85,6 @@ public class TestAzurePoolDriver {
         verifyZeroInteractions(this.clientMock);
     }
 
-    // TODO: AzurePoolDriver tests for listMachines (success and failure)
-    // TODO: AzurePoolDriver tests for startMachines (success and failure)
-    // TODO: AzurePoolDriver tests for terminateMachine (success and failure)
-    // TODO: AzurePoolDriver tests for attachMachine (success and failure)
-    // TODO: AzurePoolDriver tests for detachMachine (success and failure)
-    // TODO: AzurePoolDriver tests for setServiceState (success and failure)
-    // TODO: AzurePoolDriver tests for setMembershipStatus (success and failure)
-
     @Test(expected = IllegalStateException.class)
     public void listMachinesBeforeConfigured() {
         this.driver.listMachines();
@@ -124,7 +122,7 @@ public class TestAzurePoolDriver {
 
     @Test(expected = IllegalStateException.class)
     public void terminateMachineBeforeConfigured() {
-        this.driver.terminateMachine("id");
+        this.driver.terminateMachines(asList("id"));
     }
 
 }

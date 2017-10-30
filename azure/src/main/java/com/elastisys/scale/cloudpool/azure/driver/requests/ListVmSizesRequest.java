@@ -3,7 +3,9 @@ package com.elastisys.scale.cloudpool.azure.driver.requests;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.elastisys.scale.cloudpool.azure.driver.client.AzureException;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
+import com.microsoft.azure.PagedList;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.VirtualMachineSize;
 import com.microsoft.azure.management.resources.fluentcore.arm.Region;
@@ -13,27 +15,34 @@ import com.microsoft.azure.management.resources.fluentcore.arm.Region;
  * region.
  *
  */
-public class GetVmSizesRequest extends AzureRequest<List<VirtualMachineSize>> {
+public class ListVmSizesRequest extends AzureRequest<List<VirtualMachineSize>> {
 
     /** The Azure region of interest. */
     private final Region region;
 
     /**
-     * Creates a {@link GetVmSizesRequest} for a particular region.
+     * Creates a {@link ListVmSizesRequest} for a particular region.
      *
      * @param apiAccess
      *            Azure API access credentials and settings.
      * @param regionName
      *            The Azure region of interest.
      */
-    public GetVmSizesRequest(AzureApiAccess apiAccess, Region region) {
+    public ListVmSizesRequest(AzureApiAccess apiAccess, Region region) {
         super(apiAccess);
         this.region = region;
     }
 
     @Override
-    public List<VirtualMachineSize> doRequest(Azure api) throws RuntimeException {
-        return new ArrayList<>(api.virtualMachines().sizes().listByRegion(this.region));
+    public List<VirtualMachineSize> doRequest(Azure api) throws AzureException {
+        PagedList<VirtualMachineSize> sizes;
+        try {
+            sizes = api.virtualMachines().sizes().listByRegion(this.region);
+        } catch (Exception e) {
+            throw new AzureException("failed to get vm sizes: " + e.getMessage(), e);
+        }
+
+        return new ArrayList<>(sizes);
     }
 
 }

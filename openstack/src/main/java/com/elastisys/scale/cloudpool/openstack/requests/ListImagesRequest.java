@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.openstack.requests;
 import java.util.List;
 
 import org.openstack4j.api.OSClient;
+import org.openstack4j.api.exceptions.ResponseException;
 import org.openstack4j.model.compute.Image;
 
 import com.elastisys.scale.commons.openstack.OSClientFactory;
@@ -26,7 +27,7 @@ public class ListImagesRequest extends AbstractOpenstackRequest<List<Image>> {
     }
 
     @Override
-    public List<Image> doRequest(OSClient api) {
+    public List<Image> doRequest(OSClient api) throws ResponseException {
         List<Image> images = Lists.newArrayList(api.compute().images().list(true));
         return images;
     }

@@ -7,6 +7,7 @@ import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
+import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 
@@ -107,10 +108,9 @@ public interface Ec2Client {
      *
      * @param instanceIds
      *            The identifiers of the {@link Instance}s to be terminated.
-     * @throws NotFoundException
-     *             if the instance doesn't exist
+     * @return The result of the termination request.
      * @throws AmazonClientException
      *             if the request failed
      */
-    void terminateInstances(List<String> instanceIds) throws NotFoundException, AmazonClientException;
+    TerminateInstancesResult terminateInstances(List<String> instanceIds) throws AmazonClientException;
 }

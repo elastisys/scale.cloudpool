@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.azure.driver.requests;
 
 import java.util.Collection;
 
+import com.elastisys.scale.cloudpool.azure.driver.client.AzureException;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.VirtualMachine;
@@ -36,15 +37,20 @@ public class UntagVmRequest extends AzureRequest<Void> {
     }
 
     @Override
-    public Void doRequest(Azure api) throws RuntimeException {
+    public Void doRequest(Azure api) throws AzureException {
         LOG.debug("untagging vm {}: {} ...", this.vmId, this.tagKeys);
+
         VirtualMachine vm = new GetVmRequest(apiAccess(), this.vmId).call();
 
-        Update update = vm.update();
-        for (String tagKey : this.tagKeys) {
-            update.withoutTag(tagKey);
+        try {
+            Update update = vm.update();
+            for (String tagKey : this.tagKeys) {
+                update.withoutTag(tagKey);
+            }
+            update.apply();
+        } catch (Exception e) {
+            throw new AzureException("failed to update vm tags: " + e.getMessage(), e);
         }
-        update.apply();
 
         LOG.debug("vm {} untagged.", this.vmId);
         return null;

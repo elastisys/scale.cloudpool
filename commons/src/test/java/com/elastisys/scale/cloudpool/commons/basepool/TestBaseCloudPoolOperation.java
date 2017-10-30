@@ -19,27 +19,29 @@ import static com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertTopics.
 import static com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy.NEWEST;
 import static com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy.OLDEST;
 import static com.elastisys.scale.commons.net.alerter.AlertSeverity.ERROR;
+import static com.elastisys.scale.commons.net.alerter.AlertSeverity.INFO;
 import static com.elastisys.scale.commons.net.alerter.AlertSeverity.WARN;
+import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,14 +72,17 @@ import com.elastisys.scale.cloudpool.commons.basepool.config.ScaleInConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
+import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.util.file.FileUtils;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 import com.google.gson.JsonObject;
@@ -494,7 +500,7 @@ public class TestBaseCloudPoolOperation {
 
         // verify that cloud driver was asked to terminate the oldest active
         // machine
-        verify(this.driverMock).terminateMachine("i-3");
+        verify(this.driverMock).terminateMachines(asList("i-3"));
         // verify event posted on event bus
         verify(this.eventBusMock).post(argThat(isTerminationAlert("i-3")));
 
@@ -505,7 +511,7 @@ public class TestBaseCloudPoolOperation {
      * Verify that cloud pool enforces the chosen {@link VictimSelectionPolicy}.
      */
     @Test
-    public void victimSelectionPolicyEnforcementOnscaleDown() throws CloudPoolException {
+    public void victimSelectionPolicyEnforcementOnScaleDown() throws CloudPoolException {
         // set up initial pool
         DateTime now = UtcTime.now();
         Machine booting = machine("i-1", PENDING, now.minus(1));
@@ -527,7 +533,7 @@ public class TestBaseCloudPoolOperation {
 
         // verify that cloud driver was asked to terminate the _newest_ active
         // machine
-        verify(this.driverMock).terminateMachine("i-1");
+        verify(this.driverMock).terminateMachines(asList("i-1"));
         // verify event posted on event bus
         verify(this.eventBusMock).post(argThat(isTerminationAlert("i-1")));
 
@@ -561,8 +567,7 @@ public class TestBaseCloudPoolOperation {
 
         // verify that cloud driver was asked to terminate the two oldest
         // active machines
-        verify(this.driverMock).terminateMachine("i-3");
-        verify(this.driverMock).terminateMachine("i-2");
+        verify(this.driverMock).terminateMachines(asList("i-3", "i-2"));
         // verify event posted on event bus
         verify(this.eventBusMock).post(argThat(isTerminationAlert("i-2", "i-3")));
 
@@ -570,10 +575,12 @@ public class TestBaseCloudPoolOperation {
     }
 
     /**
-     * Verify cloud pool behavior when scaling down the machine pool fails.
+     * When the {@link CloudPoolDriver} fails with an unexpected error, an error
+     * {@link Alert} should be posted on the {@link EventBus}.
      */
+    @SuppressWarnings("unchecked")
     @Test
-    public void failedSingleMachineScaleDownOfMachinePool() throws CloudPoolException {
+    public void scaleDownOfMachinePoolOnDriverError() throws CloudPoolException {
         // set up initial pool
         DateTime now = UtcTime.now();
         Machine booting = machine("i-1", PENDING, now.minus(1));
@@ -582,8 +589,8 @@ public class TestBaseCloudPoolOperation {
         Machine terminated = machine("i-4", TERMINATED, now.minus(4));
         when(this.driverMock.listMachines()).thenReturn(machines(booting, active1, active2, terminated));
         // when asked to terminate a machine, the cloud pool will fail
-        Exception fault = new CloudPoolDriverException("terminate failed");
-        doThrow(fault).when(this.driverMock).terminateMachine(anyString());
+        Exception fault = new CloudPoolDriverException("terminations failed: api error");
+        doThrow(fault).when(this.driverMock).terminateMachines(Matchers.anyList());
 
         // run test that requests one machine to be terminated
         this.cloudPool.configure(poolConfig(OLDEST));
@@ -598,54 +605,17 @@ public class TestBaseCloudPoolOperation {
 
         // verify that cloud driver was asked to terminate the oldest active
         // machine
-        verify(this.driverMock).terminateMachine("i-3");
+        verify(this.driverMock).terminateMachines(asList("i-3"));
         // verify error events posted on event bus
-        verify(this.eventBusMock).post(argThat(isAlert(RESIZE.name(), WARN)));
+        verify(this.eventBusMock).post(argThat(isAlert(RESIZE.name(), ERROR)));
 
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(2));
     }
 
     /**
-     * Verify cloud pool behavior when scaling down the machine pool with
-     * several terminates fail.
-     */
-    @Test
-    public void failedMultiMachineScaleDownOfMachinePool() throws CloudPoolException {
-        // set up initial pool
-        DateTime now = UtcTime.now();
-        Machine booting = machine("i-1", PENDING, now.minus(1));
-        Machine active1 = machine("i-2", RUNNING, now.minus(2));
-        Machine active2 = machine("i-3", RUNNING, now.minus(3));
-        Machine terminated = machine("i-4", TERMINATED, now.minus(4));
-        when(this.driverMock.listMachines()).thenReturn(machines(booting, active1, active2, terminated));
-        // when asked to terminate a machine, the cloud pool will fail
-        Exception fault = new CloudPoolDriverException("terminate failed");
-        doThrow(fault).when(this.driverMock).terminateMachine(anyString());
-
-        // run test that requests two machines to be terminated
-        this.cloudPool.configure(poolConfig(OLDEST));
-        this.cloudPool.start();
-
-        // effective size: 3 => ask for 1 machines
-        assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(3));
-        this.cloudPool.setDesiredSize(1);
-
-        // force a pool resize run
-        this.cloudPool.updateMachinePool();
-
-        // verify that cloud driver was asked to terminate the two oldest
-        // active machines
-        verify(this.driverMock).terminateMachine("i-3");
-        verify(this.driverMock).terminateMachine("i-2");
-        // verify error events posted on event bus
-        verify(this.eventBusMock, atLeast(2)).post(argThat(isAlert(RESIZE.name(), WARN)));
-
-        assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(1));
-    }
-
-    /**
      * Verify cloud pool behavior when scaling down the machine pool fails for
-     * some machines but not others.
+     * some machines but not others, as indicated by the {@link CloudPoolDriver}
+     * throwing a {@link TerminateMachinesException}.
      */
     @Test
     public void partiallyFailedScaleDownOfMachinePool() throws CloudPoolException {
@@ -654,11 +624,12 @@ public class TestBaseCloudPoolOperation {
         Machine booting = machine("i-1", PENDING, now.minus(1));
         Machine active1 = machine("i-2", RUNNING, now.minus(2));
         Machine active2 = machine("i-3", RUNNING, now.minus(3));
-        Machine terminated = machine("i-4", TERMINATED, now.minus(4));
-        when(this.driverMock.listMachines()).thenReturn(machines(booting, active1, active2, terminated));
-        // when asked to terminate i-3, the cloud pool will fail
-        Exception fault = new CloudPoolDriverException("terminate failed");
-        doThrow(fault).when(this.driverMock).terminateMachine("i-3");
+        when(this.driverMock.listMachines()).thenReturn(machines(booting, active1, active2));
+        // driver will succeed with terminating i-3 but fail on i-2
+        List<String> terminated = asList("i-3");
+        ImmutableMap<String, Throwable> terminationErrors = ImmutableMap.of("i-2", new RuntimeException("api error"));
+        TerminateMachinesException fault = new TerminateMachinesException(terminated, terminationErrors);
+        doThrow(fault).when(this.driverMock).terminateMachines(asList("i-3", "i-2"));
 
         // run test that requests two machines to be terminated
         this.cloudPool.configure(poolConfig(OLDEST));
@@ -673,14 +644,48 @@ public class TestBaseCloudPoolOperation {
 
         // verify that cloud driver was asked to terminate the two oldest
         // active machines
-        verify(this.driverMock).terminateMachine("i-3");
-        verify(this.driverMock).terminateMachine("i-2");
-        // verify one error event due to failure to terminate i-3
-        verify(this.eventBusMock, atMost(1)).post(argThat(isAlert(RESIZE.name(), ERROR)));
-        // verify that termination of i-2 succeeded
-        verify(this.eventBusMock).post(argThat(isTerminationAlert("i-2")));
+        verify(this.driverMock).terminateMachines(asList("i-3", "i-2"));
+        // verify error event due to failure to some terminations failing
+        verify(this.eventBusMock).post(argThat(isAlert(RESIZE.name(), WARN)));
+        // verify that a termination alert was sent for i-3
+        verify(this.eventBusMock).post(argThat(isTerminationAlert("i-3")));
 
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(1));
+    }
+
+    /**
+     * Verify cloud pool behavior when scaling down the machine pool fails for
+     * all machines. In such case, a resize alert should not be sent.
+     */
+    @Test
+    public void completelyFailedScaleDownOfMachinePool() throws CloudPoolException {
+        // set up initial pool
+        DateTime now = UtcTime.now();
+        Machine active1 = machine("i-1", PENDING, now.minus(1));
+        when(this.driverMock.listMachines()).thenReturn(machines(active1));
+        // driver will fail to terminate i-1
+        List<String> terminated = Collections.emptyList();
+        ImmutableMap<String, Throwable> terminationErrors = ImmutableMap.of("i-1", new RuntimeException("api error"));
+        TerminateMachinesException fault = new TerminateMachinesException(terminated, terminationErrors);
+        doThrow(fault).when(this.driverMock).terminateMachines(asList("i-1"));
+
+        this.cloudPool.configure(poolConfig(OLDEST));
+        this.cloudPool.start();
+
+        this.cloudPool.setDesiredSize(0);
+
+        // force a pool resize run
+        this.cloudPool.updateMachinePool();
+
+        // verify that cloud driver was asked to terminate
+        verify(this.driverMock).terminateMachines(asList("i-1"));
+
+        // verify one warn event due to failure to terminate i-1
+        verify(this.eventBusMock).post(argThat(isAlert(RESIZE.name(), WARN)));
+
+        // verify that NO resize alert is sent (since no terminations were
+        // successful
+        verify(this.eventBusMock, times(0)).post(argThat(isAlert(RESIZE.name(), INFO)));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -794,7 +799,7 @@ public class TestBaseCloudPoolOperation {
 
         // verify that cloud driver was asked to terminate the oldest active
         // machine
-        verify(this.driverMock).terminateMachine("i-3");
+        verify(this.driverMock).terminateMachines(asList("i-3"));
         // verify event posted on event bus
         verify(this.eventBusMock).post(argThat(isTerminationAlert("i-3")));
 
@@ -874,7 +879,7 @@ public class TestBaseCloudPoolOperation {
 
         // verify that the out-of-service machine, despite being the oldest,
         // was not selected for termination
-        verify(this.driverMock).terminateMachine("i-2");
+        verify(this.driverMock).terminateMachines(asList("i-2"));
         // verify event posted on event bus
         verify(this.eventBusMock).post(argThat(isTerminationAlert("i-2")));
 
@@ -1027,7 +1032,7 @@ public class TestBaseCloudPoolOperation {
         assertThat(this.cloudPool.getPoolSize(), is(new PoolSizeSummary(UtcTime.now(), 1, 1, 1)));
 
         // prepare cloud driver to be asked to terminate i-1
-        doNothing().when(this.driverMock).terminateMachine("i-1");
+        doNothing().when(this.driverMock).terminateMachines(asList("i-1"));
 
         boolean decrementDesiredSize = false;
         this.cloudPool.terminateMachine("i-1", decrementDesiredSize);
@@ -1035,7 +1040,7 @@ public class TestBaseCloudPoolOperation {
         // verify that call was dispatched through and that a replacement is to
         // be called in (that is, desiredSize still set to 1)
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(1));
-        verify(this.driverMock).terminateMachine("i-1");
+        verify(this.driverMock).terminateMachines(asList("i-1"));
         // verify event posted on event bus
         verify(this.eventBusMock).post(argThat(isTerminationAlert("i-1")));
     }
@@ -1058,7 +1063,7 @@ public class TestBaseCloudPoolOperation {
         assertThat(this.cloudPool.getPoolSize(), is(new PoolSizeSummary(UtcTime.now(), 1, 1, 1)));
 
         // prepare cloud driver to be asked to terminate i-1
-        doNothing().when(this.driverMock).terminateMachine("i-1");
+        doNothing().when(this.driverMock).terminateMachines(asList("i-1"));
 
         boolean decementDesiredSize = true;
         this.cloudPool.terminateMachine("i-1", decementDesiredSize);
@@ -1066,7 +1071,7 @@ public class TestBaseCloudPoolOperation {
         // verify that call was dispatched through and that a replacement won't
         // be called in (that is, desiredSize is decremented)
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(0));
-        verify(this.driverMock).terminateMachine("i-1");
+        verify(this.driverMock).terminateMachines(asList("i-1"));
         // verify event posted on event bus
         verify(this.eventBusMock).post(argThat(isTerminationAlert("i-1")));
     }
@@ -1210,7 +1215,7 @@ public class TestBaseCloudPoolOperation {
         doAnswer(invocation -> {
             Thread.sleep(200);
             return null;
-        }).when(this.driverMock).terminateMachine("i-1");
+        }).when(this.driverMock).terminateMachines(asList("i-1"));
 
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(2));
 
@@ -1320,12 +1325,12 @@ public class TestBaseCloudPoolOperation {
         this.cloudPool.setDesiredSize(0);
         // ... but before the pool has been updated to the new desired size a
         // terminate is requested
-        doNothing().when(this.driverMock).terminateMachine("i-1");
+        doNothing().when(this.driverMock).terminateMachines(asList("i-1"));
         boolean decrementDesiredSize = true;
         this.cloudPool.terminateMachine("i-1", decrementDesiredSize);
         // verify that desired size is left at 0 and isn't decremented to -1!
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(0));
-        verify(this.driverMock).terminateMachine("i-1");
+        verify(this.driverMock).terminateMachines(asList("i-1"));
     }
 
     /**

@@ -27,7 +27,7 @@ to the following:
     ...	
     "cloudApiSettings": {
         "auth": {
-            "keystoneEndpoint": "http://keystone.host.com:5000/v2.0",
+            "keystoneUrl": "http://keystone.host.com:5000/v2.0",
             "v2Credentials": {
                 "tenantName": "tenant",
                 "userName": "clouduser",
@@ -36,7 +36,8 @@ to the following:
         },
         "region": "RegionOne",
         "connectionTimeout": 10000,
-        "socketTimeout": 10000
+        "socketTimeout": 10000,
+		"logHttpRequests": "true",
     },
     
     "provisioningTemplate": {
@@ -56,88 +57,120 @@ to the following:
 The configuration keys have the following meaning:
 
 - `cloudApiSettings`: API access credentials and settings.
-    - `auth`: Specifies how to authenticate against the OpenStack identity service (Keystone).
-        - `keystoneEndpoint`: Endpoint URL of the Keystone service. For example, http://172.16.0.1:5000/v2.0."
+    - `auth`: Specifies how to authenticate against the OpenStack identity
+      service (Keystone).
+        - `keystoneUrl`: Endpoint URL of the Keystone service. For example,
+          http://172.16.0.1:5000/v2.0."
         - `v2Credentials`: Credentials for using version 2 of the [identity HTTP API](http://docs.openstack.org/developer/keystone/http-api.html#history).  
-		  *Note: that the OpenStack cloud pool supports both Keystone version 2 and 3, see separate section below for details on the supported authentication schemes.*
+		  *Note: that the OpenStack cloud pool supports both Keystone version 2
+          and 3, see separate section below for details on the supported
+          authentication schemes.*
           - `tenantName`: OpenStack account tenant name.
           - `userName`: OpenStack account user
           - `password`: OpenStack account password
-      - `region`: The particular OpenStack region (out of the ones available in Keystone's 
-        service catalog) to connect to. For example, `RegionOne`.
-      - `connectionTimeout`: The timeout in milliseconds until a connection is established.
-      - `socketTimeout`: The socket timeout (`SO_TIMEOUT`) in milliseconds, which is the
-	    timeout for waiting for data or, put differently, a maximum period inactivity between 
-	    two consecutive data packets.
+      - `region`: The particular OpenStack region (out of the ones available in
+        Keystone's service catalog) to connect to. For example, `RegionOne`.
+      - `connectionTimeout`: The timeout in milliseconds until a connection is
+        established. 
+      - `socketTimeout`: The socket timeout (`SO_TIMEOUT`) in milliseconds,
+	    which is the timeout for waiting for data or, put differently, a
+	    maximum period inactivity between two consecutive data packets.
+	  - `logHttpRequests`: Indicates if HTTP requests should be logged. If
+        `true` each HTTP request will be logged (using a logger named `os`.
 		
-- `provisioningTemplate`: Describes how to provision additional servers (on scale-up).
+- `provisioningTemplate`: Describes how to provision additional servers (on
+  scale-up).
     - `size`: The name of the server type to launch.
     - `image`: The name of the machine image used to boot new servers.
-    - `keyPair`: The name of the key pair to use for new servers. For example, `my-ssh-loginkey`.
+    - `keyPair`: The name of the key pair to use for new servers. For example,
+      `my-ssh-loginkey`.
     - `securityGroups`: The security group(s) to use for new servers.
     - `encodedUserData`: A [base64-encoded](http://tools.ietf.org/html/rfc4648)
-      blob of data used to pass custom data to started machines typically in the form 
-      of a boot-up shell script or cloud-init parameters. Can, for instance, be produced 
-      via `cat bootscript.sh | base64 -w 0`. Refer to the 
-      [OpenStack documentation](http://docs.openstack.org/user-guide/cli_provide_user_data_to_instances.html) 
-      for details.
-    - `networks`: The names of the networks to attach launched servers to (for example, `private`).
-	  Each network creates a separate network interface controller (NIC) on a created server. Typically, 
-	  this option can be left out, but in rare cases, when an account has more than one network to
-      choose from, the OpenStack API forces us to be explicit about the network(s) we want to use.  
-	  If left out, the default behavior is to use which ever network is configured by the cloud 
-	  provider for the user/project. However, if there are multiple choices, this may cause 
-	  server boot requests to fail.
-    - `assignFloatingIp`: Set to `true` if a floating IP address should be allocated to launched servers. Default: `true`.
+      blob of data used to pass custom data to started machines typically in the
+      form of a boot-up shell script or cloud-init parameters. Can, for
+      instance, be produced via `cat bootscript.sh | base64 -w 0`. Refer to the 
+      [OpenStack documentation](https://docs.openstack.org/nova/latest/user/user-data.html) for  details.
+    - `networks`: The names of the networks to attach launched servers to (for
+	  example, `private`). Each network creates a separate network interface
+	  controller (NIC) on a created server. Typically, this option can be left
+	  out, but in rare cases, when an account has more than one network to
+	  choose from, the OpenStack API forces us to be explicit about the
+	  network(s) we want to use.   
+	  If left out, the default behavior is to use which ever network is
+      configured by the cloud provider for the user/project. However, if there
+      are multiple choices, this may cause  server boot requests to fail.
+    - `assignFloatingIp`: Set to `true` if a floating IP address should be
+      allocated to launched servers. Default: `true`.
 
 
 
 ## Supported Authentication Schemes
 The `openstackpool` supports both version 2 and version 3 of the 
-[identity HTTP API](http://docs.openstack.org/developer/keystone/http-api.html#history).
-Configuring the pool for use of version 2 of the Keystone API is shown above.
+[identity HTTP API](https://docs.openstack.org/keystone/pike/contributor/http-api.html). Configuring
+the pool for use with version 2 of Keystone is shown above.
 
-Version 3 authentication supports either project-scoped or domain-scoped logins.
-A configuration excerpt for a project-scoped authentication is shown here:
+Similar to version 2, version 3 authentication requires a *user* and a
+*password* to authenticate. However, it also requires a *project* to scope the
+login. Furthermore, both the user and the project are owned by a certain
+*domain*. 
 
-```javascript
-     ...
-     "auth": {
-        "keystoneUrl": "http://keystone.host.com:5000/v3/",
-        "v3Credentials": {
-            "scope": {
-               "projectId": "5acfdc77c79440bbbad61187999edd1f"
-            },
-            "userId": "fd33b32bc1234bc491947b3a88e67f71",
-            "password": "secret"
-        }
-    },
-    ...
-```
+The user and project can be given either by-name or by-id. 
 
-Here, the `projectId` is the project identifier to which the user with id `userId` 
-and password `password` belongs.
+- When given by id (`userId` or `projectId`) no domain needs to be specified, as
+  the project/user is identified by a universally unique id.
+- When given by name (`userName` or `projectName`), the user/project name must
+  be qualified by its owning domain to make the login unambiguous to Keystone. 
+  The domain can also be given either by name
+  (`userDomainName`/`projectDomainName`) or by id
+  (`userDomainId`/`projectDomainId`).
 
-Similarly, for a domain-scoped login an `auth` configuration similar to the 
-following can be used:
+Below are some sample configuration excerpts that illustrate a few different
+authentication configurations:
 
-```javascript
-     ...
-     "auth": {
-        "keystoneUrl": "http://keystone.host.com:5000/v3/",
-        "v3Credentials": {
-            "scope": {
-               "domainId": "5dffdc77c79440bbbad61187999edd1f"
-            },
-            "userId": "fd33b32bc1234bc491947b3a88e67f71",
-            "password": "secret"
-        }
-    },
-    ...
-```
+- Specify both user and project by-id (no domain qualification necessary):
+       
+        ...
+        "auth": {
+          "keystoneUrl": "http://keystone.host.com:5000/v3/",
+          "v3Credentials": {
+              "userId":    "fd33b32bc1234bc491947b3a88e67f71",
+              "password":  "secret",
+              "projectId": "5acfdc77c79440bbbad61187999edd1f"
+          }
+        },
+        ...
 
-With `domainId` being the domain identifier to which the user with id `userId` 
-and password `password` belongs.
+- Both user and project given by name (domain qualification necessary):
+  
+        ...
+        "auth": {
+          "keystoneUrl": "http://keystone.host.com:5000/v3/",
+          "v3Credentials": {
+              "userName":          "foo",
+			  "userDomainName":    "default",
+              "password":          "secret",
+              "projectName":       "admin"
+              "projectDomainName": "default"
+          }
+        },
+        ...
+
+
+- Domain names can be specified either by-name or by-id:
+
+        ...
+        "auth": {
+          "keystoneUrl": "http://keystone.host.com:5000/v3/",
+          "v3Credentials": {
+              "userName":          "foo",
+			  "userDomainId":      "1acfdc77c79440bbbad60007999edd1c",
+              "password":          "secret",
+              "projectName":       "admin"
+              "projectDomainName": "default"
+          }
+        },
+        ...
+
 
 
 ## Usage

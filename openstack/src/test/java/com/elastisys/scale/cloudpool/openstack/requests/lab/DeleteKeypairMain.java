@@ -20,7 +20,7 @@ public class DeleteKeypairMain {
         HttpLoggingFilter.toggleLogging(false);
         CloudApiSettings driverConfig = DriverConfigLoader.loadDefault();
 
-        OSClient client = new OSClientFactory(driverConfig.toApiAccessConfig()).authenticatedClient();
+        OSClient client = new OSClientFactory(driverConfig).authenticatedClient();
         KeypairService keyApi = client.compute().keypairs();
 
         ActionResponse response = keyApi.delete(keyPairName);

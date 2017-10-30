@@ -5,8 +5,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.Math.max;
 import static java.lang.String.format;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,6 +28,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertTopics;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.FetchOption;
 import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.PoolFetcher;
 import com.elastisys.scale.cloudpool.commons.basepool.poolupdater.PoolUpdater;
@@ -154,7 +155,7 @@ public class StandardPoolUpdater implements PoolUpdater {
             }
 
             LOG.info("terminating {}", machineId);
-            this.cloudDriver.terminateMachine(machineId);
+            this.cloudDriver.terminateMachines(Arrays.asList(machineId));
             terminationAlert(machineId);
 
             if (!decrementDesiredSize) {
@@ -423,35 +424,38 @@ public class StandardPoolUpdater implements PoolUpdater {
      * @param victims
      * @return
      */
-    private List<Machine> terminateMachines(List<Machine> victims) {
+    private void terminateMachines(List<Machine> victims) {
         if (victims.isEmpty()) {
-            return Collections.emptyList();
+            return;
         }
 
-        List<Machine> terminated = Lists.newArrayList();
-        LOG.info("terminating {} machine(s): {}", victims.size(),
-                victims.stream().map(Machine::getId).collect(Collectors.toList()));
-        for (Machine victim : victims) {
-            try {
-                this.cloudDriver.terminateMachine(victim.getId());
-                terminated.add(victim);
-            } catch (Exception e) {
-                // only warn, since a failure to terminate a machine is not
-                // necessarily an error condition, as the machine, e.g., may
-                // have been terminated by external means since we last checked
-                // the pool members
-                String message = format("failed to terminate machine '%s': %s", victim.getId(), e.getMessage());
-                Alert alert = AlertBuilder.create().topic(RESIZE.name()).severity(AlertSeverity.WARN).message(message)
-                        .build();
-                this.eventBus.post(alert);
-                LOG.warn(message, e);
-            }
-        }
-        if (!terminated.isEmpty()) {
-            terminationAlert(terminated);
+        List<String> victimIds = victims.stream().map(Machine::getId).collect(Collectors.toList());
+        LOG.info("terminating {} machine(s): {}", victimIds.size(), victimIds);
+        List<String> terminatedIds = new ArrayList<>();
+        try {
+            this.cloudDriver.terminateMachines(victimIds);
+            terminatedIds.addAll(victimIds);
+        } catch (TerminateMachinesException e) {
+            terminatedIds.addAll(e.getTerminatedMachines());
+
+            LOG.error(e.getMessage());
+            int numFailed = e.getTerminationErrors().size();
+            String message = format("%d out of %d machine terminations failed", numFailed, victims.size());
+            Alert alert = AlertBuilder.create().topic(RESIZE.name()).severity(AlertSeverity.WARN).message(message) //
+                    .addMetadata("terminated", e.getTerminatedMachines()) //
+                    .addMetadata("terminationErrors", JsonUtils.toJson(e.getTerminationErrorMessages())).build();
+            this.eventBus.post(alert);
+        } catch (Exception e) {
+            String errorMsg = format("failed to terminate machines %s: %s", victimIds, e.getMessage());
+            LOG.error(errorMsg);
+            Alert alert = AlertBuilder.create().topic(RESIZE.name()).severity(AlertSeverity.ERROR).message(errorMsg)
+                    .build();
+            this.eventBus.post(alert);
         }
 
-        return terminated;
+        if (!terminatedIds.isEmpty()) {
+            terminationAlert(terminatedIds);
+        }
     }
 
     /**
@@ -520,12 +524,11 @@ public class StandardPoolUpdater implements PoolUpdater {
      * @param terminatedMachines
      *            The machine instances that were terminated.
      */
-    void terminationAlert(List<Machine> terminatedMachines) {
-        String message = String.format("%d machine(s) were terminated in cloud pool", terminatedMachines.size());
+    void terminationAlert(List<String> terminatedMachineIds) {
+        String message = String.format("%d machine(s) were terminated in cloud pool: %s", terminatedMachineIds.size(),
+                terminatedMachineIds);
         LOG.info(message);
         Map<String, JsonElement> tags = Maps.newHashMap();
-        List<String> terminatedMachineIds = terminatedMachines.stream().map(Machine::getId)
-                .collect(Collectors.toList());
         tags.put("terminatedMachines", JsonUtils.toJson(terminatedMachineIds));
         tags.put("poolMembers", poolMembersTag());
         this.eventBus

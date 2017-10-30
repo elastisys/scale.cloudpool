@@ -3,6 +3,8 @@ package com.elastisys.scale.cloudpool.azure.driver.requests;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.elastisys.scale.cloudpool.api.NotFoundException;
+import com.elastisys.scale.cloudpool.azure.driver.client.AzureException;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.VirtualMachine;
@@ -36,17 +38,22 @@ public class TagVmRequest extends AzureRequest<Void> {
     }
 
     @Override
-    public Void doRequest(Azure api) throws RuntimeException {
+    public Void doRequest(Azure api) throws NotFoundException, AzureException {
         LOG.debug("tagging vm {}: {} ...", this.vmId, this.tags);
+
         VirtualMachine vm = new GetVmRequest(apiAccess(), this.vmId).call();
 
         // append tags to existing vm tags
         Map<String, String> newTags = new HashMap<>(vm.tags());
         newTags.putAll(this.tags);
 
-        vm.update().withTags(newTags).apply();
-        LOG.debug("vm {} tagged.", this.vmId);
-        return null;
+        try {
+            vm.update().withTags(newTags).apply();
+            LOG.debug("vm {} tagged.", this.vmId);
+            return null;
+        } catch (Exception e) {
+            throw new AzureException("failed to tag vm: " + e.getMessage(), e);
+        }
     }
 
 }

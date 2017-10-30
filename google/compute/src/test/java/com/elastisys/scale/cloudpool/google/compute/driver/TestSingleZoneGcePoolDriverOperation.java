@@ -1,10 +1,14 @@
 package com.elastisys.scale.cloudpool.google.compute.driver;
 
+import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.isA;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.argThat;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -29,11 +33,13 @@ import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.cloudpool.google.commons.api.CloudApiSettings;
 import com.elastisys.scale.cloudpool.google.commons.api.compute.ComputeClient;
 import com.elastisys.scale.cloudpool.google.commons.api.compute.InstanceGroupClient;
 import com.elastisys.scale.cloudpool.google.commons.api.compute.functions.InstanceToMachine;
 import com.elastisys.scale.cloudpool.google.commons.api.compute.metadata.MetadataKeys;
+import com.elastisys.scale.cloudpool.google.commons.errors.GceException;
 import com.elastisys.scale.cloudpool.google.commons.utils.InstanceGroupUrl;
 import com.elastisys.scale.cloudpool.google.commons.utils.MetadataUtil;
 import com.elastisys.scale.cloudpool.google.compute.driver.config.ProvisioningTemplate;
@@ -43,8 +49,8 @@ import com.google.api.services.compute.model.Instance;
 import com.google.api.services.compute.model.Metadata;
 
 /**
- * Exercises the {@link GoogleComputeEnginePoolDriver} against a mocked single-zone instance
- * group.
+ * Exercises the {@link GoogleComputeEnginePoolDriver} against a mocked
+ * single-zone instance group.
  */
 public class TestSingleZoneGcePoolDriverOperation {
     private static final Logger LOG = LoggerFactory.getLogger(TestSingleZoneGcePoolDriverOperation.class);
@@ -119,11 +125,12 @@ public class TestSingleZoneGcePoolDriverOperation {
     /**
      * If the actual size of the instance froup is less than the target size
      * (for example, when a target size has been requested but the group has not
-     * reached its new desired state yet) the {@link GoogleComputeEnginePoolDriver} should
-     * report the requested-but-not-yet-acquired instances as pseudo instances
-     * in state {@link MachineState#REQUESTED}, to not fool the
-     * {@link BaseCloudPool} from believing that the pool is too small and order
-     * new machines to be started (and excessively increase the target size).
+     * reached its new desired state yet) the
+     * {@link GoogleComputeEnginePoolDriver} should report the
+     * requested-but-not-yet-acquired instances as pseudo instances in state
+     * {@link MachineState#REQUESTED}, to not fool the {@link BaseCloudPool}
+     * from believing that the pool is too small and order new machines to be
+     * started (and excessively increase the target size).
      */
     @Test
     public void listMachinesOnGroupThatHasNotReachedTargetSize() throws CloudPoolDriverException {
@@ -148,8 +155,8 @@ public class TestSingleZoneGcePoolDriverOperation {
     }
 
     /**
-     * A call to {@link GoogleComputeEnginePoolDriver#startMachines(int)} should call through to
-     * resize the instance group.
+     * A call to {@link GoogleComputeEnginePoolDriver#startMachines(int)} should
+     * call through to resize the instance group.
      */
     @Test
     public void startMachines() {
@@ -176,8 +183,8 @@ public class TestSingleZoneGcePoolDriverOperation {
     }
 
     /**
-     * A call to {@link GoogleComputeEnginePoolDriver#terminateMachine(String)} should call
-     * through to resize the instance group.
+     * A call to {@link GoogleComputeEnginePoolDriver#terminateMachine(String)}
+     * should call through to resize the instance group.
      */
     @Test
     public void terminateMachine() {
@@ -188,38 +195,13 @@ public class TestSingleZoneGcePoolDriverOperation {
         setUpMockedInstanceGroup(simulatedGroup);
 
         String instanceUrl = simulatedGroup.instances().get(0).getSelfLink();
-        this.driver.terminateMachine(instanceUrl);
+        this.driver.terminateMachines(asList(instanceUrl));
 
         //
         // verify calls to mock api clients
         //
 
         verify(this.instanceGroupClientMock).deleteInstances(Arrays.asList(instanceUrl));
-    }
-
-    /**
-     * It should not be allowed to attempt to delete an instance that is not a
-     * member of the instance group.
-     */
-    @Test
-    public void terminateNonMemberInstance() {
-        int targetSize = 1;
-        int runningInstances = 1;
-        FakeSingleZoneInstanceGroup simulatedGroup = new FakeSingleZoneInstanceGroup(POOL_DRIVER_CONFIG, targetSize,
-                runningInstances);
-        setUpMockedInstanceGroup(simulatedGroup);
-
-        String instanceUrl = String.format("https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances/%s",
-                PROJECT, ZONE, "mysql-1");
-        try {
-            this.driver.terminateMachine(instanceUrl);
-            fail("should not be possible to delete non-group member");
-        } catch (NotFoundException e) {
-            // expected
-        }
-
-        // should NOT call through to delete
-        verify(this.instanceGroupClientMock, times(0)).deleteInstances(Arrays.asList(instanceUrl));
     }
 
     /**
@@ -246,7 +228,7 @@ public class TestSingleZoneGcePoolDriverOperation {
         assertThat(UrlUtils.basename(pseudoInstanceUrl),
                 is("requested-" + simulatedGroup.instanceTemplateName() + "-1"));
 
-        this.driver.terminateMachine(pseudoInstanceUrl);
+        this.driver.terminateMachines(asList(pseudoInstanceUrl));
 
         // should call through to decrement group size
         verify(this.instanceGroupClientMock).resize(1);
@@ -255,8 +237,107 @@ public class TestSingleZoneGcePoolDriverOperation {
     }
 
     /**
-     * {@link GoogleComputeEnginePoolDriver#detachMachine(String)} should call through to
-     * abandon instance in instance group API.
+     * Verifies behavior when terminating multiple instances.
+     */
+    @Test
+    public void terminateMultipleInstances() throws Exception {
+        int targetSize = 3;
+        int runningInstances = 3;
+        FakeSingleZoneInstanceGroup simulatedGroup = new FakeSingleZoneInstanceGroup(POOL_DRIVER_CONFIG, targetSize,
+                runningInstances);
+        setUpMockedInstanceGroup(simulatedGroup);
+
+        String instance1Url = simulatedGroup.instances().get(0).getSelfLink();
+        String instance2Url = simulatedGroup.instances().get(1).getSelfLink();
+
+        this.driver.terminateMachines(asList(instance1Url, instance2Url));
+
+        //
+        // verify calls to mock api clients
+        //
+
+        verify(this.instanceGroupClientMock).deleteInstances(Arrays.asList(instance1Url));
+        verify(this.instanceGroupClientMock).deleteInstances(Arrays.asList(instance2Url));
+    }
+
+    /**
+     * On a client error, a {@link CloudPoolDriverException} should be raised.
+     */
+    @Test(expected = CloudPoolDriverException.class)
+    public void terminateOnClientError() throws Exception {
+        int targetSize = 3;
+        int runningInstances = 3;
+        FakeSingleZoneInstanceGroup simulatedGroup = new FakeSingleZoneInstanceGroup(POOL_DRIVER_CONFIG, targetSize,
+                runningInstances);
+        setUpMockedInstanceGroup(simulatedGroup);
+
+        String instance1Url = simulatedGroup.instances().get(0).getSelfLink();
+
+        doThrow(new GceException("internal error")).when(this.instanceGroupClientMock)
+                .deleteInstances(asList(instance1Url));
+
+        this.driver.terminateMachines(asList(instance1Url));
+    }
+
+    /**
+     * It should not be allowed to attempt to delete an instance that is not a
+     * member of the instance group.
+     */
+    @Test
+    public void terminateOnNonGroupMember() {
+        int targetSize = 1;
+        int runningInstances = 1;
+        FakeSingleZoneInstanceGroup simulatedGroup = new FakeSingleZoneInstanceGroup(POOL_DRIVER_CONFIG, targetSize,
+                runningInstances);
+        setUpMockedInstanceGroup(simulatedGroup);
+
+        String instanceUrl = String.format("https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances/%s",
+                PROJECT, ZONE, "mysql-1");
+        try {
+            this.driver.terminateMachines(asList(instanceUrl));
+            fail("should not be possible to delete non-group member");
+        } catch (TerminateMachinesException e) {
+            // expected
+            assertThat(e.getTerminatedMachines().size(), is(0));
+            assertTrue(e.getTerminationErrors().containsKey(instanceUrl));
+            assertThat(e.getTerminationErrors().get(instanceUrl), instanceOf(NotFoundException.class));
+        }
+
+        // should NOT call through to delete
+        verify(this.instanceGroupClientMock, times(0)).deleteInstances(Arrays.asList(instanceUrl));
+    }
+
+    /**
+     * When some terminations were successful and some failed, a
+     * {@link TerminateMachinesException} should be thrown which indicates which
+     * instances were terminated and which instance terminations failed.
+     */
+    @Test
+    public void terminateOnPartialFailure() {
+        int targetSize = 2;
+        int runningInstances = 2;
+        FakeSingleZoneInstanceGroup simulatedGroup = new FakeSingleZoneInstanceGroup(POOL_DRIVER_CONFIG, targetSize,
+                runningInstances);
+        setUpMockedInstanceGroup(simulatedGroup);
+
+        String instance1Url = simulatedGroup.instances().get(0).getSelfLink();
+        String instance2Url = simulatedGroup.instances().get(1).getSelfLink();
+        // note: not a member of the pool
+        String instance3Url = "https://www.googleapis.com/compute/v1/projects/my-project/zones/eu-west1-b/instances/webserver-3";
+
+        try {
+            this.driver.terminateMachines(asList(instance3Url, instance1Url, instance2Url));
+        } catch (TerminateMachinesException e) {
+            // expected
+            assertTrue(e.getTerminationErrors().keySet().contains(instance3Url));
+            assertThat(e.getTerminationErrors().get(instance3Url), instanceOf(NotFoundException.class));
+            assertThat(e.getTerminatedMachines(), is(asList(instance1Url, instance2Url)));
+        }
+    }
+
+    /**
+     * {@link GoogleComputeEnginePoolDriver#detachMachine(String)} should call
+     * through to abandon instance in instance group API.
      */
     @Test
     public void detachInstance() {

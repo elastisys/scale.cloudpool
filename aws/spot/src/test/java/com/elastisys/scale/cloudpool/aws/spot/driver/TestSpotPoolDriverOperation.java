@@ -10,10 +10,12 @@ import static com.elastisys.scale.cloudpool.aws.commons.ScalingTags.CLOUD_POOL_T
 import static com.elastisys.scale.cloudpool.aws.spot.util.SpotTestUtil.instance;
 import static com.elastisys.scale.cloudpool.aws.spot.util.SpotTestUtil.spotRequest;
 import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -50,6 +52,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
@@ -222,14 +225,14 @@ public class TestSpotPoolDriverOperation {
     }
 
     /**
-     * Test termination.
+     * Terminating a single unfulfilled spot requests should only cancel the
+     * spot request (there is no associated instance to terminate).
      */
     @Test
-    public void testTerminateUnfulfilledRequest() {
+    public void terminateSingleUnfulfilledRequest() {
         this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
-        // terminating an unfulfilled spot request
         this.fakeClient.setupFakeAccount(
                 asList(spotRequest("sir-1", "open", null, POOL1_TAG), spotRequest("sir-2", "active", "i-2", POOL1_TAG),
                         spotRequest("sir-3", "active", "i-3", POOL1_TAG)),
@@ -237,51 +240,127 @@ public class TestSpotPoolDriverOperation {
         assertRequestIds(this.driver.listMachines(), asList("sir-1", "sir-2", "sir-3"));
         assertInstanceIds(this.fakeClient.getInstances(emptyFilters), asList("i-2", "i-3"));
 
-        this.driver.terminateMachine("sir-1");
+        this.driver.terminateMachines(asList("sir-1"));
         assertRequestIds(this.driver.listMachines(), asList("sir-2", "sir-3"));
+        assertInstanceIds(this.fakeClient.getInstances(emptyFilters), asList("i-2", "i-3"));
+    }
+
+    /**
+     * Terminating a single fulfilled spot requests should both cancel the spot
+     * request and also terminate its associated instance.
+     */
+    @Test
+    public void terminateSingleFulfilledRequest() {
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
+        this.driver.configure(config());
+
+        this.fakeClient.setupFakeAccount(
+                asList(spotRequest("sir-1", "open", null, POOL1_TAG), spotRequest("sir-2", "active", "i-2", POOL1_TAG),
+                        spotRequest("sir-3", "active", "i-3", POOL1_TAG)),
+                asList(instance("i-2", Running, "sir-2"), instance("i-3", Terminated, "sir-3")));
+        assertRequestIds(this.driver.listMachines(), asList("sir-1", "sir-2", "sir-3"));
         assertInstanceIds(this.fakeClient.getInstances(emptyFilters), asList("i-2", "i-3"));
 
         // terminating a fulfilled spot request should both cancel the request
         // and terminate the instance.
-        this.driver.terminateMachine("sir-2");
-        assertRequestIds(this.driver.listMachines(), asList("sir-3"));
+        this.driver.terminateMachines(asList("sir-2"));
+        assertRequestIds(this.driver.listMachines(), asList("sir-1", "sir-3"));
         assertInstanceIds(this.fakeClient.getInstances(emptyFilters), asList("i-3"));
 
-        // Terminating a fulfilled spot request should work even if the
+        // terminating a fulfilled spot request should work even if the
         // associated instance has already been terminated (e.g., user-initiated
         // shutdown).
-        this.driver.terminateMachine("sir-3");
+        this.driver.terminateMachines(asList("sir-1", "sir-3"));
         assertRequestIds(this.driver.listMachines(), emptyIds);
     }
 
     /**
-     * An error to complete the operation should result in a
-     * {@link CloudPoolDriverException}.
+     * It should be possible to terminate several spot requests/instances in a
+     * single terminate call.
      */
-    @Test(expected = NotFoundException.class)
-    public void testTerminateOnError() {
-        this.driver = new SpotPoolDriver(this.mockClient, this.executor, this.mockEventBus);
+    @Test
+    public void terminateMultipleSpotRequests() {
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
-        doThrow(new AmazonServiceException("something went wrong")).when(this.mockClient)
-                .cancelSpotRequests(asList("sir-1"));
+        this.fakeClient.setupFakeAccount(
+                asList(spotRequest("sir-1", "open", null, POOL1_TAG), spotRequest("sir-2", "active", "i-2", POOL1_TAG),
+                        spotRequest("sir-3", "active", "i-3", POOL1_TAG)),
+                asList(instance("i-2", Running, "sir-2"), instance("i-3", Terminated, "sir-3")));
+        assertRequestIds(this.driver.listMachines(), asList("sir-1", "sir-2", "sir-3"));
+        assertInstanceIds(this.fakeClient.getInstances(emptyFilters), asList("i-2", "i-3"));
 
-        this.driver.terminateMachine("sir-1");
+        // terminating a fulfilled spot request should both cancel the request
+        // and terminate the instance.
+        this.driver.terminateMachines(asList("sir-1", "sir-2", "sir-3"));
+        assertRequestIds(this.driver.listMachines(), emptyIds);
+        assertInstanceIds(this.fakeClient.getInstances(emptyFilters), emptyIds);
+
     }
 
     /**
-     * It should not be possible to terminate an spot request that isn't a group
-     * member.
+     * On client error, a {@link CloudPoolDriverException} should be raised.
      */
-    @Test(expected = NotFoundException.class)
-    public void testTerminateRequestOnNonGroupMember() {
+    @Test(expected = CloudPoolDriverException.class)
+    public void terminateOnClientError() {
+        this.driver = new SpotPoolDriver(this.mockClient, this.executor, this.mockEventBus);
+        this.driver.configure(config());
+
+        doThrow(new AmazonServiceException("api error")).when(this.mockClient).cancelSpotRequests(asList("sir-1"));
+
+        this.driver.terminateMachines(asList("sir-1"));
+    }
+
+    /**
+     * Trying to terminate a spot request that is not recognized as a pool
+     * member should result in a {@link TerminateMachinesException}.
+     */
+    @Test
+    public void terminateOnNonGroupMember() {
         this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
         this.driver.configure(config());
 
         // terminating an unfulfilled spot request
         this.fakeClient.setupFakeAccount(asList(spotRequest("sir-1", "open", null, POOL1_TAG)), emptyInstances);
 
-        this.driver.terminateMachine("sir-2");
+        try {
+            this.driver.terminateMachines(asList("sir-2"));
+            fail("should fail to terminate spot request that is not a pool member");
+        } catch (TerminateMachinesException e) {
+            // expected
+            assertTrue(e.getTerminationErrors().keySet().contains("sir-2"));
+            assertThat(e.getTerminationErrors().get("sir-2"), instanceOf(NotFoundException.class));
+            assertThat(e.getTerminatedMachines(), is(Collections.emptyList()));
+        }
+    }
+
+    /**
+     * When some terminations were successful and some failed, a
+     * {@link TerminateMachinesException} should be thrown which indicates which
+     * instances were terminated and which instance terminations failed.
+     */
+    @Test
+    public void terminateOnPartialFailure() {
+
+        this.driver = new SpotPoolDriver(this.fakeClient, this.executor, this.mockEventBus);
+        this.driver.configure(config());
+
+        this.fakeClient.setupFakeAccount(
+                asList(spotRequest("sir-1", "open", null, POOL1_TAG), spotRequest("sir-2", "active", "i-2", POOL1_TAG)),
+                asList(instance("i-2", Running, "sir-2")));
+        this.driver.configure(config());
+
+        // sir-3 is not a pool member and should fail
+        try {
+            this.driver.terminateMachines(asList("sir-3", "sir-2"));
+            fail("expected to fail");
+        } catch (TerminateMachinesException e) {
+            // terminating sir-2 should succeed
+            assertThat(e.getTerminatedMachines(), is(asList("sir-2")));
+            // terminating sir-3 should fail
+            assertTrue(e.getTerminationErrors().keySet().contains("sir-3"));
+            assertThat(e.getTerminationErrors().get("sir-3"), instanceOf(NotFoundException.class));
+        }
     }
 
     /**

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.openstack4j.api.OSClient;
+import org.openstack4j.api.exceptions.ResponseException;
 import org.openstack4j.model.network.Network;
 
 import com.elastisys.scale.commons.openstack.OSClientFactory;
@@ -26,7 +27,7 @@ public class ListNetworksRequest extends AbstractOpenstackRequest<List<Network>>
     }
 
     @Override
-    public List<Network> doRequest(OSClient api) throws RuntimeException {
+    public List<Network> doRequest(OSClient api) throws ResponseException {
         List<Network> networks = new ArrayList<>();
         networks.addAll(api.networking().network().list());
         return networks;

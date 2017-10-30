@@ -21,9 +21,9 @@
     "provisioningTemplate": {
         "vmSize": "Standard_DS1_v2",
         "vmImage": "Canonical:UbuntuServer:16.04.0-LTS:latest",
+        "osDiskType": "Premium_LRS",
         "__comment": "neither linuxSettings nor windowsSettings given",
 
-        "storageAccountName": "testpooldisks",
         "network": {
             "virtualNetwork": "testnet",
             "subnetName": "default",

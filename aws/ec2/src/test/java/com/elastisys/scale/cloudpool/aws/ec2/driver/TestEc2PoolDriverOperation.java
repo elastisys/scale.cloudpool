@@ -8,6 +8,7 @@ import static com.elastisys.scale.cloudpool.aws.ec2.driver.MachinesMatcher.machi
 import static com.elastisys.scale.cloudpool.aws.ec2.driver.TestUtils.driverConfig;
 import static com.elastisys.scale.cloudpool.aws.ec2.driver.TestUtils.ec2Instances;
 import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
@@ -19,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.jetty.server.Server;
@@ -41,6 +43,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 
 /**
@@ -70,18 +73,18 @@ public class TestEc2PoolDriverOperation {
     @Test
     public void listMachines() throws CloudPoolDriverException {
         // empty pool
-        setUpMockedScalingGroup(POOL_NAME, ec2Instances());
+        setUpMockedPoolClient(POOL_NAME, ec2Instances());
         assertThat(this.driver.listMachines(), is(machines()));
         verify(this.mockClient).getInstances(asList(POOL_MEMBER_QUERY_FILTER));
 
         // non-empty pool
-        setUpMockedScalingGroup(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
+        setUpMockedPoolClient(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
         assertThat(this.driver.listMachines(), is(machines("i-1")));
 
         // pool with machines in different states
         List<Instance> members = ec2Instances(memberInstance("i-1", "running"), memberInstance("i-2", "pending"),
                 memberInstance("i-3", "terminated"));
-        setUpMockedScalingGroup(POOL_NAME, members);
+        setUpMockedPoolClient(POOL_NAME, members);
         List<Machine> machines = this.driver.listMachines();
         assertThat(machines, is(machines("i-1", "i-2", "i-3")));
         // verify that cloud-specific metadata is included for each machine
@@ -148,7 +151,7 @@ public class TestEc2PoolDriverOperation {
     @Test
     public void startMachinesOnFailure() throws StartMachinesException {
         // set up mock to throw an error whenever asked to launch an instance
-        setUpMockedScalingGroup(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
+        setUpMockedPoolClient(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
         doThrow(new AmazonClientException("API unreachable")).when(this.mockClient).launchInstances(
                 this.driver.provisioningTemplate(), 1, Arrays.asList(new Tag(CLOUD_POOL_TAG, POOL_NAME)));
 
@@ -163,43 +166,89 @@ public class TestEc2PoolDriverOperation {
     }
 
     /**
-     * Verifies behavior when terminating a pool member.
+     * Verifies behavior when terminating a single pool member.
      */
     @Test
-    public void terminate() throws Exception {
+    public void terminateSingleInstance() throws Exception {
         DriverConfig config = driverConfig(POOL_NAME);
 
         this.driver = new Ec2PoolDriver(
                 new FakeEc2Client(ec2Instances(memberInstance("i-1", "running"), memberInstance("i-2", "pending"))));
         this.driver.configure(config);
-        this.driver.terminateMachine("i-1");
+        this.driver.terminateMachines(asList("i-1"));
         assertThat(this.driver.listMachines(), is(machines("i-2")));
 
-        this.driver.terminateMachine("i-2");
+        this.driver.terminateMachines(asList("i-2"));
         assertThat(this.driver.listMachines(), is(machines()));
+    }
+
+    /**
+     * Verifies behavior when terminating multiple pool members.
+     */
+    @Test
+    public void terminateMultipleInstances() throws Exception {
+        DriverConfig config = driverConfig(POOL_NAME);
+
+        this.driver = new Ec2PoolDriver(
+                new FakeEc2Client(ec2Instances(memberInstance("i-1", "running"), memberInstance("i-2", "pending"))));
+        this.driver.configure(config);
+        this.driver.terminateMachines(asList("i-1", "i-2"));
+        assertThat(this.driver.listMachines(), is(Collections.emptyList()));
     }
 
     /**
      * On client error, a {@link CloudPoolDriverException} should be raised.
      */
     @Test(expected = CloudPoolDriverException.class)
-    public void terminateOnError() throws Exception {
+    public void terminateOnClientError() throws Exception {
         // set up mock to throw an error whenever terminateInstance is called
-        setUpMockedScalingGroup(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
+        setUpMockedPoolClient(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
         doThrow(new AmazonClientException("API unreachable")).when(this.mockClient).terminateInstances(asList("i-1"));
 
-        this.driver.terminateMachine("i-1");
+        this.driver.terminateMachines(asList("i-1"));
     }
 
     /**
-     * It should not be possible to terminate a machine instance that is not
-     * recognized as a pool member.
+     * Trying to terminate a machine instance that is not recognized as a pool
+     * member should result in a {@link TerminateMachinesException}.
      */
-    @Test(expected = NotFoundException.class)
+    @Test
     public void terminateOnNonGroupMember() {
-        setUpMockedScalingGroup(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
+        setUpMockedPoolClient(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
 
-        this.driver.terminateMachine("i-2");
+        try {
+            this.driver.terminateMachines(asList("i-2"));
+            fail("should fail to terminate instance that is not a pool member");
+        } catch (TerminateMachinesException e) {
+            // expected
+            assertTrue(e.getTerminationErrors().keySet().contains("i-2"));
+            assertThat(e.getTerminationErrors().get("i-2"), instanceOf(NotFoundException.class));
+            assertThat(e.getTerminatedMachines(), is(Collections.emptyList()));
+        }
+    }
+
+    /**
+     * When some terminations were successful and some failed, a
+     * {@link TerminateMachinesException} should be thrown which indicates which
+     * instances were terminated and which instance terminations failed.
+     */
+    @Test
+    public void terminateOnPartialFailure() {
+        DriverConfig config = driverConfig(POOL_NAME);
+
+        this.driver = new Ec2PoolDriver(new FakeEc2Client(ec2Instances(memberInstance("i-2", "running"))));
+        this.driver.configure(config);
+        // i-1 is not a pool member and should fail
+        try {
+            this.driver.terminateMachines(asList("i-1", "i-2"));
+            fail("expected to fail");
+        } catch (TerminateMachinesException e) {
+            // terminating i-2 should succeed
+            assertThat(e.getTerminatedMachines(), is(asList("i-2")));
+            // terminating i-1 should fail
+            assertTrue(e.getTerminationErrors().keySet().contains("i-1"));
+            assertThat(e.getTerminationErrors().get("i-1"), instanceOf(NotFoundException.class));
+        }
     }
 
     /**
@@ -223,7 +272,7 @@ public class TestEc2PoolDriverOperation {
      */
     @Test(expected = NotFoundException.class)
     public void detachOnNonGroupMember() {
-        setUpMockedScalingGroup(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
+        setUpMockedPoolClient(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
 
         this.driver.detachMachine("i-2");
     }
@@ -234,7 +283,7 @@ public class TestEc2PoolDriverOperation {
      */
     @Test(expected = CloudPoolDriverException.class)
     public void detachOnError() throws Exception {
-        setUpMockedScalingGroup(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
+        setUpMockedPoolClient(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
 
         List<Tag> poolTag = Arrays.asList(new Tag().withKey(CLOUD_POOL_TAG).withValue(POOL_NAME));
         doThrow(new RuntimeException("API unreachable")).when(this.mockClient).untagResource("i-1", poolTag);
@@ -277,7 +326,7 @@ public class TestEc2PoolDriverOperation {
      */
     @Test(expected = CloudPoolDriverException.class)
     public void attachOnError() throws Exception {
-        setUpMockedScalingGroup(POOL_NAME, ec2Instances(nonMemberInstance("i-1", "running")));
+        setUpMockedPoolClient(POOL_NAME, ec2Instances(nonMemberInstance("i-1", "running")));
         List<Tag> poolTag = Arrays.asList(new Tag().withKey(CLOUD_POOL_TAG).withValue(POOL_NAME));
         doThrow(new RuntimeException("API unreachable")).when(this.mockClient).tagResource("i-1", poolTag);
 
@@ -309,7 +358,7 @@ public class TestEc2PoolDriverOperation {
      */
     @Test(expected = NotFoundException.class)
     public void setServiceStateOnNonGroupMember() {
-        setUpMockedScalingGroup(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
+        setUpMockedPoolClient(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
 
         this.driver.setServiceState("i-2", ServiceState.IN_SERVICE);
     }
@@ -320,7 +369,7 @@ public class TestEc2PoolDriverOperation {
      */
     @Test(expected = CloudPoolDriverException.class)
     public void setServiceStateOnError() {
-        setUpMockedScalingGroup(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
+        setUpMockedPoolClient(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
 
         List<Tag> serviceStateTag = asList(new Tag().withKey(SERVICE_STATE_TAG).withValue(IN_SERVICE.name()));
         doThrow(new RuntimeException("API unreachable")).when(this.mockClient).tagResource("i-1", serviceStateTag);
@@ -357,7 +406,7 @@ public class TestEc2PoolDriverOperation {
      */
     @Test(expected = NotFoundException.class)
     public void setMembershipStatusOnNonGroupMember() {
-        setUpMockedScalingGroup(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
+        setUpMockedPoolClient(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
 
         this.driver.setMembershipStatus("i-2", MembershipStatus.blessed());
     }
@@ -368,7 +417,7 @@ public class TestEc2PoolDriverOperation {
      */
     @Test(expected = CloudPoolDriverException.class)
     public void setMembershipStatusOnError() {
-        setUpMockedScalingGroup(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
+        setUpMockedPoolClient(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
 
         MembershipStatus status = MembershipStatus.awaitingService();
         String statusAsJson = JsonUtils.toString(JsonUtils.toJson(status));
@@ -378,7 +427,7 @@ public class TestEc2PoolDriverOperation {
         this.driver.setMembershipStatus("i-1", status);
     }
 
-    private void setUpMockedScalingGroup(String poolName, List<Instance> poolMembers) {
+    private void setUpMockedPoolClient(String poolName, List<Instance> poolMembers) {
         // set up response to queries for pool member instances
         List<Filter> poolQueryFilters = asList(POOL_MEMBER_QUERY_FILTER);
         when(this.mockClient.getInstances(poolQueryFilters)).thenReturn(poolMembers);

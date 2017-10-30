@@ -11,11 +11,15 @@ import org.junit.Test;
  */
 public class TestVmImage {
 
+    /**
+     * It should be possible to specify an image as a reference to a
+     * market-place image.
+     */
     @Test
-    public void imageFromUrn() {
+    public void imageFromImageRef() {
         VmImage image = new VmImage("Canonical:UbuntuServer:16.04.0-LTS:2016-01-01");
         assertThat(image.isImageReference(), is(true));
-        assertThat(image.isImageUri(), is(false));
+        assertThat(image.isImageId(), is(false));
         assertThat(image.getImageReference().publisher(), is("Canonical"));
         assertThat(image.getImageReference().offer(), is("UbuntuServer"));
         assertThat(image.getImageReference().sku(), is("16.04.0-LTS"));
@@ -23,7 +27,7 @@ public class TestVmImage {
 
         // should not be possible to get image URL
         try {
-            image.getImageURL();
+            image.getImageId();
             fail("should fail");
         } catch (IllegalStateException e) {
             // expected
@@ -34,29 +38,21 @@ public class TestVmImage {
      * If left out, image reference version should be set to "latest".
      */
     @Test
-    public void imageFromUrnWithoutVersion() {
+    public void imageFromImageRefWithoutVersion() {
         VmImage image = new VmImage("Canonical:UbuntuServer:16.04.0-LTS");
         assertThat(image.isImageReference(), is(true));
-        assertThat(image.isImageUri(), is(false));
+        assertThat(image.isImageId(), is(false));
         assertThat(image.getImageReference().version(), is("latest"));
     }
 
     @Test
-    public void imageFromUrl() {
-        VmImage image = new VmImage("https://my.site/vm/image.iso");
+    public void imageFromId() {
+        VmImage image = new VmImage(
+                "/subscriptions/123/resourceGroups/rg/providers/Microsoft.Compute/images/ubuntu-apache");
         assertThat(image.isImageReference(), is(false));
-        assertThat(image.isImageUri(), is(true));
-        assertThat(image.getImageURL(), is("https://my.site/vm/image.iso"));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void illegalUrn() {
-        new VmImage("Canonical:UbuntuServer");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void illegalUrl() {
-        new VmImage("tcp://some/image");
+        assertThat(image.isImageId(), is(true));
+        assertThat(image.getImageId(),
+                is("/subscriptions/123/resourceGroups/rg/providers/Microsoft.Compute/images/ubuntu-apache"));
     }
 
 }

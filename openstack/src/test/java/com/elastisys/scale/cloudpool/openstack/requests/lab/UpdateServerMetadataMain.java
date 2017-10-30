@@ -13,7 +13,7 @@ public class UpdateServerMetadataMain {
 
     public static void main(String[] args) {
         Map<String, String> metadata = ImmutableMap.of("key1", "value1");
-        new UpdateServerMetadataRequest(new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig()),
-                serverId, metadata).call();
+        new UpdateServerMetadataRequest(new OSClientFactory(DriverConfigLoader.loadDefault()), serverId, metadata)
+                .call();
     }
 }

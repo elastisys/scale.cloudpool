@@ -17,8 +17,8 @@ import com.microsoft.rest.LogLevel;
 public class AzureApiAccess {
     static LogLevel DEFAULT_AZURE_SDK_LOG_LEVEL = LogLevel.NONE;
 
-    static final TimeInterval DEFAULT_CONNECTION_TIMEOUT = new TimeInterval(10L, "seconds");
-    static final TimeInterval DEFAULT_READ_TIMEOUT = new TimeInterval(10L, "seconds");
+    static final TimeInterval DEFAULT_CONNECTION_TIMEOUT = new TimeInterval(60L, "seconds");
+    static final TimeInterval DEFAULT_READ_TIMEOUT = new TimeInterval(300L, "seconds");
 
     /**
      * The Azure account subscription that will be billed for resources

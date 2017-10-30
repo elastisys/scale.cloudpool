@@ -5,10 +5,10 @@ import static org.junit.Assert.assertThat;
 
 import org.junit.Test;
 
+import com.elastisys.scale.commons.openstack.ApiAccessConfig;
 import com.elastisys.scale.commons.openstack.AuthConfig;
 import com.elastisys.scale.commons.openstack.AuthV2Credentials;
 import com.elastisys.scale.commons.openstack.AuthV3Credentials;
-import com.elastisys.scale.commons.openstack.Scope;
 
 /**
  * Exercise {@link CloudApiSettings}.
@@ -58,8 +58,9 @@ public class TestCloudApiSettings {
         CloudApiSettings config = new CloudApiSettings(auth, "RegionOne");
         config.validate();
 
-        assertThat(config.getConnectionTimeout(), is(CloudApiSettings.DEFAULT_CONNECTION_TIMEOUT));
-        assertThat(config.getSocketTimeout(), is(CloudApiSettings.DEFAULT_SOCKET_TIMEOUT));
+        assertThat(config.getConnectionTimeout(), is(ApiAccessConfig.DEFAULT_CONNECTION_TIMEOUT));
+        assertThat(config.getSocketTimeout(), is(ApiAccessConfig.DEFAULT_SOCKET_TIMEOUT));
+        assertThat(config.shouldLogHttpRequests(), is(false));
     }
 
     @Test
@@ -71,6 +72,19 @@ public class TestCloudApiSettings {
         config.validate();
         assertThat(config.getConnectionTimeout(), is(connectionTimeout));
         assertThat(config.getSocketTimeout(), is(socketTimeout));
+    }
+
+    @Test
+    public void withRequestLogging() {
+        int connectionTimeout = 5000;
+        int socketTimeout = 7000;
+        boolean logHttpRequests = true;
+        CloudApiSettings config = new CloudApiSettings(new AuthConfig(keystoneUrl(), null, authV3Credentials()),
+                "RegionOne", connectionTimeout, socketTimeout, logHttpRequests);
+        config.validate();
+        assertThat(config.getConnectionTimeout(), is(connectionTimeout));
+        assertThat(config.getSocketTimeout(), is(socketTimeout));
+        assertThat(config.shouldLogHttpRequests(), is(true));
     }
 
     /** Config must specify authentication details. */
@@ -116,7 +130,16 @@ public class TestCloudApiSettings {
     }
 
     private AuthV3Credentials authV3Credentials() {
-        return new AuthV3Credentials(new Scope("domain_id", null), "user_id", "pass");
+        String userId = null;
+        String userName = "foo";
+        String userDomainId = null;
+        String userDomainName = "default";
+        String password = "secret";
+        String projectId = null;
+        String projectName = "admin";
+        String projectDomainName = "default";
+        String projectDomainId = null;
+        return new AuthV3Credentials(userId, userName, userDomainId, userDomainName, password, projectId, projectName,
+                projectDomainName, projectDomainId);
     }
-
 }

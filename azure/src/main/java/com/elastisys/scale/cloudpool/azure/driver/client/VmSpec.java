@@ -11,6 +11,7 @@ import com.elastisys.scale.cloudpool.azure.driver.config.NetworkSettings;
 import com.elastisys.scale.cloudpool.azure.driver.config.WindowsSettings;
 import com.elastisys.scale.cloudpool.azure.driver.util.TagValidator;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.microsoft.azure.management.compute.StorageAccountTypes;
 
 /**
  * Captures provisioning details for a single Azure VM to be created via the
@@ -23,7 +24,14 @@ public class VmSpec {
     /** VM size to use for VM. */
     private final String vmSize;
     /** Image used to boot VM. */
-    private final String vmImage;
+    private final VmImage vmImage;
+
+    /**
+     * The disk type to use for the managed OS disk that will be created for the
+     * VM.
+     */
+    private final StorageAccountTypes osDiskType;
+
     /** Name to assign to the created VM. */
     private final String vmName;
 
@@ -38,12 +46,6 @@ public class VmSpec {
      * be created.
      */
     private final Optional<WindowsSettings> windowsSettings;
-
-    /**
-     * An existing storage account used to store the OS disk VHD for the created
-     * VM.
-     */
-    private final String storageAccountName;
 
     /** Network settings for the created VM. */
     private final NetworkSettings network;
@@ -65,6 +67,9 @@ public class VmSpec {
      *            VM size to use for VM.
      * @param vmImage
      *            Image used to boot VM.
+     * @param osDiskType
+     *            The disk type to use for the managed OS disk that will be
+     *            created for the VM.
      * @param vmName
      *            Name to assign to the created VM.
      * @param linuxSettings
@@ -73,9 +78,6 @@ public class VmSpec {
      * @param windowsSettings
      *            Settings for creating a Windows VM. May be <code>null</code>
      *            if {@link #linuxSettings} is given.
-     * @param storageAccountName
-     *            An existing storage account used to store the OS disk VHD for
-     *            the created VM.
      * @param network
      *            Network settings for the created VM.
      * @param availabilitySet
@@ -86,15 +88,15 @@ public class VmSpec {
      * @param tags
      *            Tags to associate with the created VM.
      */
-    public VmSpec(String vmSize, String vmImage, String vmName, Optional<LinuxSettings> linuxSettings,
-            Optional<WindowsSettings> windowsSettings, String storageAccountName, NetworkSettings network,
+    public VmSpec(String vmSize, VmImage vmImage, StorageAccountTypes osDiskType, String vmName,
+            Optional<LinuxSettings> linuxSettings, Optional<WindowsSettings> windowsSettings, NetworkSettings network,
             String availabilitySet, Map<String, String> tags) {
         this.vmSize = vmSize;
         this.vmImage = vmImage;
+        this.osDiskType = osDiskType;
         this.vmName = vmName;
         this.linuxSettings = linuxSettings;
         this.windowsSettings = windowsSettings;
-        this.storageAccountName = storageAccountName;
         this.network = network;
         this.availabilitySet = availabilitySet;
         this.tags = tags;
@@ -116,8 +118,18 @@ public class VmSpec {
      *
      * @return
      */
-    public String getVmImage() {
+    public VmImage getVmImage() {
         return this.vmImage;
+    }
+
+    /**
+     * The disk type to use for the managed OS disk that will be created for the
+     * VM.
+     *
+     * @return
+     */
+    public StorageAccountTypes getOsDiskType() {
+        return this.osDiskType;
     }
 
     /**
@@ -150,16 +162,6 @@ public class VmSpec {
     }
 
     /**
-     * An existing storage account used to store the OS disk VHD for the created
-     * VM.
-     *
-     * @return
-     */
-    public String getStorageAccountName() {
-        return this.storageAccountName;
-    }
-
-    /**
      * Network settings for the created VM.
      *
      * @return
@@ -189,8 +191,8 @@ public class VmSpec {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.vmSize, this.vmImage, this.vmName, this.linuxSettings, this.windowsSettings,
-                this.storageAccountName, this.network, this.availabilitySet, this.tags);
+        return Objects.hash(this.vmSize, this.vmImage, this.osDiskType, this.vmName, this.linuxSettings,
+                this.windowsSettings, this.network, this.availabilitySet, this.tags);
     }
 
     @Override
@@ -200,9 +202,9 @@ public class VmSpec {
             return Objects.equals(this.vmSize, that.vmSize) //
                     && Objects.equals(this.vmImage, that.vmImage) //
                     && Objects.equals(this.vmName, that.vmName) //
+                    && Objects.equals(this.osDiskType, that.osDiskType) //
                     && Objects.equals(this.linuxSettings, that.linuxSettings)
-                    && Objects.equals(this.windowsSettings, that.windowsSettings)
-                    && Objects.equals(this.storageAccountName, that.storageAccountName)
+                    && Objects.equals(this.windowsSettings, that.windowsSettings) //
                     && Objects.equals(this.network, that.network) //
                     && Objects.equals(this.availabilitySet, that.availabilitySet) //
                     && Objects.equals(this.tags, that.tags);
@@ -213,12 +215,14 @@ public class VmSpec {
     public void validate() throws IllegalArgumentException {
         checkArgument(this.vmSize != null, "vmSpec: no vmSize given");
         checkArgument(this.vmImage != null, "vmSpec: no vmImage given");
+        checkArgument(this.osDiskType != null, "vmSpec: no osDiskType given");
         checkArgument(this.vmName != null, "vmSpec: no vmName given");
+        checkArgument(this.linuxSettings != null, "vmSpec: linuxSettings is null");
+        checkArgument(this.windowsSettings != null, "vmSpec: windowsSettings is null");
         checkArgument(this.linuxSettings.isPresent() || this.windowsSettings.isPresent(),
                 "vmSpec: neither  linuxSettings nor windowsSettings given");
         checkArgument(this.linuxSettings.isPresent() ^ this.windowsSettings.isPresent(),
                 "vmSpec: may only specify one of linuxSettings and windowsSettings, not both");
-        checkArgument(this.storageAccountName != null, "vmSpec: missing storageAccountName");
         checkArgument(this.network != null, "vmSpec: no network given");
         checkArgument(this.tags != null, "vmSpec: tags cannot be null");
 

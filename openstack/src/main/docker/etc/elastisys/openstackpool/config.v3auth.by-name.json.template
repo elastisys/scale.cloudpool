@@ -2,19 +2,20 @@
     "name": "${CLOUD_POOL_NAME}",
 
     "cloudApiSettings": {
-            "auth": {
-                "keystoneUrl": "http://${KEYSTONE_HOST}:5000/v3.0",
-                "v3Credentials": {
-                    "scope": {
-                        "projectId": "${OS_PROJECT_ID}"
-                    },
-                    "userId": "${OS_PROJECT_USER_ID}",
-                    "password": "${OS_PROJECT_USER_PASSWORD}"
-                }
-            },
-            "region": "${OS_REGION}",
-            "connectionTimeout": 10000,
-            "socketTimeout": 10000
+        "auth": {
+            "keystoneUrl": "http://${KEYSTONE_HOST}:5000/v3.0",
+            "v3Credentials": {
+                "userName": "${OS_USER_NAME}",
+                "userDomainName": "${OS_USER_DOMAIN_NAME}",
+                "password": "${OS_PASSWORD}",
+                "projectName": "${OS_PROJECT_NAME}",
+                "projectDomainName": "${OS_PROJECT_DOMAIN_NAME}"
+            }
+        },
+        "region": "${OS_REGION}",
+        "connectionTimeout": 10000,
+        "socketTimeout": 10000,
+        "logHttpRequests": false
     },
 
 

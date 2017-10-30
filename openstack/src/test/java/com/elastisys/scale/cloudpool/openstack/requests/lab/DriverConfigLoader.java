@@ -11,20 +11,19 @@ import com.elastisys.scale.commons.json.JsonUtils;
 
 /**
  * Utility class that can be used by OpenStack clients wishing to load
- * {@link CloudApiSettings} from a JSON file to initialize a client
- * before submitting a request to the OpenStack API.
+ * {@link CloudApiSettings} from a JSON file to initialize a client before
+ * submitting a request to the OpenStack API.
  */
 public class DriverConfigLoader {
 
     /**
      * TODO: set to a path holding the {@link CloudApiSettings} to use.
      */
-    private static final Path OPENSTACK_DRIVER_CONFIG = Paths.get(System.getenv("HOME"), ".elastisys",
-            "openstack-driver-config.json");
+    private static final Path OPENSTACK_DRIVER_CONFIG = Paths.get(System.getenv("HOME"), ".elastisys", "openstack",
+            "driver-config.json");
 
     /**
-     * Loads an {@link CloudApiSettings} from
-     * {@link #OPENSTACK_DRIVER_CONFIG}.
+     * Loads an {@link CloudApiSettings} from {@link #OPENSTACK_DRIVER_CONFIG}.
      *
      * @return
      */

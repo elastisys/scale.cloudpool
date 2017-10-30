@@ -5,12 +5,9 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.elastisys.scale.cloudpool.azure.driver.client.impl.ApiUtils;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
 import com.elastisys.scale.cloudpool.azure.driver.requests.DeleteNetworkInterfaceRequest;
 import com.elastisys.scale.commons.json.types.TimeInterval;
-import com.microsoft.azure.management.Azure;
-import com.microsoft.azure.management.network.NetworkInterface;
 import com.microsoft.rest.LogLevel;
 
 /**
@@ -27,17 +24,18 @@ public class DeleteNetworkInterface extends BaseLabProgram {
      * TODO: set the name of the network interface within the resource group to
      * delete.
      */
-    private static final String networkInterfaceName = "AzureTestPool-1481267299236-0";
+    private static final String networkInterfaceName = "my-nic";
 
     public static void main(String[] args) {
 
         AzureApiAccess apiAccess = new AzureApiAccess(SUBSCRIPTION_ID, AZURE_AUTH,
                 new TimeInterval(10L, TimeUnit.SECONDS), new TimeInterval(10L, TimeUnit.SECONDS), LogLevel.BASIC);
-        Azure api = ApiUtils.acquireApiClient(apiAccess);
 
-        NetworkInterface nic = api.networkInterfaces().getByResourceGroup(resourceGroup, networkInterfaceName);
-        LOG.debug("found network interface {}", nic.id());
+        String nicId = String.format(
+                "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/networkInterfaces/%s", SUBSCRIPTION_ID,
+                resourceGroup, networkInterfaceName);
 
-        new DeleteNetworkInterfaceRequest(apiAccess, nic.id()).call();
+        new DeleteNetworkInterfaceRequest(apiAccess, nicId).call();
+        LOG.info("nic deleted.");
     }
 }

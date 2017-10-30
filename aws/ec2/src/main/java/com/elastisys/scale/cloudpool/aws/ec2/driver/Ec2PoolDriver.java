@@ -5,8 +5,13 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +35,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -90,15 +96,8 @@ public class Ec2PoolDriver implements CloudPoolDriver {
     public List<Machine> listMachines() throws CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured Ec2PoolDriver");
 
-        try {
-            // filter instances on cloud pool tag
-            Filter filter = new Filter().withName(ScalingFilters.CLOUD_POOL_TAG_FILTER).withValues(getPoolName());
-            List<Instance> instances = this.client.getInstances(asList(filter));
-            return Lists.transform(instances, new InstanceToMachine());
-        } catch (Exception e) {
-            throw new CloudPoolDriverException(
-                    format("failed to retrieve machines in cloud pool \"%s\": %s", getPoolName(), e.getMessage()), e);
-        }
+        // filter instances on cloud pool tag
+        return Lists.transform(getPoolInstances(), new InstanceToMachine());
     }
 
     @Override
@@ -125,19 +124,64 @@ public class Ec2PoolDriver implements CloudPoolDriver {
     }
 
     @Override
-    public void terminateMachine(String machineId) throws CloudPoolDriverException {
+    public void terminateMachines(List<String> instanceIds)
+            throws IllegalStateException, TerminateMachinesException, CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured Ec2PoolDriver");
+        List<String> victimIds = new ArrayList<>(instanceIds);
+        LOG.info("request to terminate instances: {}", instanceIds);
 
-        // verify that machine exists in group
-        getMachineOrFail(machineId);
+        List<Instance> poolInstances = getPoolInstances();
 
+        // track termination failures
+        Map<String, Throwable> failures = new HashMap<>();
+
+        // only terminate pool members (error mark other requests)
+        nonPoolMembers(instanceIds, poolInstances).stream().forEach(instanceId -> {
+            failures.put(instanceId,
+                    new NotFoundException(String.format("instance %s is not a member of the pool", instanceId)));
+            victimIds.remove(instanceId);
+        });
+
+        // none of the machine ids were pool members
+        if (victimIds.isEmpty()) {
+            throw new TerminateMachinesException(Collections.emptyList(), failures);
+        }
+
+        LOG.debug("terminating pool member instances: {}", victimIds);
         try {
-            LOG.info("terminating instance {}", machineId);
-            this.client.terminateInstances(asList(machineId));
+            this.client.terminateInstances(victimIds);
         } catch (Exception e) {
-            String message = format("failed to terminate instance \"%s\": %s", machineId, e.getMessage());
+            String message = format("failed to terminate instances %s: %s", victimIds, e.getMessage());
             throw new CloudPoolDriverException(message, e);
         }
+
+        if (!failures.isEmpty()) {
+            throw new TerminateMachinesException(victimIds, failures);
+        }
+    }
+
+    /**
+     * Returns the list of machine ids (from a given list of machine ids) that
+     * are *not* members of the given pool.
+     *
+     * @param machineIds
+     * @param pool
+     * @return
+     */
+    private static List<String> nonPoolMembers(List<String> machineIds, List<Instance> pool) {
+        return machineIds.stream().filter(machineId -> !member(machineId, pool)).collect(Collectors.toList());
+    }
+
+    /**
+     * Returns <code>true</code> if the given instance id is found in the given
+     * instance pool.
+     *
+     * @param instanceId
+     * @param pool
+     * @return
+     */
+    private static boolean member(String instanceId, List<Instance> pool) {
+        return pool.stream().anyMatch(i -> i.getInstanceId().equals(instanceId));
     }
 
     @Override
@@ -151,7 +195,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
             Tag tag = new Tag(ScalingTags.CLOUD_POOL_TAG, getPoolName());
             tagInstance(machineId, tag);
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, NotFoundException.class);
+            Throwables.throwIfInstanceOf(e, NotFoundException.class);
             throw new CloudPoolDriverException(
                     String.format("failed to attach '%s' to cloud pool: %s", machineId, e.getMessage()), e);
         }
@@ -185,7 +229,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
             Tag tag = new Tag(ScalingTags.SERVICE_STATE_TAG, serviceState.name());
             tagInstance(machineId, tag);
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, NotFoundException.class);
+            Throwables.throwIfInstanceOf(e, NotFoundException.class);
             throw new CloudPoolDriverException(
                     String.format("failed to set service state for instance %s: %s", machineId, e.getMessage()), e);
         }
@@ -203,7 +247,7 @@ public class Ec2PoolDriver implements CloudPoolDriver {
             Tag tag = new Tag(ScalingTags.MEMBERSHIP_STATUS_TAG, JsonUtils.toString(toJson(membershipStatus)));
             tagInstance(machineId, tag);
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, NotFoundException.class);
+            Throwables.throwIfInstanceOf(e, NotFoundException.class);
             throw new CloudPoolDriverException(
                     String.format("failed to set membership status for instance %s: %s", machineId, e.getMessage()), e);
         }
@@ -266,6 +310,23 @@ public class Ec2PoolDriver implements CloudPoolDriver {
     private Instance tagInstance(String instanceId, Tag... tags) throws NotFoundException, CloudPoolDriverException {
         this.client.tagResource(instanceId, Arrays.asList(tags));
         return this.client.getInstanceMetadata(instanceId);
+    }
+
+    /**
+     * Retrieves all {@link Instance}s that are members of the machine pool.
+     *
+     * @return
+     * @throws CloudPoolDriverException
+     */
+    private List<Instance> getPoolInstances() throws CloudPoolDriverException {
+        try {
+            Filter filter = new Filter().withName(ScalingFilters.CLOUD_POOL_TAG_FILTER).withValues(getPoolName());
+            List<Instance> instances = this.client.getInstances(asList(filter));
+            return instances;
+        } catch (Exception e) {
+            throw new CloudPoolDriverException(
+                    format("failed to retrieve machines in cloud pool \"%s\": %s", getPoolName(), e.getMessage()), e);
+        }
     }
 
     boolean isConfigured() {

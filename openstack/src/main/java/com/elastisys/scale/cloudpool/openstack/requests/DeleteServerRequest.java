@@ -10,6 +10,7 @@ import java.util.Map;
 import org.openstack4j.api.OSClient;
 import org.openstack4j.api.compute.ComputeFloatingIPService;
 import org.openstack4j.api.compute.ServerService;
+import org.openstack4j.api.exceptions.ResponseException;
 import org.openstack4j.model.common.ActionResponse;
 import org.openstack4j.model.compute.Address;
 import org.openstack4j.model.compute.FloatingIP;
@@ -18,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
-import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
 import com.elastisys.scale.commons.openstack.OSClientFactory;
@@ -51,31 +51,28 @@ public class DeleteServerRequest extends AbstractOpenstackRequest<Void> {
     }
 
     @Override
-    public Void doRequest(OSClient api) throws NotFoundException {
+    public Void doRequest(OSClient api) throws NotFoundException, ResponseException {
         // look for victim server in all regions
         ServerService serverApi = api.compute().servers();
         Server victimServer = serverApi.get(this.victimId);
         if (victimServer == null) {
-            throw new NotFoundException(format("a victim server with id '%s' could not be found " + "in region %s",
+            throw new NotFoundException(format("delete failed: server with id '%s' could not be found in region %s",
                     this.victimId, getApiAccessConfig().getRegion()));
         }
 
         releaseFloatingIps(api, victimServer);
         ActionResponse response = serverApi.delete(this.victimId);
         if (!response.isSuccess()) {
-            throw new CloudPoolDriverException("failed to delete victim server " + this.victimId);
+            throw new ResponseException(
+                    String.format("delete failed: server %s: %s", this.victimId, response.getFault()),
+                    response.getCode());
         }
 
-        try {
-            awaitTermination(victimServer.getId());
-        } catch (Exception e) {
-            throw new CloudPoolDriverException(
-                    String.format("timed out waiting for server %s to be terminated", e.getMessage()), e);
-        }
+        awaitTermination(victimServer.getId());
         return null;
     }
 
-    private void awaitTermination(String serverId) throws Exception {
+    private void awaitTermination(String serverId) throws ResponseException {
         String taskName = String.format("termination-waiter{%s}", serverId);
 
         ServerExistsRequest serverExistsRequester = new ServerExistsRequest(getClientFactory(), serverId);
@@ -84,7 +81,13 @@ public class DeleteServerRequest extends AbstractOpenstackRequest<Void> {
         Retryable<Boolean> awaitTermination = Retryers.fixedDelayRetryer(taskName, serverExistsRequester, fixedDelay,
                 SECONDS, maxRetries, Predicates.equalTo(false));
 
-        awaitTermination.call();
+        try {
+            awaitTermination.call();
+        } catch (ResponseException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseException(String.format("failed to await %s", taskName), -1, e);
+        }
     }
 
     /**

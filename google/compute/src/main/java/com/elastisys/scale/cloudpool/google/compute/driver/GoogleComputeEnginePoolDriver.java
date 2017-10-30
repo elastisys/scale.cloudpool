@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkState;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,6 +23,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.cloudpool.google.commons.api.CloudApiSettings;
 import com.elastisys.scale.cloudpool.google.commons.api.compute.ComputeClient;
 import com.elastisys.scale.cloudpool.google.commons.api.compute.InstanceGroupClient;
@@ -146,10 +148,47 @@ public class GoogleComputeEnginePoolDriver implements CloudPoolDriver {
     }
 
     @Override
-    public void terminateMachine(String instanceUrl)
-            throws IllegalStateException, NotFoundException, CloudPoolDriverException {
+    public void terminateMachines(List<String> instanceUrls)
+            throws IllegalStateException, TerminateMachinesException, CloudPoolDriverException {
         ensureConfigured();
 
+        List<String> victimUrls = new ArrayList<>(instanceUrls);
+        LOG.info("request to terminate instances: {}", instanceUrls);
+
+        List<Machine> poolMembers = listMachines();
+
+        // track termination failures
+        Map<String, Throwable> failures = new HashMap<>();
+
+        // only terminate pool members (error mark others)
+        nonPoolMembers(victimUrls, poolMembers).stream().forEach(machineId -> {
+            failures.put(machineId,
+                    new NotFoundException(String.format("machine %s is not a member of the pool", machineId)));
+            victimUrls.remove(machineId);
+        });
+
+        List<String> terminated = new ArrayList<>();
+        for (String victimUrl : victimUrls) {
+            try {
+                deleteInstance(victimUrl);
+                terminated.add(victimUrl);
+            } catch (Exception e) {
+                failures.put(victimUrl, e);
+            }
+        }
+
+        if (!failures.isEmpty()) {
+            throw new TerminateMachinesException(terminated, failures);
+        }
+    }
+
+    /**
+     * Deletes a single instance from the pool. The instance is assumed to have
+     * been verified to be a pool member already.
+     *
+     * @param instanceUrl
+     */
+    private void deleteInstance(String instanceUrl) {
         if (UrlUtils.basename(instanceUrl).startsWith(REQUESTED_INSTANCE_PREFIX)) {
             // we were asked to terminate a pseudo instance for a requested, but
             // not yet acquired, instance. just decrement the targetSize of the
@@ -160,7 +199,6 @@ public class GoogleComputeEnginePoolDriver implements CloudPoolDriver {
                     targetSize, decrementedSize);
             instanceGroupClient().resize(decrementedSize);
         } else {
-            ensureGroupMember(instanceUrl);
             LOG.info("removing instance {} from instance group {} ...", UrlUtils.basename(instanceUrl),
                     provisioningTemplate().getInstanceGroup());
             instanceGroupClient().deleteInstances(Arrays.asList(instanceUrl));
@@ -276,6 +314,30 @@ public class GoogleComputeEnginePoolDriver implements CloudPoolDriver {
         }
         throw new NotFoundException(
                 String.format("instance %s does not exist in instance group %s", instanceUrl, instanceGroup));
+    }
+
+    /**
+     * Returns the list of instance URLs (from a given list of instance URLs)
+     * that are *not* members of the given pool.
+     *
+     * @param instanceUrls
+     * @param pool
+     * @return
+     */
+    private static List<String> nonPoolMembers(List<String> instanceUrls, List<Machine> pool) {
+        return instanceUrls.stream().filter(instanceUrl -> !member(instanceUrl, pool)).collect(Collectors.toList());
+    }
+
+    /**
+     * Returns <code>true</code> if the given instance is found in the given
+     * machine pool.
+     *
+     * @param instanceUrl
+     * @param pool
+     * @return
+     */
+    private static boolean member(String instanceUrl, List<Machine> pool) {
+        return pool.stream().anyMatch(m -> m.getId().equals(instanceUrl));
     }
 
     private void ensureConfigured() {

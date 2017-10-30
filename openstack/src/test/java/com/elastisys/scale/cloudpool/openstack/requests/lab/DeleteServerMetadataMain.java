@@ -13,7 +13,7 @@ public class DeleteServerMetadataMain {
 
     public static void main(String[] args) {
         List<String> metadataKeys = ImmutableList.of("key1");
-        new DeleteServerMetadataRequest(new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig()),
-                serverId, metadataKeys).call();
+        new DeleteServerMetadataRequest(new OSClientFactory(DriverConfigLoader.loadDefault()), serverId, metadataKeys)
+                .call();
     }
 }

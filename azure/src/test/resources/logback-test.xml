@@ -1,6 +1,26 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <configuration>
+
+  <!-- captures to file -->
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>azurepool.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- daily rollover -->
+      <fileNamePattern>azurepool.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+      <!-- keep 7 days' worth of history -->
+      <maxHistory>7</maxHistory>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%date{ISO8601} [%X{cloudpool:-server}/%thread] %-5level [%class{0}:%method:%line] %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!-- captures to stdout -->
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.out</target>    
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">    
+      <level>INFO</level>
+    </filter>
     <encoder>
       <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level [%class{0}:%method:%line] - %msg%n</pattern>
     </encoder>
@@ -9,12 +29,23 @@
   <root>
     <level value="ERROR" />
     <appender-ref ref="STDOUT" />
-    <!-- <appender-ref ref="FILE" /> -->
+    <appender-ref ref="FILE" />        
   </root>
+
   <logger name="com.elastisys">
-    <level value="debug" />
+    <level value="DEBUG"/>   
   </logger>
-  <logger name="com.microsoft">
-    <level value="INFO" />
+
+  <!-- Azure SDK logging only goes to file (additivity=false). 
+       The amount depends on what the azureSdkLogLevel is set to. -->
+  <logger name="com.microsoft" additivity="false">
+    <level value="INFO"/>        
+    <appender-ref ref="FILE"/>
   </logger>
+
+  <!-- Get rid of noisy "Correlation ID ..." output  -->
+  <logger name="com.microsoft.aad.adal4j">
+    <level value="WARN"/>
+  </logger>
+  
 </configuration>

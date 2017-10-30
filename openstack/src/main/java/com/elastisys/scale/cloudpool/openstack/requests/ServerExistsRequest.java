@@ -1,6 +1,7 @@
 package com.elastisys.scale.cloudpool.openstack.requests;
 
 import org.openstack4j.api.OSClient;
+import org.openstack4j.api.exceptions.ResponseException;
 import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.commons.openstack.OSClientFactory;
@@ -27,7 +28,7 @@ public class ServerExistsRequest extends AbstractOpenstackRequest<Boolean> {
     }
 
     @Override
-    public Boolean doRequest(OSClient api) {
+    public Boolean doRequest(OSClient api) throws ResponseException {
         Server server = api.compute().servers().get(this.serverId);
         return server != null;
     }

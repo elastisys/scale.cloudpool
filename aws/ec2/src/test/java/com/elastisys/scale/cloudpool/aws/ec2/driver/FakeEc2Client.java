@@ -9,7 +9,10 @@ import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceState;
+import com.amazonaws.services.ec2.model.InstanceStateChange;
+import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.amazonaws.services.ec2.model.Tag;
+import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTemplate;
@@ -106,11 +109,16 @@ public class FakeEc2Client implements Ec2Client {
     }
 
     @Override
-    public void terminateInstances(List<String> instanceIds) throws NotFoundException, AmazonClientException {
+    public TerminateInstancesResult terminateInstances(List<String> instanceIds) throws AmazonClientException {
+        TerminateInstancesResult result = new TerminateInstancesResult();
         for (String instanceId : instanceIds) {
             Instance instance = getInstanceMetadata(instanceId);
             this.instances.remove(instance);
+            InstanceStateChange instanceStateChange = new InstanceStateChange().withInstanceId(instance.getInstanceId())
+                    .withCurrentState(new InstanceState().withName(InstanceStateName.ShuttingDown));
+            result.withTerminatingInstances(instanceStateChange);
         }
+        return result;
     }
 
 }

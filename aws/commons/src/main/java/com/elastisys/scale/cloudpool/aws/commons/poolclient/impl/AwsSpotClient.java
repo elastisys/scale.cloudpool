@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 
 import com.amazonaws.AmazonClientException;
+import com.amazonaws.services.ec2.model.CancelSpotInstanceRequestsResult;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.Tag;
@@ -31,19 +32,21 @@ public class AwsSpotClient extends AwsEc2Client implements SpotClient {
     }
 
     @Override
-    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, Ec2ProvisioningTemplate instanceTemplate, int count,
-            List<Tag> tags) {
+    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, Ec2ProvisioningTemplate instanceTemplate,
+            int count, List<Tag> tags) {
         // no particular availability zone
         String availabilityZone = null;
         PlaceSpotInstanceRequests request = new PlaceSpotInstanceRequests(awsCredentials(), region(), clientConfig(),
                 bidPrice, availabilityZone, instanceTemplate.getSecurityGroups(), instanceTemplate.getKeyPair(),
-                instanceTemplate.getSize(), instanceTemplate.getImage(), instanceTemplate.getEncodedUserData(), count, tags);
+                instanceTemplate.getSize(), instanceTemplate.getImage(), instanceTemplate.getEncodedUserData(), count,
+                tags);
         return request.call();
     }
 
     @Override
-    public void cancelSpotRequests(List<String> spotInstanceRequestIds) {
-        new CancelSpotInstanceRequests(awsCredentials(), region(), clientConfig(), spotInstanceRequestIds).call();
+    public CancelSpotInstanceRequestsResult cancelSpotRequests(List<String> spotInstanceRequestIds) {
+        return new CancelSpotInstanceRequests(awsCredentials(), region(), clientConfig(), spotInstanceRequestIds)
+                .call();
     }
 
 }

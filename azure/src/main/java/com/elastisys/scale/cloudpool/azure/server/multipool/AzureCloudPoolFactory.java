@@ -26,10 +26,9 @@ public class AzureCloudPoolFactory implements CloudPoolFactory {
     public CloudPool create(ThreadFactory threadFactory, File stateDir) throws CloudPoolException {
 
         StateStorage stateStorage = StateStorage.builder(stateDir).build();
-        CloudPoolDriver driver = new AzurePoolDriver(new StandardAzureClient());
-
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(THREADS_PER_CLOUDPOOL, threadFactory);
 
+        CloudPoolDriver driver = new AzurePoolDriver(new StandardAzureClient(), executor);
         return new BaseCloudPool(stateStorage, driver, executor);
     }
 

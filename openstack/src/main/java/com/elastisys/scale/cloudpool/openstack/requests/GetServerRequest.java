@@ -1,6 +1,7 @@
 package com.elastisys.scale.cloudpool.openstack.requests;
 
 import org.openstack4j.api.OSClient;
+import org.openstack4j.api.exceptions.ResponseException;
 import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
@@ -8,10 +9,7 @@ import com.elastisys.scale.commons.openstack.OSClientFactory;
 
 /**
  * A request that, when called, requests meta data about a particular
- * {@link Server} instance.
- * <p/>
- * If the requested {@link Server} cannot be found, an
- * {@link IllegalArgumentException} is raised.
+ * {@link Server}.
  */
 public class GetServerRequest extends AbstractOpenstackRequest<Server> {
 
@@ -32,7 +30,7 @@ public class GetServerRequest extends AbstractOpenstackRequest<Server> {
     }
 
     @Override
-    public Server doRequest(OSClient api) throws NotFoundException {
+    public Server doRequest(OSClient api) throws NotFoundException, ResponseException {
         Server server = api.compute().servers().get(this.serverId);
         if (server == null) {
             throw new NotFoundException(String.format("failed to retrieve " + "server '%s' in region %s", this.serverId,

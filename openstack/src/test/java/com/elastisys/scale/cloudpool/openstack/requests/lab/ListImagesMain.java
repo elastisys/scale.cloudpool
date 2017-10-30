@@ -13,8 +13,7 @@ public class ListImagesMain {
     private static Logger LOG = LoggerFactory.getLogger(ListImagesMain.class);
 
     public static void main(String[] args) {
-        List<Image> images = new ListImagesRequest(
-                new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig())).call();
+        List<Image> images = new ListImagesRequest(new OSClientFactory(DriverConfigLoader.loadDefault())).call();
         LOG.info("{} server image(s) found", images.size());
         for (Image image : images) {
             LOG.info("image: {}", image);

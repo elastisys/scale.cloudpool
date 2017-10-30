@@ -18,12 +18,14 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
  */
 public class Main {
 
+    private static final int MAX_CONCURRENCY = 5;
+
     public static void main(String[] args) throws Exception {
         CloudPoolOptions options = CloudPoolServer.parseArgs(args);
         StateStorage stateStorage = StateStorage.builder(options.storageDir).build();
-        CloudPoolDriver driver = new AzurePoolDriver(new StandardAzureClient());
-        ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
 
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(MAX_CONCURRENCY);
+        CloudPoolDriver driver = new AzurePoolDriver(new StandardAzureClient(), executor);
         CloudPoolServer.main(new BaseCloudPool(stateStorage, driver, executor), args);
     }
 }

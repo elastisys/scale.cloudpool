@@ -19,10 +19,11 @@ import com.elastisys.scale.cloudpool.azure.driver.client.VmSpec;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
 import com.elastisys.scale.cloudpool.azure.driver.config.CloudApiSettings;
 import com.elastisys.scale.cloudpool.azure.driver.requests.GetVmRequest;
-import com.elastisys.scale.cloudpool.azure.driver.requests.PurgeVmRequest;
+import com.elastisys.scale.cloudpool.azure.driver.requests.ListVmsRequest;
+import com.elastisys.scale.cloudpool.azure.driver.requests.PurgeVmsRequest;
 import com.elastisys.scale.cloudpool.azure.driver.requests.TagVmRequest;
 import com.elastisys.scale.cloudpool.azure.driver.requests.UntagVmRequest;
-import com.microsoft.azure.management.Azure;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.microsoft.azure.management.compute.VirtualMachine;
 
 /**
@@ -50,8 +51,6 @@ public class StandardAzureClient implements AzureClient {
     public List<VirtualMachine> launchVms(List<VmSpec> vmSpecs) throws AzureException {
         checkState(isConfigured(), "attempt to use unconfigured azure client");
 
-        validateVmSpecs(vmSpecs);
-
         VmLauncher vmLauncher = new VmLauncher(apiAccess(), this.config.getResourceGroup(), this.config.getRegion());
         List<VirtualMachine> createdVms = vmLauncher.createVms(vmSpecs);
         LOG.debug("{} VMs launched.", createdVms.size());
@@ -60,18 +59,17 @@ public class StandardAzureClient implements AzureClient {
     }
 
     @Override
-    public void deleteVm(String vmId) throws NotFoundException, AzureException {
+    public void deleteVms(List<String> vmIds) throws TerminateMachinesException, AzureException {
         checkState(isConfigured(), "attempt to use unconfigured azure client");
 
-        new PurgeVmRequest(apiAccess(), vmId).call();
+        new PurgeVmsRequest(apiAccess(), vmIds).call();
     }
 
     @Override
     public List<VirtualMachine> listVms(Map<String, String> withTags) throws AzureException {
         checkState(isConfigured(), "attempt to use unconfigured azure client");
 
-        Azure api = ApiUtils.acquireApiClient(apiAccess());
-        List<VirtualMachine> vms = api.virtualMachines().listByResourceGroup(this.config.getResourceGroup());
+        List<VirtualMachine> vms = new ListVmsRequest(apiAccess(), this.config.getResourceGroup()).call();
 
         // filter out VMs in wrong region and with wrong tag set
         List<VirtualMachine> filteredVms = vms.stream()//
@@ -108,24 +106,5 @@ public class StandardAzureClient implements AzureClient {
 
     private boolean isConfigured() {
         return this.config != null;
-    }
-
-    /**
-     * Validate a collection VM provisioning specs to ensure that referenced
-     * assets exist.
-     *
-     * @param vmSpecs
-     */
-    private void validateVmSpecs(List<VmSpec> vmSpecs) {
-
-        for (VmSpec vmSpec : vmSpecs) {
-            try {
-                new VmSpecValidator(apiAccess(), this.config.getRegion(), this.config.getResourceGroup())
-                        .validateVmSpec(vmSpec);
-            } catch (Exception e) {
-                throw new IllegalArgumentException("failed to validate provisioning spec for a VM: " + e.getMessage(),
-                        e);
-            }
-        }
     }
 }

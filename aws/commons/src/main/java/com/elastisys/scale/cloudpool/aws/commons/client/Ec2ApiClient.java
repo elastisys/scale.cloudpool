@@ -4,8 +4,9 @@ import java.io.Closeable;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 
 /**
  * An Amazon EC2 client that connects to and operates against a specific AWS
@@ -51,9 +52,9 @@ public class Ec2ApiClient implements Closeable {
         java.security.Security.setProperty("networkaddress.cache.ttl", "60");
 
         this.region = region;
-        this.api = new AmazonEC2Client(awsCredentials, clientConfiguration);
-        String ec2Endpoint = "ec2." + region + ".amazonaws.com";
-        this.api.setEndpoint(ec2Endpoint);
+
+        this.api = AmazonEC2ClientBuilder.standard().withRegion(region)
+                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials)).build();
     }
 
     /**

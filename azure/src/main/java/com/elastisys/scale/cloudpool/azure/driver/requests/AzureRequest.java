@@ -5,6 +5,7 @@ import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.elastisys.scale.cloudpool.azure.driver.client.AzureException;
 import com.elastisys.scale.cloudpool.azure.driver.client.impl.ApiUtils;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
 import com.google.common.base.Preconditions;
@@ -36,7 +37,7 @@ abstract public class AzureRequest<R> implements Callable<R> {
     }
 
     @Override
-    public R call() throws RuntimeException {
+    public R call() throws AzureException {
         return doRequest(ApiUtils.acquireApiClient(this.apiAccess));
     }
 
@@ -55,7 +56,7 @@ abstract public class AzureRequest<R> implements Callable<R> {
      *
      * @param api
      * @return
-     * @throws RuntimeException
+     * @throws AzureException
      */
-    abstract public R doRequest(Azure api) throws RuntimeException;
+    abstract public R doRequest(Azure api) throws AzureException;
 }

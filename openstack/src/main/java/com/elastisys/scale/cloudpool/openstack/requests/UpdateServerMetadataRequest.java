@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudpool.openstack.requests;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.String.format;
 
 import java.util.HashMap;
@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.openstack4j.api.OSClient;
 import org.openstack4j.api.compute.ServerService;
+import org.openstack4j.api.exceptions.ResponseException;
 import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
@@ -41,15 +42,15 @@ public class UpdateServerMetadataRequest extends AbstractOpenstackRequest<Void> 
     public UpdateServerMetadataRequest(OSClientFactory clientFactory, String serverId, Map<String, String> metadata) {
         super(clientFactory);
 
-        checkNotNull(serverId, "server id cannot be null");
-        checkNotNull(metadata, "metadata map cannot be null");
+        checkArgument(serverId != null, "server id cannot be null");
+        checkArgument(metadata != null, "metadata map cannot be null");
 
         this.serverId = serverId;
         this.metadata = metadata;
     }
 
     @Override
-    public Void doRequest(OSClient api) throws NotFoundException {
+    public Void doRequest(OSClient api) throws NotFoundException, ResponseException {
         ServerService serverApi = api.compute().servers();
         Server server = serverApi.get(this.serverId);
         if (server == null) {

@@ -7,18 +7,15 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.elastisys.scale.cloudpool.azure.driver.client.impl.ApiUtils;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
+import com.elastisys.scale.cloudpool.azure.driver.requests.ListVmsRequest;
 import com.elastisys.scale.commons.json.types.TimeInterval;
-import com.microsoft.azure.PagedList;
-import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.InstanceViewStatus;
 import com.microsoft.azure.management.compute.VirtualMachine;
 import com.microsoft.rest.LogLevel;
 
 /**
- * Lab program that deletes a given VM and any associated public IP and network
- * interface.
+ * Lab program that lists VMs in a given resource group.
  */
 public class ListVirtualMachines extends BaseLabProgram {
     private static final Logger LOG = LoggerFactory.getLogger(ListVirtualMachines.class);
@@ -30,9 +27,9 @@ public class ListVirtualMachines extends BaseLabProgram {
 
         AzureApiAccess apiAccess = new AzureApiAccess(SUBSCRIPTION_ID, AZURE_AUTH,
                 new TimeInterval(10L, TimeUnit.SECONDS), new TimeInterval(10L, TimeUnit.SECONDS), LogLevel.BASIC);
-        Azure api = ApiUtils.acquireApiClient(apiAccess);
 
-        PagedList<VirtualMachine> vmsInGroup = api.virtualMachines().listByResourceGroup(resourceGroup);
+        List<VirtualMachine> vmsInGroup = new ListVmsRequest(apiAccess, resourceGroup).call();
+
         for (VirtualMachine vm : vmsInGroup) {
             LOG.debug("vm: {}", vm.name());
             LOG.debug("* tags: {}", vm.tags());

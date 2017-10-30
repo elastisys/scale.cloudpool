@@ -3,15 +3,20 @@ package com.elastisys.scale.cloudpool.openstack.functions;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
+import java.util.function.Function;
+
 import org.openstack4j.model.compute.Server;
 import org.openstack4j.model.compute.Server.Status;
 
 import com.elastisys.scale.cloudpool.api.types.MachineState;
-import com.google.common.base.Function;
 
 /**
  * A {@link Function} that takes a {@link Server} status and converts it to the
  * corresponding {@link MachineState}.
+ * <p/>
+ * For additional details refer to the <a href=
+ * "https://docs.openstack.org/nova/latest/reference/vm-states.html">OpenStack
+ * documentation</a>
  */
 public class StatusToMachineState implements Function<Status, MachineState> {
 

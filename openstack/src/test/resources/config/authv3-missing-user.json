@@ -1,15 +1,13 @@
 {
-    "name": "my-scaling-pool2",
+    "name": "my-openstack-pool",
 
     "cloudApiSettings": {
         "auth": {  
             "keystoneUrl": "http://nova.host.com:5000/v3",  
             "v3Credentials": {
-                "scope": {
-                    "domainId": "domain_id"
-                },
 
-                "password": "secret"
+                "password": "secret",
+                "projectId": "projectId"
             }            
         },    
         "region": "RegionTwo"

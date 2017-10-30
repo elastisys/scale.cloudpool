@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.InstanceStateChange;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 import com.elastisys.scale.commons.net.retryable.Retryable;
@@ -19,13 +18,12 @@ import com.google.common.collect.ImmutableList;
 
 /**
  * A {@link Callable} task that, when executed, terminates a collection of EC2
- * instances terminated and waits for the instance to appear
- * terminating/terminated in {@code DescribeInstances}, which may not be
- * immediate due to the <a href=
+ * instances and waits for the instances to appear terminating/terminated in
+ * {@code DescribeInstances}, which may not be immediate due to the <a href=
  * "http://docs.aws.amazon.com/AWSEC2/latest/APIReference/query-api-troubleshooting.html#eventual-consistency"
  * >eventual consistency semantics</a> of the Amazon API.
  */
-public class TerminateInstances extends AmazonEc2Request<List<InstanceStateChange>> {
+public class TerminateInstances extends AmazonEc2Request<TerminateInstancesResult> {
 
     /** Initial exponential back-off delay in ms. */
     private static final int INITIAL_BACKOFF_DELAY = 1000;
@@ -47,14 +45,13 @@ public class TerminateInstances extends AmazonEc2Request<List<InstanceStateChang
     }
 
     @Override
-    public List<InstanceStateChange> call() {
+    public TerminateInstancesResult call() {
         TerminateInstancesRequest request = new TerminateInstancesRequest().withInstanceIds(this.instanceIds);
         TerminateInstancesResult result = getClient().getApi().terminateInstances(request);
-        List<InstanceStateChange> stateChanges = result.getTerminatingInstances();
 
         awaitTermination(this.instanceIds);
 
-        return stateChanges;
+        return result;
     }
 
     private void awaitTermination(List<String> instanceIds) {

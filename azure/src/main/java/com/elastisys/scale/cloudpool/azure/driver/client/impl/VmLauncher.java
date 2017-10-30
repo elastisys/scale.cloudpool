@@ -9,6 +9,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.elastisys.scale.cloudpool.api.NotFoundException;
+import com.elastisys.scale.cloudpool.azure.driver.client.AzureException;
 import com.elastisys.scale.cloudpool.azure.driver.client.VmImage;
 import com.elastisys.scale.cloudpool.azure.driver.client.VmSpec;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
@@ -19,7 +21,6 @@ import com.elastisys.scale.cloudpool.azure.driver.requests.CreateNetworkInterfac
 import com.elastisys.scale.cloudpool.azure.driver.requests.CreateVmsRequest;
 import com.elastisys.scale.cloudpool.azure.driver.requests.DeleteNetworkInterfaceRequest;
 import com.elastisys.scale.cloudpool.azure.driver.requests.GetAvailabilitySetRequest;
-import com.elastisys.scale.cloudpool.azure.driver.requests.GetStorageAccountRequest;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.common.base.Charsets;
 import com.microsoft.azure.management.Azure;
@@ -27,13 +28,11 @@ import com.microsoft.azure.management.compute.AvailabilitySet;
 import com.microsoft.azure.management.compute.VirtualMachine;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithCreate;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged;
-import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithFromImageCreateOptionsUnmanaged;
 import com.microsoft.azure.management.compute.VirtualMachine.DefinitionStages.WithOS;
 import com.microsoft.azure.management.network.NetworkInterface;
 import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 import com.microsoft.azure.management.resources.fluentcore.model.Creatable;
 import com.microsoft.azure.management.resources.fluentcore.model.CreatedResources;
-import com.microsoft.azure.management.storage.StorageAccount;
 
 /**
  * A launcher of Azure VM definitions.
@@ -53,8 +52,6 @@ public class VmLauncher {
     private final String resourceGroup;
     private final Region region;
 
-    // private final Azure api;
-
     public VmLauncher(AzureApiAccess apiAccess, String resourceGroup, Region region) {
         this.apiAccess = apiAccess;
         this.resourceGroup = resourceGroup;
@@ -68,21 +65,22 @@ public class VmLauncher {
      *            Provisioning specs for a collection of VMs.
      * @return
      */
-    public List<VirtualMachine> createVms(List<VmSpec> vmSpecs) {
+    public List<VirtualMachine> createVms(List<VmSpec> vmSpecs) throws NotFoundException, AzureException {
         // first create one network interface per VM
         Map<String, NetworkInterface> vmNetworkInterfaces = new HashMap<>();
         for (VmSpec vmSpec : vmSpecs) {
             vmNetworkInterfaces.put(vmSpec.getVmName(), createNetworkInterface(vmSpec));
         }
 
-        // create each VM definition and associate it with its network interface
-        List<Creatable<VirtualMachine>> vmDefinitions = new ArrayList<>();
-        for (VmSpec vmSpec : vmSpecs) {
-            NetworkInterface vmNetworkInterface = vmNetworkInterfaces.get(vmSpec.getVmName());
-            vmDefinitions.add(renderVmDefinition(vmSpec, vmNetworkInterface));
-        }
-        // launch
         try {
+            // create each VM definition and associate with a network interface
+            List<Creatable<VirtualMachine>> vmDefinitions = new ArrayList<>();
+            for (VmSpec vmSpec : vmSpecs) {
+                NetworkInterface vmNetworkInterface = vmNetworkInterfaces.get(vmSpec.getVmName());
+                vmDefinitions.add(renderVmDefinition(vmSpec, vmNetworkInterface));
+            }
+
+            // launch
             CreatedResources<VirtualMachine> createdVms = new CreateVmsRequest(this.apiAccess, vmDefinitions).call();
             return new ArrayList<>(createdVms.values());
         } catch (Exception e) {
@@ -102,7 +100,7 @@ public class VmLauncher {
      *            A VM to be created.
      * @return
      */
-    private NetworkInterface createNetworkInterface(VmSpec vmSpec) {
+    private NetworkInterface createNetworkInterface(VmSpec vmSpec) throws NotFoundException, AzureException {
         // create a network interface for VM (possibly with security groups
         // and public IP)
         String vmName = vmSpec.getVmName();
@@ -113,13 +111,14 @@ public class VmLauncher {
     }
 
     /**
-     * Creates a VM with a given network interface.
+     * Creates a VM definition from a given {@link VmSpec} and with a given
+     * network interface.
      *
      * @param vmSpec
      * @param vmNetworkInterface
      * @return
      */
-    private Creatable<VirtualMachine> renderVmDefinition(VmSpec vmSpec, NetworkInterface vmNetworkInterface) {
+    public Creatable<VirtualMachine> renderVmDefinition(VmSpec vmSpec, NetworkInterface vmNetworkInterface) {
         String vmName = vmSpec.getVmName();
 
         Azure api = ApiUtils.acquireApiClient(this.apiAccess);
@@ -136,116 +135,91 @@ public class VmLauncher {
     }
 
     private Creatable<VirtualMachine> linuxVmDefinition(VmSpec vmSpec, WithOS rawVmDef) {
-        VmImage vmImage = new VmImage(vmSpec.getVmImage());
+        VmImage vmImage = vmSpec.getVmImage();
         LinuxSettings linuxSettings = vmSpec.getLinuxSettings().get();
-        WithCreate vmWithOs = null;
 
         // NOTE: due to the poor azure SDK design we need two separate, almost
-        // identical, VM builder call sequences depending on if an Azure-managed
-        // VM image or a private VM image is used.
+        // identical, VM builder call sequences depending on if using an
+        // Azure-managed VM image or a private VM image.
+        WithFromImageCreateOptionsManaged linuxVm;
         if (vmImage.isImageReference()) {
-            WithFromImageCreateOptionsManaged vm = rawVmDef //
-                    .withSpecificLinuxImageVersion(vmImage.getImageReference()) //
+            linuxVm = rawVmDef.withSpecificLinuxImageVersion(vmImage.getImageReference()) //
                     .withRootUsername(linuxSettings.getRootUserName()) //
                     .withRootPassword(linuxSettings.getPassword()) //
                     .withSsh(linuxSettings.getPublicSshKey()) //
                     .withComputerName(vmSpec.getVmName());
-
-            // add custom data (for example, cloud-init script)
-            if (linuxSettings.getCustomData() != null) {
-                // cast as a temporary workaround for
-                // https://github.com/Azure/azure-sdk-for-java/issues/1628
-                ((VirtualMachine.DefinitionStages.WithLinuxCreateManagedOrUnmanaged) vm)
-                        .withCustomData(linuxSettings.getCustomData());
-            }
-
-            vmWithOs = vm.withSize(vmSpec.getVmSize());
         } else {
-            WithFromImageCreateOptionsUnmanaged vm = rawVmDef //
-                    .withStoredLinuxImage(vmImage.getImageURL()) //
+            linuxVm = rawVmDef.withLinuxCustomImage(vmImage.getImageId()) //
                     .withRootUsername(linuxSettings.getRootUserName()) //
                     .withRootPassword(linuxSettings.getPassword()) //
                     .withSsh(linuxSettings.getPublicSshKey()) //
                     .withComputerName(vmSpec.getVmName());
+        }
+        linuxVm.withOSDiskName(vmSpec.getVmName());
+        linuxVm.withOSDiskStorageAccountType(vmSpec.getOsDiskType());
 
-            // add custom data (for example, cloud-init script)
-            if (linuxSettings.getCustomData() != null) {
-                vm.withCustomData(linuxSettings.getCustomData());
-            }
-
-            vmWithOs = vm.withSize(vmSpec.getVmSize());
+        // add custom data (for example, cloud-init script)
+        if (linuxSettings.getCustomData() != null) {
+            linuxVm.withCustomData(linuxSettings.getCustomData());
         }
 
         // if specified, add VM to availability set
         if (vmSpec.getAvailabilitySet().isPresent()) {
             String availabilitySet = vmSpec.getAvailabilitySet().get();
-            AvailabilitySet set = new GetAvailabilitySetRequest(this.apiAccess, availabilitySet, this.resourceGroup)
+            AvailabilitySet set = new GetAvailabilitySetRequest(this.apiAccess, this.resourceGroup, availabilitySet)
                     .call();
-            vmWithOs.withExistingAvailabilitySet(set);
+            linuxVm.withExistingAvailabilitySet(set);
         }
 
-        vmWithOs.withTags(vmSpec.getTags());
-        // storage account where OS disk will be stored (the disk is deleted on
-        // scale-in)
-        StorageAccount storageAccount = new GetStorageAccountRequest(this.apiAccess, vmSpec.getStorageAccountName(),
-                this.resourceGroup).call();
-        vmWithOs.withExistingStorageAccount(storageAccount) //
-                .withOSDiskName(vmSpec.getVmName());
+        linuxVm.withSize(vmSpec.getVmSize());
+        linuxVm.withTags(vmSpec.getTags());
 
         // add custom boot script to be executed
         CustomScriptExtension customScript = linuxSettings.getCustomScript();
         if (customScript != null) {
-            attachLinuxCustomScript(vmWithOs, customScript);
+            attachLinuxCustomScript(linuxVm, customScript);
         }
-        return vmWithOs;
+        return linuxVm;
     }
 
     private Creatable<VirtualMachine> windowsVmDefinition(VmSpec vmSpec, WithOS rawVmDef) {
-        VmImage vmImage = new VmImage(vmSpec.getVmImage());
+        VmImage vmImage = vmSpec.getVmImage();
         WindowsSettings windowsSettings = vmSpec.getWindowsSettings().get();
-        WithCreate vmWithOs = null;
 
         // NOTE: due to the poor azure SDK design we need two separate, almost
-        // identical, VM builder call sequences depending on if an Azure-managed
-        // VM image or a private VM image is used.
+        // identical, VM builder call sequences depending on if using an
+        // Azure-managed VM image or a private VM image.
+        WithFromImageCreateOptionsManaged windowsVm;
         if (vmImage.isImageReference()) {
-            WithFromImageCreateOptionsManaged vm = rawVmDef//
-                    .withSpecificWindowsImageVersion(vmImage.getImageReference()) //
+            windowsVm = rawVmDef.withSpecificWindowsImageVersion(vmImage.getImageReference()) //
                     .withAdminUsername(windowsSettings.getAdminUserName()) //
                     .withAdminPassword(windowsSettings.getPassword()) //
                     .withComputerName(vmSpec.getVmName());
-            vmWithOs = vm.withSize(vmSpec.getVmSize());
         } else {
-            WithFromImageCreateOptionsUnmanaged vm = rawVmDef.withStoredWindowsImage(vmImage.getImageURL())
+            windowsVm = rawVmDef.withWindowsCustomImage(vmImage.getImageId()) //
                     .withAdminUsername(windowsSettings.getAdminUserName()) //
                     .withAdminPassword(windowsSettings.getPassword()) //
                     .withComputerName(vmSpec.getVmName());
-            vmWithOs = vm.withSize(vmSpec.getVmSize());
         }
+        windowsVm.withOSDiskName(vmSpec.getVmName());
+        windowsVm.withOSDiskStorageAccountType(vmSpec.getOsDiskType());
 
         // if specified, add VM to availability set
         if (vmSpec.getAvailabilitySet().isPresent()) {
             String availabilitySet = vmSpec.getAvailabilitySet().get();
-            AvailabilitySet set = new GetAvailabilitySetRequest(this.apiAccess, availabilitySet, this.resourceGroup)
+            AvailabilitySet set = new GetAvailabilitySetRequest(this.apiAccess, this.resourceGroup, availabilitySet)
                     .call();
-            vmWithOs.withExistingAvailabilitySet(set);
+            windowsVm.withExistingAvailabilitySet(set);
         }
 
-        vmWithOs.withTags(vmSpec.getTags());
-
-        // storage account where OS disk will be stored (the disk is deleted on
-        // scale-in)
-        StorageAccount storageAccount = new GetStorageAccountRequest(this.apiAccess, vmSpec.getStorageAccountName(),
-                this.resourceGroup).call();
-        vmWithOs.withExistingStorageAccount(storageAccount) //
-                .withOSDiskName(vmSpec.getVmName());
+        windowsVm.withTags(vmSpec.getTags());
 
         // add custom boot script to be executed
         CustomScriptExtension customScript = windowsSettings.getCustomScript();
         if (customScript != null) {
-            attachWindowsCustomScript(vmWithOs, customScript);
+            attachWindowsCustomScript(windowsVm, customScript);
         }
-        return vmWithOs;
+        return windowsVm;
     }
 
     /**

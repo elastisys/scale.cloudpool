@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.aws.ec2.driver;
 
 import static com.elastisys.scale.cloudpool.aws.ec2.driver.IsClientConfigMatcher.isClientConfig;
 import static com.elastisys.scale.cloudpool.aws.ec2.driver.TestUtils.driverConfig;
+import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -85,7 +86,7 @@ public class TestEc2PoolDriverConfiguration {
 
     @Test(expected = IllegalStateException.class)
     public void invokeTerminateMachineBeforeBeingConfigured() throws Exception {
-        this.driver.terminateMachine("i-1");
+        this.driver.terminateMachines(asList("i-1"));
     }
 
     @Test

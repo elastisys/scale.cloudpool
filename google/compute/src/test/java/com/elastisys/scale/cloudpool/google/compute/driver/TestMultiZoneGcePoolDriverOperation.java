@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.google.compute.driver;
 
+import static java.util.Arrays.asList;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -26,14 +27,14 @@ import com.elastisys.scale.commons.net.url.UrlUtils;
 import com.google.api.services.compute.model.Instance;
 
 /**
- * Exercises the {@link GoogleComputeEnginePoolDriver} against a mocked multi-zone instance
- * group.
+ * Exercises the {@link GoogleComputeEnginePoolDriver} against a mocked
+ * multi-zone instance group.
  * <p/>
- * These tests only verify that the {@link GoogleComputeEnginePoolDriver} makes use of a
- * *multi-zone* instance group when the {@link DriverConfig}'s
+ * These tests only verify that the {@link GoogleComputeEnginePoolDriver} makes
+ * use of a *multi-zone* instance group when the {@link DriverConfig}'s
  * {@link ProvisioningTemplate} specifies a region rather than a zone. More
- * extensive testing of the {@link GoogleComputeEnginePoolDriver} logic can be found in
- * {@link TestSingleZoneGcePoolDriverOperation}.
+ * extensive testing of the {@link GoogleComputeEnginePoolDriver} logic can be
+ * found in {@link TestSingleZoneGcePoolDriverOperation}.
  */
 public class TestMultiZoneGcePoolDriverOperation {
     private static final Logger LOG = LoggerFactory.getLogger(TestSingleZoneGcePoolDriverOperation.class);
@@ -121,12 +122,12 @@ public class TestMultiZoneGcePoolDriverOperation {
      * instance group client.
      */
     @Test
-    public void terminateMachine() {
+    public void terminateMachines() {
         FakeMultiZoneInstanceGroup simulatedGroup = new FakeMultiZoneInstanceGroup(POOL_DRIVER_CONFIG, 1, 1);
         setUpMockedInstanceGroup(simulatedGroup);
 
         String instanceUrl = simulatedGroup.instances().get(0).getSelfLink();
-        this.driver.terminateMachine(instanceUrl);
+        this.driver.terminateMachines(asList(instanceUrl));
 
         //
         // verify calls to mock api clients

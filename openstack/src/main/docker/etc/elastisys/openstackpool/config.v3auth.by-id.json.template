@@ -6,16 +6,15 @@
         "auth": {
             "keystoneUrl": "http://${KEYSTONE_HOST}:5000/v3.0",
             "v3Credentials": {
-                "scope": {
-                    "domainId": "${OS_DOMAIN_ID}"
-                },
-                "userId": "${OS_DOMAIN_USER_ID}",
-                "password": "${OS_DOMAIN_USER_PASSWORD}"
+                "userId": "${OS_USER_ID}",
+                "password": "${OS_PASSWORD}",
+                "projectId": "${OS_PROJECT_ID}"
             }
         },
         "region": "${OS_REGION}",
         "connectionTimeout": 10000,
-        "socketTimeout": 10000
+        "socketTimeout": 10000,
+        "logHttpRequests": false
     },
 
 

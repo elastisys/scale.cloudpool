@@ -5,10 +5,11 @@ import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 /**
  * Thrown to indicate that a given machine cannot be removed from the cloudpool
  * due to it having a membership status with {@code evictable: false}.
- * 
+ *
  * @see MembershipStatus
  */
 public class NotEvictableException extends CloudPoolException {
+    private static final long serialVersionUID = 1L;
 
     public NotEvictableException() {
         super();

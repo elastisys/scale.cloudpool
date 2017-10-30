@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.openstack.driver.client;
 import java.util.List;
 import java.util.Map;
 
+import org.openstack4j.api.exceptions.ResponseException;
 import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.NotFoundException;
@@ -37,8 +38,10 @@ public interface OpenstackClient {
      *            The value for the meta data tag that must be present on
      *            returned servers.
      * @return All {@link Server}s matching the filters.
+     * @throws ResponseException
+     *             On communication errors.
      */
-    List<Server> getServers(String tag, String tagValue);
+    List<Server> getServers(String tag, String tagValue) throws ResponseException;
 
     /**
      * Return meta data about a particular {@link Server} instance.
@@ -49,8 +52,10 @@ public interface OpenstackClient {
      *
      * @throws NotFoundException
      *             if the server doesn't exist.
+     * @throws ResponseException
+     *             On communication errors.
      */
-    Server getServer(String serverId) throws NotFoundException;
+    Server getServer(String serverId) throws NotFoundException, ResponseException;
 
     /**
      * Launch a new server.
@@ -62,8 +67,11 @@ public interface OpenstackClient {
      * @param tags
      *            Meta data tags to set on the launched server.
      * @return The launched {@link Server}.
+     * @throws ResponseException
+     *             On communication errors.
      */
-    Server launchServer(String name, ProvisioningTemplate provisioningDetails, Map<String, String> tags);
+    Server launchServer(String name, ProvisioningTemplate provisioningDetails, Map<String, String> tags)
+            throws ResponseException;
 
     /**
      * Allocate a floating IP address and associate it with a given server.
@@ -72,8 +80,10 @@ public interface OpenstackClient {
      *            The identifier of the server that will be assigned a floating
      *            IP address.
      * @return The IP address that was assigned to the server.
+     * @throws ResponseException
+     *             On communication errors.
      */
-    String assignFloatingIp(String serverId);
+    String assignFloatingIp(String serverId) throws ResponseException;
 
     /**
      * Terminates a particular server.
@@ -82,8 +92,10 @@ public interface OpenstackClient {
      *            Identifier of the server to be terminated.
      * @throws NotFoundException
      *             if the server doesn't exist.
+     * @throws ResponseException
+     *             On communication errors.
      */
-    void terminateServer(String serverId) throws NotFoundException;
+    void terminateServer(String serverId) throws NotFoundException, ResponseException;
 
     /**
      * Adds meta data tags to a given server.
@@ -94,8 +106,10 @@ public interface OpenstackClient {
      *            Meta data tags to set on the server.
      * @throws NotFoundException
      *             if the server doesn't exist.
+     * @throws ResponseException
+     *             On communication errors.
      */
-    void tagServer(String serverId, Map<String, String> tags) throws NotFoundException;
+    void tagServer(String serverId, Map<String, String> tags) throws NotFoundException, ResponseException;
 
     /**
      * Removes a collection of meta data tags from a given server.
@@ -106,7 +120,9 @@ public interface OpenstackClient {
      *            The meta data tag keys to remove from the server.
      * @throws NotFoundException
      *             if the server doesn't exist.
+     * @throws ResponseException
+     *             On communication errors.
      */
-    void untagServer(String serverId, List<String> tagKeys) throws NotFoundException;
+    void untagServer(String serverId, List<String> tagKeys) throws NotFoundException, ResponseException;
 
 }

@@ -4,18 +4,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.openstack4j.model.compute.Server;
 import org.openstack4j.model.compute.Server.Status;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Sets;
 
 /**
  * {@link Predicate}s relating to Openstack {@link Server} instances.
- *
- *
- *
  */
 public class ServerPredicates {
 
@@ -37,12 +34,9 @@ public class ServerPredicates {
     public static Predicate<Server> withTag(final String tag, final String tagValue) {
         checkNotNull(tag, "tag cannot be null");
         checkNotNull(tagValue, "tag value cannot be null");
-        return new Predicate<Server>() {
-            @Override
-            public boolean apply(Server server) {
-                Map<String, String> metadata = server.getMetadata();
-                return metadata.containsKey(tag) && metadata.get(tag).equals(tagValue);
-            }
+        return server -> {
+            Map<String, String> metadata = server.getMetadata();
+            return metadata.containsKey(tag) && metadata.get(tag).equals(tagValue);
         };
     }
 
@@ -57,12 +51,9 @@ public class ServerPredicates {
      */
     public static Predicate<? super Server> withStateIn(final Status... statuses) {
         checkNotNull(statuses, "statuses cannot be null");
-        return new Predicate<Server>() {
-            @Override
-            public boolean apply(Server server) {
-                Set<Status> allowedStatuses = Sets.newHashSet(statuses);
-                return allowedStatuses.contains(server.getStatus());
-            }
+        return server -> {
+            Set<Status> allowedStatuses = Sets.newHashSet(statuses);
+            return allowedStatuses.contains(server.getStatus());
         };
     }
 }

@@ -1,6 +1,7 @@
 package com.elastisys.scale.cloudpool.google.compute.driver;
 
 import static com.elastisys.scale.cloudpool.google.compute.driver.ConfigTestUtils.validDriverConfig;
+import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
@@ -15,10 +16,10 @@ import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.google.commons.api.compute.ComputeClient;
-import com.elastisys.scale.cloudpool.google.compute.driver.GoogleComputeEnginePoolDriver;
 
 /**
- * Exercises the {@link GoogleComputeEnginePoolDriver} with a mocked {@link ComputeClient}.
+ * Exercises the {@link GoogleComputeEnginePoolDriver} with a mocked
+ * {@link ComputeClient}.
  */
 public class TestGcePoolDriverConfiguration {
 
@@ -99,8 +100,8 @@ public class TestGcePoolDriverConfiguration {
      */
     @Test(expected = IllegalStateException.class)
     public void terminateMachineBeforeConfigured() {
-        this.driver.terminateMachine(
-                "https://www.googleapis.com/compute/v1/projects/my-project/zones/europe-west1-d/instances/webserver-instance-group-s4s0");
+        this.driver.terminateMachines(asList(
+                "https://www.googleapis.com/compute/v1/projects/my-project/zones/europe-west1-d/instances/webserver-instance-group-s4s0"));
     }
 
     /**

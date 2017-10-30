@@ -12,6 +12,7 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
+import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTemplate;
@@ -110,10 +111,10 @@ public class AwsEc2Client implements Ec2Client {
     }
 
     @Override
-    public void terminateInstances(List<String> instanceIds) throws NotFoundException, AmazonClientException {
+    public TerminateInstancesResult terminateInstances(List<String> instanceIds) throws AmazonClientException {
         checkArgument(isConfigured(), "can't use client before it's configured");
 
-        new TerminateInstances(awsCredentials(), region(), clientConfig(), instanceIds).call();
+        return new TerminateInstances(awsCredentials(), region(), clientConfig(), instanceIds).call();
     }
 
     private boolean isConfigured() {

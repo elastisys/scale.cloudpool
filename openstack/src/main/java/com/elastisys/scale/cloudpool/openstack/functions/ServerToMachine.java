@@ -3,22 +3,21 @@ package com.elastisys.scale.cloudpool.openstack.functions;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Function;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.openstack4j.model.compute.Address;
+import org.openstack4j.model.compute.Addresses;
 import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
-import com.elastisys.scale.cloudpool.api.types.MachineState;
+import com.elastisys.scale.cloudpool.api.types.Machine.Builder;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.openstack.driver.Constants;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.ip.IsPrivateIp;
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
-import com.google.gson.JsonObject;
 
 /**
  * Translates a {@link Server} from the OpenStack API to its {@link Machine}
@@ -73,38 +72,19 @@ public class ServerToMachine implements Function<Server, Machine> {
      * representation.
      */
     private Machine asMachine(Server server) {
-        MachineState machineState = new StatusToMachineState().apply(server.getStatus());
 
-        final DateTime creationTime = new DateTime(server.getCreated(), DateTimeZone.UTC);
-        final DateTime launchedAtTime = new DateTime(server.getLaunchedAt(), DateTimeZone.UTC);
+        Builder builder = Machine.builder();
+        builder.id(server.getId());
+        builder.cloudProvider(this.cloudProvider);
+        builder.region(this.region);
+        builder.machineSize(server.getFlavor().getName());
+        builder.machineState(new StatusToMachineState().apply(server.getStatus()));
+        builder.requestTime(new DateTime(server.getCreated(), DateTimeZone.UTC));
+        builder.launchTime(new DateTime(server.getLaunchedAt(), DateTimeZone.UTC));
 
-        // collect public (floating) and private (fixed) IP addresses assigned
-        // to server
-        List<String> publicIps = Lists.newArrayList();
-        List<String> privateIps = Lists.newArrayList();
-        Map<String, List<? extends Address>> serverAddresses = server.getAddresses().getAddresses();
-        for (Entry<String, List<? extends Address>> networkAddresses : serverAddresses.entrySet()) {
-            List<? extends Address> addresses = networkAddresses.getValue();
-            for (Address address : addresses) {
-                String addressType = address.getType();
-                // The "OS-EXT-IPS:type" field may be set to indicate if this is
-                // a fixed (private) or floating (public) IP
-                if (addressType != null) {
-                    if (addressType.equals(FLOATING)) {
-                        publicIps.add(address.getAddr());
-                    } else {
-                        privateIps.add(address.getAddr());
-                    }
-                } else {
-                    // If no address type is assigned, we fall back to checking
-                    // if the IP address is in a private address range
-                    if (new IsPrivateIp().test(address.getAddr())) {
-                        privateIps.add(address.getAddr());
-                    } else {
-                        publicIps.add(address.getAddr());
-                    }
-                }
-            }
+        Addresses serverAddresses = server.getAddresses();
+        if (serverAddresses != null) {
+            collectIps(builder, server.getAddresses());
         }
 
         // extract membership status if tag has been set on server
@@ -114,16 +94,49 @@ public class ServerToMachine implements Function<Server, Machine> {
                     JsonUtils.parseJsonString(server.getMetadata().get(Constants.MEMBERSHIP_STATUS_TAG)),
                     MembershipStatus.class);
         }
+        builder.membershipStatus(membershipStatus);
 
         // extract service state if tag has been set on server
         ServiceState serviceState = ServiceState.UNKNOWN;
         if (server.getMetadata().containsKey(Constants.SERVICE_STATE_TAG)) {
             serviceState = ServiceState.valueOf(server.getMetadata().get(Constants.SERVICE_STATE_TAG));
         }
-        JsonObject metadata = JsonUtils.toJson(server).getAsJsonObject();
-        return Machine.builder().id(server.getId()).machineState(machineState).cloudProvider(this.cloudProvider)
-                .region(this.region).machineSize(server.getFlavor().getName()).membershipStatus(membershipStatus)
-                .serviceState(serviceState).requestTime(creationTime).launchTime(launchedAtTime).publicIps(publicIps)
-                .privateIps(privateIps).metadata(metadata).build();
+        builder.serviceState(serviceState);
+
+        builder.metadata(JsonUtils.toJson(server).getAsJsonObject());
+
+        return builder.build();
+
+    }
+
+    private void collectIps(Builder builder, Addresses serverAddresses) {
+        Map<String, List<? extends Address>> networkAddresses = serverAddresses.getAddresses();
+        if (networkAddresses != null) {
+            for (Entry<String, List<? extends Address>> networkIps : networkAddresses.entrySet()) {
+                List<? extends Address> ips = networkIps.getValue();
+                for (Address ip : ips) {
+                    String addressType = ip.getType();
+                    // The "OS-EXT-IPS:type" field may be set to indicate if
+                    // this is a fixed (private) or floating (public) IP
+                    if (addressType != null) {
+                        if (addressType.equals(FLOATING)) {
+                            builder.publicIp(ip.getAddr());
+                        } else {
+                            builder.privateIp(ip.getAddr());
+                        }
+                    } else {
+                        // If no address type is assigned, we fall back to
+                        // checking if the IP address is in a private
+                        // address range
+                        if (new IsPrivateIp().test(ip.getAddr())) {
+                            builder.privateIp(ip.getAddr());
+                        } else {
+                            builder.publicIp(ip.getAddr());
+                        }
+                    }
+                }
+            }
+        }
+
     }
 }

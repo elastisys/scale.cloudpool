@@ -6,8 +6,6 @@ import static org.junit.Assert.assertThat;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.amazonaws.services.ec2.model.HypervisorType;
 import com.amazonaws.services.ec2.model.Instance;
@@ -18,10 +16,10 @@ import com.amazonaws.services.ec2.model.Monitoring;
 import com.amazonaws.services.ec2.model.MonitoringState;
 import com.amazonaws.services.ec2.model.Placement;
 import com.amazonaws.services.ec2.model.Tag;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.commons.json.JsonUtils;
@@ -32,7 +30,6 @@ import com.elastisys.scale.commons.util.time.UtcTime;
  * Exercises the {@link InstanceToMachine} class.
  */
 public class TestInstanceToMachine {
-    private final static Logger LOG = LoggerFactory.getLogger(TestInstanceToMachine.class);
 
     @Before
     public void onSetup() {
@@ -141,8 +138,8 @@ public class TestInstanceToMachine {
 
     /**
      * A converted spot instance {@link Machine} should have a cloud provider
-     * value of {@link CloudProviders#AWS_SPOT} to distinguish it from a
-     * regular EC2 on-demand instance.
+     * value of {@link CloudProviders#AWS_SPOT} to distinguish it from a regular
+     * EC2 on-demand instance.
      */
     @Test
     public void convertSpotInstance() {

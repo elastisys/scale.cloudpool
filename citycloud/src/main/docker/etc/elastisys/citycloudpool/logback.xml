@@ -43,5 +43,13 @@
   <logger name="com.elastisys">
     <level value="DEBUG"/>
   </logger>
+  
+  <logger name="org.openstack4j">
+    <level value="WARN"/>
+  </logger>
+  <!-- Needed to display HTTP requests when running with logHttpRequests true -->
+  <logger name="os">
+    <level value="DEBUG"/>
+  </logger>  
 
 </configuration>

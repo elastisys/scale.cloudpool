@@ -15,10 +15,9 @@ public class AssignFloatingIpMain {
     private static final String serverId = "47d3376e-e6e0-4ebd-8ba5-add5d67a6c8e";
 
     public static void main(String[] args) throws Exception {
-        Server server = new GetServerRequest(new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig()),
-                serverId).call();
-        String floatingIp = new AssignFloatingIpRequest(
-                new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig()), server).call();
+        Server server = new GetServerRequest(new OSClientFactory(DriverConfigLoader.loadDefault()), serverId).call();
+        String floatingIp = new AssignFloatingIpRequest(new OSClientFactory(DriverConfigLoader.loadDefault()), server)
+                .call();
         LOG.info("assigned floating IP {} to server {}", floatingIp, serverId);
     }
 }

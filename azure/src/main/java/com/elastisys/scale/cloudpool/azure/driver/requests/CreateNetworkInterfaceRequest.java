@@ -1,5 +1,7 @@
 package com.elastisys.scale.cloudpool.azure.driver.requests;
 
+import com.elastisys.scale.cloudpool.api.NotFoundException;
+import com.elastisys.scale.cloudpool.azure.driver.client.AzureException;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
 import com.elastisys.scale.cloudpool.azure.driver.config.NetworkSettings;
 import com.microsoft.azure.management.Azure;
@@ -58,12 +60,29 @@ public class CreateNetworkInterfaceRequest extends AzureRequest<NetworkInterface
     }
 
     @Override
-    public NetworkInterface doRequest(Azure api) throws RuntimeException {
+    public NetworkInterface doRequest(Azure api) throws NotFoundException, AzureException {
         LOG.debug("creating network interface {} ...", this.nicName);
 
         String networkName = this.networkSettings.getVirtualNetwork();
-        Network network = new GetNetworkRequest(apiAccess(), networkName, this.resourceGroup).call();
+        Network network = new GetNetworkRequest(apiAccess(), this.resourceGroup, networkName).call();
 
+        if (!network.subnets().keySet().contains(this.networkSettings.getSubnetName())) {
+            throw new NotFoundException(String.format("virtual network '%s' does not have a subnet named '%s'",
+                    this.networkSettings.getVirtualNetwork(), this.networkSettings.getSubnetName()));
+        }
+
+        NetworkInterface networkInterface;
+        try {
+            WithCreate nicDef = nicDefinition(api, network);
+            networkInterface = nicDef.create();
+        } catch (Exception e) {
+            throw new AzureException("failed to create network interface card: " + e.getMessage(), e);
+        }
+
+        return networkInterface;
+    }
+
+    private WithCreate nicDefinition(Azure api, Network network) {
         WithCreate nicDef = api.networkInterfaces().define(this.nicName) //
                 .withRegion(this.region) //
                 .withExistingResourceGroup(this.resourceGroup) //
@@ -78,9 +97,7 @@ public class CreateNetworkInterfaceRequest extends AzureRequest<NetworkInterface
                     securityGroup).call();
             nicDef.withExistingNetworkSecurityGroup(nsg);
         }
-
-        NetworkInterface networkInterface = nicDef.create();
-        return networkInterface;
+        return nicDef;
     }
 
 }

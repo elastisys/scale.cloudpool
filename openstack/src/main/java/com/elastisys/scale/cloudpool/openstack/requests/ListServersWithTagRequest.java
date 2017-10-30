@@ -1,12 +1,12 @@
 package com.elastisys.scale.cloudpool.openstack.requests;
 
 import static com.elastisys.scale.cloudpool.openstack.predicates.ServerPredicates.withTag;
-import static com.google.common.collect.Iterables.filter;
-import static com.google.common.collect.Lists.newArrayList;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.openstack4j.api.OSClient;
+import org.openstack4j.api.exceptions.ResponseException;
 import org.openstack4j.model.compute.Server;
 
 import com.elastisys.scale.commons.openstack.OSClientFactory;
@@ -43,8 +43,8 @@ public class ListServersWithTagRequest extends AbstractOpenstackRequest<List<Ser
     }
 
     @Override
-    public List<Server> doRequest(OSClient api) {
+    public List<Server> doRequest(OSClient api) throws ResponseException {
         List<? extends Server> servers = api.compute().servers().list();
-        return newArrayList(filter(servers, withTag(this.tag, this.tagValue)));
+        return servers.stream().filter(withTag(this.tag, this.tagValue)).collect(Collectors.toList());
     }
 }

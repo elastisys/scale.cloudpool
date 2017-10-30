@@ -21,6 +21,7 @@
     "provisioningTemplate": {
         "vmSize": "Standard_DS1_v2",
         "vmImage": "MicrosoftWindowsServer:WindowsServer:2008-R2-SP1:2.0.20161109",
+        "osDiskType": "Premium_LRS",
         "windowsSettings": {
             "adminUserName": "adminuser",
             "password": "XXXXXXXXXX",
@@ -29,7 +30,6 @@
                 "encodedCommand": "cG93ZXJzaGVsbC5leGUgLUV4ZWN1dGlvblBvbGljeSBVbnJlc3RyaWN0ZWQgLUZpbGUgd2luLXNlcnZlci1pbnN0YWxsLXdlYnNlcnZlci5wczEK"
             }
         },
-        "storageAccountName": "testpooldisks",
         "network": {
             "virtualNetwork": "testnet",
             "subnetName": "default",

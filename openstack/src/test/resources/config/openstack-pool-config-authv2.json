@@ -1,5 +1,5 @@
 {
-    "name": "my-scaling-pool",
+    "name": "my-openstack-pool",
     
     "cloudApiSettings": {
         "auth": {  
@@ -10,7 +10,8 @@
                 "password": "cloudpass"
             }
         },    
-        "region": "RegionTwo"
+        "region": "RegionTwo",
+        "logHttpRequests": true
     },
     
     "provisioningTemplate": {

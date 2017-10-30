@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import org.openstack4j.api.OSClient;
 import org.openstack4j.api.compute.ServerService;
+import org.openstack4j.api.exceptions.ResponseException;
 import org.openstack4j.model.compute.Flavor;
 import org.openstack4j.model.compute.Image;
 import org.openstack4j.model.compute.Server;
@@ -18,11 +19,8 @@ import org.openstack4j.model.compute.ServerCreate;
 import org.openstack4j.model.compute.builder.ServerCreateBuilder;
 import org.openstack4j.model.network.Network;
 
-import com.elastisys.scale.cloudpool.api.CloudPoolException;
-import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
+import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.commons.openstack.OSClientFactory;
-import com.elastisys.scale.commons.util.base64.Base64Utils;
-import com.google.common.base.Charsets;
 
 /**
  * An request that, when executed, creates a new server instance.
@@ -108,7 +106,7 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
      */
     public CreateServerRequest(OSClientFactory clientFactory, String serverName, String flavorName, String imageName,
             String keyPair, List<String> securityGroups, List<String> networks, String encodedUserData,
-            Map<String, String> metadata) {
+            Map<String, String> metadata) throws ResponseException {
         super(clientFactory);
 
         checkNotNull(serverName, "server name cannot be null");
@@ -126,13 +124,11 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
     }
 
     @Override
-    public Server doRequest(OSClient api) {
+    public Server doRequest(OSClient api) throws NotFoundException, ResponseException {
         ServerService serverService = api.compute().servers();
 
         ServerCreateBuilder serverCreateBuilder = serverService.serverBuilder().name(this.serverName)
                 .flavor(getFlavorId()).image(getImageId()).keypairName(this.keyPair).addMetadata(this.metadata);
-
-        logDebugInfo();
 
         for (String securityGroup : this.securityGroups) {
             serverCreateBuilder.addSecurityGroup(securityGroup);
@@ -156,27 +152,20 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
      * name.
      *
      * @return
-     * @throws IllegalArgumentException
+     * @throws NotFoundException
      *             If the specified flavor name doesn't exist.
-     * @throws CloudPoolDriverException
-     *             If the available flavors could not be listed.
+     * @throws ResponseException
+     *             On communication errors.
      */
-    private String getFlavorId() throws IllegalArgumentException, CloudPoolDriverException {
-        List<Flavor> flavors;
-        try {
-            flavors = new ListSizesRequest(getClientFactory()).call();
-        } catch (Exception e) {
-            throw new CloudPoolDriverException(
-                    String.format("failed to fetch the list of available flavors: %s", e.getMessage()), e);
-        }
+    private String getFlavorId() throws NotFoundException, ResponseException {
+        List<Flavor> flavors = new ListSizesRequest(getClientFactory()).call();
         for (Flavor flavor : flavors) {
             if (flavor.getName().equals(this.flavorName)) {
                 return flavor.getId();
             }
         }
-        throw new IllegalArgumentException(
-                String.format("failed to create server: no flavor with " + "name \"%s\" exists in region \"%s\"",
-                        this.flavorName, getApiAccessConfig().getRegion()));
+        throw new NotFoundException(String.format("no flavor with name \"%s\" exists in region \"%s\"", this.flavorName,
+                getApiAccessConfig().getRegion()));
     }
 
     /**
@@ -184,28 +173,21 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
      * name.
      *
      * @return
-     * @throws CloudPoolException
-     *             If the available images could not be listed.
-     * @throws IllegalArgumentException
+     * @throws NotFoundException
      *             If the specified image name doesn't exist.
+     * @throws ResponseException
+     *             On communication errors.
      */
-    private String getImageId() throws IllegalArgumentException, CloudPoolDriverException {
+    private String getImageId() throws NotFoundException, ResponseException {
 
-        List<Image> images;
-        try {
-            images = new ListImagesRequest(getClientFactory()).call();
-        } catch (Exception e) {
-            throw new CloudPoolDriverException(
-                    String.format("failed to fetch the list of available images: %s", e.getMessage()), e);
-        }
+        List<Image> images = new ListImagesRequest(getClientFactory()).call();
         for (Image image : images) {
             if (image.getName().equals(this.imageName)) {
                 return image.getId();
             }
         }
-        throw new IllegalArgumentException(
-                String.format("failed to create server: no image with " + "name \"%s\" exists in region \"%s\"",
-                        this.imageName, getApiAccessConfig().getRegion()));
+        throw new NotFoundException(String.format("no image with name \"%s\" exists in region \"%s\"", this.imageName,
+                getApiAccessConfig().getRegion()));
     }
 
     /**
@@ -213,10 +195,12 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
      * network names.
      *
      * @return
-     * @throws IllegalArgumentException
-     * @throws CloudPoolDriverException
+     * @throws NotFoundException
+     *             If any of the specified network names does not exist.
+     * @throws ResponseException
+     *             On communication errors.
      */
-    private List<String> getNetworkIds() throws IllegalArgumentException, CloudPoolDriverException {
+    private List<String> getNetworkIds() throws NotFoundException, ResponseException {
         List<String> networkIds = new LinkedList<>();
 
         if (this.networks == null) {
@@ -231,30 +215,12 @@ public class CreateServerRequest extends AbstractOpenstackRequest<Server> {
             Optional<Network> matchingNetwork = availableNetworks.stream()
                     .filter(network -> network.getName().equals(networkName)).findFirst();
             if (!matchingNetwork.isPresent()) {
-                throw new IllegalArgumentException(String.format(
-                        "failed to create server: no network with " + "name \"%s\" exists in region \"%s\"",
+                throw new NotFoundException(String.format("no network with name \"%s\" exists in region \"%s\"",
                         networkName, getApiAccessConfig().getRegion()));
             }
             networkIds.add(matchingNetwork.get().getId());
         }
 
         return networkIds;
-    }
-
-    /**
-     * Logs debug information about the server that is to be launched.
-     */
-    private void logDebugInfo() {
-        LOG.debug("Starting server: {}", this.serverName);
-        LOG.debug("Flavor: {}", this.flavorName);
-        LOG.debug("Image: {}", this.imageName);
-        LOG.debug("Key pair: {}", this.keyPair);
-        LOG.debug("Metadata: {}", this.metadata);
-        LOG.debug("Security groups: {}", this.securityGroups);
-        LOG.debug("Encoded user data: {}", this.encodedUserData);
-        LOG.debug("networks: {}", this.networks);
-        if (this.encodedUserData != null) {
-            LOG.debug("User data: {}", Base64Utils.fromBase64(this.encodedUserData, Charsets.UTF_8));
-        }
     }
 }

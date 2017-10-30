@@ -29,6 +29,13 @@ public class InstancePairedSpotRequest {
     }
 
     /**
+     * Returns the spot instance request id.
+     */
+    public String getId() {
+        return getRequest().getSpotInstanceRequestId();
+    }
+
+    /**
      * @return the {@link #request}
      */
     public SpotInstanceRequest getRequest() {

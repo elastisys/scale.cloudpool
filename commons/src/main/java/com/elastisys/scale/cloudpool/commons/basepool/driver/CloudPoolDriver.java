@@ -122,23 +122,30 @@ public interface CloudPoolDriver {
      * @throws StartMachinesException
      *             If the request failed to complete. The exception includes
      *             details on machines that were started (if any).
+     * @throws CloudPoolDriverException
+     *             If the operation could not be completed.
      */
-    public List<Machine> startMachines(int count) throws IllegalStateException, StartMachinesException;
+    public List<Machine> startMachines(int count)
+            throws IllegalStateException, StartMachinesException, CloudPoolDriverException;
 
     /**
-     * Terminates a {@link Machine} in the cloud pool.
+     * Terminates a collection of {@link Machine}s in the cloud pool. On
+     * success, the complete method returns without error. On failure, a
+     * {@link TerminateMachinesException} is thrown with the cause of the
+     * failure and indicating which {@link Machine}s were terminated (if any)
+     * before the request failed.
      *
      * @param machineId
      *            The identifier of the {@link Machine}.
      * @throws IllegalStateException
      *             If the {@link CloudPoolDriver} has not been configured.
-     * @throws NotFoundException
-     *             If the machine is not a member of the pool.
+     * @throws TerminateMachinesException
+     *             If one or more {@link Machine}s could not be terminated.
      * @throws CloudPoolDriverException
-     *             If anything went wrong.
+     *             If the operation could not be completed.
      */
-    public void terminateMachine(String machineId)
-            throws IllegalStateException, NotFoundException, CloudPoolDriverException;
+    public void terminateMachines(List<String> machineIds)
+            throws IllegalStateException, TerminateMachinesException, CloudPoolDriverException;
 
     /**
      * Attaches an already running machine instance to the cloud pool.

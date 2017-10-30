@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 
 import com.amazonaws.AmazonClientException;
+import com.amazonaws.services.ec2.model.CancelSpotInstanceRequestsResult;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
@@ -53,16 +54,18 @@ public interface SpotClient extends Ec2Client {
      * @return The placed {@link SpotInstanceRequest}s.
      * @throws AmazonClientException
      */
-    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, Ec2ProvisioningTemplate instanceTemplate, int count,
-            List<Tag> tags) throws AmazonClientException;
+    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, Ec2ProvisioningTemplate instanceTemplate,
+            int count, List<Tag> tags) throws AmazonClientException;
 
     /**
      * Cancels a collection of {@link SpotInstanceRequest}s.
      *
      * @param spotInstanceRequestIds
      *            The identifiers of all {@link SpotInstanceRequest}s to cancel.
+     * @return The result of the cancellation request.
      * @throws AmazonClientException
      */
-    void cancelSpotRequests(List<String> spotInstanceRequestIds) throws AmazonClientException;
+    CancelSpotInstanceRequestsResult cancelSpotRequests(List<String> spotInstanceRequestIds)
+            throws AmazonClientException;
 
 }

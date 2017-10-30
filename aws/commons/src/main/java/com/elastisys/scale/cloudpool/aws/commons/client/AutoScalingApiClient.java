@@ -4,8 +4,9 @@ import java.io.Closeable;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.services.autoscaling.AmazonAutoScaling;
-import com.amazonaws.services.autoscaling.AmazonAutoScalingClient;
+import com.amazonaws.services.autoscaling.AmazonAutoScalingClientBuilder;
 
 /**
  * An Amazon EC2 Autoscaling client that connects to and operates against a
@@ -52,9 +53,9 @@ public class AutoScalingApiClient implements Closeable {
         java.security.Security.setProperty("networkaddress.cache.ttl", "60");
 
         this.region = region;
-        this.api = new AmazonAutoScalingClient(awsCredentials, clientConfiguration);
-        String endpoint = "autoscaling." + region + ".amazonaws.com";
-        this.api.setEndpoint(endpoint);
+
+        this.api = AmazonAutoScalingClientBuilder.standard().withRegion(region)
+                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials)).build();
     }
 
     /**

@@ -24,9 +24,9 @@ public class CreateServerMain {
 
         HttpLoggingFilter.toggleLogging(true);
         List<String> networks = null;
-        CreateServerRequest request = new CreateServerRequest(
-                new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig()), "server1", "m1.small",
-                "Ubuntu Trusty 14.04", "instancekey", Arrays.asList("web"), networks, encodedUserData, metadata);
+        CreateServerRequest request = new CreateServerRequest(new OSClientFactory(DriverConfigLoader.loadDefault()),
+                "server1", "m1.small", "Ubuntu Trusty 14.04", "instancekey", Arrays.asList("web"), networks,
+                encodedUserData, metadata);
         Server createdServer = request.call();
         LOG.info("created server: {}", createdServer);
     }

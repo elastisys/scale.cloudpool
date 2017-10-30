@@ -10,7 +10,6 @@ import org.openstack4j.model.compute.Server;
 import org.openstack4j.model.compute.Server.Status;
 import org.openstack4j.openstack.compute.domain.NovaServer;
 
-import com.elastisys.scale.cloudpool.openstack.predicates.ServerPredicates;
 import com.google.common.collect.ImmutableMap;
 
 /**
@@ -36,9 +35,9 @@ public class TestServerPredicates {
         Map<String, String> wrongTagValue = ImmutableMap.of("elastisys:cloudPool", "another-group");
         Map<String, String> matchingTag = ImmutableMap.of("elastisys:cloudPool", "mygroup");
 
-        assertFalse(ServerPredicates.withTag("elastisys:cloudPool", "mygroup").apply(server(wrongTag)));
-        assertFalse(ServerPredicates.withTag("elastisys:cloudPool", "mygroup").apply(server(wrongTagValue)));
-        assertTrue(ServerPredicates.withTag("elastisys:cloudPool", "mygroup").apply(server(matchingTag)));
+        assertFalse(ServerPredicates.withTag("elastisys:cloudPool", "mygroup").test(server(wrongTag)));
+        assertFalse(ServerPredicates.withTag("elastisys:cloudPool", "mygroup").test(server(wrongTagValue)));
+        assertTrue(ServerPredicates.withTag("elastisys:cloudPool", "mygroup").test(server(matchingTag)));
     }
 
     @Test(expected = NullPointerException.class)
@@ -51,19 +50,19 @@ public class TestServerPredicates {
         Server server = server(Status.STOPPED);
 
         // empty set
-        assertFalse(ServerPredicates.withStateIn().apply(server));
+        assertFalse(ServerPredicates.withStateIn().test(server));
         // non-empty set, missing a matching state
-        assertFalse(ServerPredicates.withStateIn(Status.ACTIVE).apply(server));
-        assertFalse(ServerPredicates.withStateIn(Status.ACTIVE, Status.BUILD).apply(server));
+        assertFalse(ServerPredicates.withStateIn(Status.ACTIVE).test(server));
+        assertFalse(ServerPredicates.withStateIn(Status.ACTIVE, Status.BUILD).test(server));
         // set contains matching state only
-        assertTrue(ServerPredicates.withStateIn(Status.STOPPED).apply(server));
+        assertTrue(ServerPredicates.withStateIn(Status.STOPPED).test(server));
         // set contains matching state and other states
-        assertTrue(ServerPredicates.withStateIn(Status.ACTIVE, Status.STOPPED).apply(server));
+        assertTrue(ServerPredicates.withStateIn(Status.ACTIVE, Status.STOPPED).test(server));
 
         // test with another server state
         server = server(Status.ACTIVE);
-        assertFalse(ServerPredicates.withStateIn(Status.STOPPED, Status.BUILD).apply(server));
-        assertTrue(ServerPredicates.withStateIn(Status.ACTIVE, Status.STOPPED).apply(server));
+        assertFalse(ServerPredicates.withStateIn(Status.STOPPED, Status.BUILD).test(server));
+        assertTrue(ServerPredicates.withStateIn(Status.ACTIVE, Status.STOPPED).test(server));
     }
 
     private Server server(Status status) {

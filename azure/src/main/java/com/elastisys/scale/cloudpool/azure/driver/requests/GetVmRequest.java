@@ -1,8 +1,10 @@
 package com.elastisys.scale.cloudpool.azure.driver.requests;
 
+import java.util.Optional;
+
 import com.elastisys.scale.cloudpool.api.NotFoundException;
+import com.elastisys.scale.cloudpool.azure.driver.client.AzureException;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
-import com.microsoft.azure.CloudException;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.VirtualMachine;
 
@@ -31,16 +33,19 @@ public class GetVmRequest extends AzureRequest<VirtualMachine> {
     }
 
     @Override
-    public VirtualMachine doRequest(Azure api) throws NotFoundException, CloudException {
+    public VirtualMachine doRequest(Azure api) throws NotFoundException, AzureException {
+        VirtualMachine vm;
         try {
             LOG.debug("retrieving vm {} ...", this.vmId);
-            return api.virtualMachines().getById(this.vmId);
-        } catch (CloudException e) {
-            if (e.body().code().equals("ResourceNotFound")) {
-                throw new NotFoundException("no such vm: " + this.vmId, e);
-            }
-            throw e;
+            vm = api.virtualMachines().getById(this.vmId);
+        } catch (Exception e) {
+            throw new AzureException("failed to get vm: " + e.getMessage(), e);
         }
+
+        return Optional.ofNullable(vm).orElseThrow(() -> notFoundError());
     }
 
+    private NotFoundException notFoundError() {
+        throw new NotFoundException(String.format("vm not found: %s", this.vmId));
+    }
 }

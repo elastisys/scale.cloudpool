@@ -1,8 +1,10 @@
 package com.elastisys.scale.cloudpool.azure.driver.requests;
 
+import java.util.Optional;
+
 import com.elastisys.scale.cloudpool.api.NotFoundException;
+import com.elastisys.scale.cloudpool.azure.driver.client.AzureException;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
-import com.microsoft.azure.CloudException;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.network.NetworkSecurityGroup;
 
@@ -34,17 +36,21 @@ public class GetNetworkSecurityGroupRequest extends AzureRequest<NetworkSecurity
     }
 
     @Override
-    public NetworkSecurityGroup doRequest(Azure api) throws RuntimeException {
-
+    public NetworkSecurityGroup doRequest(Azure api) throws NotFoundException, AzureException {
+        NetworkSecurityGroup nsg;
         try {
             LOG.debug("retrieving security group {} ...", this.securityGroup);
-            return api.networkSecurityGroups().getByResourceGroup(this.resourceGroup, this.securityGroup);
-        } catch (CloudException e) {
-            if (e.body().code().equals("ResourceNotFound")) {
-                throw new NotFoundException("no such security group: " + this.securityGroup, e);
-            }
-            throw e;
+            nsg = api.networkSecurityGroups().getByResourceGroup(this.resourceGroup, this.securityGroup);
+        } catch (Exception e) {
+            throw new AzureException("failed to get network security group: " + e.getMessage(), e);
         }
+
+        return Optional.ofNullable(nsg).orElseThrow(() -> notFoundError());
+    }
+
+    private NotFoundException notFoundError() {
+        throw new NotFoundException(String.format("security group not found: resourceGroup: %s, name: %s",
+                this.resourceGroup, this.securityGroup));
     }
 
 }

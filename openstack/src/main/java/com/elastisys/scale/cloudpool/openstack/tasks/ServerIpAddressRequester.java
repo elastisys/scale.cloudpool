@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.openstack.tasks;
 import java.util.concurrent.Callable;
 
 import org.openstack4j.api.OSClient;
+import org.openstack4j.api.exceptions.ResponseException;
 import org.openstack4j.model.compute.Addresses;
 
 import com.elastisys.scale.commons.net.retryable.Retryable;
@@ -37,7 +38,7 @@ public class ServerIpAddressRequester implements Callable<Addresses> {
     }
 
     @Override
-    public Addresses call() throws Exception {
+    public Addresses call() throws ResponseException {
         return this.api.compute().servers().get(this.serverId).getAddresses();
     }
 }

@@ -21,11 +21,13 @@ import static java.util.Arrays.asList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +57,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.net.alerter.AlertSeverity;
@@ -223,21 +226,15 @@ public class SpotPoolDriver implements CloudPoolDriver {
     public List<Machine> listMachines() throws CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured driver");
 
-        try {
-            List<InstancePairedSpotRequest> requestInstancePairs = getAlivePoolSpotRequests();
-            return Lists.transform(requestInstancePairs, new InstancePairedSpotRequestToMachine());
-        } catch (Exception e) {
-            throw new CloudPoolDriverException(
-                    format("failed to retrieve machines in cloud pool \"%s\": %s", getPoolName(), e.getMessage()), e);
-        }
+        List<InstancePairedSpotRequest> requestInstancePairs = getAlivePoolSpotRequests();
+        return Lists.transform(requestInstancePairs, new InstancePairedSpotRequestToMachine());
     }
 
     @Override
-    public List<Machine> startMachines(int count) throws StartMachinesException {
+    public List<Machine> startMachines(int count) throws StartMachinesException, CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured driver");
         List<Machine> startedMachines = Lists.newArrayList();
         try {
-
             List<SpotInstanceRequest> spotRequests = this.client.placeSpotRequests(cloudApiSettings().getBidPrice(),
                     provisioningTemplate(), count, asList(poolMembershipTag()));
             List<String> spotIds = Lists.transform(spotRequests, AwsEc2Functions.toSpotRequestId());
@@ -254,27 +251,51 @@ public class SpotPoolDriver implements CloudPoolDriver {
     }
 
     @Override
-    public void terminateMachine(String spotRequestId) throws NotFoundException, CloudPoolDriverException {
+    public void terminateMachines(List<String> spotRequestIds)
+            throws TerminateMachinesException, CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured driver");
+        // defensive copy
+        final List<String> victimIds = new ArrayList<>(spotRequestIds);
 
-        LOG.debug("terminating spot request {}", spotRequestId);
+        LOG.info("request to terminate spot instances: {}", victimIds);
+
+        // track errors
+        Map<String, Throwable> failures = new HashMap<>();
+
+        List<InstancePairedSpotRequest> poolSpotRequests = getAlivePoolSpotRequests();
+
+        // only terminate pool members (error mark other requests)
+        nonPoolMembers(spotRequestIds, poolSpotRequests).stream().forEach(spotId -> {
+            failures.put(spotId, new NotFoundException(
+                    String.format("spot instance request %s is not a member of the pool", spotId)));
+            victimIds.remove(spotId);
+        });
+
+        // none of the machine ids were pool members
+        if (victimIds.isEmpty()) {
+            throw new TerminateMachinesException(Collections.emptyList(), failures);
+        }
+
         try {
-            verifyPoolMember(spotRequestId);
+            // cancel spot requests
+            LOG.info("cancelling spot requests: {}", victimIds);
+            this.client.cancelSpotRequests(victimIds);
 
-            InstancePairedSpotRequest instancePairedSpotRequest = getSpotRequestWithInstance(spotRequestId);
-            SpotInstanceRequest request = instancePairedSpotRequest.getRequest();
-            // cancel spot request
-            this.client.cancelSpotRequests(asList(request.getSpotInstanceRequestId()));
-            if (instancePairedSpotRequest.hasInstance()) {
-                // terminate spot instance (if spot request is fulfilled)
-                String instanceId = instancePairedSpotRequest.getInstance().getInstanceId();
-                LOG.debug("terminating {}'s spot instance {}", spotRequestId, instanceId);
-                this.client.terminateInstances(asList(instanceId));
-            }
+            // terminate spot instances (for fulfilled requests)
+            List<String> instanceIds = poolSpotRequests.stream() //
+                    .filter(r -> victimIds.contains(r.getId())) //
+                    .filter(r -> r.hasInstance()) //
+                    .map(r -> r.getInstance().getInstanceId()) //
+                    .collect(Collectors.toList());
+            LOG.info("terminating spot instances: {}", instanceIds);
+            this.client.terminateInstances(instanceIds);
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, NotFoundException.class);
-            String message = format("failed to terminate spot request \"%s\": %s", spotRequestId, e.getMessage());
+            String message = format("failed to terminate spot instances %s: %s", victimIds, e.getMessage());
             throw new CloudPoolDriverException(message, e);
+        }
+
+        if (!failures.isEmpty()) {
+            throw new TerminateMachinesException(victimIds, failures);
         }
     }
 
@@ -287,7 +308,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
 
             setPoolMembershipTag(spotRequest);
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, NotFoundException.class);
+            Throwables.throwIfInstanceOf(e, NotFoundException.class);
             throw new CloudPoolDriverException(
                     String.format("failed to attach '%s' to cloud pool: %s", spotRequestId, e.getMessage()), e);
         }
@@ -302,7 +323,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
 
             this.client.untagResource(spotRequestId, asList(poolMembershipTag()));
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, NotFoundException.class);
+            Throwables.throwIfInstanceOf(e, NotFoundException.class);
             throw new CloudPoolDriverException(
                     String.format("failed to attach '%s' to cloud pool: %s", spotRequestId, e.getMessage()), e);
         }
@@ -319,7 +340,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
             Tag serviceStateTag = new Tag().withKey(SERVICE_STATE_TAG).withValue(serviceState.name());
             this.client.tagResource(spotRequestId, asList(serviceStateTag));
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, NotFoundException.class);
+            Throwables.throwIfInstanceOf(e, NotFoundException.class);
             throw new CloudPoolDriverException(
                     String.format("failed to set service state for %s: %s", spotRequestId, e.getMessage()), e);
         }
@@ -336,7 +357,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
             Tag membershipStatusTag = new Tag().withKey(MEMBERSHIP_STATUS_TAG).withValue(membershipStatus.toString());
             this.client.tagResource(spotRequestId, asList(membershipStatusTag));
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, NotFoundException.class);
+            Throwables.throwIfInstanceOf(e, NotFoundException.class);
             throw new CloudPoolDriverException(
                     String.format("failed to set membership status for %s: %s", spotRequestId, e.getMessage()), e);
         }
@@ -374,8 +395,9 @@ public class SpotPoolDriver implements CloudPoolDriver {
      *
      * @return The {@link SpotInstanceRequest}s paired with their
      *         {@link Instance} (if fulfilled).
+     * @throws CloudPoolDriverException
      */
-    private List<InstancePairedSpotRequest> getAlivePoolSpotRequests() {
+    private List<InstancePairedSpotRequest> getAlivePoolSpotRequests() throws CloudPoolDriverException {
         return getPoolSpotRequests(Arrays.asList(Open.toString(), Active.toString()));
     }
 
@@ -387,16 +409,23 @@ public class SpotPoolDriver implements CloudPoolDriver {
      *            The spot request states of interest.
      * @return The {@link SpotInstanceRequest}s paired with their
      *         {@link Instance}.
+     * @throws CloudPoolDriverException
      */
-    private List<InstancePairedSpotRequest> getPoolSpotRequests(List<String> states) {
-        // only include spot requests with cloud pool tag
-        Filter poolFilter = new Filter().withName(ScalingFilters.CLOUD_POOL_TAG_FILTER).withValues(getPoolName());
-        // only include spot requests in any of the given states
-        Filter stateFilter = new Filter().withName(ScalingFilters.SPOT_REQUEST_STATE_FILTER).withValues(states);
+    private List<InstancePairedSpotRequest> getPoolSpotRequests(List<String> states) throws CloudPoolDriverException {
+        try {
+            // only include spot requests with cloud pool tag
+            Filter poolFilter = new Filter().withName(ScalingFilters.CLOUD_POOL_TAG_FILTER).withValues(getPoolName());
+            // only include spot requests in any of the given states
+            Filter stateFilter = new Filter().withName(ScalingFilters.SPOT_REQUEST_STATE_FILTER).withValues(states);
 
-        List<SpotInstanceRequest> spotRequests = this.client.getSpotInstanceRequests(asList(poolFilter, stateFilter));
-        List<InstancePairedSpotRequest> requestInstancePairs = pairUpWithInstances(spotRequests);
-        return requestInstancePairs;
+            List<SpotInstanceRequest> spotRequests = this.client
+                    .getSpotInstanceRequests(asList(poolFilter, stateFilter));
+            List<InstancePairedSpotRequest> requestInstancePairs = pairUpWithInstances(spotRequests);
+            return requestInstancePairs;
+        } catch (Exception e) {
+            throw new CloudPoolDriverException(
+                    format("failed to retrieve machines in cloud pool \"%s\": %s", getPoolName(), e.getMessage()), e);
+        }
     }
 
     /**
@@ -420,22 +449,6 @@ public class SpotPoolDriver implements CloudPoolDriver {
             pairs.add(new InstancePairedSpotRequest(spotRequest, spotInstance));
         }
         return pairs;
-    }
-
-    /**
-     * Retrieves a {@link SpotInstanceRequest} and, if fulfilled, its associated
-     * {@link Instance}.
-     *
-     * @param spotRequestId
-     * @return
-     */
-    private InstancePairedSpotRequest getSpotRequestWithInstance(String spotRequestId) {
-        SpotInstanceRequest request = this.client.getSpotInstanceRequest(spotRequestId);
-        Instance instance = null;
-        if (request.getInstanceId() != null) {
-            instance = this.client.getInstanceMetadata(request.getInstanceId());
-        }
-        return new InstancePairedSpotRequest(request, instance);
     }
 
     /**
@@ -598,6 +611,30 @@ public class SpotPoolDriver implements CloudPoolDriver {
         Map<String, JsonElement> metadata = ImmutableMap.of("cancelledRequests", JsonUtils.toJson(cancelledRequests));
         this.eventBus.post(new Alert(AlertTopics.SPOT_REQUEST_CANCELLATION.name(), AlertSeverity.INFO, UtcTime.now(),
                 message, null, metadata));
+    }
+
+    /**
+     * Returns the list of machine ids (from a given list of machine ids) that
+     * are *not* members of the given pool.
+     *
+     * @param machineIds
+     * @param pool
+     * @return
+     */
+    private static List<String> nonPoolMembers(List<String> spotIds, List<InstancePairedSpotRequest> pool) {
+        return spotIds.stream().filter(spotId -> !member(spotId, pool)).collect(Collectors.toList());
+    }
+
+    /**
+     * Returns <code>true</code> if the given spot request id is found in the
+     * given pool of {@link InstancePairedSpotRequest}s.
+     *
+     * @param spotId
+     * @param pool
+     * @return
+     */
+    private static boolean member(String spotId, List<InstancePairedSpotRequest> pool) {
+        return pool.stream().anyMatch(spotReq -> spotReq.getId().equals(spotId));
     }
 
     /**

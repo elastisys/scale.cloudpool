@@ -1,16 +1,14 @@
 package com.elastisys.scale.cloudpool.azure.lab;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.elastisys.scale.cloudpool.azure.driver.client.impl.ApiUtils;
 import com.elastisys.scale.cloudpool.azure.driver.config.AzureApiAccess;
-import com.elastisys.scale.cloudpool.azure.driver.requests.PurgeVmRequest;
+import com.elastisys.scale.cloudpool.azure.driver.requests.PurgeVmsRequest;
 import com.elastisys.scale.commons.json.types.TimeInterval;
-import com.microsoft.azure.management.Azure;
-import com.microsoft.azure.management.compute.VirtualMachine;
 import com.microsoft.rest.LogLevel;
 
 /**
@@ -24,19 +22,18 @@ public class DeleteVirtualMachine extends BaseLabProgram {
     private static final String resourceGroup = "itest";
 
     /** TODO: set the name of the VM within the resource group to delete. */
-    private static final String vmName = "testvm-1495801148941";
+    private static final String vmName = "mv-vm";
 
     public static void main(String[] args) {
-
         AzureApiAccess apiAccess = new AzureApiAccess(SUBSCRIPTION_ID, AZURE_AUTH,
                 new TimeInterval(10L, TimeUnit.SECONDS), new TimeInterval(10L, TimeUnit.SECONDS), LogLevel.BASIC);
-        Azure api = ApiUtils.acquireApiClient(apiAccess);
 
-        VirtualMachine vm = api.virtualMachines().getByResourceGroup(resourceGroup, vmName);
-        LOG.debug("found vm {}: {}", vm.name(), vm.id());
+        String vmId = String.format(
+                "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s", SUBSCRIPTION_ID,
+                resourceGroup, vmName);
 
-        LOG.debug("deleting vm {}", vm.id());
-        new PurgeVmRequest(apiAccess, vm.id()).call();
+        LOG.debug("deleting vm {}", vmName);
+        new PurgeVmsRequest(apiAccess, Arrays.asList(vmId)).call();
         LOG.debug("vm deleted.");
     }
 }

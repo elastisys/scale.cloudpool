@@ -1,15 +1,13 @@
 {
-    "name": "my-scaling-pool3",
+    "name": "my-openstack-pool",
 
     "cloudApiSettings": {
         "auth": {  
             
             "v3Credentials": {
-                "scope": {
-                    "projectId": "project_id"
-                },
                 "userId": "user_id",
-                "password": "secret"
+                "password": "secret",
+                "projectId": "project_id"
             }            
         },    
         "region": "RegionTwo"

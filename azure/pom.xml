@@ -20,6 +20,8 @@
   <properties>
     <docker.image>elastisys/azurepool</docker.image>
     <shade.mainClass>com.elastisys.scale.cloudpool.azure.server.Main</shade.mainClass>
+    
+    <azure.sdk.version>1.3.0</azure.sdk.version>
   </properties>
 
   <dependencies>
@@ -27,14 +29,69 @@
     <dependency>
       <groupId>com.microsoft.azure</groupId>
       <artifactId>azure</artifactId>
-      <version>1.0.0</version>
+      <version>${azure.sdk.version}</version>
       <exclusions>
+        <!-- prevent multiple SLF4J implementations on classpath -->
         <exclusion>
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-simple</artifactId>
         </exclusion>
-      </exclusions>
+        <!-- reduce jar footprint -->
+        <exclusion>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>azure-mgmt-graph-rbac</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>azure-mgmt-keyvault</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>azure-mgmt-trafficmanager</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>azure-mgmt-dns</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>azure-mgmt-redis</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>azure-mgmt-appservice</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>azure-mgmt-cdn</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>azure-mgmt-sql</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>azure-mgmt-containerinstance</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>azure-mgmt-containerregistry</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>azure-mgmt-cosmosdb</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>azure-mgmt-search</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>azure-mgmt-servicebus</artifactId>
+        </exclusion>
+      </exclusions>      
     </dependency>
+    
     <!-- Azure blob storage API: to be able to delete VM disks -->
     <dependency>
       <groupId>com.microsoft.azure</groupId>

@@ -7,6 +7,7 @@ import java.util.Map;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.azure.driver.AzurePoolDriver;
 import com.elastisys.scale.cloudpool.azure.driver.config.CloudApiSettings;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.microsoft.azure.management.compute.VirtualMachine;
 
 /**
@@ -37,23 +38,26 @@ public interface AzureClient {
     List<VirtualMachine> launchVms(List<VmSpec> vmSpecs) throws AzureException;
 
     /**
-     * Deletes a VM and any associated network interface and public IP address.
+     * Deletes a collection of VMs and any associated network interfaces and
+     * public IP addresses.
      * <p/>
-     * Note that the specified VM needs to be located in the resource group and
+     * Note that the specified VMs needs to be located in the resource group and
      * region that this client has been configured to access, or else the
      * operation will fail.
      *
-     * @param vmId
+     * @param vmIds
      *            A VM identifier. Typically of form
      *            {@code /subscriptions/<subscription-id>/resourceGroups/<group>/providers/Microsoft.Compute/virtualMachines/<name>}
-     * @throws NotFoundException
+     * @throws TerminateMachinesException
+     *             If one or more vms could not be terminated.
      * @throws AzureException
      */
-    void deleteVm(String vmId) throws NotFoundException, AzureException;
+    void deleteVms(List<String> vmIds) throws TerminateMachinesException, AzureException;
 
     /**
      * Lists all VMs, with a given set of tags, that are located in the resource
-     * group and region that this client has been configured to access.
+     * group and region that this client has been configured to access. Note
+     * that this may include vms in terminated states.
      *
      * @param withTags
      * @return

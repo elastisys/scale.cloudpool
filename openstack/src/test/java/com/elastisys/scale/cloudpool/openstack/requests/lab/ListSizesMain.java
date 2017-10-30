@@ -13,11 +13,15 @@ public class ListSizesMain {
     private static Logger LOG = LoggerFactory.getLogger(ListSizesMain.class);
 
     public static void main(String[] args) {
-        List<Flavor> flavors = new ListSizesRequest(
-                new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig())).call();
-        LOG.info("{} server flavor(s) found", flavors.size());
-        for (Flavor flavor : flavors) {
-            LOG.info("flavor: {}", flavor);
+        try {
+            List<Flavor> flavors = new ListSizesRequest(new OSClientFactory(DriverConfigLoader.loadDefault())).call();
+            LOG.info("{} server flavor(s) found", flavors.size());
+            for (Flavor flavor : flavors) {
+                LOG.info("flavor: {}", flavor);
+            }
+        } catch (Exception e) {
+            LOG.error("error type: {}", e.getClass().getName());
+            LOG.error("error: {}", e.getMessage());
         }
     }
 }

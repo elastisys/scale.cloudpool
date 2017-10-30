@@ -111,28 +111,26 @@ to the following:
     },
 	
     "provisioningTemplate": {
-        "size": "Standard_DS1_v2",
+        "vmSize": "Standard_DS1_v2",
         "image": "Canonical:UbuntuServer:16.04.0-LTS:latest",
-        "extensions": {
-            "linuxSettings": {
-                "rootUserName": "ubuntu",
-                "publicSshKey": "ssh-rsa XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX foo@bar",
-                "customData": "I2Nsb3VkLWNvbmZpZwp3cml0ZV9maWxlczoKICAtIHBhdGg6IC9ob21lL3VidW50dS9pbXBvcnRhbnQubm90ZQogICAgb3duZXI6IHVidW50dTp1YnVudHUKICAgIGNvbnRlbnQ6IHwKICAgICAgVGhlIHNlY3JldCBpcyA0Mi4K",
-                "customScript": {
-                    "encodedCommand": "c2ggLWMgJ2FwdCB1cGRhdGUgLXF5ICYmIGFwdCBpbnN0YWxsIC1xeSBhcGFjaGUyJwo="
-                }
-            },
-            "storageAccountName": "testpooldisks",
-            "network": {
-                "virtualNetwork": "testnet",
-                "subnetName": "default",
-                "assignPublicIp": true,
-                "networkSecurityGroups": ["webserver"]
-            },
-			"availabilitySet": "my-test-set",
-            "tags": {
-                "tier": "web"
+		"osDiskType": "Premium_LRS",
+        "linuxSettings": {
+            "rootUserName": "ubuntu",
+            "publicSshKey": "ssh-rsa XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX foo@bar",
+            "customData": "I2Nsb3VkLWNvbmZpZwp3cml0ZV9maWxlczoKICAtIHBhdGg6IC9ob21lL3VidW50dS9pbXBvcnRhbnQubm90ZQogICAgb3duZXI6IHVidW50dTp1YnVudHUKICAgIGNvbnRlbnQ6IHwKICAgICAgVGhlIHNlY3JldCBpcyA0Mi4K",
+            "customScript": {
+                "encodedCommand": "c2ggLWMgJ2FwdCB1cGRhdGUgLXF5ICYmIGFwdCBpbnN0YWxsIC1xeSBhcGFjaGUyJwo="
             }
+        },
+        "network": {
+            "virtualNetwork": "testnet",
+            "subnetName": "default",
+            "assignPublicIp": true,
+            "networkSecurityGroups": ["webserver"]
+        },
+        "availabilitySet": "my-test-set",
+        "tags": {
+            "tier": "web"
         }
     },
 ...
@@ -156,35 +154,59 @@ The configuration keys have the following meaning:
     - `region`: The region where pool VMs and referenced assets (networks, security groups, images, etc) are located in. For example, `northeurope`.
 
 - `provisioningTemplate`: Describes how to provision additional servers (on scale-out).
-    - `size`: The name of the server type to launch. For example, `Standard_DS1_v2`.
-    - `image`: The name of the machine image used to boot new servers. For example, `Canonical:UbuntuServer:16.04.0-LTS:latest`.
-    - `extensions`: Azure-specific VM provisioning settings
-	  - `vmNamePrefix` (*optional*): Name prefix to assign to created VMs. The cloudpool will add a VM-unique suffix to the prefix to produce the final VM name: `<vmNamePrefix>-<suffix>`. If left out, the default is to use the cloud pool's name as VM name prefix.
-	  - `linuxSettings` (*semi-optional*): Settings particular to launching Linux VMs. Either this or `windowsSettings` must be specified.
-	    - `rootUserName` (*optional*): Name of the root Linux account to create on created VMs. Default: `root`.
-		- `publicSshKey` (*semi-optional*): An OpenSSH public key used to login to created VMs. Must be given unless `password` is specified.
-		- `password` (*semi-optional*): A password used to login to created VMs. Must be given unless `publicSshKey` is specified.
-		- `customData` (*optional*): custom base64-encoded data to pass to the VM. This can, for example, be used to pass a [cloud-init](https://cloudinit.readthedocs.io/) file to bootstrap a VM on [Linux VMs that support this format](https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-using-cloud-init), such as Ubuntu and CoreOS.
-		- `customScript` (*optional*): a (set of) custom script(s) to download and execute when a VM has booted. See [custom script extensions for linux](https://github.com/Azure/custom-script-extension-linux) for details.
-		  - `fileUris` (*optional*): A set of file URIs to download before executing the script.
-		  - `encodedCommand`: A base64-encoded command to execute. Such a command can, for example, be generated via a call similar to: `echo "sh -c 'apt update -qy && apt install -qy apache2'" | base64 -w0`.
-	  - `windowsSettings` (*semi-optional*): Settings particular to launching Windows VMs. Either this or `linuxsSettings` must be specified.
-	    - `adminUserName`: The administrator user name for the Windows VM. Default: `windowsadmin`.
-		- `password`: A password used to login to created VMs.
-		- `customScript` (*optional*): a (set of) custom script(s) to run when a VM is booted.
-		  - `fileUris` (*optional*): A set of file URIs to download before executing the script.
-		  - `encodedCommand`: A base64-encoded command to execute. Such a command can, for example, be generated via a call similar to: `echo "powershell.exe -ExecutionPolicy Unrestricted -File install-webserver.ps1" | base64 -w 0`
-	  - `storageAccountName`: An existing storage account used to store the OS disk VHD for created VMs.
-	  - `network`: Network settings for created VMs.
-	    - `virtualNetwork`: An existing virtual network that created VMs will be attached to (the VM's primary network interface will receive a private IP address from this network).
-	    - `subnetName`: The subnet within the virtual network, from which a (private) IP address will be assigned to created VMs.
-	    - `assignPublicIp` (*optional*): Set to `true` to assign a public IP address to created VMs. Default: `false`.
-	    - `networkSecurityGroups` (*optional*): A set of existing network security groups to associate with created VMs. May be `null`, which means that no security groups get associated with the primary network interface of created VMs. The default behavior is to allow all inbound traffic from inside the VM's virtual network and to allow all outbound traffic from a VM.
-	  - `availabilitySet` (*optional*): An existing
-        [availability set](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/create-availability-set) to
-        which created VMs are to be added. If left out, created VMs will not be
-        grouped into an availability set.
-      - `tags` (*optional*): Tags to associate with created VMs. *Note: a `elastisys-CloudPool` tag will automatically be set on each pool VM and should not be overridden*. 
+    - `vmSize`: The name of the server type to launch. For example, `Standard_DS1_v2`.
+    - `vmImage`: VM image used to boot created VMs from. Can be specified either
+      as an image reference (`<publisher>:<offer>:<sku>[:<version>]`) to use an
+      existing image from the market place or as the id of a custom image
+      (`/subscriptions/<subscriptionId>/resourceGroups/<resourceGroup>/providers/Microsoft.Compute/images/<imageName>`).
+	- `osDiskType`: The disk type to use for the managed OS disk that will be
+      created for each VM. Allowed values are `Standard_LRS` (HDD-based) and
+      `Premium_LRS` (SSD-based). Premium storage may not be supported by
+	  all types of VM series
+      (see
+      [azure documentation](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/premium-storage)). Default: `Standard_LRS`.
+	- `vmNamePrefix` (*optional*): Name prefix to assign to created VMs. The cloudpool will add a VM-unique suffix to the prefix to produce the final VM name: `<vmNamePrefix>-<suffix>`. If left out, the default is to use the cloud pool's name as VM name prefix.
+	- `linuxSettings` (*semi-optional*): Settings particular to launching Linux VMs. Either this or `windowsSettings` must be specified.
+	  - `rootUserName` (*optional*): Name of the root Linux account to create on created VMs. Default: `root`.
+	  - `publicSshKey` (*semi-optional*): An OpenSSH public key used to login to created VMs. Must be given unless `password` is specified.
+	  - `password` (*semi-optional*): A password used to login to created VMs. Must be given unless `publicSshKey` is specified.
+	  - `customData` (*optional*): custom base64-encoded data to pass to the VM. This can, for example, be used to pass a [cloud-init](https://cloudinit.readthedocs.io/) file to bootstrap a VM on [Linux VMs that support this format](https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-using-cloud-init), such as Ubuntu and CoreOS.
+	  - `customScript` (*optional*): a (set of) custom script(s) to download and execute when a VM has booted. See [custom script extensions for linux](https://github.com/Azure/custom-script-extension-linux) for details.
+	    - `fileUris` (*optional*): A set of file URIs to download before executing the script.
+	    - `encodedCommand`: A base64-encoded command to execute. Such a command can, for example, be generated via a call similar to: `echo "sh -c 'apt update -qy && apt install -qy apache2'" | base64 -w0`.
+	- `windowsSettings` (*semi-optional*): Settings particular to launching Windows VMs. Either this or `linuxsSettings` must be specified.
+	  - `adminUserName`: The administrator user name for the Windows
+        VM. Default: `windowsadmin`.
+	  - `password`: A password used to login to created VMs.
+	  - `customScript` (*optional*): a (set of) custom script(s) to run when a
+        VM is booted.
+	    - `fileUris` (*optional*): A set of file URIs to download before
+          executing the script.
+	    - `encodedCommand`: A base64-encoded command to execute. Such a command
+          can, for example, be generated via a call similar to: `echo
+          "powershell.exe -ExecutionPolicy Unrestricted -File
+          install-webserver.ps1" | base64 -w 0`
+    - `network`: Network settings for created VMs.
+	    - `virtualNetwork`: An existing virtual network that created VMs will be
+          attached to (the VM's primary network interface will receive a private
+          IP address from this network).
+	    - `subnetName`: The subnet within the virtual network, from which a
+          (private) IP address will be assigned to created VMs.
+	    - `assignPublicIp` (*optional*): Set to `true` to assign a public IP
+          address to created VMs. Default: `false`.
+	    - `networkSecurityGroups` (*optional*): A set of existing network
+          security groups to associate with created VMs. May be `null`, which
+          means that no security groups get associated with the primary network
+          interface of created VMs. The default behavior is to allow all inbound
+          traffic from inside the VM's virtual network and to allow all outbound
+          traffic from a VM.
+    - `availabilitySet` (*optional*): An existing
+      [availability set](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/create-availability-set) to
+      which created VMs are to be added. If left out, created VMs will not be 
+      grouped into an availability set.
+    - `tags` (*optional*): Tags to associate with created VMs. *Note: a
+      `elastisys-CloudPool` tag will automatically be set on each pool VM and
+      should not be overridden*.
 
 
 

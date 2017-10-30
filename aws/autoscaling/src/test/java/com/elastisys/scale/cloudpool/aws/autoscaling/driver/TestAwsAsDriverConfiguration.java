@@ -8,6 +8,8 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import java.util.Arrays;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -101,7 +103,7 @@ public class TestAwsAsDriverConfiguration {
 
     @Test(expected = IllegalStateException.class)
     public void invokeTerminateMachineBeforeBeingConfigured() throws Exception {
-        this.driver.terminateMachine("i-1");
+        this.driver.terminateMachines(Arrays.asList("i-1"));
     }
 
     @Test

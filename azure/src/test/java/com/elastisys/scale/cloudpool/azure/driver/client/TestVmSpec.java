@@ -19,6 +19,7 @@ import com.elastisys.scale.cloudpool.azure.driver.config.NetworkSettings;
 import com.elastisys.scale.cloudpool.azure.driver.config.TestUtils;
 import com.elastisys.scale.cloudpool.azure.driver.config.WindowsSettings;
 import com.google.common.collect.ImmutableMap;
+import com.microsoft.azure.management.compute.StorageAccountTypes;
 
 /**
  * Exercise {@link VmSpec}
@@ -27,10 +28,12 @@ import com.google.common.collect.ImmutableMap;
 public class TestVmSpec {
 
     private static final NetworkSettings VM_NETWORK = TestUtils.validNetworkSettings();
-    private static final String STORAGE_ACCOUNT = "vm-storage-account";
     private static final String VM_NAME = "vm-0";
-    private static final String VM_IMAGE = "Canonical:UbuntuServer:16.04.0-LTS:latest";
+    private static final VmImage VM_IMAGE_REF = new VmImage("Canonical:UbuntuServer:16.04.0-LTS:latest");
+    private static final VmImage VM_IMAGE_ID = new VmImage(
+            "subscriptions/123/resourceGroups/rg/providers/Microsoft.Compute/images/ubuntu");
     private static final String VM_SIZE = "Standard_DS1_v2";
+    private static final StorageAccountTypes OS_DISK_TYPE = StorageAccountTypes.PREMIUM_LRS;
     private static final String AVAILABILITY_SET = "availabiltiy-set";
     private static final Map<String, String> VM_TAGS = ImmutableMap.of(//
             Constants.CLOUD_POOL_TAG, "scaling-pool", //
@@ -44,19 +47,25 @@ public class TestVmSpec {
         Optional<WindowsSettings> windowsSettings = Optional.empty();
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
-        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
+        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE_REF, OS_DISK_TYPE, VM_NAME, linuxSettings, windowsSettings,
                 VM_NETWORK, AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
 
         assertThat(vmSpec.getVmSize(), is(VM_SIZE));
-        assertThat(vmSpec.getVmImage(), is(VM_IMAGE));
+        assertThat(vmSpec.getVmImage(), is(VM_IMAGE_REF));
+        assertThat(vmSpec.getOsDiskType(), is(OS_DISK_TYPE));
         assertThat(vmSpec.getVmName(), is(VM_NAME));
         assertThat(vmSpec.getLinuxSettings(), is(linuxSettings));
         assertThat(vmSpec.getWindowsSettings().isPresent(), is(false));
-        assertThat(vmSpec.getStorageAccountName(), is(STORAGE_ACCOUNT));
         assertThat(vmSpec.getNetwork(), is(VM_NETWORK));
         assertThat(vmSpec.getAvailabilitySet().get(), is(AVAILABILITY_SET));
         assertThat(vmSpec.getTags(), is(VM_TAGS));
+
+        // create with vm image id
+        vmSpec = new VmSpec(VM_SIZE, VM_IMAGE_ID, OS_DISK_TYPE, VM_NAME, linuxSettings, windowsSettings, VM_NETWORK,
+                AVAILABILITY_SET, VM_TAGS);
+        vmSpec.validate();
+        assertThat(vmSpec.getVmImage(), is(VM_IMAGE_ID));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -64,8 +73,8 @@ public class TestVmSpec {
         Optional<WindowsSettings> windowsSettings = Optional.empty();
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
-        VmSpec vmSpec = new VmSpec(null, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT, VM_NETWORK,
-                AVAILABILITY_SET, VM_TAGS);
+        VmSpec vmSpec = new VmSpec(null, VM_IMAGE_REF, OS_DISK_TYPE, VM_NAME, linuxSettings, windowsSettings,
+                VM_NETWORK, AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
     }
 
@@ -74,7 +83,17 @@ public class TestVmSpec {
         Optional<WindowsSettings> windowsSettings = Optional.empty();
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
-        VmSpec vmSpec = new VmSpec(VM_SIZE, null, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT, VM_NETWORK,
+        VmSpec vmSpec = new VmSpec(VM_SIZE, null, OS_DISK_TYPE, VM_NAME, linuxSettings, windowsSettings, VM_NETWORK,
+                AVAILABILITY_SET, VM_TAGS);
+        vmSpec.validate();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void missingOsDiskType() {
+        Optional<WindowsSettings> windowsSettings = Optional.empty();
+        Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
+
+        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE_REF, null, VM_NAME, linuxSettings, windowsSettings, VM_NETWORK,
                 AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
     }
@@ -84,8 +103,28 @@ public class TestVmSpec {
         Optional<WindowsSettings> windowsSettings = Optional.empty();
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
-        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, null, linuxSettings, windowsSettings, STORAGE_ACCOUNT, VM_NETWORK,
-                AVAILABILITY_SET, VM_TAGS);
+        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE_REF, OS_DISK_TYPE, null, linuxSettings, windowsSettings,
+                VM_NETWORK, AVAILABILITY_SET, VM_TAGS);
+        vmSpec.validate();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void onNullLinuxSettings() {
+        Optional<WindowsSettings> windowsSettings = Optional.empty();
+        Optional<LinuxSettings> linuxSettings = null;
+
+        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE_REF, OS_DISK_TYPE, VM_NAME, linuxSettings, windowsSettings,
+                VM_NETWORK, AVAILABILITY_SET, VM_TAGS);
+        vmSpec.validate();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void onNullWindowsSettings() {
+        Optional<WindowsSettings> windowsSettings = null;
+        Optional<LinuxSettings> linuxSettings = Optional.empty();
+
+        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE_REF, OS_DISK_TYPE, VM_NAME, linuxSettings, windowsSettings,
+                VM_NETWORK, AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
     }
 
@@ -94,7 +133,7 @@ public class TestVmSpec {
         Optional<WindowsSettings> windowsSettings = Optional.empty();
         Optional<LinuxSettings> linuxSettings = Optional.empty();
 
-        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
+        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE_REF, OS_DISK_TYPE, VM_NAME, linuxSettings, windowsSettings,
                 VM_NETWORK, AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
 
@@ -105,7 +144,7 @@ public class TestVmSpec {
         Optional<WindowsSettings> windowsSettings = Optional.of(validWindowsSettings());
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
-        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
+        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE_REF, OS_DISK_TYPE, VM_NAME, linuxSettings, windowsSettings,
                 VM_NETWORK, AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
 
@@ -116,7 +155,7 @@ public class TestVmSpec {
         Optional<WindowsSettings> windowsSettings = Optional.empty();
         Optional<LinuxSettings> linuxSettings = Optional.of(invalidLinuxSettings());
 
-        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
+        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE_REF, OS_DISK_TYPE, VM_NAME, linuxSettings, windowsSettings,
                 VM_NETWORK, AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
 
@@ -127,19 +166,8 @@ public class TestVmSpec {
         Optional<WindowsSettings> windowsSettings = Optional.of(invalidWindowsSettings());
         Optional<LinuxSettings> linuxSettings = Optional.empty();
 
-        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
+        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE_REF, OS_DISK_TYPE, VM_NAME, linuxSettings, windowsSettings,
                 VM_NETWORK, AVAILABILITY_SET, VM_TAGS);
-        vmSpec.validate();
-
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void missingStorageAccount() {
-        Optional<WindowsSettings> windowsSettings = Optional.empty();
-        Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
-
-        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, null, VM_NETWORK,
-                AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
 
     }
@@ -149,7 +177,7 @@ public class TestVmSpec {
         Optional<WindowsSettings> windowsSettings = Optional.empty();
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
-        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT, null,
+        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE_REF, OS_DISK_TYPE, VM_NAME, linuxSettings, windowsSettings, null,
                 AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
 
@@ -160,7 +188,7 @@ public class TestVmSpec {
         Optional<WindowsSettings> windowsSettings = Optional.empty();
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
-        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
+        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE_REF, OS_DISK_TYPE, VM_NAME, linuxSettings, windowsSettings,
                 invalidNetworkSettings(), AVAILABILITY_SET, VM_TAGS);
         vmSpec.validate();
 
@@ -171,7 +199,7 @@ public class TestVmSpec {
         Optional<WindowsSettings> windowsSettings = Optional.empty();
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
-        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
+        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE_REF, OS_DISK_TYPE, VM_NAME, linuxSettings, windowsSettings,
                 VM_NETWORK, AVAILABILITY_SET, null);
         vmSpec.validate();
     }
@@ -184,7 +212,7 @@ public class TestVmSpec {
         String nullAvailabilitySet = null;
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
         Optional<WindowsSettings> windowsSettings = Optional.empty();
-        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
+        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE_REF, OS_DISK_TYPE, VM_NAME, linuxSettings, windowsSettings,
                 VM_NETWORK, nullAvailabilitySet, VM_TAGS);
         vmSpec.validate();
     }
@@ -195,7 +223,7 @@ public class TestVmSpec {
         Optional<LinuxSettings> linuxSettings = Optional.of(validLinuxSettings());
 
         Map<String, String> invalidTags = ImmutableMap.of("a/key", "value");
-        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE, VM_NAME, linuxSettings, windowsSettings, STORAGE_ACCOUNT,
+        VmSpec vmSpec = new VmSpec(VM_SIZE, VM_IMAGE_REF, OS_DISK_TYPE, VM_NAME, linuxSettings, windowsSettings,
                 VM_NETWORK, AVAILABILITY_SET, invalidTags);
         vmSpec.validate();
 

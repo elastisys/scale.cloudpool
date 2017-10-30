@@ -2,17 +2,17 @@
     "name": "${CLOUD_POOL_NAME}",
 
     "cloudApiSettings": {
-            "auth": {
-                "keystoneUrl": "http://${KEYSTONE_HOST}:5000/v2.0",
-                "v2Credentials": {
-                    "tenantName": "${TENANT_NAME}",
-                    "userName": "${OS_USERNAME}",
-                    "password": "${OS_PASSWORD}",
-                }
-            },
-            "region": "${OS_REGION}",
-            "connectionTimeout": 10000,
-            "socketTimeout": 10000
+        "auth": {
+            "keystoneUrl": "http://${KEYSTONE_HOST}:5000/v2.0",
+            "v2Credentials": {
+                "tenantName": "${TENANT_NAME}",
+                "userName": "${OS_USERNAME}",
+                "password": "${OS_PASSWORD}",
+            }
+        },
+        "region": "${OS_REGION}",
+        "connectionTimeout": 10000,
+        "socketTimeout": 10000
     },
 
     "provisioningTemplate": {

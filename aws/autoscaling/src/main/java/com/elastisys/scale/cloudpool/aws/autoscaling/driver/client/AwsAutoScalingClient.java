@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.util.Arrays;
 import java.util.List;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -44,21 +45,21 @@ public class AwsAutoScalingClient implements AutoScalingClient {
     }
 
     @Override
-    public AutoScalingGroup getAutoScalingGroup(String autoScalingGroupName) {
+    public AutoScalingGroup getAutoScalingGroup(String autoScalingGroupName) throws AmazonClientException {
         checkArgument(isConfigured(), "can't use client before it's configured");
 
         return new GetAutoScalingGroup(awsCredentials(), region(), clientConfig(), autoScalingGroupName).call();
     }
 
     @Override
-    public LaunchConfiguration getLaunchConfiguration(String launchConfigurationName) {
+    public LaunchConfiguration getLaunchConfiguration(String launchConfigurationName) throws AmazonClientException {
         checkArgument(isConfigured(), "can't use client before it's configured");
 
         return new GetLaunchConfiguration(awsCredentials(), region(), clientConfig(), launchConfigurationName).call();
     }
 
     @Override
-    public List<Instance> getAutoScalingGroupMembers(String autoScalingGroupName) {
+    public List<Instance> getAutoScalingGroupMembers(String autoScalingGroupName) throws AmazonClientException {
         checkArgument(isConfigured(), "can't use client before it's configured");
 
         return new GetAutoScalingGroupInstances(awsCredentials(), region(), clientConfig(), autoScalingGroupName)
@@ -66,7 +67,7 @@ public class AwsAutoScalingClient implements AutoScalingClient {
     }
 
     @Override
-    public void setDesiredSize(String autoScalingGroupName, int desiredSize) {
+    public void setDesiredSize(String autoScalingGroupName, int desiredSize) throws AmazonClientException {
         checkArgument(isConfigured(), "can't use client before it's configured");
 
         new SetDesiredAutoScalingGroupSize(awsCredentials(), region(), clientConfig(), autoScalingGroupName,
@@ -74,7 +75,8 @@ public class AwsAutoScalingClient implements AutoScalingClient {
     }
 
     @Override
-    public void terminateInstance(String autoScalingGroupName, String instanceId) throws NotFoundException {
+    public void terminateInstance(String autoScalingGroupName, String instanceId)
+            throws NotFoundException, AmazonClientException {
         checkArgument(isConfigured(), "can't use client before it's configured");
 
         // verify that instance exists
@@ -84,7 +86,8 @@ public class AwsAutoScalingClient implements AutoScalingClient {
     }
 
     @Override
-    public void attachInstance(String autoScalingGroupName, String instanceId) throws NotFoundException {
+    public void attachInstance(String autoScalingGroupName, String instanceId)
+            throws NotFoundException, AmazonClientException {
         checkArgument(isConfigured(), "can't use client before it's configured");
 
         // verify that instance exists
@@ -95,7 +98,8 @@ public class AwsAutoScalingClient implements AutoScalingClient {
     }
 
     @Override
-    public void detachInstance(String autoScalingGroupName, String instanceId) throws NotFoundException {
+    public void detachInstance(String autoScalingGroupName, String instanceId)
+            throws NotFoundException, AmazonClientException {
         checkArgument(isConfigured(), "can't use client before it's configured");
 
         // verify that instance exists
@@ -106,7 +110,7 @@ public class AwsAutoScalingClient implements AutoScalingClient {
     }
 
     @Override
-    public void tagInstance(String instanceId, List<Tag> tags) throws NotFoundException {
+    public void tagInstance(String instanceId, List<Tag> tags) throws NotFoundException, AmazonClientException {
         checkArgument(isConfigured(), "can't use client before it's configured");
 
         // verify that instance exists
@@ -115,7 +119,7 @@ public class AwsAutoScalingClient implements AutoScalingClient {
         new TagEc2Resources(awsCredentials(), region(), clientConfig(), Arrays.asList(instanceId), tags).call();
     }
 
-    private Instance getInstanceOrFail(String instanceId) throws NotFoundException {
+    private Instance getInstanceOrFail(String instanceId) throws NotFoundException, AmazonClientException {
         checkArgument(isConfigured(), "can't use client before it's configured");
 
         return new GetInstance(awsCredentials(), region(), clientConfig(), instanceId).call();

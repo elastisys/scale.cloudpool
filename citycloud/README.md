@@ -17,11 +17,11 @@ something like:
         "auth": {
             "keystoneUrl": "https://identity1.citycloud.com:5000/v3/",
             "v3Credentials": {
-                "scope": {
-                    "projectId": "<project-id>"
-                },
-                "userId": "<user-id>",
-                "password": "<password>"
+                "userName": "foo",
+                "userDomainName": "CCP_Domain_12345",
+                "password": "secret",
+                "projectName": "myproject",
+                "projectDomainName": "CCP_Domain_12345"
             }
         },
         "region": "Kna1",
@@ -30,13 +30,13 @@ something like:
     },
 ```
 
-Here, 
+The domain, available users, and projects of your account can be found in
+the API access part of the [CityCloud dashboard](https://citycontrolpanel.com/openstack#openstack_api_access).
 
-- `projectId`: The id of the project to which the user account belongs. 
-  Project ids can be found in the [manage projects dashboard](https://citycontrolpanel.com/openstack#manage_projects).
-- `userId`: The id of a user associated with the given project. 
-  User ids can be found in the [API access dashboard](https://citycontrolpanel.com/openstack#openstack_api_access)
-- `region`: One of the available CityCloud zones to run against. At the time of writing, one of `Kna1` (Karlskrona/Sweden), `Sto2` (Stockholm/Sweden), `Lon1` (London/UK), `La1` (Los Angeles/USA), `Buf1` (Buffalo/USA), `Fra1` (Paris/France).
+The `region` is one of the available CityCloud regions (for example, `Kna1` for
+Karlskrona/Sweden) . The available regions, with their short-codes, are
+listed [here](https://citycontrolpanel.com/openstack#apiEndpoints) under the
+`Endpoints` tab.
 
 
 

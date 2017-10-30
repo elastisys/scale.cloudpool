@@ -1,13 +1,16 @@
 package com.elastisys.scale.cloudpool.openstack.driver;
 
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Lists.transform;
 import static java.lang.String.format;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.openstack4j.model.compute.Server;
 import org.slf4j.Logger;
@@ -22,6 +25,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
+import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.cloudpool.openstack.driver.client.OpenstackClient;
 import com.elastisys.scale.cloudpool.openstack.driver.config.CloudApiSettings;
 import com.elastisys.scale.cloudpool.openstack.driver.config.ProvisioningTemplate;
@@ -95,17 +99,11 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
     public List<Machine> listMachines() throws CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured driver");
 
-        try {
-            List<Server> servers = this.client.getServers(Constants.CLOUD_POOL_TAG, getPoolName());
-            return transform(servers, serverToMachine());
-        } catch (Exception e) {
-            throw new CloudPoolDriverException(
-                    format("failed to retrieve machines in cloud pool \"%s\": %s", getPoolName(), e.getMessage()), e);
-        }
+        return getPoolMembers().stream().map(serverToMachine()).collect(Collectors.toList());
     }
 
     @Override
-    public List<Machine> startMachines(int count) throws StartMachinesException {
+    public List<Machine> startMachines(int count) throws StartMachinesException, CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured driver");
 
         List<Machine> startedMachines = Lists.newArrayList();
@@ -114,13 +112,13 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
                 // tag new server with cloud pool membership
                 Map<String, String> tags = ImmutableMap.of(Constants.CLOUD_POOL_TAG, getPoolName());
                 Server newServer = this.client.launchServer(uniqueServerName(), provisioningTemplate(), tags);
-                startedMachines.add(serverToMachine().apply(newServer));
+                Machine machine = serverToMachine().apply(newServer);
+                startedMachines.add(machine);
 
                 if (provisioningTemplate().isAssignFloatingIp()) {
                     String serverId = newServer.getId();
-                    this.client.assignFloatingIp(serverId);
-                    // update meta data to include the public IP
-                    startedMachines.set(i, serverToMachine().apply(this.client.getServer(serverId)));
+                    String floatingIp = this.client.assignFloatingIp(serverId);
+                    machine.getPublicIps().add(floatingIp);
                 }
             }
         } catch (Exception e) {
@@ -130,18 +128,41 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
     }
 
     @Override
-    public void terminateMachine(String machineId) throws CloudPoolDriverException {
+    public void terminateMachines(List<String> machineIds)
+            throws IllegalStateException, TerminateMachinesException, CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured driver");
+        List<String> victimIds = new ArrayList<>(machineIds);
+        LOG.info("request to terminate servers: {}", machineIds);
 
-        // verify that machine exists in group
-        getMachineOrFail(machineId);
+        List<Server> poolMembers = getPoolMembers();
 
-        try {
-            this.client.terminateServer(machineId);
-        } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
-            String message = format("failed to terminate server \"%s\": %s", machineId, e.getMessage());
-            throw new CloudPoolDriverException(message, e);
+        // track termination failures
+        Map<String, Throwable> failures = new HashMap<>();
+
+        // only terminate pool members (error mark other requests)
+        nonPoolMembers(machineIds, poolMembers).stream().forEach(machineId -> {
+            failures.put(machineId,
+                    new NotFoundException(String.format("server %s is not a member of the pool", machineId)));
+            victimIds.remove(machineId);
+        });
+
+        // none of the machine ids were pool members
+        if (victimIds.isEmpty()) {
+            throw new TerminateMachinesException(Collections.emptyList(), failures);
+        }
+
+        List<String> terminated = new ArrayList<>();
+        for (String victimId : victimIds) {
+            try {
+                this.client.terminateServer(victimId);
+                terminated.add(victimId);
+            } catch (Exception e) {
+                failures.put(victimId, e);
+            }
+        }
+
+        if (!failures.isEmpty()) {
+            throw new TerminateMachinesException(terminated, failures);
         }
     }
 
@@ -153,8 +174,8 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
         try {
             this.client.tagServer(machineId, tags);
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, NotFoundException.class);
-            Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
+            Throwables.throwIfInstanceOf(e, NotFoundException.class);
+            Throwables.throwIfInstanceOf(e, CloudPoolDriverException.class);
             String message = format("failed to attach server \"%s\": %s", machineId, e.getMessage());
             throw new CloudPoolDriverException(message, e);
         }
@@ -172,7 +193,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
             List<String> tagKeys = Arrays.asList(Constants.CLOUD_POOL_TAG);
             this.client.untagServer(machineId, tagKeys);
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
+            Throwables.throwIfInstanceOf(e, CloudPoolDriverException.class);
             String message = format("failed to detach server \"%s\": %s", machineId, e.getMessage());
             throw new CloudPoolDriverException(message, e);
         }
@@ -191,7 +212,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
             Map<String, String> tags = ImmutableMap.of(Constants.SERVICE_STATE_TAG, serviceState.name());
             this.client.tagServer(machineId, tags);
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
+            Throwables.throwIfInstanceOf(e, CloudPoolDriverException.class);
             String message = format("failed to tag service state on server \"%s\": %s", machineId, e.getMessage());
             throw new CloudPoolDriverException(message, e);
         }
@@ -212,7 +233,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
                     JsonUtils.toString(JsonUtils.toJson(membershipStatus)));
             this.client.tagServer(machineId, tags);
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, CloudPoolDriverException.class);
+            Throwables.throwIfInstanceOf(e, CloudPoolDriverException.class);
             String message = format("failed to tag membership status on server \"%s\": %s", machineId, e.getMessage());
             throw new CloudPoolDriverException(message, e);
         }
@@ -259,12 +280,52 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
     }
 
     /**
+     * Returns all {@link Server}s that are members of this cloud pool.
+     *
+     * @return
+     * @throws CloudPoolDriverException
+     */
+    private List<Server> getPoolMembers() throws CloudPoolDriverException {
+        try {
+            List<Server> servers = this.client.getServers(Constants.CLOUD_POOL_TAG, getPoolName());
+            return servers;
+        } catch (Exception e) {
+            throw new CloudPoolDriverException(
+                    format("failed to retrieve machines in cloud pool \"%s\": %s", getPoolName(), e.getMessage()), e);
+        }
+    }
+
+    /**
      * A {@link Function} that converts from {@link Server} to {@link Machine}.
      *
      * @return
      */
     private ServerToMachine serverToMachine() {
         return new ServerToMachine(this.cloudProvider, cloudApiSettings().getRegion());
+    }
+
+    /**
+     * Returns the list of server ids (from a given list of server ids) that are
+     * *not* members of the given pool.
+     *
+     * @param serverIds
+     * @param pool
+     * @return
+     */
+    private static List<String> nonPoolMembers(List<String> serverIds, List<Server> pool) {
+        return serverIds.stream().filter(serverId -> !member(serverId, pool)).collect(Collectors.toList());
+    }
+
+    /**
+     * Returns <code>true</code> if the given server id is found in the given
+     * server pool.
+     *
+     * @param serverId
+     * @param pool
+     * @return
+     */
+    private static boolean member(String serverId, List<Server> pool) {
+        return pool.stream().anyMatch(i -> i.getId().equals(serverId));
     }
 
     boolean isConfigured() {
@@ -282,5 +343,4 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
     CloudApiSettings cloudApiSettings() {
         return config().parseCloudApiSettings(CloudApiSettings.class);
     }
-
 }

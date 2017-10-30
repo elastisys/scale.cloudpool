@@ -27,7 +27,7 @@ public class RunPool {
 
     private static final Path configFile = Paths.get(System.getenv("HOME"), ".elastisys", "azure", "config.json");
 
-    private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(10);
+    private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
 
     /**
      * @param args
@@ -35,7 +35,8 @@ public class RunPool {
      */
     public static void main(String[] args) throws Exception {
         StateStorage stateStorage = StateStorage.builder(new File("target/state")).build();
-        CloudPool pool = new BaseCloudPool(stateStorage, new AzurePoolDriver(new StandardAzureClient()), executor);
+        CloudPool pool = new BaseCloudPool(stateStorage, new AzurePoolDriver(new StandardAzureClient(), executor),
+                executor);
 
         JsonObject config = JsonUtils.parseJsonFile(configFile.toFile()).getAsJsonObject();
         pool.configure(config);

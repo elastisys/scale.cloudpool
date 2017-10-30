@@ -14,7 +14,7 @@ public class ListServersWithTagMain {
 
     public static void main(String[] args) {
         List<Server> taggedServers = new ListServersWithTagRequest(
-                new OSClientFactory(DriverConfigLoader.loadDefault().toApiAccessConfig()), "key1", "value1").call();
+                new OSClientFactory(DriverConfigLoader.loadDefault()), "key1", "value1").call();
         LOG.info("{} tagged server(s) found", taggedServers.size());
         for (Server server : taggedServers) {
             LOG.info("server: {}", server);

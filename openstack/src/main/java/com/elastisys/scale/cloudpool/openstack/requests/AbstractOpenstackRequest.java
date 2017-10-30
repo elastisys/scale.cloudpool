@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.util.concurrent.Callable;
 
 import org.openstack4j.api.OSClient;
+import org.openstack4j.api.exceptions.ResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +40,7 @@ public abstract class AbstractOpenstackRequest<R> implements Callable<R> {
     }
 
     @Override
-    public R call() throws RuntimeException {
+    public R call() throws ResponseException {
         OSClient api = this.clientFactory.authenticatedClient();
         return doRequest(api);
     }
@@ -70,8 +71,8 @@ public abstract class AbstractOpenstackRequest<R> implements Callable<R> {
      *            An authenticated OpenStack API client that is instructed to
      *            operate against the configured region.
      * @return The response.
-     * @throws RuntimeException
+     * @throws ResponseException
      *             if the request failed.
      */
-    public abstract R doRequest(OSClient api) throws RuntimeException;
+    public abstract R doRequest(OSClient api) throws ResponseException;
 }

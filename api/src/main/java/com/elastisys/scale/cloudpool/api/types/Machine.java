@@ -46,6 +46,12 @@ import com.google.gson.JsonObject;
  * @see CloudPool
  */
 public class Machine {
+    /**
+     * The collection of {@link MachineState}s for which machines are considered
+     * to have been allocated from the underlying infrastructure.
+     */
+    public static final Set<MachineState> allocatedStates = Sets.newHashSet(MachineState.REQUESTED,
+            MachineState.PENDING, MachineState.RUNNING);
 
     /** The identifier of the {@link Machine} . */
     private final String id;
@@ -533,8 +539,6 @@ public class Machine {
      * {@link MachineState#PENDING} or {@link MachineState#RUNNING}).
      */
     public static class AllocatedMachinePredicate implements Predicate<Machine> {
-        private static final Set<MachineState> allocatedStates = Sets.newHashSet(MachineState.REQUESTED,
-                MachineState.PENDING, MachineState.RUNNING);
 
         @Override
         public boolean test(Machine machine) {
