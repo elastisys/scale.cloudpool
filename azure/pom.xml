@@ -36,59 +36,6 @@
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-simple</artifactId>
         </exclusion>
-        <!-- reduce jar footprint -->
-        <exclusion>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-mgmt-graph-rbac</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-mgmt-keyvault</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-mgmt-trafficmanager</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-mgmt-dns</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-mgmt-redis</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-mgmt-appservice</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-mgmt-cdn</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-mgmt-sql</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-mgmt-containerinstance</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-mgmt-containerregistry</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-mgmt-cosmosdb</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-mgmt-search</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-mgmt-servicebus</artifactId>
-        </exclusion>
       </exclusions>      
     </dependency>
     
