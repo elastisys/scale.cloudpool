@@ -125,7 +125,7 @@ A common structure of a cloudpool configuration is illustrated below:
 {
     "name": "webserver-pool",
 
-	"cloudApiSettings": {
+    "cloudApiSettings": {
         ... cloud provider-specific API access credentials and settings ...
     },
 
@@ -188,7 +188,7 @@ The configuration document declares how the cloudpool:
 
   - identifies pool members (the `name` key). As an example, the cloudpool
     implementation may choose to assign a metadata tag with the pool name to
-	each started machine.
+    each started machine.
 
   - should configure its cloud-specific [CloudPoolDriver](commons/src/main/java/com/elastisys/scale/cloudpool/commons/basepool/driver/CloudPoolDriver.java) to allow it to communicate with its cloud API (the `cloudApiSettings` key).
 
@@ -207,17 +207,17 @@ In a little more detail, the configuration keys have the following meaning:
 
   - `cloudApiSettings` (**required**): API access credentials and settings required to
     communicate with the targeted cloud. The structure of this documnent is
-	cloud-specific. Refer to the `README.md` of a particular cloud implementation for
-	details.
+    cloud-specific. Refer to the `README.md` of a particular cloud implementation for
+    details.
 
   - `provisioningTemplate` (**required**): Describes how to provision additional
     servers (on scale-out). The appearance of this document is cloud-specific.
-	Refer to the `README.md` of a particular cloud implementation for details.
+    Refer to the `README.md` of a particular cloud implementation for details.
 
   - `scaleInConfig` (*optional*): Describes how to decommission servers by
     selecting a strategy for the order in which to consider machines for
     termination when the pool needs to shrink. Generally, the `BaseCloudPool`
-	will first terminate machines in `REQUESTED` state (since they are likely to
+    will first terminate machines in `REQUESTED` state (since they are likely to
     not yet be useful). For the remaining machines (which are not protected by a
     membership status with `evictable: false`) the `victimSelectionPolicy`
     guides the selection of scale-down candidates.
