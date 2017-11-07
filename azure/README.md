@@ -2,19 +2,19 @@
 
 The [elastisys](http://elastisys.com/) Azure
 [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest/)
-manages a pool of Azure Virtual Machines (VMs). 
+manages a pool of Azure Virtual Machines (VMs).
 
 The cloud pool is capable of running both Linux and Windows VMs.
 
-Pool members are identified by a configurable tag and servers are 
+Pool members are identified by a configurable tag and servers are
 continuously provisioned/decommissioned to keep the pool's actual size
-in sync with the desired size that the cloud pool has been instructed to 
+in sync with the desired size that the cloud pool has been instructed to
 maintain.
 
 The cloud pool publishes a REST API that follows the general contract of an
 [elastisys](http://elastisys.com/) cloud pool, through which
-a client (for example, an autoscaler) can manage the pool. For the complete API 
-reference, the reader is referred to the 
+a client (for example, an autoscaler) can manage the pool. For the complete API
+reference, the reader is referred to the
 [cloud pool API documentation](http://cloudpoolrestapi.readthedocs.org/en/latest/).
 
 
@@ -22,64 +22,64 @@ reference, the reader is referred to the
 
 ## Limitations
 
-The Azure cloud pool only supports the *Resource Manager* deployment model and 
-not the *Classic* deployment model. For more details on what this means, refer to 
+The Azure cloud pool only supports the *Resource Manager* deployment model and
+not the *Classic* deployment model. For more details on what this means, refer to
 [this discussion of the deployment models](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-manager-deployment-model). In essence, the Classic model is the old deployment
 model and the Resource Manager model is the way to go, unless you have some legacy
 application. As the aforementioned article states:
 
-> To simplify the deployment and management of resources, Microsoft 
-> recommends that you use Resource Manager for all new resources. If 
-> possible, Microsoft recommends that you redeploy existing resources through 
+> To simplify the deployment and management of resources, Microsoft
+> recommends that you use Resource Manager for all new resources. If
+> possible, Microsoft recommends that you redeploy existing resources through
 > Resource Manager.
 
 
 
 ## Pre-requisites
-Before you start using the Azure cloud pool, you need to set up an Azure 
+Before you start using the Azure cloud pool, you need to set up an Azure
 account and a subscription and configure the Azure cloud pool to make use
 of that subscription.
 
 1. First, you need to sign up for an [Azure account](https://azure.microsoft.com/).
 
-2. Within that account set up a subscription, which will be charged for the 
+2. Within that account set up a subscription, which will be charged for the
    VMs/assets created by the cloud pool.
 
-3. You also need to create an Active Directory application and service 
+3. You also need to create an Active Directory application and service
    principal for the cloudpool. This will give the cloudpool credentials
    to operate on behalf of your account.
-   
-    Instructions for this can be found [here](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal). A suitable [role](https://docs.microsoft.com/en-us/azure/active-directory/role-based-access-built-in-roles) 
+
+    Instructions for this can be found [here](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal). A suitable [role](https://docs.microsoft.com/en-us/azure/active-directory/role-based-access-built-in-roles)
 	for the service principal is `Contributor`.
-  
+
     *Note: the referenced instructions use different terms for certain concepts.
-	 The `appId` in the instructions corresponds to the `clientId` in the cloudpool 
+	 The `appId` in the instructions corresponds to the `clientId` in the cloudpool
 	 configuration. Similarly `tenantId` corresponds to `domain` in the configuration
 	 and `authentication key` corresponds to `secret` in the configuration.*
 
     *Note: the registration process may not be instantaneous.
     Therefore, it may take a while before the service principal credentials
     start working.*
-	
-	
-Before you start a cloud pool you should create the assets that will be 
+
+
+Before you start a cloud pool you should create the assets that will be
 referenced by the cloud pool's VM provisioning template.
-	
-1. Create a [resource group](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-overview) that will contain the pool VMs and assets they reference 
+
+1. Create a [resource group](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-overview) that will contain the pool VMs and assets they reference
   (network interfaces, virtual networks, security groups, etc).
 
 
 2. In your resource group, and for the [location]() (region) you're planning for
    your pool, you may want to create some additional assets to be used by your
    pool VMs:
-   
+
        1. Create a [virtual network](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview) to which your VMs will be attached.
 	   2. Within the virtual network, create a [subnet](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview#subnets), from which the VM will have its private IP address assigned.
-       3. You may want to create one or more [network security groups](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview#network-security-groups-nsg) 
+       3. You may want to create one or more [network security groups](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview#network-security-groups-nsg)
 	      (firewall rules).
        4. Create a [storage account](https://docs.microsoft.com/en-us/azure/storage/storage-create-storage-account), which will be used to store the OS disk VHD
-	      of started VMs.  
-		  *Note: when the pool terminates a VM, it will take care of removing the OS 
+	      of started VMs.
+		  *Note: when the pool terminates a VM, it will take care of removing the OS
 		  disk.*
 
 
@@ -87,12 +87,12 @@ referenced by the cloud pool's VM provisioning template.
 The `azurepool` is configured with a JSON document which follows the general
 structure described in the [root-level README.md](../README.md).
 
-For the cloud-specific parts of the configuration (`cloudApiSettings` 
+For the cloud-specific parts of the configuration (`cloudApiSettings`
 and `provisioningTemplate`), the `azurepool` requires input similar
 to the following:
 
 ```javascript
-    ...	
+    ...
     "cloudApiSettings": {
         "apiAccess": {
             "subscriptionId": "12345678-9abc-def0-1234-56789abcdef0",
@@ -109,11 +109,11 @@ to the following:
         "resourceGroup": "testpool",
         "region": "northeurope"
     },
-	
+
     "provisioningTemplate": {
         "vmSize": "Standard_DS1_v2",
         "image": "Canonical:UbuntuServer:16.04.0-LTS:latest",
-		"osDiskType": "Premium_LRS",
+        "osDiskType": "Premium_LRS",
         "linuxSettings": {
             "rootUserName": "ubuntu",
             "publicSshKey": "ssh-rsa XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX foo@bar",
@@ -202,7 +202,7 @@ The configuration keys have the following meaning:
           traffic from a VM.
     - `availabilitySet` (*optional*): An existing
       [availability set](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/create-availability-set) to
-      which created VMs are to be added. If left out, created VMs will not be 
+      which created VMs are to be added. If left out, created VMs will not be
       grouped into an availability set.
     - `tags` (*optional*): Tags to associate with created VMs. *Note: a
       `elastisys-CloudPool` tag will automatically be set on each pool VM and
@@ -212,7 +212,7 @@ The configuration keys have the following meaning:
 
 ## Booting Windows VMs
 
-The example above illustrated how to configure the pool to boot Linux VMs. 
+The example above illustrated how to configure the pool to boot Linux VMs.
 To set up a pool of Windows VMs, replace the `linuxSettings` element in the
 `provisioningTemplate` with a `windowsSettings` similar to the following:
 
@@ -239,7 +239,7 @@ The simplest way of starting the server is to run
 
     java -jar <jar-file> --http-port=8080
 
-which will start a server listening on HTTP port `8080`. 
+which will start a server listening on HTTP port `8080`.
 
 *Note: for production settings, it is recommended to run the server with an HTTPS port.*
 
@@ -251,16 +251,16 @@ run the server with the ``--help`` flag:
 
 
 ## Running the cloud pool in a Docker container
-The cloud pool can be executed inside a 
-[Docker](https://www.docker.com/) container. First, however, a docker image 
-needs to be built that includes the cloud pool. The steps for building 
+The cloud pool can be executed inside a
+[Docker](https://www.docker.com/) container. First, however, a docker image
+needs to be built that includes the cloud pool. The steps for building
 the image and running a container from the image are outlined below.
 
 Before proceeding, make sure that your user is a member of the `docker` user group.
 Without being a member of that user group, you won't be able to use docker without
- sudo/root privileges. 
+ sudo/root privileges.
 
-See the [docker documentation](https://docs.docker.com/installation/ubuntulinux/#giving-non-root-access) 
+See the [docker documentation](https://docs.docker.com/installation/ubuntulinux/#giving-non-root-access)
 for more details.
 
 
@@ -278,7 +278,7 @@ pushed to our private docker registry.
 
 
 ### Running a container from the image
-Once the docker image is built for the server, it can be run by either 
+Once the docker image is built for the server, it can be run by either
 specfying a HTTP port or an HTTPS port. For example, running with an HTTP port:
 
     docker run -d -p 8080:80 -e HTTP_PORT=80 <image>
@@ -288,62 +288,62 @@ This will start publish the container's HTTP port on host port `8080`.
 *Note: for production settings, it is recommended to run the server with an HTTPS port.*
 
 The following environment variables can be passed to the Docker container (`-e`)
-to control its behavior. At least one of `${HTTP_PORT}` and `${HTTPS_PORT}` 
+to control its behavior. At least one of `${HTTP_PORT}` and `${HTTPS_PORT}`
 _must_ be specified.
 
 Singleton/multipool mode:
 
-  - `MULTIPOOL`: Set to `true` to start the server in [multipool](../multipool/README.md)-mode, 
+  - `MULTIPOOL`: Set to `true` to start the server in [multipool](../multipool/README.md)-mode,
     in which it will publish a dynamic collection of *cloudpool instances*.
     The default is to run the server as a singleton cloudpool.
 
 HTTP/HTTPS configuration:
 
-  - `HTTP_PORT`: Enables a HTTP port on the server.  
+  - `HTTP_PORT`: Enables a HTTP port on the server.
 
-  - `HTTPS_PORT`: Enables a HTTPS port on the server.  
+  - `HTTPS_PORT`: Enables a HTTPS port on the server.
     *Note: when specified, a `${SSL_KEYSTORE}` must be specified to identify to clients.*
-	
-  - `SSL_KEYSTORE`: The location of the server's SSL key store (PKCS12 format).  
-     You typically combine this with mounting a volume that holds the key store.  
+
+  - `SSL_KEYSTORE`: The location of the server's SSL key store (PKCS12 format).
+     You typically combine this with mounting a volume that holds the key store.
 	 *Note: when specified, an `${SSL_KEYSTORE_PASSWORD}` must is required.*
-	 
-  - `SSL_KEYSTORE_PASSWORD`: The password that protects the key store.  
+
+  - `SSL_KEYSTORE_PASSWORD`: The password that protects the key store.
 
 Runtime configuration:
 
-  - `STORAGE_DIR`: destination folder for runtime state.  
-    *Note: to persist across container recreation, this directory should be 
-	mapped via a volume to a directory on the host.*  
+  - `STORAGE_DIR`: destination folder for runtime state.
+    *Note: to persist across container recreation, this directory should be
+	mapped via a volume to a directory on the host.*
     Default: `/var/lib/elastisys/azurepool`.
 
 
 Debug-related:
 
   - `LOG_CONFIG`: [logback](http://logback.qos.ch/manual/configuration.html)
-    logging configuration file (`logback.xml`).  
+    logging configuration file (`logback.xml`).
     Default: `/etc/elastisys/azurepool/logback.xml`.
-  - `JUL_CONFIG`: `java.util.logging` `logging.properties` configuration.  
+  - `JUL_CONFIG`: `java.util.logging` `logging.properties` configuration.
     Default: `/etc/elastisys/azurepool/logging.properties`.
   - `LOG_DIR`: destination folder for log files (when using default
-    `${LOG_CONFIG}` setup).  
+    `${LOG_CONFIG}` setup).
     Default: `/var/log/elastisys/azurepool`.
-  - `STDOUT_LOG_LEVEL`: output level for logging to stdout (note: log output 
-    that is written to file includes `DEBUG` level).  
+  - `STDOUT_LOG_LEVEL`: output level for logging to stdout (note: log output
+    that is written to file includes `DEBUG` level).
     Default: `INFO`.
 
 Client authentication:
 
   - `REQUIRE_BASIC_AUTH`: If `true`, require clients to provide username/password
-    credentials according to the HTTP BASIC authentication scheme.  
-    *Note: when specified, `${BASIC_AUTH_REALM_FILE}` and `${BASIC_AUTH_ROLE}` must be specified to identify trusted clients.*  
+    credentials according to the HTTP BASIC authentication scheme.
+    *Note: when specified, `${BASIC_AUTH_REALM_FILE}` and `${BASIC_AUTH_ROLE}` must be specified to identify trusted clients.*
 	Default: `false`.
-  - `BASIC_AUTH_ROLE`: The role that an authenticated user must be assigned to be granted access to the server.  
+  - `BASIC_AUTH_ROLE`: The role that an authenticated user must be assigned to be granted access to the server.
   - `BASIC_AUTH_REALM_FILE`: A credentials store with users, passwords, and
-    roles according to the format prescribed by the [Jetty HashLoginService](http://www.eclipse.org/jetty/documentation/9.2.6.v20141205/configuring-security-authentication.html#configuring-login-service).  
+    roles according to the format prescribed by the [Jetty HashLoginService](http://www.eclipse.org/jetty/documentation/9.2.6.v20141205/configuring-security-authentication.html#configuring-login-service).
   - `REQUIRE_CERT_AUTH`: Require SSL clients to authenticate with a certificate,
-    which must be included in the server's trust store.  
-    *Note: when specified, `${CERT_AUTH_TRUSTSTORE}` and `${CERT_AUTH_TRUSTSTORE_PASSWORD}` must be specified to identify trusted clients.*  	
+    which must be included in the server's trust store.
+    *Note: when specified, `${CERT_AUTH_TRUSTSTORE}` and `${CERT_AUTH_TRUSTSTORE_PASSWORD}` must be specified to identify trusted clients.*
   - `CERT_AUTH_TRUSTSTORE`. The location of a SSL trust store (JKS format), containing trusted client certificates.
   - `CERT_AUTH_TRUSTSTORE_PASSWORD`: The password that protects the SSL trust store.
 
@@ -356,7 +356,7 @@ JVM-related:
 
 ### Debugging a running container
 The simplest way to debug a running container is to get a shell session via
-  
+
     docker exec -it <container-id/name> /bin/bash
 
 and check out the log files under `/var/log/elastisys`. Configurations are
@@ -365,14 +365,14 @@ located under `/etc/elastisys` and binaries under `/opt/elastisys`.
 
 
 ## Interacting with the cloud pool over its REST API
-The following examples, all using the [curl](http://en.wikipedia.org/wiki/CURL) 
+The following examples, all using the [curl](http://en.wikipedia.org/wiki/CURL)
 command-line tool, shows how to interact with the cloud pool over its
 [REST API](http://cloudpoolrestapi.readthedocs.org/en/latest/).
 
 The exact command-line arguments to pass to curl depends on the security
 settings that the server was launched with. For example, if client-certificate
-authentication is enforced (`--require-cert`), one needs to pass client 
-certificate credentials via `curl`: 
+authentication is enforced (`--require-cert`), one needs to pass client
+certificate credentials via `curl`:
 
     --key-type pem --key key.pem --cert-type pem --cert cert.pem
 
@@ -383,7 +383,7 @@ the server was started on a HTTP port):
 1. Retrieve the currently set configuration document:
 
         curl -X GET http://localhost:8080/config
-    
+
 
 2. Set configuration:
 

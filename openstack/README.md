@@ -1,16 +1,16 @@
 # OpenStack cloud pool
 
-The [elastisys](http://elastisys.com/) OpenStack 
+The [elastisys](http://elastisys.com/) OpenStack
 [cloud pool](http://cloudpoolrestapi.readthedocs.org/en/latest/)
-manages a pool of OpenStack servers. Pool members are identified by a 
-configurable tag and servers are continuously provisioned/decommissioned to 
-keep the pool's actual size in sync with the desired size that the cloud 
+manages a pool of OpenStack servers. Pool members are identified by a
+configurable tag and servers are continuously provisioned/decommissioned to
+keep the pool's actual size in sync with the desired size that the cloud
 pool has been instructed to maintain.
 
 The cloud pool publishes a REST API that follows the general contract of an
 [elastisys](http://elastisys.com/) cloud pool, through which
-a client (for example, an autoscaler) can manage the pool. For the complete API 
-reference, the reader is referred to the 
+a client (for example, an autoscaler) can manage the pool. For the complete API
+reference, the reader is referred to the
 [cloud pool API documentation](http://cloudpoolrestapi.readthedocs.org/en/latest/).
 
 
@@ -19,12 +19,12 @@ reference, the reader is referred to the
 The `openstackpool` is configured with a JSON document which follows the general
 structure described in the [root-level README.md](../README.md).
 
-For the cloud-specific parts of the configuration (`cloudApiSettings` 
+For the cloud-specific parts of the configuration (`cloudApiSettings`
 and `provisioningTemplate`), the OpenStack cloud pool requires input similar
 to the following:
 
 ```javascript
-    ...	
+    ...
     "cloudApiSettings": {
         "auth": {
             "keystoneUrl": "http://keystone.host.com:5000/v2.0",
@@ -37,9 +37,9 @@ to the following:
         "region": "RegionOne",
         "connectionTimeout": 10000,
         "socketTimeout": 10000,
-		"logHttpRequests": "true",
+        "logHttpRequests": "true",
     },
-    
+
     "provisioningTemplate": {
         "size": "m1.small",
         "image": "Ubuntu  16.04.LTS",
@@ -49,7 +49,7 @@ to the following:
         "networks": ["private"],
         "assignFloatingIp": true,
     },
-	...
+    ...
 ```
 
 
@@ -61,8 +61,8 @@ The configuration keys have the following meaning:
       service (Keystone).
         - `keystoneUrl`: Endpoint URL of the Keystone service. For example,
           http://172.16.0.1:5000/v2.0."
-        - `v2Credentials`: Credentials for using version 2 of the [identity HTTP API](http://docs.openstack.org/developer/keystone/http-api.html#history).  
-		  *Note: that the OpenStack cloud pool supports both Keystone version 2
+        - `v2Credentials`: Credentials for using version 2 of the [identity HTTP API](http://docs.openstack.org/developer/keystone/http-api.html#history).
+          *Note: that the OpenStack cloud pool supports both Keystone version 2
           and 3, see separate section below for details on the supported
           authentication schemes.*
           - `tenantName`: OpenStack account tenant name.
@@ -71,13 +71,13 @@ The configuration keys have the following meaning:
       - `region`: The particular OpenStack region (out of the ones available in
         Keystone's service catalog) to connect to. For example, `RegionOne`.
       - `connectionTimeout`: The timeout in milliseconds until a connection is
-        established. 
+        established.
       - `socketTimeout`: The socket timeout (`SO_TIMEOUT`) in milliseconds,
-	    which is the timeout for waiting for data or, put differently, a
-	    maximum period inactivity between two consecutive data packets.
-	  - `logHttpRequests`: Indicates if HTTP requests should be logged. If
+        which is the timeout for waiting for data or, put differently, a
+        maximum period inactivity between two consecutive data packets.
+      - `logHttpRequests`: Indicates if HTTP requests should be logged. If
         `true` each HTTP request will be logged (using a logger named `os`.
-		
+
 - `provisioningTemplate`: Describes how to provision additional servers (on
   scale-up).
     - `size`: The name of the server type to launch.
@@ -88,15 +88,15 @@ The configuration keys have the following meaning:
     - `encodedUserData`: A [base64-encoded](http://tools.ietf.org/html/rfc4648)
       blob of data used to pass custom data to started machines typically in the
       form of a boot-up shell script or cloud-init parameters. Can, for
-      instance, be produced via `cat bootscript.sh | base64 -w 0`. Refer to the 
+      instance, be produced via `cat bootscript.sh | base64 -w 0`. Refer to the
       [OpenStack documentation](https://docs.openstack.org/nova/latest/user/user-data.html) for  details.
     - `networks`: The names of the networks to attach launched servers to (for
-	  example, `private`). Each network creates a separate network interface
-	  controller (NIC) on a created server. Typically, this option can be left
-	  out, but in rare cases, when an account has more than one network to
-	  choose from, the OpenStack API forces us to be explicit about the
-	  network(s) we want to use.   
-	  If left out, the default behavior is to use which ever network is
+      example, `private`). Each network creates a separate network interface
+      controller (NIC) on a created server. Typically, this option can be left
+      out, but in rare cases, when an account has more than one network to
+      choose from, the OpenStack API forces us to be explicit about the
+      network(s) we want to use.
+      If left out, the default behavior is to use which ever network is
       configured by the cloud provider for the user/project. However, if there
       are multiple choices, this may cause  server boot requests to fail.
     - `assignFloatingIp`: Set to `true` if a floating IP address should be
@@ -105,21 +105,21 @@ The configuration keys have the following meaning:
 
 
 ## Supported Authentication Schemes
-The `openstackpool` supports both version 2 and version 3 of the 
+The `openstackpool` supports both version 2 and version 3 of the
 [identity HTTP API](https://docs.openstack.org/keystone/pike/contributor/http-api.html). Configuring
 the pool for use with version 2 of Keystone is shown above.
 
 Similar to version 2, version 3 authentication requires a *user* and a
 *password* to authenticate. However, it also requires a *project* to scope the
 login. Furthermore, both the user and the project are owned by a certain
-*domain*. 
+*domain*.
 
-The user and project can be given either by-name or by-id. 
+The user and project can be given either by-name or by-id.
 
 - When given by id (`userId` or `projectId`) no domain needs to be specified, as
   the project/user is identified by a universally unique id.
 - When given by name (`userName` or `projectName`), the user/project name must
-  be qualified by its owning domain to make the login unambiguous to Keystone. 
+  be qualified by its owning domain to make the login unambiguous to Keystone.
   The domain can also be given either by name
   (`userDomainName`/`projectDomainName`) or by id
   (`userDomainId`/`projectDomainId`).
@@ -128,7 +128,7 @@ Below are some sample configuration excerpts that illustrate a few different
 authentication configurations:
 
 - Specify both user and project by-id (no domain qualification necessary):
-       
+
         ...
         "auth": {
           "keystoneUrl": "http://keystone.host.com:5000/v3/",
@@ -141,13 +141,13 @@ authentication configurations:
         ...
 
 - Both user and project given by name (domain qualification necessary):
-  
+
         ...
         "auth": {
           "keystoneUrl": "http://keystone.host.com:5000/v3/",
           "v3Credentials": {
               "userName":          "foo",
-			  "userDomainName":    "default",
+              "userDomainName":    "default",
               "password":          "secret",
               "projectName":       "admin"
               "projectDomainName": "default"
@@ -163,7 +163,7 @@ authentication configurations:
           "keystoneUrl": "http://keystone.host.com:5000/v3/",
           "v3Credentials": {
               "userName":          "foo",
-			  "userDomainId":      "1acfdc77c79440bbbad60007999edd1c",
+              "userDomainId":      "1acfdc77c79440bbbad60007999edd1c",
               "password":          "secret",
               "projectName":       "admin"
               "projectDomainName": "default"
@@ -179,7 +179,7 @@ The simplest way of starting the server is to run
 
     java -jar <jar-file> --http-port=8080
 
-which will start a server listening on HTTP port `8080`. 
+which will start a server listening on HTTP port `8080`.
 
 *Note: for production settings, it is recommended to run the server with an HTTPS port.*
 
@@ -191,16 +191,16 @@ run the server with the `--help` flag:
 
 
 ## Running the cloud pool in a Docker container
-The cloud pool can be executed inside a 
-[Docker](https://www.docker.com/) container. First, however, a docker image 
-needs to be built that includes the cloud pool. The steps for building 
+The cloud pool can be executed inside a
+[Docker](https://www.docker.com/) container. First, however, a docker image
+needs to be built that includes the cloud pool. The steps for building
 the image and running a container from the image are outlined below.
 
 Before proceeding, make sure that your user is a member of the `docker` user group.
 Without being a member of that user group, you won't be able to use docker without
- sudo/root privileges. 
+ sudo/root privileges.
 
-See the [docker documentation](https://docs.docker.com/installation/ubuntulinux/#giving-non-root-access) 
+See the [docker documentation](https://docs.docker.com/installation/ubuntulinux/#giving-non-root-access)
 for more details.
 
 
@@ -218,7 +218,7 @@ pushed to our private docker registry.
 
 
 ### Running a container from the image
-Once the docker image is built for the server, it can be run by either 
+Once the docker image is built for the server, it can be run by either
 specfying a HTTP port or an HTTPS port. For example, running with an HTTP port:
 
     docker run -d -p 8080:80 -e HTTP_PORT=80 <image>
@@ -228,62 +228,62 @@ This will start publish the container's HTTP port on host port `8080`.
 *Note: for production settings, it is recommended to run the server with an HTTPS port.*
 
 The following environment variables can be passed to the Docker container (`-e`)
-to control its behavior. At least one of `${HTTP_PORT}` and `${HTTPS_PORT}` 
+to control its behavior. At least one of `${HTTP_PORT}` and `${HTTPS_PORT}`
 _must_ be specified.
 
 Singleton/multipool mode:
 
-  - `MULTIPOOL`: Set to `true` to start the server in [multipool](../multipool/README.md)-mode, 
+  - `MULTIPOOL`: Set to `true` to start the server in [multipool](../multipool/README.md)-mode,
     in which it will publish a dynamic collection of *cloudpool instances*.
     The default is to run the server as a singleton cloudpool.
 
 HTTP/HTTPS configuration:
 
-  - `HTTP_PORT`: Enables a HTTP port on the server.  
+  - `HTTP_PORT`: Enables a HTTP port on the server.
 
-  - `HTTPS_PORT`: Enables a HTTPS port on the server.  
+  - `HTTPS_PORT`: Enables a HTTPS port on the server.
     *Note: when specified, a `${SSL_KEYSTORE}` must be specified to identify to clients.*
-	
-  - `SSL_KEYSTORE`: The location of the server's SSL key store (PKCS12 format).  
-     You typically combine this with mounting a volume that holds the key store.  
-	 *Note: when specified, an `${SSL_KEYSTORE_PASSWORD}` must is required.*
-	 
-  - `SSL_KEYSTORE_PASSWORD`: The password that protects the key store.  
+
+  - `SSL_KEYSTORE`: The location of the server's SSL key store (PKCS12 format).
+     You typically combine this with mounting a volume that holds the key store.
+     *Note: when specified, an `${SSL_KEYSTORE_PASSWORD}` must is required.*
+
+  - `SSL_KEYSTORE_PASSWORD`: The password that protects the key store.
 
 Runtime configuration:
 
-  - `STORAGE_DIR`: destination folder for runtime state.  
-    *Note: to persist across container recreation, this directory should be 
-	mapped via a volume to a directory on the host.*  
+  - `STORAGE_DIR`: destination folder for runtime state.
+    *Note: to persist across container recreation, this directory should be
+    mapped via a volume to a directory on the host.*
     Default: `/var/lib/elastisys/openstackpool`.
 
 
 Debug-related:
 
   - `LOG_CONFIG`: [logback](http://logback.qos.ch/manual/configuration.html)
-    logging configuration file (`logback.xml`).  
+    logging configuration file (`logback.xml`).
     Default: `/etc/elastisys/openstackpool/logback.xml`.
-  - `JUL_CONFIG`: `java.util.logging` `logging.properties` configuration.  
+  - `JUL_CONFIG`: `java.util.logging` `logging.properties` configuration.
     Default: `/etc/elastisys/openstackpool/logging.properties`.
   - `LOG_DIR`: destination folder for log files (when using default
-    `${LOG_CONFIG}` setup).  
+    `${LOG_CONFIG}` setup).
     Default: `/var/log/elastisys/openstackpool`.
-  - `STDOUT_LOG_LEVEL`: output level for logging to stdout (note: log output 
-    that is written to file includes `DEBUG` level).  
+  - `STDOUT_LOG_LEVEL`: output level for logging to stdout (note: log output
+    that is written to file includes `DEBUG` level).
     Default: `INFO`.
 
 Client authentication:
 
   - `REQUIRE_BASIC_AUTH`: If `true`, require clients to provide username/password
-    credentials according to the HTTP BASIC authentication scheme.  
-    *Note: when specified, `${BASIC_AUTH_REALM_FILE}` and `${BASIC_AUTH_ROLE}` must be specified to identify trusted clients.*  
-	Default: `false`.
-  - `BASIC_AUTH_ROLE`: The role that an authenticated user must be assigned to be granted access to the server.  
+    credentials according to the HTTP BASIC authentication scheme.
+    *Note: when specified, `${BASIC_AUTH_REALM_FILE}` and `${BASIC_AUTH_ROLE}` must be specified to identify trusted clients.*
+    Default: `false`.
+  - `BASIC_AUTH_ROLE`: The role that an authenticated user must be assigned to be granted access to the server.
   - `BASIC_AUTH_REALM_FILE`: A credentials store with users, passwords, and
-    roles according to the format prescribed by the [Jetty HashLoginService](http://www.eclipse.org/jetty/documentation/9.2.6.v20141205/configuring-security-authentication.html#configuring-login-service).  
+    roles according to the format prescribed by the [Jetty HashLoginService](http://www.eclipse.org/jetty/documentation/9.2.6.v20141205/configuring-security-authentication.html#configuring-login-service).
   - `REQUIRE_CERT_AUTH`: Require SSL clients to authenticate with a certificate,
-    which must be included in the server's trust store.  
-    *Note: when specified, `${CERT_AUTH_TRUSTSTORE}` and `${CERT_AUTH_TRUSTSTORE_PASSWORD}` must be specified to identify trusted clients.*  	
+    which must be included in the server's trust store.
+    *Note: when specified, `${CERT_AUTH_TRUSTSTORE}` and `${CERT_AUTH_TRUSTSTORE_PASSWORD}` must be specified to identify trusted clients.*
   - `CERT_AUTH_TRUSTSTORE`. The location of a SSL trust store (JKS format), containing trusted client certificates.
   - `CERT_AUTH_TRUSTSTORE_PASSWORD`: The password that protects the SSL trust store.
 
@@ -296,7 +296,7 @@ JVM-related:
 
 ### Debugging a running container
 The simplest way to debug a running container is to get a shell session via
-  
+
     docker exec -it <container-id/name> /bin/bash
 
 and check out the log files under `/var/log/elastisys`. Configurations are
@@ -305,14 +305,14 @@ located under `/etc/elastisys` and binaries under `/opt/elastisys`.
 
 
 ## Interacting with the cloud pool over its REST API
-The following examples, all using the [curl](http://en.wikipedia.org/wiki/CURL) 
+The following examples, all using the [curl](http://en.wikipedia.org/wiki/CURL)
 command-line tool, shows how to interact with the cloud pool over its
 [REST API](http://cloudpoolrestapi.readthedocs.org/en/latest/).
 
 The exact command-line arguments to pass to curl depends on the security
 settings that the server was launched with. For example, if client-certificate
-authentication is enforced (`--require-cert`), one needs to pass client 
-certificate credentials via `curl`: 
+authentication is enforced (`--require-cert`), one needs to pass client
+certificate credentials via `curl`:
 
     --key-type pem --key key.pem --cert-type pem --cert cert.pem
 
@@ -323,7 +323,7 @@ Here are some examples illustrating basic interactions with the cloud pool
 1. Retrieve the currently set configuration document:
 
         curl -X GET http://localhost:8080/config
-    
+
 
 2. Set configuration:
 
