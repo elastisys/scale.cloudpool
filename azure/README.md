@@ -77,10 +77,6 @@ referenced by the cloud pool's VM provisioning template.
    2. Within the virtual network, create a [subnet](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview#subnets), from which the VM will have its private IP address assigned.
    3. You may want to create one or more [network security groups](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview#network-security-groups-nsg)
           (firewall rules).
-   4. Create a [storage account](https://docs.microsoft.com/en-us/azure/storage/storage-create-storage-account), which will be used to store the OS disk VHD
-          of started VMs.
-          *Note: when the pool terminates a VM, it will take care of removing the OS
-          disk.*
 
 
 ## Configuration
