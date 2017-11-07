@@ -50,12 +50,12 @@ of that subscription.
    to operate on behalf of your account.
 
     Instructions for this can be found [here](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal). A suitable [role](https://docs.microsoft.com/en-us/azure/active-directory/role-based-access-built-in-roles)
-	for the service principal is `Contributor`.
+    for the service principal is `Contributor`.
 
     *Note: the referenced instructions use different terms for certain concepts.
-	 The `appId` in the instructions corresponds to the `clientId` in the cloudpool
-	 configuration. Similarly `tenantId` corresponds to `domain` in the configuration
-	 and `authentication key` corresponds to `secret` in the configuration.*
+     The `appId` in the instructions corresponds to the `clientId` in the cloudpool
+     configuration. Similarly `tenantId` corresponds to `domain` in the configuration
+     and `authentication key` corresponds to `secret` in the configuration.*
 
     *Note: the registration process may not be instantaneous.
     Therefore, it may take a while before the service principal credentials
@@ -73,14 +73,14 @@ referenced by the cloud pool's VM provisioning template.
    your pool, you may want to create some additional assets to be used by your
    pool VMs:
 
-       1. Create a [virtual network](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview) to which your VMs will be attached.
-	   2. Within the virtual network, create a [subnet](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview#subnets), from which the VM will have its private IP address assigned.
-       3. You may want to create one or more [network security groups](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview#network-security-groups-nsg)
-	      (firewall rules).
-       4. Create a [storage account](https://docs.microsoft.com/en-us/azure/storage/storage-create-storage-account), which will be used to store the OS disk VHD
-	      of started VMs.
-		  *Note: when the pool terminates a VM, it will take care of removing the OS
-		  disk.*
+   1. Create a [virtual network](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview) to which your VMs will be attached.
+   2. Within the virtual network, create a [subnet](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview#subnets), from which the VM will have its private IP address assigned.
+   3. You may want to create one or more [network security groups](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview#network-security-groups-nsg)
+          (firewall rules).
+   4. Create a [storage account](https://docs.microsoft.com/en-us/azure/storage/storage-create-storage-account), which will be used to store the OS disk VHD
+          of started VMs.
+          *Note: when the pool terminates a VM, it will take care of removing the OS
+          disk.*
 
 
 ## Configuration
@@ -143,13 +143,13 @@ The configuration keys have the following meaning:
     - `apiAccess`: Azure [service principal](https://github.com/Azure/azure-sdk-for-java/blob/master/AUTH.md) access credentials and settings:
         - `subscriptionId`: The Azure account subscription that will be billed allocated resources. Format: UUID.
         - `auth`: Azure API authentication credentials.
-		  - `clientId`: The active directory client id for this application. May also be referred to as `appId`. Format: UUID.
-		  - `domain`: The domain or tenant id containing this application. Format: UUID.
-		  - `secret`: The authentication key/secret (password) for this application. Format: base64-encoded string.
-		  - `environment` (*optional*): The particular Azure environment to authenticate against. One of: `AZURE`, `AZURE_CHINA`, `AZURE_US_GOVERNMENT`, `AZURE_GERMANY`. Default: `AZURE`, the world-wide public Azure cloud.
+          - `clientId`: The active directory client id for this application. May also be referred to as `appId`. Format: UUID.
+          - `domain`: The domain or tenant id containing this application. Format: UUID.
+          - `secret`: The authentication key/secret (password) for this application. Format: base64-encoded string.
+          - `environment` (*optional*): The particular Azure environment to authenticate against. One of: `AZURE`, `AZURE_CHINA`, `AZURE_US_GOVERNMENT`, `AZURE_GERMANY`. Default: `AZURE`, the world-wide public Azure cloud.
         - `connectionTimeout` (*optional*): The timeout until a connection is established. Default: `10 seconds`.
         - `socketTimeout` (*optional*): The socket timeout (`SO_TIMEOUT`), which is the timeout for waiting for data or, put differently, a maximum period inactivity between two consecutive data packets. Default: `10 seconds`.
-		- `azureSdkLogLevel` (*optional*): The log level to see REST API requests made to the Azure API. One of `NONE`, `BASIC`, `HEADERS`, and `BODY`. Default: `NONE`.
+        - `azureSdkLogLevel` (*optional*): The log level to see REST API requests made to the Azure API. One of `NONE`, `BASIC`, `HEADERS`, and `BODY`. Default: `NONE`.
     - `resourceGroup`: The name of the [resource group](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-overview) that contains referenced resources (VMs, networks, security groups, etc). *Note: this asset must have been created in advance.*
     - `region`: The region where pool VMs and referenced assets (networks, security groups, images, etc) are located in. For example, `northeurope`.
 
@@ -159,42 +159,42 @@ The configuration keys have the following meaning:
       as an image reference (`<publisher>:<offer>:<sku>[:<version>]`) to use an
       existing image from the market place or as the id of a custom image
       (`/subscriptions/<subscriptionId>/resourceGroups/<resourceGroup>/providers/Microsoft.Compute/images/<imageName>`).
-	- `osDiskType`: The disk type to use for the managed OS disk that will be
+    - `osDiskType`: The disk type to use for the managed OS disk that will be
       created for each VM. Allowed values are `Standard_LRS` (HDD-based) and
       `Premium_LRS` (SSD-based). Premium storage may not be supported by
-	  all types of VM series
+      all types of VM series
       (see
       [azure documentation](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/premium-storage)). Default: `Standard_LRS`.
-	- `vmNamePrefix` (*optional*): Name prefix to assign to created VMs. The cloudpool will add a VM-unique suffix to the prefix to produce the final VM name: `<vmNamePrefix>-<suffix>`. If left out, the default is to use the cloud pool's name as VM name prefix.
-	- `linuxSettings` (*semi-optional*): Settings particular to launching Linux VMs. Either this or `windowsSettings` must be specified.
-	  - `rootUserName` (*optional*): Name of the root Linux account to create on created VMs. Default: `root`.
-	  - `publicSshKey` (*semi-optional*): An OpenSSH public key used to login to created VMs. Must be given unless `password` is specified.
-	  - `password` (*semi-optional*): A password used to login to created VMs. Must be given unless `publicSshKey` is specified.
-	  - `customData` (*optional*): custom base64-encoded data to pass to the VM. This can, for example, be used to pass a [cloud-init](https://cloudinit.readthedocs.io/) file to bootstrap a VM on [Linux VMs that support this format](https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-using-cloud-init), such as Ubuntu and CoreOS.
-	  - `customScript` (*optional*): a (set of) custom script(s) to download and execute when a VM has booted. See [custom script extensions for linux](https://github.com/Azure/custom-script-extension-linux) for details.
-	    - `fileUris` (*optional*): A set of file URIs to download before executing the script.
-	    - `encodedCommand`: A base64-encoded command to execute. Such a command can, for example, be generated via a call similar to: `echo "sh -c 'apt update -qy && apt install -qy apache2'" | base64 -w0`.
-	- `windowsSettings` (*semi-optional*): Settings particular to launching Windows VMs. Either this or `linuxsSettings` must be specified.
-	  - `adminUserName`: The administrator user name for the Windows
+    - `vmNamePrefix` (*optional*): Name prefix to assign to created VMs. The cloudpool will add a VM-unique suffix to the prefix to produce the final VM name: `<vmNamePrefix>-<suffix>`. If left out, the default is to use the cloud pool's name as VM name prefix.
+    - `linuxSettings` (*semi-optional*): Settings particular to launching Linux VMs. Either this or `windowsSettings` must be specified.
+      - `rootUserName` (*optional*): Name of the root Linux account to create on created VMs. Default: `root`.
+      - `publicSshKey` (*semi-optional*): An OpenSSH public key used to login to created VMs. Must be given unless `password` is specified.
+      - `password` (*semi-optional*): A password used to login to created VMs. Must be given unless `publicSshKey` is specified.
+      - `customData` (*optional*): custom base64-encoded data to pass to the VM. This can, for example, be used to pass a [cloud-init](https://cloudinit.readthedocs.io/) file to bootstrap a VM on [Linux VMs that support this format](https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-using-cloud-init), such as Ubuntu and CoreOS.
+      - `customScript` (*optional*): a (set of) custom script(s) to download and execute when a VM has booted. See [custom script extensions for linux](https://github.com/Azure/custom-script-extension-linux) for details.
+        - `fileUris` (*optional*): A set of file URIs to download before executing the script.
+        - `encodedCommand`: A base64-encoded command to execute. Such a command can, for example, be generated via a call similar to: `echo "sh -c 'apt update -qy && apt install -qy apache2'" | base64 -w0`.
+    - `windowsSettings` (*semi-optional*): Settings particular to launching Windows VMs. Either this or `linuxsSettings` must be specified.
+      - `adminUserName`: The administrator user name for the Windows
         VM. Default: `windowsadmin`.
-	  - `password`: A password used to login to created VMs.
-	  - `customScript` (*optional*): a (set of) custom script(s) to run when a
+      - `password`: A password used to login to created VMs.
+      - `customScript` (*optional*): a (set of) custom script(s) to run when a
         VM is booted.
-	    - `fileUris` (*optional*): A set of file URIs to download before
+        - `fileUris` (*optional*): A set of file URIs to download before
           executing the script.
-	    - `encodedCommand`: A base64-encoded command to execute. Such a command
+        - `encodedCommand`: A base64-encoded command to execute. Such a command
           can, for example, be generated via a call similar to: `echo
           "powershell.exe -ExecutionPolicy Unrestricted -File
           install-webserver.ps1" | base64 -w 0`
     - `network`: Network settings for created VMs.
-	    - `virtualNetwork`: An existing virtual network that created VMs will be
+        - `virtualNetwork`: An existing virtual network that created VMs will be
           attached to (the VM's primary network interface will receive a private
           IP address from this network).
-	    - `subnetName`: The subnet within the virtual network, from which a
+        - `subnetName`: The subnet within the virtual network, from which a
           (private) IP address will be assigned to created VMs.
-	    - `assignPublicIp` (*optional*): Set to `true` to assign a public IP
+        - `assignPublicIp` (*optional*): Set to `true` to assign a public IP
           address to created VMs. Default: `false`.
-	    - `networkSecurityGroups` (*optional*): A set of existing network
+        - `networkSecurityGroups` (*optional*): A set of existing network
           security groups to associate with created VMs. May be `null`, which
           means that no security groups get associated with the primary network
           interface of created VMs. The default behavior is to allow all inbound
@@ -306,7 +306,7 @@ HTTP/HTTPS configuration:
 
   - `SSL_KEYSTORE`: The location of the server's SSL key store (PKCS12 format).
      You typically combine this with mounting a volume that holds the key store.
-	 *Note: when specified, an `${SSL_KEYSTORE_PASSWORD}` must is required.*
+     *Note: when specified, an `${SSL_KEYSTORE_PASSWORD}` must is required.*
 
   - `SSL_KEYSTORE_PASSWORD`: The password that protects the key store.
 
@@ -314,7 +314,7 @@ Runtime configuration:
 
   - `STORAGE_DIR`: destination folder for runtime state.
     *Note: to persist across container recreation, this directory should be
-	mapped via a volume to a directory on the host.*
+    mapped via a volume to a directory on the host.*
     Default: `/var/lib/elastisys/azurepool`.
 
 
@@ -337,7 +337,7 @@ Client authentication:
   - `REQUIRE_BASIC_AUTH`: If `true`, require clients to provide username/password
     credentials according to the HTTP BASIC authentication scheme.
     *Note: when specified, `${BASIC_AUTH_REALM_FILE}` and `${BASIC_AUTH_ROLE}` must be specified to identify trusted clients.*
-	Default: `false`.
+    Default: `false`.
   - `BASIC_AUTH_ROLE`: The role that an authenticated user must be assigned to be granted access to the server.
   - `BASIC_AUTH_REALM_FILE`: A credentials store with users, passwords, and
     roles according to the format prescribed by the [Jetty HashLoginService](http://www.eclipse.org/jetty/documentation/9.2.6.v20141205/configuring-security-authentication.html#configuring-login-service).
@@ -388,7 +388,7 @@ the server was started on a HTTP port):
 2. Set configuration:
 
         curl --header "Content-Type:application/json" \
-		    -X POST -d @myconfig.json http://localhost:8080/config
+            -X POST -d @myconfig.json http://localhost:8080/config
 
 
 3. Start:
@@ -403,4 +403,4 @@ the server was started on a HTTP port):
 5. Request the machine pool to be resized to size ``4``:
 
         curl --header "Content-Type:application/json" \
-		    -X POST -d '{"desiredCapacity": 4}' http://localhost:8080/config
+            -X POST -d '{"desiredCapacity": 4}' http://localhost:8080/config
