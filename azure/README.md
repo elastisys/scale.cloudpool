@@ -108,7 +108,7 @@ to the following:
 
     "provisioningTemplate": {
         "vmSize": "Standard_DS1_v2",
-        "image": "Canonical:UbuntuServer:16.04.0-LTS:latest",
+        "vmImage": "Canonical:UbuntuServer:16.04.0-LTS:latest",
         "osDiskType": "Premium_LRS",
         "linuxSettings": {
             "rootUserName": "ubuntu",
