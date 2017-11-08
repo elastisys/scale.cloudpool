@@ -3,6 +3,14 @@ sudo: false # faster builds
 jdk:
   - openjdk8
 
+before_install:
+  # If cloudpool uses a SNAPSHOT dependency of scale.commons, make sure it
+  # gets built prior to running the cloudpool build.
+  - git clone https://github.com/elastisys/scale.commons ~/builds/scale.commons
+  - pushd ~/builds/scale.commons
+  - mvn clean install -Dmaven.test.skip
+  - popd 
+  
 after_success:
   # run jacoco test coverage report and upload to codecov.io
   - mvn org.jacoco:jacoco-maven-plugin:report
