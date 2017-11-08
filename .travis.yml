@@ -9,7 +9,7 @@ before_install:
   - git clone https://github.com/elastisys/scale.commons ~/builds/scale.commons
   - pushd ~/builds/scale.commons
   - mvn clean install -Dmaven.test.skip
-  - popd 
+  - popd
 
 # download dependencies: by default, runs
 # "mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V"
@@ -20,3 +20,10 @@ after_success:
   # run jacoco test coverage report and upload to codecov.io
   - mvn org.jacoco:jacoco-maven-plugin:report
   - bash <(curl -s https://codecov.io/bash)
+
+notifications:
+  email:
+    recipients:
+      - techteam@elastisys.com
+    on_success: change
+    on_failure: always
