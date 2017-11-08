@@ -10,7 +10,12 @@ before_install:
   - pushd ~/builds/scale.commons
   - mvn clean install -Dmaven.test.skip
   - popd 
-  
+
+# download dependencies: by default, runs
+# "mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V"
+# which would cause Docker images to be built (and fail)
+install: mvn package -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+script: mvn test -B
 after_success:
   # run jacoco test coverage report and upload to codecov.io
   - mvn org.jacoco:jacoco-maven-plugin:report
