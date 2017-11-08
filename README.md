@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/elastisys/scale.cloudpool.svg?branch=master)](https://travis-ci.org/elastisys/scale.cloudpool)
+[![Coverage](https://codecov.io/gh/elastisys/scale.cloudpool/branch/master/graph/badge.svg)](https://codecov.io/gh/elastisys/scale.cloudpool)
+
 # Cloudpools
 A _cloudpool_ is a an abstract, cloud-neutral, management interface for an
 elastic pool of servers.
