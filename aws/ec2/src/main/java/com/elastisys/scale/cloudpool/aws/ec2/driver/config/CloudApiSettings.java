@@ -15,13 +15,13 @@ public class CloudApiSettings {
     /**
      * The default timeout in milliseconds until a connection is established.
      */
-    public static final int DEFAULT_CONNECTION_TIMEOUT = 10000;
+    public static final int DEFAULT_CONNECTION_TIMEOUT = 60000;
     /**
      * The default socket timeout ({@code SO_TIMEOUT}) in milliseconds, which is
      * the timeout for waiting for data or, put differently, a maximum period
      * inactivity between two consecutive data packets).
      */
-    public static final int DEFAULT_SOCKET_TIMEOUT = 10000;
+    public static final int DEFAULT_SOCKET_TIMEOUT = 60000;
 
     /** The access key id of the AWS account. */
     private final String awsAccessKeyId;
@@ -78,8 +78,8 @@ public class CloudApiSettings {
      *            packets. May be <code>null</code>. Default:
      *            {@value #DEFAULT_SOCKET_TIMEOUT} ms.
      */
-    public CloudApiSettings(String awsAccessKeyId, String awsSecretAccessKey, String region,
-            Integer connectionTimeout, Integer socketTimeout) {
+    public CloudApiSettings(String awsAccessKeyId, String awsSecretAccessKey, String region, Integer connectionTimeout,
+            Integer socketTimeout) {
         this.awsAccessKeyId = awsAccessKeyId;
         this.awsSecretAccessKey = awsSecretAccessKey;
         this.region = region;
@@ -159,8 +159,8 @@ public class CloudApiSettings {
             CloudApiSettings that = (CloudApiSettings) obj;
             return equal(this.awsAccessKeyId, that.awsAccessKeyId)
                     && equal(this.awsSecretAccessKey, that.awsSecretAccessKey) && equal(this.region, that.region)
-                    && equal(this.getConnectionTimeout(), that.getConnectionTimeout())
-                    && equal(this.getSocketTimeout(), that.getSocketTimeout());
+                    && equal(getConnectionTimeout(), that.getConnectionTimeout())
+                    && equal(getSocketTimeout(), that.getSocketTimeout());
         }
         return false;
     }

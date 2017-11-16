@@ -26,8 +26,10 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
@@ -44,7 +46,6 @@ import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
-import com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTemplate;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
 import com.elastisys.scale.cloudpool.aws.spot.driver.config.CloudApiSettings;
@@ -54,9 +55,10 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.eventbus.EventBus;
 
 /**
@@ -83,21 +85,26 @@ public class TestSpotPoolDriverOperation {
     private static final String SECRET_ACCESS_KEY = "awsSecretAccessKey";
     /** Sample region */
     private static final String REGION = "us-east-1";
-    private static final long DANGLING_INSTANCE_CLEANUP_PERIOD = 30L;
-    private static final long BID_REPLACEMENT_PERIOD = 30L;
+    private static final TimeInterval DANGLING_INSTANCE_CLEANUP_PERIOD = new TimeInterval(30L, TimeUnit.SECONDS);
+    private static final TimeInterval BID_REPLACEMENT_PERIOD = new TimeInterval(30L, TimeUnit.SECONDS);
     private static final double BID_PRICE = 0.0070;
 
     /** Sample instance type. */
     private static final String INSTANCE_TYPE = "m1.small";
     /** Sample image. */
     private static final String AMI = "ami-12345678";
+    private static final List<String> SUBNET_IDS = asList("subnet-44b5786b", "subnet-dcd15f97");
+    private static final boolean ASSIGN_PUBLIC_IP = true;
     /** Sample keypair. */
     private static final String KEYPAIR = "ssh-loginkey";
+    private static final String IAM_INSTANCE_PROFILE = "arn:aws:iam::123456789012:instance-profile/my-iam-profile";
     /** Sample security groups. */
-    private static final List<String> SECURITY_GROUPS = Arrays.asList("webserver");
+    private static final List<String> SECURITY_GROUP_IDS = Arrays.asList("sg-12345678");
     /** Sample base64-encoded user data. */
     private static final String USER_DATA = Base64Utils
             .toBase64(Arrays.asList("#!/bin/bash", "apt-get update -qy && apt-get isntall apache2 -qy"));
+    private static final boolean EBS_OPTIMIZED = true;
+    private static final Map<String, String> TAGS = ImmutableMap.of("Cluster", "mycluster");
 
     /** Fake stubbed {@link SpotClient}. */
     private FakeSpotClient fakeClient;
@@ -117,8 +124,8 @@ public class TestSpotPoolDriverOperation {
     private DriverConfig config() {
         CloudApiSettings cloudApiSettings = new CloudApiSettings(ACCESS_KEY_ID, SECRET_ACCESS_KEY, REGION, BID_PRICE,
                 BID_REPLACEMENT_PERIOD, DANGLING_INSTANCE_CLEANUP_PERIOD);
-        Ec2ProvisioningTemplate provisioningTemplate = new Ec2ProvisioningTemplate(INSTANCE_TYPE, AMI, KEYPAIR,
-                SECURITY_GROUPS, USER_DATA);
+        Ec2ProvisioningTemplate provisioningTemplate = new Ec2ProvisioningTemplate(INSTANCE_TYPE, AMI, SUBNET_IDS,
+                ASSIGN_PUBLIC_IP, KEYPAIR, IAM_INSTANCE_PROFILE, SECURITY_GROUP_IDS, USER_DATA, EBS_OPTIMIZED, TAGS);
         return new DriverConfig(POOL_NAME, JsonUtils.toJson(cloudApiSettings).getAsJsonObject(),
                 JsonUtils.toJson(provisioningTemplate).getAsJsonObject());
     }
@@ -218,8 +225,7 @@ public class TestSpotPoolDriverOperation {
         this.driver.configure(config());
 
         doThrow(new AmazonServiceException("something went wrong")).when(this.mockClient).placeSpotRequests(
-                Matchers.anyDouble(), Matchers.any(Ec2ProvisioningTemplate.class), Matchers.anyInt(),
-                Matchers.anyListOf(Tag.class));
+                Matchers.anyDouble(), Matchers.any(Ec2ProvisioningTemplate.class), Matchers.anyInt());
 
         this.driver.startMachines(1);
     }
@@ -671,9 +677,7 @@ public class TestSpotPoolDriverOperation {
 
     private void assertInstanceIds(List<Instance> instances, List<String> expectedInstanceIds) {
         assertThat(instances.size(), is(expectedInstanceIds.size()));
-        List<String> machineIds = Lists.transform(instances, AwsEc2Functions.toInstanceId());
+        List<String> machineIds = instances.stream().map(Instance::getInstanceId).collect(Collectors.toList());
         assertTrue("not all expected instance ids were present", machineIds.containsAll(expectedInstanceIds));
-
     }
-
 }

@@ -152,8 +152,8 @@ public class TestEc2PoolDriverOperation {
     public void startMachinesOnFailure() throws StartMachinesException {
         // set up mock to throw an error whenever asked to launch an instance
         setUpMockedPoolClient(POOL_NAME, ec2Instances(memberInstance("i-1", "running")));
-        doThrow(new AmazonClientException("API unreachable")).when(this.mockClient).launchInstances(
-                this.driver.provisioningTemplate(), 1, Arrays.asList(new Tag(CLOUD_POOL_TAG, POOL_NAME)));
+        doThrow(new AmazonClientException("API unreachable")).when(this.mockClient)
+                .launchInstances(this.driver.provisioningTemplate(), 1);
 
         // should raise an exception
         try {

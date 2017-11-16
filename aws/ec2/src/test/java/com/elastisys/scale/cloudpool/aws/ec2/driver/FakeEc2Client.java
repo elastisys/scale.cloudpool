@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.aws.ec2.driver;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
@@ -52,15 +53,18 @@ public class FakeEc2Client implements Ec2Client {
     }
 
     @Override
-    public List<Instance> launchInstances(Ec2ProvisioningTemplate provisioningDetails, int count, List<Tag> tags)
+    public List<Instance> launchInstances(Ec2ProvisioningTemplate provisioningDetails, int count)
             throws AmazonClientException {
         List<Instance> launchedInstances = Lists.newArrayList();
         for (int i = 0; i < count; i++) {
             int idNum = ++this.idSequencer;
             Instance newInstance = new Instance().withInstanceId("i-" + idNum)
                     .withState(new InstanceState().withName("pending")).withPublicIpAddress("1.2.3." + idNum)
-                    .withImageId(provisioningDetails.getImage()).withInstanceType(provisioningDetails.getSize())
-                    .withTags(tags);
+                    .withImageId(provisioningDetails.getAmiId())
+                    .withInstanceType(provisioningDetails.getInstanceType());
+            for (Entry<String, String> tagItem : provisioningDetails.getTags().entrySet()) {
+                newInstance.withTags(new Tag(tagItem.getKey(), tagItem.getValue()));
+            }
             this.instances.add(newInstance);
             launchedInstances.add(newInstance);
         }

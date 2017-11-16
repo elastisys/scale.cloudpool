@@ -106,10 +106,11 @@ public class Ec2PoolDriver implements CloudPoolDriver {
 
         List<Machine> startedMachines = Lists.newArrayList();
         try {
-            // launch instances and set cloud pool tag to make sure machines are
-            // recognized as pool members
-            List<Instance> newInstances = this.client.launchInstances(provisioningTemplate(), count,
-                    asList(cloudPoolTag()));
+            // set tag to make sure instances are recognized as pool members
+            Ec2ProvisioningTemplate template = provisioningTemplate();
+            template = template.withTag(ScalingTags.CLOUD_POOL_TAG, getPoolName());
+
+            List<Instance> newInstances = this.client.launchInstances(template, count);
             startedMachines = Lists.transform(newInstances, new InstanceToMachine());
 
             // set instance Name tags
@@ -290,10 +291,6 @@ public class Ec2PoolDriver implements CloudPoolDriver {
         // assign a name to the instance
         String instanceName = String.format("%s-%s", getPoolName(), instance.getInstanceId());
         return new Tag(ScalingTags.INSTANCE_NAME_TAG, instanceName);
-    }
-
-    private Tag cloudPoolTag() {
-        return new Tag(ScalingTags.CLOUD_POOL_TAG, getPoolName());
     }
 
     /**

@@ -1,26 +1,21 @@
 package com.elastisys.scale.cloudpool.aws.commons.predicates;
 
-import static com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions.toInstanceId;
-import static com.google.common.collect.Collections2.transform;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.amazonaws.services.ec2.model.Tag;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 /**
  * {@link Predicate}s that apply to EC2 {@link Instance}s.
- *
- *
- *
  */
 public class InstancePredicates {
 
@@ -63,7 +58,7 @@ public class InstancePredicates {
         }
 
         @Override
-        public boolean apply(Instance instance) {
+        public boolean test(Instance instance) {
             if (instance == null) {
                 return false;
             }
@@ -99,16 +94,13 @@ public class InstancePredicates {
                     state);
         }
         final List<String> expectedStates = ImmutableList.copyOf(states);
-        return new Predicate<List<Instance>>() {
-            @Override
-            public boolean apply(List<Instance> instances) {
-                for (Instance instance : instances) {
-                    if (!expectedStates.contains(instance.getState().getName())) {
-                        return false;
-                    }
+        return instances -> {
+            for (Instance instance : instances) {
+                if (!expectedStates.contains(instance.getState().getName())) {
+                    return false;
                 }
-                return true;
             }
+            return true;
         };
     }
 
@@ -140,7 +132,7 @@ public class InstancePredicates {
         }
 
         @Override
-        public boolean apply(Instance state) {
+        public boolean test(Instance state) {
             return this.acceptableStates.contains(state.getState().getName());
         }
     }
@@ -180,8 +172,8 @@ public class InstancePredicates {
         }
 
         @Override
-        public boolean apply(List<Instance> instances) {
-            Collection<String> actualIds = transform(instances, toInstanceId());
+        public boolean test(List<Instance> instances) {
+            Collection<String> actualIds = instances.stream().map(Instance::getInstanceId).collect(Collectors.toList());
             return actualIds.containsAll(this.expectedIds);
         }
     }

@@ -12,9 +12,7 @@ import static com.elastisys.scale.cloudpool.aws.commons.ScalingFilters.SPOT_REQU
 import static com.elastisys.scale.cloudpool.aws.commons.ScalingFilters.SPOT_REQUEST_STATE_FILTER;
 import static com.elastisys.scale.cloudpool.aws.commons.ScalingTags.MEMBERSHIP_STATUS_TAG;
 import static com.elastisys.scale.cloudpool.aws.commons.ScalingTags.SERVICE_STATE_TAG;
-import static com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions.toSpotRequestId;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Lists.transform;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
@@ -26,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -45,7 +42,6 @@ import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
-import com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTemplate;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
 import com.elastisys.scale.cloudpool.aws.spot.driver.alerts.AlertTopics;
@@ -59,6 +55,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.net.alerter.AlertSeverity;
 import com.elastisys.scale.commons.util.time.UtcTime;
@@ -213,13 +210,13 @@ public class SpotPoolDriver implements CloudPoolDriver {
         }
 
         LOG.info("starting periodical execution of cleanup tasks");
-        long period = cloudApiSettings().getDanglingInstanceCleanupPeriod();
-        this.danglingInstanceCleanupTask = this.executor.scheduleWithFixedDelay(new DanglingInstanceCleaner(), period,
-                period, TimeUnit.SECONDS);
+        TimeInterval period = cloudApiSettings().getDanglingInstanceCleanupPeriod();
+        this.danglingInstanceCleanupTask = this.executor.scheduleWithFixedDelay(new DanglingInstanceCleaner(),
+                period.getTime(), period.getTime(), period.getUnit());
 
-        long bidReplacePeriod = cloudApiSettings().getBidReplacementPeriod();
+        TimeInterval bidReplacePeriod = cloudApiSettings().getBidReplacementPeriod();
         this.wrongPricedRequestCancellerTask = this.executor.scheduleWithFixedDelay(new WrongPricedRequestCanceller(),
-                bidReplacePeriod, bidReplacePeriod, TimeUnit.SECONDS);
+                bidReplacePeriod.getTime(), bidReplacePeriod.getTime(), bidReplacePeriod.getUnit());
     }
 
     @Override
@@ -235,9 +232,14 @@ public class SpotPoolDriver implements CloudPoolDriver {
         checkState(isConfigured(), "attempt to use unconfigured driver");
         List<Machine> startedMachines = Lists.newArrayList();
         try {
+            Ec2ProvisioningTemplate template = provisioningTemplate();
+            // add pool tag to recognize spot requests as pool members
+            template = template.withTag(ScalingTags.CLOUD_POOL_TAG, getPoolName());
+
             List<SpotInstanceRequest> spotRequests = this.client.placeSpotRequests(cloudApiSettings().getBidPrice(),
-                    provisioningTemplate(), count, asList(poolMembershipTag()));
-            List<String> spotIds = Lists.transform(spotRequests, AwsEc2Functions.toSpotRequestId());
+                    template, count);
+            List<String> spotIds = spotRequests.stream().map(SpotInstanceRequest::getSpotInstanceRequestId)
+                    .collect(Collectors.toList());
             LOG.info("placed spot requests: {}", spotIds);
             for (SpotInstanceRequest spotRequest : spotRequests) {
                 InstancePairedSpotRequest pairedSpotRequest = new InstancePairedSpotRequest(spotRequest, null);
@@ -519,7 +521,8 @@ public class SpotPoolDriver implements CloudPoolDriver {
         Filter spotStateFilter = new Filter().withName(SPOT_REQUEST_STATE_FILTER).withValues(Cancelled.toString(),
                 Closed.toString());
         List<SpotInstanceRequest> deadRequests = client().getSpotInstanceRequests(asList(poolFilter, spotStateFilter));
-        List<String> deadRequestIds = transform(deadRequests, toSpotRequestId());
+        List<String> deadRequestIds = deadRequests.stream().map(SpotInstanceRequest::getSpotInstanceRequestId)
+                .collect(Collectors.toList());
 
         // get all pending/running instances with a spot instance id equal
         // to any of the dead spot requests

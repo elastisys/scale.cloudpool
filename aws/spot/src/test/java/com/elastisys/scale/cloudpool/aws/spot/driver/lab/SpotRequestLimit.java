@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
-import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTemplate;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.impl.AwsSpotClient;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
@@ -43,8 +42,7 @@ public class SpotRequestLimit extends BaseClient {
         List<SpotInstanceRequest> placedRequests = new ArrayList<>();
         int MAX = 200;
         try {
-            placedRequests.addAll(
-                    client.placeSpotRequests(0.001, provisioningTemplate, MAX, Arrays.asList(new Tag("key", "value"))));
+            placedRequests.addAll(client.placeSpotRequests(0.001, provisioningTemplate, MAX));
         } catch (Exception e) {
             LOG.error("failed: {}", e.getMessage(), e);
         } finally {

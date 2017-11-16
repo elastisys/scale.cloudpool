@@ -1,16 +1,18 @@
-package com.elastisys.scale.cloudpool.aws.spot.driver;
+package com.elastisys.scale.cloudpool.aws.spot.driver.config;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Test;
 
-import com.elastisys.scale.cloudpool.aws.spot.driver.config.CloudApiSettings;
+import com.elastisys.scale.commons.json.types.TimeInterval;
 
 /**
  * Exercises the {@link CloudApiSettings} class.
  */
-public class TestSpotPoolDriverConfig {
+public class TestCloudApiSettings {
 
     /**
      * Test applying a configuration that provides values for all fields
@@ -19,12 +21,12 @@ public class TestSpotPoolDriverConfig {
     @Test
     public void completeConfig() {
         double bidPrice = 0.0050;
-        long bidReplacementPeriod = 120L;
-        long danglingInstanceCleanupPeriod = 60L;
+        TimeInterval bidReplacementPeriod = new TimeInterval(120L, TimeUnit.SECONDS);
+        TimeInterval danglingInstanceCleanupPeriod = new TimeInterval(60L, TimeUnit.SECONDS);
         int connectionTimeout = 7000;
         int socketTimeout = 5000;
-        CloudApiSettings config = new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", "us-east-1",
-                bidPrice, bidReplacementPeriod, danglingInstanceCleanupPeriod, connectionTimeout, socketTimeout);
+        CloudApiSettings config = new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", "us-east-1", bidPrice,
+                bidReplacementPeriod, danglingInstanceCleanupPeriod, connectionTimeout, socketTimeout);
         config.validate();
 
         assertThat(config.getAwsAccessKeyId(), is("awsAccessKeyId"));
@@ -42,8 +44,8 @@ public class TestSpotPoolDriverConfig {
      */
     @Test
     public void withDefaults() {
-        CloudApiSettings config = new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", "us-east-1",
-                0.0050, null, null);
+        CloudApiSettings config = new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", "us-east-1", 0.0050,
+                null, null);
         config.validate();
 
         assertThat(config.getBidReplacementPeriod(), is(CloudApiSettings.DEFAULT_BID_REPLACEMENT_PERIOD));
@@ -101,7 +103,11 @@ public class TestSpotPoolDriverConfig {
     }
 
     private CloudApiSettings configWithPrice(double bidPrice) {
-        return new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", "us-east-1", bidPrice, 120L, 60L);
+        TimeInterval bidReplacementPeriod = new TimeInterval(120L, TimeUnit.SECONDS);
+        TimeInterval danglingInstanceCleanupPeriod = new TimeInterval(60L, TimeUnit.SECONDS);
+
+        return new CloudApiSettings("awsAccessKeyId", "awsSecretAccessKey", "us-east-1", bidPrice, bidReplacementPeriod,
+                danglingInstanceCleanupPeriod);
 
     }
 }

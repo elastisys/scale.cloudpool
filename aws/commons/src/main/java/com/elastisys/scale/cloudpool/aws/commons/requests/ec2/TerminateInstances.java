@@ -1,7 +1,5 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.ec2;
 
-import static com.elastisys.scale.cloudpool.aws.commons.predicates.InstancePredicates.allInAnyOfStates;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -12,8 +10,10 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
+import com.elastisys.scale.cloudpool.aws.commons.predicates.InstancePredicates;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -70,4 +70,9 @@ public class TerminateInstances extends AmazonEc2Request<TerminateInstancesResul
                     String.format("gave up waiting for instances to terminate %s: %s", instanceIds, e.getMessage()), e);
         }
     }
+
+    private Predicate<List<Instance>> allInAnyOfStates(String... acceptableStates) {
+        return instances -> InstancePredicates.allInAnyOfStates(acceptableStates).test(instances);
+    }
+
 }

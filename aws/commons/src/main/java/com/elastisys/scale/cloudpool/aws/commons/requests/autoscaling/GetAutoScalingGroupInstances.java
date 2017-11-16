@@ -1,7 +1,5 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling;
 
-import static com.elastisys.scale.cloudpool.aws.commons.predicates.InstancePredicates.instancesPresent;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -14,9 +12,11 @@ import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.elastisys.scale.cloudpool.aws.commons.functions.AwsAutoScalingFunctions;
+import com.elastisys.scale.cloudpool.aws.commons.predicates.InstancePredicates;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstances;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 
 /**
@@ -81,4 +81,9 @@ public class GetAutoScalingGroupInstances extends AmazonAutoScalingRequest<List<
 
         return retryer.call();
     }
+
+    private Predicate<List<Instance>> instancesPresent(List<String> instanceIds) {
+        return instances -> InstancePredicates.instancesPresent(instanceIds).test(instances);
+    }
+
 }

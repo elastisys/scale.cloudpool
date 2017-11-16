@@ -1,11 +1,13 @@
 package com.elastisys.scale.cloudpool.aws.spot.driver;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import org.slf4j.Logger;
@@ -123,8 +125,7 @@ public class FakeSpotClient implements SpotClient {
     }
 
     @Override
-    public List<Instance> launchInstances(Ec2ProvisioningTemplate provisioningDetails, int count, List<Tag> tags)
-            throws AmazonClientException {
+    public List<Instance> launchInstances(Ec2ProvisioningTemplate template, int count) throws AmazonClientException {
 
         List<Instance> launchedInstances = Lists.newArrayList();
         for (int i = 0; i < count; i++) {
@@ -132,8 +133,15 @@ public class FakeSpotClient implements SpotClient {
             String id = "i-" + idNum;
             LOG.info("launching instance {} into fake account ...", id);
             Instance newInstance = new Instance().withInstanceId(id).withState(new InstanceState().withName("pending"))
-                    .withPublicIpAddress("1.2.3." + idNum).withImageId(provisioningDetails.getImage())
-                    .withInstanceType(provisioningDetails.getSize()).withTags(tags);
+                    .withPublicIpAddress("1.2.3." + idNum).withImageId(template.getAmiId())
+                    .withInstanceType(template.getInstanceType());
+            if (!template.getTags().isEmpty()) {
+                List<Tag> tags = new ArrayList<>();
+                for (Entry<String, String> tag : template.getTags().entrySet()) {
+                    tags.add(new Tag(tag.getKey(), tag.getValue()));
+                }
+                newInstance.withTags(tags);
+            }
             this.instances.put(newInstance.getInstanceId(), newInstance);
             launchedInstances.add(newInstance);
         }
@@ -227,14 +235,22 @@ public class FakeSpotClient implements SpotClient {
     }
 
     @Override
-    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, Ec2ProvisioningTemplate instanceTemplate,
-            int count, List<Tag> tags) throws AmazonClientException {
+    public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, Ec2ProvisioningTemplate template, int count)
+            throws AmazonClientException {
         List<SpotInstanceRequest> requests = Lists.newArrayList();
         for (int i = 0; i < count; i++) {
             String id = "sir-" + (System.currentTimeMillis() + count);
             SpotInstanceRequest request = new SpotInstanceRequest().withSpotInstanceRequestId(id)
-                    .withLaunchSpecification(new LaunchSpecification().withInstanceType(instanceTemplate.getSize()))
-                    .withState(SpotInstanceState.Open).withSpotPrice(String.valueOf(bidPrice)).withTags(tags);
+                    .withLaunchSpecification(new LaunchSpecification().withInstanceType(template.getInstanceType()))
+                    .withState(SpotInstanceState.Open).withSpotPrice(String.valueOf(bidPrice));
+
+            if (!template.getTags().isEmpty()) {
+                List<Tag> tags = new ArrayList<>();
+                for (Entry<String, String> tag : template.getTags().entrySet()) {
+                    tags.add(new Tag(tag.getKey(), tag.getValue()));
+                }
+                request.withTags(tags);
+            }
             this.spotRequests.put(id, request);
             requests.add(request);
         }

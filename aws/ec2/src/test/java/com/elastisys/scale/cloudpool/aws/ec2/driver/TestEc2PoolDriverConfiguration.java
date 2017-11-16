@@ -12,8 +12,6 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import java.util.Arrays;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,6 +22,7 @@ import com.elastisys.scale.cloudpool.aws.ec2.driver.config.CloudApiSettings;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * Verifies the behavior of the {@link Ec2PoolDriver} with respect to
@@ -40,38 +39,58 @@ public class TestEc2PoolDriverConfiguration {
     }
 
     @Test
-    public void configureWithValidConfig() throws CloudPoolException {
+    public void configureWithCompleteConfig() throws CloudPoolException {
         assertFalse(this.driver.isConfigured());
-        DriverConfig config = driverConfig(loadCloudPoolConfig("config/valid-ec2pool-config.json"));
+        DriverConfig config = driverConfig(loadCloudPoolConfig("config/complete-config.json"));
         this.driver.configure(config);
 
-        CloudApiSettings expectedApiSettings = new CloudApiSettings("ABC", "XYZ", "us-west-1");
-        Ec2ProvisioningTemplate expectedProvisioningTemplate = new Ec2ProvisioningTemplate("m1.small", "ami-018c9568",
-                "instancekey", Arrays.asList("webserver"),
-                "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg==");
+        CloudApiSettings expectedApiSettings = new CloudApiSettings("ABC", "XYZ", "us-west-1", 15000, 20000);
+        Ec2ProvisioningTemplate expectedTemplate = new Ec2ProvisioningTemplate("m1.small", "ami-018c9568",
+                asList("subnet-44b5786b", "subnet-dcd15f97"), true, "instancekey",
+                "arn:aws:iam::123456789012:instance-profile/my-iam-profile", asList("sg-12345678"),
+                "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg==",
+                true, ImmutableMap.of("Cluster", "my-cluster"));
 
         assertTrue(this.driver.isConfigured());
         assertThat(this.driver.cloudApiSettings(), is(expectedApiSettings));
+        assertThat(this.driver.provisioningTemplate(), is(expectedTemplate));
 
-        assertThat(this.driver.provisioningTemplate(), is(expectedProvisioningTemplate));
+        // verify that configuration was passed on to cloud client
+        verify(this.mockClient).configure(argThat(is("ABC")), argThat(is("XYZ")), argThat(is("us-west-1")),
+                argThat(isClientConfig(15000, 20000)));
+
+    }
+
+    @Test
+    public void configureWithDefaults() throws CloudPoolException {
+        assertFalse(this.driver.isConfigured());
+        DriverConfig config = driverConfig(loadCloudPoolConfig("config/minimal-config.json"));
+        this.driver.configure(config);
+
+        CloudApiSettings expectedApiSettings = new CloudApiSettings("ABC", "XYZ", "us-west-1");
+        Ec2ProvisioningTemplate expectedTemplate = new Ec2ProvisioningTemplate("m1.small", "ami-018c9568",
+                asList("subnet-44b5786b", "subnet-dcd15f97"), null, null, null, null, null, null, null);
+
+        assertTrue(this.driver.isConfigured());
+        assertThat(this.driver.cloudApiSettings(), is(expectedApiSettings));
+        assertThat(this.driver.provisioningTemplate(), is(expectedTemplate));
 
         // verify that configuration was passed on to cloud client
         verify(this.mockClient).configure(argThat(is("ABC")), argThat(is("XYZ")), argThat(is("us-west-1")), argThat(
                 isClientConfig(CloudApiSettings.DEFAULT_CONNECTION_TIMEOUT, CloudApiSettings.DEFAULT_SOCKET_TIMEOUT)));
-
     }
 
     @Test
     public void reconfigure() throws CloudPoolException {
         // configure
-        DriverConfig config1 = driverConfig(loadCloudPoolConfig("config/valid-ec2pool-config.json"));
+        DriverConfig config1 = driverConfig(loadCloudPoolConfig("config/minimal-config.json"));
         this.driver.configure(config1);
         assertThat(this.driver.cloudApiSettings(), is(new CloudApiSettings("ABC", "XYZ", "us-west-1")));
 
         // re-configure
-        DriverConfig config2 = driverConfig(loadCloudPoolConfig("config/valid-ec2pool-config2.json"));
+        DriverConfig config2 = driverConfig(loadCloudPoolConfig("config/complete-config.json"));
         this.driver.configure(config2);
-        assertThat(this.driver.cloudApiSettings(), is(new CloudApiSettings("DEF", "TUV", "us-east-1", 7000, 5000)));
+        assertThat(this.driver.cloudApiSettings(), is(new CloudApiSettings("ABC", "XYZ", "us-west-1", 15000, 20000)));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -92,8 +111,7 @@ public class TestEc2PoolDriverConfiguration {
     @Test
     public void configureWithConfigMissingAccessKeyId() throws Exception {
         try {
-            DriverConfig config = driverConfig(
-                    loadCloudPoolConfig("config/invalid-ec2pool-config-missing-accesskeyid.json"));
+            DriverConfig config = driverConfig(loadCloudPoolConfig("config/invalid-config-missing-accesskeyid.json"));
             this.driver.configure(config);
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
@@ -105,7 +123,7 @@ public class TestEc2PoolDriverConfiguration {
     public void configureWithConfigMissingSecretAccessKey() throws Exception {
         try {
             DriverConfig config = driverConfig(
-                    loadCloudPoolConfig("config/invalid-ec2pool-config-missing-secretaccesskey.json"));
+                    loadCloudPoolConfig("config/invalid-config-missing-secretaccesskey.json"));
             this.driver.configure(config);
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
@@ -116,12 +134,44 @@ public class TestEc2PoolDriverConfiguration {
     @Test
     public void configureWithConfigMissingRegion() throws Exception {
         try {
-            DriverConfig config = driverConfig(
-                    loadCloudPoolConfig("config/invalid-ec2pool-config-missing-region.json"));
+            DriverConfig config = driverConfig(loadCloudPoolConfig("config/invalid-config-missing-region.json"));
             this.driver.configure(config);
             fail("expected to fail");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("region"));
+        }
+    }
+
+    @Test
+    public void configureWithConfigMissingInstanceType() throws Exception {
+        try {
+            DriverConfig config = driverConfig(loadCloudPoolConfig("config/invalid-config-missing-instancetype.json"));
+            this.driver.configure(config);
+            fail("expected to fail");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("instanceType"));
+        }
+    }
+
+    @Test
+    public void configureWithConfigMissingAmiId() throws Exception {
+        try {
+            DriverConfig config = driverConfig(loadCloudPoolConfig("config/invalid-config-missing-ami.json"));
+            this.driver.configure(config);
+            fail("expected to fail");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("amiId"));
+        }
+    }
+
+    @Test
+    public void configureWithConfigMissingSubnets() throws Exception {
+        try {
+            DriverConfig config = driverConfig(loadCloudPoolConfig("config/invalid-config-missing-subnets.json"));
+            this.driver.configure(config);
+            fail("expected to fail");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("subnetIds"));
         }
     }
 

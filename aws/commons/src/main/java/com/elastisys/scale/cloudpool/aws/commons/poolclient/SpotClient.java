@@ -8,7 +8,6 @@ import com.amazonaws.services.ec2.model.CancelSpotInstanceRequestsResult;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
-import com.amazonaws.services.ec2.model.Tag;
 
 /**
  * An AWS client interface that extends the {@link Ec2Client} with methods for
@@ -39,8 +38,8 @@ public interface SpotClient extends Ec2Client {
     List<SpotInstanceRequest> getSpotInstanceRequests(Collection<Filter> filters) throws AmazonClientException;
 
     /**
-     * Places a number of new {@link SpotInstanceRequest}s and (optionally) tags
-     * the spot instance requests with a given set of {@link Tag}s.
+     * Places a number of new {@link SpotInstanceRequest}s with a given bid
+     * price.
      *
      * @param bidPrice
      *            The bid price to set for the {@link SpotInstanceRequest}.
@@ -48,14 +47,11 @@ public interface SpotClient extends Ec2Client {
      *            A description of the desired spot {@link Instance}.
      * @param count
      *            The number of spot instances to request.
-     * @param tags
-     *            Tags to set on the created spot instance requests. May be
-     *            empty.
      * @return The placed {@link SpotInstanceRequest}s.
      * @throws AmazonClientException
      */
     public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, Ec2ProvisioningTemplate instanceTemplate,
-            int count, List<Tag> tags) throws AmazonClientException;
+            int count) throws AmazonClientException;
 
     /**
      * Cancels a collection of {@link SpotInstanceRequest}s.

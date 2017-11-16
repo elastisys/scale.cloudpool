@@ -1,7 +1,5 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling;
 
-import static com.elastisys.scale.cloudpool.aws.commons.predicates.InstancePredicates.inAnyOfStates;
-
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -10,9 +8,11 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.autoscaling.model.TerminateInstanceInAutoScalingGroupRequest;
 import com.amazonaws.services.ec2.model.Instance;
 import com.elastisys.scale.cloudpool.aws.commons.client.Ec2ApiClient;
+import com.elastisys.scale.cloudpool.aws.commons.predicates.InstancePredicates;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstance;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
+import com.google.common.base.Predicate;
 
 /**
  * A {@link Callable} task that, when executed, requests a particular Auto
@@ -61,5 +61,9 @@ public class TerminateAutoScalingGroupInstance extends AmazonAutoScalingRequest<
                         instanceId, e.getMessage()), e);
             }
         }
+    }
+
+    private Predicate<Instance> inAnyOfStates(String... acceptableStates) {
+        return instance -> InstancePredicates.inAnyOfStates(acceptableStates).test(instance);
     }
 }

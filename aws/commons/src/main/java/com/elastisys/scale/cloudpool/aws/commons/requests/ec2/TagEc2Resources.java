@@ -1,7 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.ec2;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -41,16 +40,10 @@ public class TagEc2Resources extends AmazonEc2Request<Void> {
     private List<Tag> tags = Lists.newArrayList();
 
     public TagEc2Resources(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig,
-            List<String> resourceIds, Tag... tags) {
-        this(awsCredentials, region, clientConfig, resourceIds,
-                (tags == null ? new ArrayList<Tag>() : Arrays.asList(tags)));
-    }
-
-    public TagEc2Resources(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig,
             List<String> resourceIds, List<Tag> tags) {
         super(awsCredentials, region, clientConfig);
         this.resourceIds = resourceIds;
-        this.tags = Lists.newArrayList(tags);
+        this.tags = new ArrayList<>(tags);
     }
 
     @Override

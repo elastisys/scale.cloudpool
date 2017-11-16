@@ -1,11 +1,10 @@
 {
-    "name": "spot-cluster",
+    "name": "ec2-cluster",
 
     "cloudApiSettings": {
         "awsAccessKeyId": "ABC",
+        "awsSecretAccessKey": "XYZ"
 
-        "region": "us-west-1",
-        "bidPrice": 0.0070
     },
 
     "provisioningTemplate": {

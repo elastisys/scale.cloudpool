@@ -1,31 +1,33 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.ec2;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.services.ec2.model.IamInstanceProfileSpecification;
+import com.amazonaws.services.ec2.model.InstanceNetworkInterfaceSpecification;
 import com.amazonaws.services.ec2.model.LaunchSpecification;
 import com.amazonaws.services.ec2.model.RequestSpotInstancesRequest;
 import com.amazonaws.services.ec2.model.RequestSpotInstancesResult;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.SpotInstanceType;
-import com.amazonaws.services.ec2.model.SpotPlacement;
 import com.amazonaws.services.ec2.model.Tag;
-import com.elastisys.scale.cloudpool.aws.commons.functions.AwsEc2Functions;
+import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTemplate;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
+import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Predicate;
-import com.google.common.collect.Lists;
 
 /**
  * A {@link Callable} task that, when executed, requests a number of AWS spot
- * instances, (optionally) tags them, and waits for the
- * {@link SpotInstanceRequest}s to appear in
- * {@code DescribeSpotInstanceRequests}, which may not be immediate due to the
- * <a href=
+ * instances, tags them, and waits for them to appear in the API, which may not
+ * be immediate due to the <a href=
  * "http://docs.aws.amazon.com/AWSEC2/latest/APIReference/query-api-troubleshooting.html#eventual-consistency"
  * >eventual consistency semantics</a> of the Amazon API.
  */
@@ -36,70 +38,71 @@ public class PlaceSpotInstanceRequests extends AmazonEc2Request<List<SpotInstanc
     /** Maximum number of retries of operations. */
     private static final int MAX_RETRIES = 8;
 
-    /** The availability zone (within the region) to launch machine in. */
-    private final String availabilityZone;
+    /** The provisioning template used to describe the instances to create. */
+    private final Ec2ProvisioningTemplate instanceTemplate;
 
-    /** The AWS security group(s) to use for the created instance. */
-    private final List<String> securityGroups;
-    /** The EC2 key pair to use for the created instance. */
-    private final String keyPair;
+    /** The number of instances to request. */
+    private final int count;
 
-    /** The EC2 instance type to use for the created instance. */
-    private final String instanceType;
-    /** The AMI (amazon machine image) id to use for the created instance. */
-    private final String imageId;
-
-    /**
-     * The base64-encoded <a href=
-     * "http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html">
-     * user data</a> boot to pass to the created instance.
-     */
-    private final String encodedUserData;
     /** The bid price to set for the spot request. */
     private final String bidPrice;
 
-    /** The number of spot instances to request. */
-    private final int count;
-
-    /**
-     * The (possibly empty) set of {@link Tag}s to attach to the placed spot
-     * instance requests.
-     */
-    private final List<Tag> tags;
+    /** Random generator to spread instances across subnets. */
+    private final Random random = new Random(UtcTime.now().getMillis());
 
     public PlaceSpotInstanceRequests(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig,
-            double bidPrice, String availabilityZone, List<String> securityGroups, String keyPair, String instanceType,
-            String imageId, String encodedUserData, int count, List<Tag> tags) {
+            Ec2ProvisioningTemplate instanceTemplate, int count, double bidPrice) {
         super(awsCredentials, region, clientConfig);
-        this.bidPrice = String.valueOf(bidPrice);
-        this.availabilityZone = availabilityZone;
-        this.securityGroups = securityGroups;
-        this.keyPair = keyPair;
-        this.instanceType = instanceType;
-        this.imageId = imageId;
-        this.encodedUserData = encodedUserData;
+        this.instanceTemplate = instanceTemplate;
         this.count = count;
-        this.tags = tags;
+        this.bidPrice = String.valueOf(bidPrice);
     }
 
     @Override
     public List<SpotInstanceRequest> call() {
-        SpotPlacement placement = new SpotPlacement().withAvailabilityZone(this.availabilityZone);
-        LaunchSpecification launchSpec = new LaunchSpecification().withInstanceType(this.instanceType)
-                .withImageId(this.imageId).withPlacement(placement).withSecurityGroups(this.securityGroups)
-                .withKeyName(this.keyPair).withUserData(this.encodedUserData);
-        RequestSpotInstancesRequest request = new RequestSpotInstancesRequest().withInstanceCount(this.count)
-                .withType(SpotInstanceType.Persistent).withSpotPrice(this.bidPrice).withLaunchSpecification(launchSpec);
-        RequestSpotInstancesResult result = getClient().getApi().requestSpotInstances(request);
+        LaunchSpecification spec = new LaunchSpecification();
+        spec.withInstanceType(this.instanceTemplate.getInstanceType());
+        spec.withImageId(this.instanceTemplate.getAmiId());
 
-        List<String> spotRequestIds = Lists.transform(result.getSpotInstanceRequests(),
-                AwsEc2Functions.toSpotRequestId());
+        InstanceNetworkInterfaceSpecification nic = new InstanceNetworkInterfaceSpecification();
+        nic.withDeviceIndex(0);
+        // select a subnet at random
+        nic.withSubnetId(randomSubnet());
+        nic.withAssociatePublicIpAddress(this.instanceTemplate.isAssignPublicIp());
+        nic.withGroups(this.instanceTemplate.getSecurityGroupIds());
+        spec.withNetworkInterfaces(nic);
 
-        if (!this.tags.isEmpty()) {
+        spec.withKeyName(this.instanceTemplate.getKeyPair());
+        spec.withIamInstanceProfile(
+                new IamInstanceProfileSpecification().withArn(this.instanceTemplate.getIamInstanceProfileARN()));
+        spec.withUserData(this.instanceTemplate.getEncodedUserData());
+        spec.withEbsOptimized(this.instanceTemplate.isEbsOptimized());
+
+        RequestSpotInstancesRequest spotRequest = new RequestSpotInstancesRequest().withInstanceCount(this.count)
+                .withType(SpotInstanceType.Persistent).withSpotPrice(this.bidPrice).withLaunchSpecification(spec);
+
+        RequestSpotInstancesResult result = getClient().getApi().requestSpotInstances(spotRequest);
+        List<String> spotRequestIds = result.getSpotInstanceRequests().stream()
+                .map(SpotInstanceRequest::getSpotInstanceRequestId).collect(Collectors.toList());
+
+        if (!this.instanceTemplate.getTags().isEmpty()) {
             tagRequests(spotRequestIds);
         }
 
         return awaitSpotRequests(spotRequestIds);
+    }
+
+    private List<Tag> tags() {
+        List<Tag> tags = new ArrayList<>();
+        for (Entry<String, String> tag : this.instanceTemplate.getTags().entrySet()) {
+            tags.add(new Tag(tag.getKey(), tag.getValue()));
+        }
+        return tags;
+    }
+
+    private String randomSubnet() {
+        int nextSubnet = this.random.nextInt(this.instanceTemplate.getSubnetIds().size());
+        return this.instanceTemplate.getSubnetIds().get(nextSubnet);
     }
 
     /**
@@ -110,7 +113,7 @@ public class PlaceSpotInstanceRequests extends AmazonEc2Request<List<SpotInstanc
      */
     private void tagRequests(List<String> spotRequestIds) {
         Callable<Void> requester = new TagEc2Resources(getAwsCredentials(), getRegion(), getClientConfig(),
-                spotRequestIds, this.tags);
+                spotRequestIds, tags());
         String tagTaskName = String.format("tag{%s}", spotRequestIds);
         Retryable<Void> retryable = Retryers.exponentialBackoffRetryer(tagTaskName, requester, INITIAL_BACKOFF_DELAY,
                 TimeUnit.MILLISECONDS, MAX_RETRIES);
@@ -161,9 +164,10 @@ public class PlaceSpotInstanceRequests extends AmazonEc2Request<List<SpotInstanc
      * @return
      */
     private static Predicate<List<SpotInstanceRequest>> contains(final List<String> expectedSpotRequestIds) {
-        return input -> {
-            List<String> inputIds = Lists.transform(input, AwsEc2Functions.toSpotRequestId());
-            return inputIds.containsAll(expectedSpotRequestIds);
+        return spotRequests -> {
+            List<String> spotIds = spotRequests.stream().map(SpotInstanceRequest::getSpotInstanceRequestId)
+                    .collect(Collectors.toList());
+            return spotIds.containsAll(expectedSpotRequestIds);
         };
     }
 }

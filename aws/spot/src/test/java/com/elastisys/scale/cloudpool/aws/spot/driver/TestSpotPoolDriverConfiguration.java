@@ -1,6 +1,7 @@
 package com.elastisys.scale.cloudpool.aws.spot.driver;
 
 import static com.elastisys.scale.cloudpool.aws.spot.driver.IsClientConfigMatcher.isClientConfig;
+import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
@@ -10,9 +11,9 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import java.util.Arrays;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -26,6 +27,8 @@ import com.elastisys.scale.cloudpool.aws.spot.driver.config.CloudApiSettings;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.json.types.TimeInterval;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.eventbus.EventBus;
 
 /**
@@ -58,15 +61,17 @@ public class TestSpotPoolDriverConfiguration {
         this.driver.configure(config);
         assertThat(this.driver.getPoolName(), is(config.getPoolName()));
 
-        CloudApiSettings expectedApiSettings = new CloudApiSettings("ABC", "XYZ", "us-west-1", 0.0070, 35L, 45L, 7000,
-                5000);
+        CloudApiSettings expectedApiSettings = new CloudApiSettings("ABC", "XYZ", "us-west-1", 0.0070,
+                new TimeInterval(35L, TimeUnit.SECONDS), new TimeInterval(45L, TimeUnit.SECONDS), 7000, 5000);
         assertThat(this.driver.cloudApiSettings(), is(expectedApiSettings));
 
         // check the provisioning template
-        Ec2ProvisioningTemplate expectedProvisioningTemplate = new Ec2ProvisioningTemplate("m1.small", "ami-018c9568",
-                "instancekey", Arrays.asList("webserver"),
-                "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg==");
-        assertThat(this.driver.provisioningTemplate(), is(expectedProvisioningTemplate));
+        Ec2ProvisioningTemplate expectedTemplate = new Ec2ProvisioningTemplate("m1.small", "ami-018c9568",
+                asList("subnet-44b5786b", "subnet-dcd15f97"), true, "instancekey",
+                "arn:aws:iam::123456789012:instance-profile/my-iam-profile", asList("sg-12345678"),
+                "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg==",
+                true, ImmutableMap.of("Cluster", "my-cluster"));
+        assertThat(this.driver.provisioningTemplate(), is(expectedTemplate));
 
         // verify that driver calls through to configure spot client
         // appropriately
@@ -74,26 +79,24 @@ public class TestSpotPoolDriverConfiguration {
                 argThat(is(isClientConfig(7000, 5000))));
     }
 
-    /**
-     * Verify that a default value is used.
-     */
     @Test
-    public void configureWithMissingBidReplacementPeriod() {
-        DriverConfig config = driverConfig(loadCloudPoolConfig("config/valid-config-relying-on-defaults.json"));
+    public void configureWithDefaults() throws CloudPoolException {
+        DriverConfig config = driverConfig(loadCloudPoolConfig("config/config-relying-on-defaults.json"));
         this.driver.configure(config);
-        assertThat(this.driver.cloudApiSettings().getBidReplacementPeriod(),
-                is(CloudApiSettings.DEFAULT_BID_REPLACEMENT_PERIOD));
-    }
 
-    /**
-     * Verify that a default value is used.
-     */
-    @Test
-    public void configureWithMissingDanglingInstanceCleanupPeriod() {
-        DriverConfig config = driverConfig(loadCloudPoolConfig("config/valid-config-relying-on-defaults.json"));
-        this.driver.configure(config);
-        assertThat(this.driver.cloudApiSettings().getDanglingInstanceCleanupPeriod(),
-                is(CloudApiSettings.DEFAULT_DANGLING_INSTANCE_CLEANUP_PERIOD));
+        CloudApiSettings expectedApiSettings = new CloudApiSettings("ABC", "XYZ", "us-west-1", 0.0070,
+                CloudApiSettings.DEFAULT_BID_REPLACEMENT_PERIOD,
+                CloudApiSettings.DEFAULT_DANGLING_INSTANCE_CLEANUP_PERIOD, CloudApiSettings.DEFAULT_CONNECTION_TIMEOUT,
+                CloudApiSettings.DEFAULT_SOCKET_TIMEOUT);
+        Ec2ProvisioningTemplate expectedTemplate = new Ec2ProvisioningTemplate("m1.small", "ami-018c9568",
+                asList("subnet-44b5786b", "subnet-dcd15f97"), null, null, null, null, null, null, null);
+
+        assertThat(this.driver.cloudApiSettings(), is(expectedApiSettings));
+        assertThat(this.driver.provisioningTemplate(), is(expectedTemplate));
+
+        // verify that configuration was passed on to cloud client
+        verify(this.mockClient).configure(argThat(is("ABC")), argThat(is("XYZ")), argThat(is("us-west-1")), argThat(
+                isClientConfig(CloudApiSettings.DEFAULT_CONNECTION_TIMEOUT, CloudApiSettings.DEFAULT_SOCKET_TIMEOUT)));
     }
 
     /**
@@ -102,16 +105,20 @@ public class TestSpotPoolDriverConfiguration {
     @Test
     public void reconfigure() throws CloudPoolException {
         // configure
-        DriverConfig config1 = driverConfig(loadCloudPoolConfig("config/valid-config-relying-on-defaults.json"));
+        DriverConfig config1 = driverConfig(loadCloudPoolConfig("config/config-relying-on-defaults.json"));
         this.driver.configure(config1);
-        assertThat(this.driver.cloudApiSettings(),
-                is(new CloudApiSettings("ABC", "XYZ", "us-west-1", 0.0070, null, null)));
+        CloudApiSettings expectedApiSettings = new CloudApiSettings("ABC", "XYZ", "us-west-1", 0.0070,
+                CloudApiSettings.DEFAULT_BID_REPLACEMENT_PERIOD,
+                CloudApiSettings.DEFAULT_DANGLING_INSTANCE_CLEANUP_PERIOD, CloudApiSettings.DEFAULT_CONNECTION_TIMEOUT,
+                CloudApiSettings.DEFAULT_SOCKET_TIMEOUT);
+        assertThat(this.driver.cloudApiSettings(), is(expectedApiSettings));
 
         // re-configure
         DriverConfig config2 = driverConfig(loadCloudPoolConfig("config/complete-driver-config.json"));
         this.driver.configure(config2);
-        assertThat(this.driver.cloudApiSettings(),
-                is(new CloudApiSettings("ABC", "XYZ", "us-west-1", 0.0070, 35L, 45L, 7000, 5000)));
+        expectedApiSettings = new CloudApiSettings("ABC", "XYZ", "us-west-1", 0.0070,
+                new TimeInterval(35L, TimeUnit.SECONDS), new TimeInterval(45L, TimeUnit.SECONDS), 7000, 5000);
+        assertThat(this.driver.cloudApiSettings(), is(expectedApiSettings));
     }
 
     @Test
@@ -150,13 +157,46 @@ public class TestSpotPoolDriverConfiguration {
     }
 
     @Test
-    public void configureWithConfigMissingbidPrice() throws Exception {
+    public void configureWithConfigMissingBidPrice() throws Exception {
         try {
             DriverConfig config = driverConfig(loadCloudPoolConfig("config/invalid-config-missing-bidprice.json"));
             this.driver.configure(config);
             fail("expected failure");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("bidPrice"));
+        }
+    }
+
+    @Test
+    public void configureWithConfigMissingInstanceType() throws Exception {
+        try {
+            DriverConfig config = driverConfig(loadCloudPoolConfig("config/invalid-config-missing-instancetype.json"));
+            this.driver.configure(config);
+            fail("expected failure");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("instanceType"));
+        }
+    }
+
+    @Test
+    public void configureWithConfigMissingAmiId() throws Exception {
+        try {
+            DriverConfig config = driverConfig(loadCloudPoolConfig("config/invalid-config-missing-ami.json"));
+            this.driver.configure(config);
+            fail("expected failure");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("amiId"));
+        }
+    }
+
+    @Test
+    public void configureWithConfigMissingSubnets() throws Exception {
+        try {
+            DriverConfig config = driverConfig(loadCloudPoolConfig("config/invalid-config-missing-subnets.json"));
+            this.driver.configure(config);
+            fail("expected failure");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("subnetId"));
         }
     }
 

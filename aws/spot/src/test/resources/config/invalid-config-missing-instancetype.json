@@ -3,13 +3,13 @@
 
     "cloudApiSettings": {
         "awsAccessKeyId": "ABC",
-
+        "awsSecretAccessKey": "XYZ",
         "region": "us-west-1",
         "bidPrice": 0.0070
     },
 
     "provisioningTemplate": {
-        "instanceType": "m1.small",
+
         "amiId": "ami-018c9568",
         "subnetIds": ["subnet-44b5786b", "subnet-dcd15f97"]
     }

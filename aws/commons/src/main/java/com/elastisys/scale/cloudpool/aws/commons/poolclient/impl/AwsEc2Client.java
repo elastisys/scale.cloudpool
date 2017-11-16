@@ -81,17 +81,12 @@ public class AwsEc2Client implements Ec2Client {
     }
 
     @Override
-    public List<Instance> launchInstances(Ec2ProvisioningTemplate provisioningDetails, int count, List<Tag> tags)
+    public List<Instance> launchInstances(Ec2ProvisioningTemplate provisioningDetails, int count)
             throws AmazonClientException {
         checkArgument(isConfigured(), "can't use client before it's configured");
 
-        // no particular availability zone
-        String availabilityZone = null;
-
         List<Instance> startedInstances = new CreateInstances(awsCredentials(), region(), clientConfig(),
-                availabilityZone, provisioningDetails.getSecurityGroups(), provisioningDetails.getKeyPair(),
-                provisioningDetails.getSize(), provisioningDetails.getImage(), provisioningDetails.getEncodedUserData(),
-                count, tags).call();
+                provisioningDetails, count).call();
 
         return startedInstances;
     }

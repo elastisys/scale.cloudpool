@@ -1,16 +1,15 @@
 {
-    "name": "spot-cluster",
+    "name": "ec2-cluster",
 
     "cloudApiSettings": {
         "awsAccessKeyId": "ABC",
         "awsSecretAccessKey": "XYZ",
         "region": "us-west-1"
-
     },
 
     "provisioningTemplate": {
         "instanceType": "m1.small",
-        "amiId": "ami-018c9568",
-        "subnetIds": ["subnet-44b5786b", "subnet-dcd15f97"]
+        "amiId": "ami-018c9568"
+
     }
 }

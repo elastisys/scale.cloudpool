@@ -60,22 +60,18 @@ public interface Ec2Client {
     Instance getInstanceMetadata(String instanceId) throws NotFoundException, AmazonClientException;
 
     /**
-     * Requests a number of new EC2 {@link Instance}s to be launched and
-     * (optionally) tags the instances with a given set of {@link Tag}s.
+     * Requests a number of new EC2 {@link Instance}s to be launched from a
+     * given provisioning template.
      *
-     * @param provisioningDetails
-     *            The provisioning details on how to launch the new machine
-     *            {@link Instance}s.
+     * @param instanceTemplate
+     *            A template for the {@link Instance}s to create.
      * @param count
      *            The number of {@link Instance}s to launch.
-     * @param tags
-     *            Tags to set on the launched instances. May be empty.
      * @return The launched {@link Instance}s.
      * @throws AmazonClientException
      *             if the request failed
      */
-    List<Instance> launchInstances(Ec2ProvisioningTemplate provisioningDetails, int count, List<Tag> tags)
-            throws AmazonClientException;
+    List<Instance> launchInstances(Ec2ProvisioningTemplate instanceTemplate, int count) throws AmazonClientException;
 
     /**
      * Sets a collection of tags on an EC2 resource (such as an instance or a

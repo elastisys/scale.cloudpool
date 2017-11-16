@@ -1,15 +1,12 @@
 {
-    "name": "spot-cluster",
+    "name": "ec2-cluster",
 
     "cloudApiSettings": {
         "awsAccessKeyId": "ABC",
         "awsSecretAccessKey": "XYZ",
         "region": "us-west-1",
-        "bidPrice": 0.0070,
-        "bidReplacementPeriod": { "time": 35, "unit": "seconds" },
-        "danglingInstanceCleanupPeriod": { "time": 45, "unit": "seconds" },
-        "connectionTimeout": 7000,
-        "socketTimeout": 5000
+        "connectionTimeout": 15000,
+        "socketTimeout": 20000
     },
 
     "provisioningTemplate": {

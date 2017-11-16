@@ -9,10 +9,8 @@
     },
 
     "provisioningTemplate": {
-        "size": "m1.small",
-        "image": "ami-018c9568",
-        "keyPair": "instancekey",
-        "securityGroups": ["webserver"],
-        "encodedUserData": "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg=="
+        "instanceType": "m1.small",
+        "amiId": "ami-018c9568",
+        "subnetIds": ["subnet-44b5786b", "subnet-dcd15f97"]
     }
 }
