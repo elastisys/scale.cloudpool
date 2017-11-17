@@ -6,8 +6,6 @@ import java.util.List;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 
-import com.google.common.collect.Lists;
-
 /**
  * Convenience methods used by {@link MachinePool}-related tests.
  */
@@ -21,7 +19,7 @@ public class TestUtils {
      * @return
      */
     public static MachinePool pool(DateTime timestamp, Machine... machines) {
-        List<Machine> machineList = Lists.newArrayList(machines);
+        List<Machine> machineList = Arrays.asList(machines);
         return new MachinePool(machineList, timestamp);
     }
 

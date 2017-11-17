@@ -9,7 +9,10 @@ import static com.elastisys.scale.cloudpool.api.types.TestUtils.machineNoIp;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -20,8 +23,6 @@ import com.elastisys.scale.cloudpool.api.types.Machine.ActiveMemberPredicate;
 import com.elastisys.scale.cloudpool.api.types.Machine.AllocatedMachinePredicate;
 import com.elastisys.scale.cloudpool.api.types.Machine.MachineWithState;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Sets;
 
 /**
  * Verifies the behavior of {@link Predicate}s declared for the {@link Machine}
@@ -71,8 +72,8 @@ public class TestMachinePredicates {
                             .region("us-east-1").machineSize("m1.small").membershipStatus(membershipStatus)
                             .serviceState(serviceState).requestTime(timestamp).launchTime(timestamp)
                             .publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5")).build();
-                    Set<MachineState> allocatedStates = Sets.newHashSet(MachineState.REQUESTED, MachineState.PENDING,
-                            MachineState.RUNNING);
+                    Set<MachineState> allocatedStates = new HashSet<>(
+                            Arrays.asList(MachineState.REQUESTED, MachineState.PENDING, MachineState.RUNNING));
                     if (allocatedStates.contains(machine.getMachineState())) {
                         allocatedFound = true;
                         assertTrue(combo, isAllocated().test(machine));
@@ -112,7 +113,8 @@ public class TestMachinePredicates {
                             .region("us-east-1").machineSize("m1.small").membershipStatus(membershipStatus)
                             .serviceState(serviceState).requestTime(timestamp).launchTime(timestamp)
                             .publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5")).build();
-                    Set<MachineState> startedStates = Sets.newHashSet(MachineState.PENDING, MachineState.RUNNING);
+                    Set<MachineState> startedStates = new HashSet<>(
+                            Arrays.asList(MachineState.PENDING, MachineState.RUNNING));
                     if (startedStates.contains(machine.getMachineState())) {
                         startedFound = true;
                         assertTrue(combo, isStarted().test(machine));
@@ -151,8 +153,8 @@ public class TestMachinePredicates {
                             .region("us-east-1").machineSize("m1.small").membershipStatus(membershipStatus)
                             .serviceState(serviceState).requestTime(timestamp).launchTime(timestamp)
                             .publicIps(ips("1.2.3.4")).privateIps(ips("1.2.3.5")).build();
-                    Set<MachineState> allocatedStates = Sets.newHashSet(MachineState.REQUESTED, MachineState.PENDING,
-                            MachineState.RUNNING);
+                    Set<MachineState> allocatedStates = new HashSet<>(
+                            Arrays.asList(MachineState.REQUESTED, MachineState.PENDING, MachineState.RUNNING));
                     if (allocatedStates.contains(machine.getMachineState())
                             && machine.getMembershipStatus().isActive()) {
                         activeFound = true;

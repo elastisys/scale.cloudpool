@@ -18,7 +18,6 @@ import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AutoScalingClient;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.config.CloudApiSettings;
-import com.google.common.collect.Lists;
 
 /**
  * Fake {@link AutoScalingClient} that manages an Auto Scaling Group for a phony
@@ -67,9 +66,9 @@ public class FakeAutoScalingClient implements AutoScalingClient {
         this.autoScalingGroupName = autoScalingGroupName;
         this.launchConfig = launchConfig;
         this.desiredCapacity = desiredCapacity;
-        this.memberInstances = Lists.newArrayList(groupMmembers);
+        this.memberInstances = new ArrayList<>(groupMmembers);
 
-        this.allInstances = Lists.newArrayList(nonGroupMembers);
+        this.allInstances = new ArrayList<>(nonGroupMembers);
         this.allInstances.addAll(groupMmembers);
 
         this.idSequencer = this.allInstances.size();
@@ -93,7 +92,7 @@ public class FakeAutoScalingClient implements AutoScalingClient {
 
     @Override
     public List<Instance> getAutoScalingGroupMembers(String autoScalingGroupName) {
-        return Lists.newArrayList(this.memberInstances);
+        return new ArrayList<>(this.memberInstances);
     }
 
     /**

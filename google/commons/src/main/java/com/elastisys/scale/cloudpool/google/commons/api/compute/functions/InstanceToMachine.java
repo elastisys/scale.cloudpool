@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.google.commons.api.compute.functions;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.Machine;
@@ -14,7 +15,6 @@ import com.elastisys.scale.cloudpool.google.commons.utils.ZoneUtils;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.url.UrlUtils;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.api.client.repackaged.com.google.common.base.Function;
 import com.google.api.services.compute.model.AccessConfig;
 import com.google.api.services.compute.model.Instance;
 import com.google.api.services.compute.model.ManagedInstance;

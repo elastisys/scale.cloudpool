@@ -1,9 +1,10 @@
 package com.elastisys.scale.cloudpool.aws.ec2.functions;
 
+import java.util.function.Function;
+
 import com.amazonaws.services.ec2.model.InstanceState;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
-import com.google.common.base.Function;
 
 /**
  * {@link Function} that translates an EC2 API instance state representation to

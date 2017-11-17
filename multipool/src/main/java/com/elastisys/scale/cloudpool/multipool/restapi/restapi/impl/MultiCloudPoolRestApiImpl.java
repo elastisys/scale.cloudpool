@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 
 import javax.ws.rs.Path;
@@ -30,7 +31,6 @@ import com.elastisys.scale.cloudpool.multipool.api.CloudPoolInstance;
 import com.elastisys.scale.cloudpool.multipool.api.MultiCloudPool;
 import com.elastisys.scale.cloudpool.multipool.restapi.restapi.MultiCloudPoolRestApi;
 import com.elastisys.scale.commons.json.types.ErrorType;
-import com.google.common.base.Optional;
 import com.google.gson.JsonObject;
 
 @Path("/")

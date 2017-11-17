@@ -1,7 +1,8 @@
 package com.elastisys.scale.cloudpool.commons.basepool;
 
-import static com.google.common.base.Objects.equal;
 import static java.lang.String.format;
+
+import java.util.Objects;
 
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
@@ -26,7 +27,7 @@ public class IsSetMembershipStatusAlert extends TypeSafeMatcher<Alert> {
     public boolean matchesSafely(Alert someAlert) {
         String messagePattern = format("Membership status set to %s for machine %s", this.membershipStatus,
                 this.machineId);
-        return equal(AlertTopics.MEMBERSHIP_STATUS.name(), someAlert.getTopic())
+        return Objects.equals(AlertTopics.MEMBERSHIP_STATUS.name(), someAlert.getTopic())
                 && someAlert.getMessage().contains(messagePattern);
     }
 

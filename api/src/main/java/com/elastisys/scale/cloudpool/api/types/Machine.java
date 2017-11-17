@@ -2,12 +2,16 @@ package com.elastisys.scale.cloudpool.api.types;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Arrays.asList;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -16,10 +20,6 @@ import org.joda.time.DateTime;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Objects;
-import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
@@ -50,8 +50,8 @@ public class Machine {
      * The collection of {@link MachineState}s for which machines are considered
      * to have been allocated from the underlying infrastructure.
      */
-    public static final Set<MachineState> allocatedStates = Sets.newHashSet(MachineState.REQUESTED,
-            MachineState.PENDING, MachineState.RUNNING);
+    public static final Set<MachineState> allocatedStates = new HashSet<>(
+            asList(MachineState.REQUESTED, MachineState.PENDING, MachineState.RUNNING));
 
     /** The identifier of the {@link Machine} . */
     private final String id;
@@ -198,8 +198,8 @@ public class Machine {
         this.machineSize = machineSize;
         this.requestTime = requestTime;
         this.launchTime = launchTime;
-        this.publicIps = Optional.fromNullable(publicIps).or(new ArrayList<String>());
-        this.privateIps = Optional.fromNullable(privateIps).or(new ArrayList<String>());
+        this.publicIps = Optional.ofNullable(publicIps).orElse(new ArrayList<String>());
+        this.privateIps = Optional.ofNullable(privateIps).orElse(new ArrayList<String>());
         this.metadata = metadata;
     }
 
@@ -344,9 +344,9 @@ public class Machine {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.id, this.machineState, this.membershipStatus, this.serviceState,
-                this.cloudProvider, this.region, this.machineSize, this.launchTime, this.requestTime, this.publicIps,
-                this.privateIps, this.metadata);
+        return Objects.hash(this.id, this.machineState, this.membershipStatus, this.serviceState, this.cloudProvider,
+                this.region, this.machineSize, this.launchTime, this.requestTime, this.publicIps, this.privateIps,
+                this.metadata);
     }
 
     @Override
@@ -356,12 +356,17 @@ public class Machine {
             boolean launchtimesEqual = timestampsEqual(this.launchTime, that.launchTime);
             boolean requesttimesEqual = timestampsEqual(this.requestTime, that.requestTime);
             boolean metadataEqual = metadataEqual(this.metadata, that.metadata);
-            return Objects.equal(this.id, that.id) && Objects.equal(this.machineState, that.machineState)
-                    && Objects.equal(this.membershipStatus, that.membershipStatus)
-                    && Objects.equal(this.serviceState, that.serviceState)
-                    && Objects.equal(this.cloudProvider, that.cloudProvider) && Objects.equal(this.region, that.region)
-                    && Objects.equal(this.machineSize, that.machineSize) && launchtimesEqual && requesttimesEqual
-                    && Objects.equal(this.publicIps, that.publicIps) && Objects.equal(this.privateIps, that.privateIps)
+            return Objects.equals(this.id, that.id) //
+                    && Objects.equals(this.machineState, that.machineState) //
+                    && Objects.equals(this.membershipStatus, that.membershipStatus) //
+                    && Objects.equals(this.serviceState, that.serviceState) //
+                    && Objects.equals(this.cloudProvider, that.cloudProvider) //
+                    && Objects.equals(this.region, that.region) //
+                    && Objects.equals(this.machineSize, that.machineSize) //
+                    && launchtimesEqual && //
+                    requesttimesEqual //
+                    && Objects.equals(this.publicIps, that.publicIps) //
+                    && Objects.equals(this.privateIps, that.privateIps) //
                     && metadataEqual;
         }
         return false;
@@ -382,7 +387,7 @@ public class Machine {
      */
     private boolean metadataEqual(JsonElement m1, JsonElement m2) {
         if (m1 != null && m2 != null) {
-            return Objects.equal(m1, m2);
+            return Objects.equals(m1, m2);
         } else if (m1 == null && m2 != null) {
             return m2 == JsonNull.INSTANCE;
         } else if (m1 != null && m2 == null) {
@@ -555,8 +560,8 @@ public class Machine {
      * @see MachineState
      */
     public static class StartedMachinePredicate implements Predicate<Machine> {
-        private static final Set<MachineState> startedStates = Sets.newHashSet(MachineState.PENDING,
-                MachineState.RUNNING);
+        private static final Set<MachineState> startedStates = new HashSet<>(
+                asList(MachineState.PENDING, MachineState.RUNNING));
 
         @Override
         public boolean test(Machine machine) {
@@ -573,7 +578,7 @@ public class Machine {
      * @return
      */
     public static List<Machine> sort(Collection<Machine> machines, Comparator<Machine> comparator) {
-        List<Machine> list = Lists.newArrayList(machines);
+        List<Machine> list = new ArrayList<>(machines);
         Collections.sort(list, comparator);
         return list;
     }
@@ -645,8 +650,8 @@ public class Machine {
         private String machineSize;
         private DateTime launchTime = null;
         private DateTime requestTime = null;
-        private final List<String> publicIps = Lists.newArrayList();
-        private final List<String> privateIps = Lists.newArrayList();
+        private final List<String> publicIps = new ArrayList<>();
+        private final List<String> privateIps = new ArrayList<>();
         private JsonElement metadata = null;
 
         private Builder() {

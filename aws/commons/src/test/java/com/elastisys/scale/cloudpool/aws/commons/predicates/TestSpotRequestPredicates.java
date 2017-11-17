@@ -20,11 +20,11 @@ public class TestSpotRequestPredicates {
     @Test
     public void testInAnyOfStatesPredicateWithSingleMatchingState() {
         // make sure all valid states are recognized
-        assertTrue(SpotRequestPredicates.inAnyOfStates("active").apply(spotRequest("sir-1", "active")));
-        assertTrue(SpotRequestPredicates.inAnyOfStates("closed").apply(spotRequest("sir-1", "closed")));
-        assertTrue(SpotRequestPredicates.inAnyOfStates("cancelled").apply(spotRequest("sir-1", "cancelled")));
-        assertTrue(SpotRequestPredicates.inAnyOfStates("failed").apply(spotRequest("sir-1", "failed")));
-        assertTrue(SpotRequestPredicates.inAnyOfStates("open").apply(spotRequest("sir-1", "open")));
+        assertTrue(SpotRequestPredicates.inAnyOfStates("active").test(spotRequest("sir-1", "active")));
+        assertTrue(SpotRequestPredicates.inAnyOfStates("closed").test(spotRequest("sir-1", "closed")));
+        assertTrue(SpotRequestPredicates.inAnyOfStates("cancelled").test(spotRequest("sir-1", "cancelled")));
+        assertTrue(SpotRequestPredicates.inAnyOfStates("failed").test(spotRequest("sir-1", "failed")));
+        assertTrue(SpotRequestPredicates.inAnyOfStates("open").test(spotRequest("sir-1", "open")));
     }
 
     /**
@@ -36,21 +36,21 @@ public class TestSpotRequestPredicates {
     public void testInAnyOfStatesPredicateWithMultipleMatchingStates() {
 
         assertTrue(SpotRequestPredicates.inAnyOfStates("closed", "cancelled", "failed")
-                .apply(spotRequest("sir-1", "closed")));
+                .test(spotRequest("sir-1", "closed")));
         assertTrue(SpotRequestPredicates.inAnyOfStates("closed", "cancelled", "failed")
-                .apply(spotRequest("sir-1", "cancelled")));
+                .test(spotRequest("sir-1", "cancelled")));
         assertTrue(SpotRequestPredicates.inAnyOfStates("closed", "cancelled", "failed")
-                .apply(spotRequest("sir-1", "failed")));
+                .test(spotRequest("sir-1", "failed")));
         assertFalse(SpotRequestPredicates.inAnyOfStates("closed", "cancelled", "failed")
-                .apply(spotRequest("sir-1", "active")));
+                .test(spotRequest("sir-1", "active")));
         assertFalse(SpotRequestPredicates.inAnyOfStates("closed", "cancelled", "failed")
-                .apply(spotRequest("sir-1", "open")));
+                .test(spotRequest("sir-1", "open")));
 
-        assertTrue(SpotRequestPredicates.inAnyOfStates("active", "open").apply(spotRequest("sir-1", "active")));
-        assertTrue(SpotRequestPredicates.inAnyOfStates("active", "open").apply(spotRequest("sir-1", "open")));
-        assertFalse(SpotRequestPredicates.inAnyOfStates("active", "open").apply(spotRequest("sir-1", "closed")));
-        assertFalse(SpotRequestPredicates.inAnyOfStates("active", "open").apply(spotRequest("sir-1", "cancelled")));
-        assertFalse(SpotRequestPredicates.inAnyOfStates("active", "open").apply(spotRequest("sir-1", "failed")));
+        assertTrue(SpotRequestPredicates.inAnyOfStates("active", "open").test(spotRequest("sir-1", "active")));
+        assertTrue(SpotRequestPredicates.inAnyOfStates("active", "open").test(spotRequest("sir-1", "open")));
+        assertFalse(SpotRequestPredicates.inAnyOfStates("active", "open").test(spotRequest("sir-1", "closed")));
+        assertFalse(SpotRequestPredicates.inAnyOfStates("active", "open").test(spotRequest("sir-1", "cancelled")));
+        assertFalse(SpotRequestPredicates.inAnyOfStates("active", "open").test(spotRequest("sir-1", "failed")));
     }
 
     /**
@@ -71,30 +71,30 @@ public class TestSpotRequestPredicates {
     @Test
     public void testAllInAnyOfStatesPredicateWithSingleMatchingState() {
         // make sure all valid states are recognized
-        assertTrue(SpotRequestPredicates.allInAnyOfStates("active").apply(spotRequests()));
-        assertTrue(SpotRequestPredicates.allInAnyOfStates("active").apply(spotRequests("active")));
-        assertTrue(SpotRequestPredicates.allInAnyOfStates("active").apply(spotRequests("active", "active")));
-        assertFalse(SpotRequestPredicates.allInAnyOfStates("active").apply(spotRequests("active", "open")));
+        assertTrue(SpotRequestPredicates.allInAnyOfStates("active").test(spotRequests()));
+        assertTrue(SpotRequestPredicates.allInAnyOfStates("active").test(spotRequests("active")));
+        assertTrue(SpotRequestPredicates.allInAnyOfStates("active").test(spotRequests("active", "active")));
+        assertFalse(SpotRequestPredicates.allInAnyOfStates("active").test(spotRequests("active", "open")));
 
-        assertTrue(SpotRequestPredicates.allInAnyOfStates("closed").apply(spotRequests()));
-        assertTrue(SpotRequestPredicates.allInAnyOfStates("closed").apply(spotRequests("closed")));
-        assertTrue(SpotRequestPredicates.allInAnyOfStates("closed").apply(spotRequests("closed", "closed")));
-        assertFalse(SpotRequestPredicates.allInAnyOfStates("closed").apply(spotRequests("closed", "open")));
+        assertTrue(SpotRequestPredicates.allInAnyOfStates("closed").test(spotRequests()));
+        assertTrue(SpotRequestPredicates.allInAnyOfStates("closed").test(spotRequests("closed")));
+        assertTrue(SpotRequestPredicates.allInAnyOfStates("closed").test(spotRequests("closed", "closed")));
+        assertFalse(SpotRequestPredicates.allInAnyOfStates("closed").test(spotRequests("closed", "open")));
 
-        assertTrue(SpotRequestPredicates.allInAnyOfStates("cancelled").apply(spotRequests()));
-        assertTrue(SpotRequestPredicates.allInAnyOfStates("cancelled").apply(spotRequests("cancelled")));
-        assertTrue(SpotRequestPredicates.allInAnyOfStates("cancelled").apply(spotRequests("cancelled", "cancelled")));
-        assertFalse(SpotRequestPredicates.allInAnyOfStates("cancelled").apply(spotRequests("cancelled", "open")));
+        assertTrue(SpotRequestPredicates.allInAnyOfStates("cancelled").test(spotRequests()));
+        assertTrue(SpotRequestPredicates.allInAnyOfStates("cancelled").test(spotRequests("cancelled")));
+        assertTrue(SpotRequestPredicates.allInAnyOfStates("cancelled").test(spotRequests("cancelled", "cancelled")));
+        assertFalse(SpotRequestPredicates.allInAnyOfStates("cancelled").test(spotRequests("cancelled", "open")));
 
-        assertTrue(SpotRequestPredicates.allInAnyOfStates("failed").apply(spotRequests()));
-        assertTrue(SpotRequestPredicates.allInAnyOfStates("failed").apply(spotRequests("failed")));
-        assertTrue(SpotRequestPredicates.allInAnyOfStates("failed").apply(spotRequests("failed", "failed")));
-        assertFalse(SpotRequestPredicates.allInAnyOfStates("failed").apply(spotRequests("failed", "open")));
+        assertTrue(SpotRequestPredicates.allInAnyOfStates("failed").test(spotRequests()));
+        assertTrue(SpotRequestPredicates.allInAnyOfStates("failed").test(spotRequests("failed")));
+        assertTrue(SpotRequestPredicates.allInAnyOfStates("failed").test(spotRequests("failed", "failed")));
+        assertFalse(SpotRequestPredicates.allInAnyOfStates("failed").test(spotRequests("failed", "open")));
 
-        assertTrue(SpotRequestPredicates.allInAnyOfStates("open").apply(spotRequests()));
-        assertTrue(SpotRequestPredicates.allInAnyOfStates("open").apply(spotRequests("open")));
-        assertTrue(SpotRequestPredicates.allInAnyOfStates("open").apply(spotRequests("open", "open")));
-        assertFalse(SpotRequestPredicates.allInAnyOfStates("open").apply(spotRequests("open", "cancelled")));
+        assertTrue(SpotRequestPredicates.allInAnyOfStates("open").test(spotRequests()));
+        assertTrue(SpotRequestPredicates.allInAnyOfStates("open").test(spotRequests("open")));
+        assertTrue(SpotRequestPredicates.allInAnyOfStates("open").test(spotRequests("open", "open")));
+        assertFalse(SpotRequestPredicates.allInAnyOfStates("open").test(spotRequests("open", "cancelled")));
     }
 
     /**
@@ -104,22 +104,22 @@ public class TestSpotRequestPredicates {
      */
     @Test
     public void testAllInAnyOfStatesPredicateWithMultipleMatchingStates() {
-        assertTrue(SpotRequestPredicates.allInAnyOfStates("cancelled", "failed").apply(spotRequests()));
+        assertTrue(SpotRequestPredicates.allInAnyOfStates("cancelled", "failed").test(spotRequests()));
         assertTrue(SpotRequestPredicates.allInAnyOfStates("cancelled", "failed")
-                .apply(spotRequests("cancelled", "failed")));
+                .test(spotRequests("cancelled", "failed")));
         assertTrue(SpotRequestPredicates.allInAnyOfStates("cancelled", "failed")
-                .apply(spotRequests("cancelled", "failed", "failed", "cancelled")));
+                .test(spotRequests("cancelled", "failed", "failed", "cancelled")));
         assertFalse(SpotRequestPredicates.allInAnyOfStates("cancelled", "failed")
-                .apply(spotRequests("cancelled", "active", "failed", "failed", "cancelled")));
+                .test(spotRequests("cancelled", "active", "failed", "failed", "cancelled")));
 
         assertTrue(SpotRequestPredicates.allInAnyOfStates("open", "active")
-                .apply(spotRequests("open", "open", "active", "open")));
+                .test(spotRequests("open", "open", "active", "open")));
         assertFalse(SpotRequestPredicates.allInAnyOfStates("open", "active")
-                .apply(spotRequests("open", "open", "active", "cancelled")));
+                .test(spotRequests("open", "open", "active", "cancelled")));
         assertFalse(SpotRequestPredicates.allInAnyOfStates("open", "active")
-                .apply(spotRequests("open", "open", "active", "closed")));
+                .test(spotRequests("open", "open", "active", "closed")));
         assertFalse(SpotRequestPredicates.allInAnyOfStates("open", "active")
-                .apply(spotRequests("open", "open", "active", "failed")));
+                .test(spotRequests("open", "open", "active", "failed")));
     }
 
     @Test(expected = IllegalArgumentException.class)

@@ -4,6 +4,8 @@ import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -22,9 +24,6 @@ import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
 import com.elastisys.scale.commons.openstack.OSClientFactory;
-import com.google.common.base.Predicates;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 /**
  * OpenStack task that, when executed, deletes a {@link Server}, releases any
@@ -79,7 +78,7 @@ public class DeleteServerRequest extends AbstractOpenstackRequest<Void> {
         int fixedDelay = 5;
         int maxRetries = 12;
         Retryable<Boolean> awaitTermination = Retryers.fixedDelayRetryer(taskName, serverExistsRequester, fixedDelay,
-                SECONDS, maxRetries, Predicates.equalTo(false));
+                SECONDS, maxRetries, returnValue -> returnValue == false);
 
         try {
             awaitTermination.call();
@@ -122,7 +121,7 @@ public class DeleteServerRequest extends AbstractOpenstackRequest<Void> {
      * @return
      */
     private Collection<String> serverIps(Server server) {
-        List<String> serverIps = Lists.newLinkedList();
+        List<String> serverIps = new LinkedList<>();
         for (List<? extends Address> addressGroup : server.getAddresses().getAddresses().values()) {
             for (Address address : addressGroup) {
                 serverIps.add(address.getAddr());
@@ -139,7 +138,7 @@ public class DeleteServerRequest extends AbstractOpenstackRequest<Void> {
      *         addresses and values are {@link FloatingIP} objects.
      */
     private Map<String, FloatingIP> tenantFloatingIps(ComputeFloatingIPService floatingIpApi) {
-        Map<String, FloatingIP> ipToFloatingIp = Maps.newHashMap();
+        Map<String, FloatingIP> ipToFloatingIp = new HashMap<>();
         List<? extends FloatingIP> floatingIps = floatingIpApi.list();
         for (FloatingIP floatingIP : floatingIps) {
             ipToFloatingIp.put(floatingIP.getFloatingIpAddress(), floatingIP);

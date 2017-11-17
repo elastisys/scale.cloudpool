@@ -2,6 +2,8 @@ package com.elastisys.scale.cloudpool.openstack.requests;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import java.util.function.Predicate;
+
 import org.openstack4j.api.OSClient;
 import org.openstack4j.api.compute.ComputeFloatingIPService;
 import org.openstack4j.api.exceptions.ResponseException;
@@ -17,7 +19,6 @@ import com.elastisys.scale.cloudpool.openstack.tasks.ServerIpAddressRequester;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
 import com.elastisys.scale.commons.openstack.OSClientFactory;
-import com.google.common.base.Predicate;
 
 /**
  * A request that, when called, tries to assign a floating IP address to a

@@ -2,10 +2,10 @@ package com.elastisys.scale.cloudpool.azure.driver.config;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Objects;
 
 /**
  * Settings specific to launching Linux VMs.
@@ -129,7 +129,7 @@ public class LinuxSettings {
      * to bootstrap a VM on <a href=
      * "https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-using-cloud-init">Linux
      * VMs that support this format</a>. May be <code>null</code>.
-     * 
+     *
      * @return
      */
     public String getCustomData() {
@@ -152,19 +152,18 @@ public class LinuxSettings {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(getRootUserName(), this.publicSshKey, this.password, this.customData,
-                this.customScript);
+        return Objects.hash(getRootUserName(), this.publicSshKey, this.password, this.customData, this.customScript);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof LinuxSettings) {
             LinuxSettings that = (LinuxSettings) obj;
-            return Objects.equal(getRootUserName(), that.getRootUserName())
-                    && Objects.equal(this.publicSshKey, that.publicSshKey)
-                    && Objects.equal(this.password, that.password) //
-                    && Objects.equal(this.customData, that.customData) //
-                    && Objects.equal(this.customScript, that.customScript);
+            return Objects.equals(getRootUserName(), that.getRootUserName()) //
+                    && Objects.equals(this.publicSshKey, that.publicSshKey) //
+                    && Objects.equals(this.password, that.password) //
+                    && Objects.equals(this.customData, that.customData) //
+                    && Objects.equals(this.customScript, that.customScript);
 
         }
         return false;

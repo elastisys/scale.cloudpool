@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +40,6 @@ import com.elastisys.scale.commons.net.smtp.SmtpClientAuthentication;
 import com.elastisys.scale.commons.net.ssl.BasicCredentials;
 import com.elastisys.scale.commons.net.ssl.CertificateCredentials;
 import com.elastisys.scale.commons.util.file.FileUtils;
-import com.google.common.base.Optional;
 import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonObject;
 

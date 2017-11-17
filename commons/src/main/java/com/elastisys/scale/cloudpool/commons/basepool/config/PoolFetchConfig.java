@@ -2,13 +2,13 @@ package com.elastisys.scale.cloudpool.commons.basepool.config;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
-import com.google.common.base.Objects;
 
 /**
  * Control's the {@link CloudPool}'s behavior with respect to how often to
@@ -84,16 +84,16 @@ public class PoolFetchConfig {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.retries, this.refreshInterval, this.reachabilityTimeout);
+        return Objects.hash(this.retries, this.refreshInterval, this.reachabilityTimeout);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof PoolFetchConfig) {
             PoolFetchConfig that = (PoolFetchConfig) obj;
-            return Objects.equal(this.retries, that.retries)
-                    && Objects.equal(this.refreshInterval, that.refreshInterval)
-                    && Objects.equal(this.reachabilityTimeout, that.reachabilityTimeout);
+            return Objects.equals(this.retries, that.retries) //
+                    && Objects.equals(this.refreshInterval, that.refreshInterval) //
+                    && Objects.equals(this.reachabilityTimeout, that.reachabilityTimeout);
 
         }
         return false;

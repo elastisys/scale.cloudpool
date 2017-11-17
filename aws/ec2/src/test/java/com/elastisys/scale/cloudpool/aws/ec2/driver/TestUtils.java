@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.aws.ec2.driver;
 
 import static java.util.Arrays.asList;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,6 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 
 public class TestUtils {
     /** Sample AWS access key id. */
@@ -65,7 +65,7 @@ public class TestUtils {
     }
 
     public static List<Instance> ec2Instances(Instance... instances) {
-        return Lists.newArrayList(instances);
+        return new ArrayList<>(Arrays.asList(instances));
     }
 
     public static Instance ec2Instance(String id, String state, List<Tag> tags) {

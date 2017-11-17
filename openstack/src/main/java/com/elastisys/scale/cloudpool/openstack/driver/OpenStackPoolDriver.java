@@ -31,10 +31,8 @@ import com.elastisys.scale.cloudpool.openstack.driver.config.CloudApiSettings;
 import com.elastisys.scale.cloudpool.openstack.driver.config.ProvisioningTemplate;
 import com.elastisys.scale.cloudpool.openstack.functions.ServerToMachine;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 
 /**
  * A {@link CloudPoolDriver} implementation that operates against OpenStack.
@@ -106,7 +104,7 @@ public class OpenStackPoolDriver implements CloudPoolDriver {
     public List<Machine> startMachines(int count) throws StartMachinesException, CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured driver");
 
-        List<Machine> startedMachines = Lists.newArrayList();
+        List<Machine> startedMachines = new ArrayList<>();
         try {
             for (int i = 0; i < count; i++) {
                 // tag new server with cloud pool membership

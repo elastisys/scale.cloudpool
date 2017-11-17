@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -47,7 +48,6 @@ import com.elastisys.scale.cloudpool.api.types.TestUtils;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.ErrorType;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.base.Optional;
 import com.google.gson.JsonObject;
 
 /**

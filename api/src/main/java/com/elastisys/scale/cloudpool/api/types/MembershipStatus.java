@@ -1,8 +1,9 @@
 package com.elastisys.scale.cloudpool.api.types;
 
+import java.util.Objects;
+
 import com.elastisys.scale.cloudpool.api.CloudPool;
-import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
+import com.elastisys.scale.commons.json.JsonUtils;
 
 /**
  * The pool membership status indicates if a {@link Machine} needs to be given
@@ -136,14 +137,15 @@ public class MembershipStatus {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.active, this.evictable);
+        return Objects.hash(this.active, this.evictable);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof MembershipStatus) {
             MembershipStatus that = (MembershipStatus) obj;
-            return Objects.equal(this.active, that.active) && Objects.equal(this.evictable, that.evictable);
+            return Objects.equals(this.active, that.active) //
+                    && Objects.equals(this.evictable, that.evictable);
 
         }
         return false;
@@ -151,6 +153,6 @@ public class MembershipStatus {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper("").add("active", this.active).add("evictable", this.evictable).toString();
+        return JsonUtils.toString(JsonUtils.toJson(this));
     }
 }

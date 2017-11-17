@@ -14,8 +14,10 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -44,8 +46,6 @@ import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.host.HostUtils;
 import com.elastisys.scale.commons.rest.client.RestClients;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import com.google.gson.JsonObject;
 
@@ -128,7 +128,7 @@ public class TestRestApi {
     @Test
     public void testGetConfigBeforeSet() throws IOException {
         // set up mocked cloud pool response
-        Optional<JsonObject> config = Optional.absent();
+        Optional<JsonObject> config = Optional.empty();
         when(cloudPool.getConfiguration()).thenReturn(config);
 
         Client client = RestClients.httpsNoAuth();
@@ -258,7 +258,7 @@ public class TestRestApi {
     @Test
     public void testGetPool() {
         // set up mocked cloud pool response
-        List<Machine> machines = Lists.newArrayList();
+        List<Machine> machines = new ArrayList<>();
         final DateTime now = UtcTime.now();
         final DateTime anHourAgo = now.minusHours(1);
         machines.add(Machine.builder().id("i-1").machineState(MachineState.RUNNING).cloudProvider("AWS-EC2")

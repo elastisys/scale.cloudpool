@@ -1,10 +1,10 @@
 package com.elastisys.scale.cloudpool.api.types;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
-import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
+import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
@@ -67,7 +67,7 @@ public class CloudPoolMetadata {
 
     /**
      * A list of supported API versions.
-     * 
+     *
      * @return
      */
     public List<String> supportedApiVersions() {
@@ -76,15 +76,15 @@ public class CloudPoolMetadata {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.poolIdentifier, this.supportedApiVersions);
+        return Objects.hash(this.poolIdentifier, this.supportedApiVersions);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof CloudPoolMetadata) {
             CloudPoolMetadata that = (CloudPoolMetadata) obj;
-            return Objects.equal(this.poolIdentifier, that.poolIdentifier)
-                    && Objects.equal(this.supportedApiVersions, that.supportedApiVersions);
+            return Objects.equals(this.poolIdentifier, that.poolIdentifier)
+                    && Objects.equals(this.supportedApiVersions, that.supportedApiVersions);
         } else {
             return false;
         }
@@ -92,7 +92,6 @@ public class CloudPoolMetadata {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this).add("poolIdentifier", this.poolIdentifier)
-                .add("supportedApiVersions", this.supportedApiVersions).toString();
+        return JsonUtils.toString(JsonUtils.toJson(this));
     }
 }

@@ -1,11 +1,11 @@
 package com.elastisys.scale.cloudpool.commons.basepool.config;
 
-import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkArgument;
+
+import java.util.Objects;
 
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Objects;
 
 /**
  * The section of a {@link BaseCloudPoolConfig} that describes how to
@@ -44,14 +44,14 @@ public class ScaleInConfig {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.victimSelectionPolicy);
+        return Objects.hash(this.victimSelectionPolicy);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof ScaleInConfig) {
             ScaleInConfig that = (ScaleInConfig) obj;
-            return equal(this.victimSelectionPolicy, that.victimSelectionPolicy);
+            return Objects.equals(this.victimSelectionPolicy, that.victimSelectionPolicy);
         }
         return false;
     }

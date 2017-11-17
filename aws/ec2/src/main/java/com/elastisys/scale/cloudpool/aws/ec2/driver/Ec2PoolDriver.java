@@ -38,7 +38,6 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesExcept
 import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 
 /**
  * A {@link CloudPoolDriver} implementation that operates against the AWS EC2
@@ -97,21 +96,21 @@ public class Ec2PoolDriver implements CloudPoolDriver {
         checkState(isConfigured(), "attempt to use unconfigured Ec2PoolDriver");
 
         // filter instances on cloud pool tag
-        return Lists.transform(getPoolInstances(), new InstanceToMachine());
+        return getPoolInstances().stream().map(new InstanceToMachine()).collect(Collectors.toList());
     }
 
     @Override
     public List<Machine> startMachines(int count) throws StartMachinesException {
         checkState(isConfigured(), "attempt to use unconfigured Ec2PoolDriver");
 
-        List<Machine> startedMachines = Lists.newArrayList();
+        List<Machine> startedMachines = new ArrayList<>();
         try {
             // set tag to make sure instances are recognized as pool members
             Ec2ProvisioningTemplate template = provisioningTemplate();
             template = template.withTag(ScalingTags.CLOUD_POOL_TAG, getPoolName());
 
             List<Instance> newInstances = this.client.launchInstances(template, count);
-            startedMachines = Lists.transform(newInstances, new InstanceToMachine());
+            startedMachines = newInstances.stream().map(new InstanceToMachine()).collect(Collectors.toList());
 
             // set instance Name tags
             for (Instance instance : newInstances) {

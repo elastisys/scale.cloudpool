@@ -6,6 +6,7 @@ import static com.elastisys.scale.cloudpool.api.types.Machine.isEvictable;
 import static com.elastisys.scale.cloudpool.api.types.MachineState.REQUESTED;
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -19,7 +20,6 @@ import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelector;
-import com.google.common.collect.Lists;
 
 /**
  * A {@link ResizePlanner} determines necessary scaling actions needed to take a
@@ -98,7 +98,7 @@ public class ResizePlanner {
         checkArgument(desiredSize >= 0, "desired pool size must be >= 0");
 
         int toRequest = 0;
-        List<Machine> toTerminate = Lists.newArrayList();
+        List<Machine> toTerminate = new ArrayList<>();
 
         List<Machine> activeMachines = this.machinePool.getActiveMachines();
         int active = activeMachines.size();
@@ -140,7 +140,7 @@ public class ResizePlanner {
      */
     private List<Machine> selectVictims(int excessMachines) {
         LOG.debug("need {} victim(s) to reach desired size", excessMachines);
-        List<Machine> victims = Lists.newArrayList();
+        List<Machine> victims = new ArrayList<>();
         List<Machine> candidates = getTerminationCandidates();
         LOG.debug("there are {} evictable candidate(s)", candidates.size());
         // the evictable candidate set can be smaller than excessMachines

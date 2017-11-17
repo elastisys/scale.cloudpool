@@ -2,10 +2,10 @@ package com.elastisys.scale.cloudpool.azure.driver.config;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Objects;
 
 /**
  * Settings specific to launching Windows VMs.
@@ -99,16 +99,16 @@ public class WindowsSettings {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(getAdminUserName(), this.password, this.customScript);
+        return Objects.hash(getAdminUserName(), this.password, this.customScript);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof WindowsSettings) {
             WindowsSettings that = (WindowsSettings) obj;
-            return Objects.equal(getAdminUserName(), that.getAdminUserName())
-                    && Objects.equal(this.password, that.password)
-                    && Objects.equal(this.customScript, that.customScript);
+            return Objects.equals(getAdminUserName(), that.getAdminUserName()) //
+                    && Objects.equals(this.password, that.password) //
+                    && Objects.equals(this.customScript, that.customScript);
 
         }
         return false;

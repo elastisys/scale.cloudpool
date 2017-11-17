@@ -8,6 +8,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,6 @@ import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.multipool.api.CloudPoolInstance;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Optional;
 import com.google.gson.JsonObject;
 
 /**

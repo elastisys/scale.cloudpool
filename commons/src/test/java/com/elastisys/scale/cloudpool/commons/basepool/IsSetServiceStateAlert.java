@@ -1,7 +1,8 @@
 package com.elastisys.scale.cloudpool.commons.basepool;
 
-import static com.google.common.base.Objects.equal;
 import static java.lang.String.format;
+
+import java.util.Objects;
 
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
@@ -25,7 +26,7 @@ public class IsSetServiceStateAlert extends TypeSafeMatcher<Alert> {
     @Override
     public boolean matchesSafely(Alert someAlert) {
         String messagePattern = format("Service state set to %s for machine %s", this.serviceState, this.machineId);
-        return equal(AlertTopics.SERVICE_STATE.name(), someAlert.getTopic())
+        return Objects.equals(AlertTopics.SERVICE_STATE.name(), someAlert.getTopic())
                 && someAlert.getMessage().contains(messagePattern);
     }
 

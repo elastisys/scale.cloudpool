@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.ec2.driver;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -17,7 +18,6 @@ import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2Client;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTemplate;
-import com.google.common.collect.Lists;
 
 /**
  * Fake {@link Ec2Client} that manages instances for a phony AWS account.
@@ -39,7 +39,7 @@ public class FakeEc2Client implements Ec2Client {
 
     @Override
     public List<Instance> getInstances(List<Filter> filters) throws AmazonClientException {
-        return Lists.newArrayList(this.instances);
+        return new ArrayList<>(this.instances);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class FakeEc2Client implements Ec2Client {
     @Override
     public List<Instance> launchInstances(Ec2ProvisioningTemplate provisioningDetails, int count)
             throws AmazonClientException {
-        List<Instance> launchedInstances = Lists.newArrayList();
+        List<Instance> launchedInstances = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             int idNum = ++this.idSequencer;
             Instance newInstance = new Instance().withInstanceId("i-" + idNum)
@@ -83,7 +83,7 @@ public class FakeEc2Client implements Ec2Client {
     }
 
     private void replaceTags(Instance instance, List<Tag> tags) {
-        List<Tag> filteredTags = Lists.newArrayList(instance.getTags());
+        List<Tag> filteredTags = new ArrayList<>(instance.getTags());
 
         // first remove any old occurrences of updated tags
         Iterator<Tag> iterator = filteredTags.iterator();

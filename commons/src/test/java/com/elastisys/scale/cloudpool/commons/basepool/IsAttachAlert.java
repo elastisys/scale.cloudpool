@@ -1,7 +1,8 @@
 package com.elastisys.scale.cloudpool.commons.basepool;
 
-import static com.google.common.base.Objects.equal;
 import static java.lang.String.format;
+
+import java.util.Objects;
 
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
@@ -22,7 +23,7 @@ public class IsAttachAlert extends TypeSafeMatcher<Alert> {
     @Override
     public boolean matchesSafely(Alert someAlert) {
         String messagePattern = format("Attached machine %s", this.machineId);
-        return equal(AlertTopics.RESIZE.name(), someAlert.getTopic())
+        return Objects.equals(AlertTopics.RESIZE.name(), someAlert.getTopic())
                 && someAlert.getMessage().contains(messagePattern);
     }
 

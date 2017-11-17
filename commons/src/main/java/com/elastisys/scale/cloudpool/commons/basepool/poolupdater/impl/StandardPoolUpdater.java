@@ -7,6 +7,7 @@ import static java.lang.String.format;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -42,8 +43,6 @@ import com.elastisys.scale.commons.net.alerter.AlertSeverity;
 import com.elastisys.scale.commons.net.alerter.Alerter;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonElement;
 
@@ -471,7 +470,7 @@ public class StandardPoolUpdater implements PoolUpdater {
 
         String message = String.format("%d machine(s) were requested from cloud pool", startedMachines.size());
         LOG.info(message);
-        Map<String, JsonElement> tags = Maps.newHashMap();
+        Map<String, JsonElement> tags = new HashMap<>();
         List<String> startedMachineIds = startedMachines.stream().map(Machine::getId).collect(Collectors.toList());
         tags.put("requestedMachines", JsonUtils.toJson(startedMachineIds));
         tags.put("poolMembers", poolMembersTag());
@@ -508,8 +507,8 @@ public class StandardPoolUpdater implements PoolUpdater {
      * @param machineId
      */
     void terminationAlert(String machineId) {
-        Map<String, JsonElement> tags = Maps.newHashMap();
-        List<String> machineIdList = Lists.newArrayList(machineId);
+        Map<String, JsonElement> tags = new HashMap<>();
+        List<String> machineIdList = Arrays.asList(machineId);
         tags.put("terminatedMachines", JsonUtils.toJson(machineIdList));
         tags.put("poolMembers", poolMembersTag());
         String message = String.format("Terminated machine %s.", machineId);
@@ -528,7 +527,7 @@ public class StandardPoolUpdater implements PoolUpdater {
         String message = String.format("%d machine(s) were terminated in cloud pool: %s", terminatedMachineIds.size(),
                 terminatedMachineIds);
         LOG.info(message);
-        Map<String, JsonElement> tags = Maps.newHashMap();
+        Map<String, JsonElement> tags = new HashMap<>();
         tags.put("terminatedMachines", JsonUtils.toJson(terminatedMachineIds));
         tags.put("poolMembers", poolMembersTag());
         this.eventBus

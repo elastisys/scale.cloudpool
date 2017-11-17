@@ -6,20 +6,18 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 
+import java.util.function.Function;
+
 import org.joda.time.DateTime;
 import org.junit.Test;
 
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.base.Function;
 import com.google.gson.JsonObject;
 
 /**
  * Verifies the behavior of {@link Function}s declared for the {@link Machine}
  * class.
- *
- *
- *
  */
 public class TestMachineFunctions {
 

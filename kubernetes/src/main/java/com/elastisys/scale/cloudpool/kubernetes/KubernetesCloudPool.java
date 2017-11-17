@@ -6,8 +6,10 @@ import static com.elastisys.scale.commons.net.alerter.AlertSeverity.INFO;
 import static com.elastisys.scale.commons.net.alerter.AlertSeverity.WARN;
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
@@ -47,8 +49,6 @@ import com.elastisys.scale.commons.net.alerter.AlertSeverity;
 import com.elastisys.scale.commons.net.alerter.Alerter;
 import com.elastisys.scale.commons.net.alerter.multiplexing.MultiplexingAlerter;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.base.Optional;
-import com.google.common.collect.Maps;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonElement;
@@ -230,10 +230,10 @@ public class KubernetesCloudPool implements CloudPool {
     @Override
     public Optional<JsonObject> getConfiguration() {
         if (this.config == null) {
-            return Optional.absent();
+            return Optional.empty();
         }
 
-        return Optional.fromNullable(JsonUtils.toJson(this.config).getAsJsonObject());
+        return Optional.ofNullable(JsonUtils.toJson(this.config).getAsJsonObject());
     }
 
     @Override
@@ -428,7 +428,7 @@ public class KubernetesCloudPool implements CloudPool {
      * @return
      */
     private Map<String, JsonElement> standardAlertMetadata() {
-        Map<String, JsonElement> standardTags = Maps.newHashMap();
+        Map<String, JsonElement> standardTags = new HashMap<>();
         standardTags.put("apiServer", JsonUtils.toJson(config().getApiServerUrl()));
         standardTags.put("namespace", JsonUtils.toJson(config().getPodPool().getNamespace()));
         standardTags.put("apiObject", JsonUtils.toJson(config().getPodPool().getApiObject()));

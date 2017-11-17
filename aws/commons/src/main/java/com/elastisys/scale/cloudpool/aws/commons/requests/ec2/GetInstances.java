@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.ec2;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -12,7 +13,6 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
-import com.google.common.collect.Lists;
 
 /**
  * A {@link Callable} task that, when executed, requests meta data for AWS EC2
@@ -148,7 +148,7 @@ public class GetInstances extends AmazonEc2Request<List<Instance>> {
 
     @Override
     public List<Instance> call() {
-        List<Instance> instances = Lists.newArrayList();
+        List<Instance> instances = new ArrayList<>();
         DescribeInstancesRequest request = new DescribeInstancesRequest();
         request.withInstanceIds(this.instanceIds);
         request.withFilters(this.filters);
@@ -157,7 +157,7 @@ public class GetInstances extends AmazonEc2Request<List<Instance>> {
         do {
             DescribeInstancesResult result = getClient().getApi().describeInstances(request);
             instances.addAll(instances(result));
-            moreResults = (result.getNextToken() != null) && !result.getNextToken().equals("");
+            moreResults = result.getNextToken() != null && !result.getNextToken().equals("");
             request.setNextToken(result.getNextToken());
         } while (moreResults);
 
@@ -165,7 +165,7 @@ public class GetInstances extends AmazonEc2Request<List<Instance>> {
     }
 
     private List<Instance> instances(DescribeInstancesResult result) {
-        List<Instance> instances = Lists.newArrayList();
+        List<Instance> instances = new ArrayList<>();
         List<Reservation> reservations = result.getReservations();
         for (Reservation reservation : reservations) {
             instances.addAll(reservation.getInstances());

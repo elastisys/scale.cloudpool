@@ -46,7 +46,6 @@ import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.client.AutoScalingClient;
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.config.ProvisioningTemplate;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
-import com.elastisys.scale.cloudpool.aws.commons.functions.AwsAutoScalingFunctions;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
@@ -54,7 +53,6 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.collect.Lists;
 
 /**
  * Verifies the operational behavior of the {@link AwsAsPoolDriver}.
@@ -655,8 +653,11 @@ public class TestAwsAsDriverOperation {
     private void setUpMockedAutoScalingGroup(String autoScalingGroupName, LaunchConfiguration launchConfig,
             int desiredCapacity, List<Instance> memberInstances, List<Instance> nonMemberInstances) {
         AutoScalingGroup autoScalingGroup = group(autoScalingGroupName, launchConfig, desiredCapacity, memberInstances);
-        LOG.debug("setting up mocked group: {}",
-                Lists.transform(autoScalingGroup.getInstances(), AwsAutoScalingFunctions.toAutoScalingInstanceId()));
+        LOG.debug("setting up mocked group: {}", autoScalingGroup.getInstances().stream()
+                .map(com.amazonaws.services.autoscaling.model.Instance::getInstanceId).collect(Collectors.toList()));
+
+        // Lists.transform(autoScalingGroup.getInstances(),
+        // AwsAutoScalingFunctions.toAutoScalingInstanceId()));
 
         when(this.mockAwsClient.getAutoScalingGroup(autoScalingGroupName)).thenReturn(autoScalingGroup);
         when(this.mockAwsClient.getLaunchConfiguration(launchConfig.getLaunchConfigurationName()))

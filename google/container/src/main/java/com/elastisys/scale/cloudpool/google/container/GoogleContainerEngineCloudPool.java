@@ -8,9 +8,11 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
@@ -45,8 +47,6 @@ import com.elastisys.scale.commons.net.alerter.multiplexing.MultiplexingAlerter;
 import com.elastisys.scale.commons.net.retryable.Retryers;
 import com.elastisys.scale.commons.net.url.UrlUtils;
 import com.google.api.services.container.model.Cluster;
-import com.google.common.base.Optional;
-import com.google.common.collect.Maps;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonElement;
@@ -110,7 +110,7 @@ public class GoogleContainerEngineCloudPool implements CloudPool {
             ScheduledExecutorService executor) {
         this.client = gkeClient;
         this.executor = executor;
-        this.eventBus = Optional.fromNullable(eventBus).or(new AsyncEventBus(this.executor));
+        this.eventBus = Optional.ofNullable(eventBus).orElse(new AsyncEventBus(this.executor));
 
         this.alerter = new MultiplexingAlerter();
         this.eventBus.register(this.alerter);
@@ -151,9 +151,9 @@ public class GoogleContainerEngineCloudPool implements CloudPool {
     @Override
     public Optional<JsonObject> getConfiguration() {
         if (this.config == null) {
-            return Optional.absent();
+            return Optional.empty();
         }
-        return Optional.fromNullable(JsonUtils.toJson(this.config).getAsJsonObject());
+        return Optional.ofNullable(JsonUtils.toJson(this.config).getAsJsonObject());
     }
 
     @Override
@@ -289,7 +289,7 @@ public class GoogleContainerEngineCloudPool implements CloudPool {
      * @return
      */
     Map<String, JsonElement> standardAlertTags() {
-        Map<String, JsonElement> standardTags = Maps.newHashMap();
+        Map<String, JsonElement> standardTags = new HashMap<>();
         standardTags.put("cloudPoolName", JsonUtils.toJson(this.config.getName()));
         standardTags.put("containerCluster", JsonUtils.toJson(this.config.getCluster()));
         return standardTags;
@@ -372,8 +372,8 @@ public class GoogleContainerEngineCloudPool implements CloudPool {
                 ensureClusterUpdateable(cluster);
 
                 doUpdate(cluster, targetSize);
-                this.eventBus.post(AlertBuilder.create()
-                        .topic(RESIZE.name()).severity(INFO).message(String
+                this.eventBus.post(AlertBuilder
+                        .create().topic(RESIZE.name()).severity(INFO).message(String
                                 .format("container cluster size updated: %d -> %d", cluster.getTotalSize(), targetSize))
                         .build());
             }

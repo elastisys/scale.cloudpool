@@ -1,8 +1,9 @@
 package com.elastisys.scale.cloudpool.api.types;
 
+import java.util.Objects;
+
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Objects;
 
 /**
  * Represents an execution status for a {@link CloudPool}.
@@ -52,14 +53,15 @@ public class CloudPoolStatus {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.started, this.configured);
+        return Objects.hash(this.started, this.configured);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof CloudPoolStatus) {
             CloudPoolStatus that = (CloudPoolStatus) obj;
-            return Objects.equal(this.started, that.started) && Objects.equal(this.configured, that.configured);
+            return Objects.equals(this.started, that.started) //
+                    && Objects.equals(this.configured, that.configured);
         }
         return false;
     }

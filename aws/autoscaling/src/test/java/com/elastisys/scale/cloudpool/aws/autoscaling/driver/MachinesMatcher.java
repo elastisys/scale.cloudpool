@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.autoscaling.driver;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.hamcrest.Description;
@@ -10,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
-import com.google.common.collect.Lists;
 
 /**
  * Hamcrest matcher that will match that any collection of {@link Machine}s that
@@ -62,6 +62,6 @@ public class MachinesMatcher extends TypeSafeMatcher<List<Machine>> {
      */
     @Factory
     public static <T> Matcher<List<Machine>> machines(String... expectedIds) {
-        return new MachinesMatcher(Lists.newArrayList(expectedIds));
+        return new MachinesMatcher(Arrays.asList(expectedIds));
     }
 }

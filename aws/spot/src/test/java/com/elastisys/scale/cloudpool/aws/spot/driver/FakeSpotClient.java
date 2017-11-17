@@ -33,7 +33,6 @@ import com.elastisys.scale.cloudpool.api.NotFoundException;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingFilters;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTemplate;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
-import com.google.common.collect.Lists;
 
 /**
  * A fake {@link SpotClient} that can be set up to simulate an EC2 account with
@@ -95,7 +94,7 @@ public class FakeSpotClient implements SpotClient {
 
     @Override
     public List<Instance> getInstances(List<Filter> filters) throws AmazonClientException {
-        List<Instance> instances = Lists.newArrayList(this.instances.values());
+        List<Instance> instances = new ArrayList<>(this.instances.values());
         // filter out instances that don't match all filters
         Iterator<Instance> iterator = instances.iterator();
         while (iterator.hasNext()) {
@@ -127,7 +126,7 @@ public class FakeSpotClient implements SpotClient {
     @Override
     public List<Instance> launchInstances(Ec2ProvisioningTemplate template, int count) throws AmazonClientException {
 
-        List<Instance> launchedInstances = Lists.newArrayList();
+        List<Instance> launchedInstances = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             int idNum = ++this.idSequencer;
             String id = "i-" + idNum;
@@ -216,7 +215,7 @@ public class FakeSpotClient implements SpotClient {
 
     @Override
     public List<SpotInstanceRequest> getSpotInstanceRequests(Collection<Filter> filters) throws AmazonClientException {
-        List<SpotInstanceRequest> requests = Lists.newArrayList(this.spotRequests.values());
+        List<SpotInstanceRequest> requests = new ArrayList<>(this.spotRequests.values());
         // filter out requests that don't match all filters
         Iterator<SpotInstanceRequest> iterator = requests.iterator();
         while (iterator.hasNext()) {
@@ -237,7 +236,7 @@ public class FakeSpotClient implements SpotClient {
     @Override
     public List<SpotInstanceRequest> placeSpotRequests(double bidPrice, Ec2ProvisioningTemplate template, int count)
             throws AmazonClientException {
-        List<SpotInstanceRequest> requests = Lists.newArrayList();
+        List<SpotInstanceRequest> requests = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             String id = "sir-" + (System.currentTimeMillis() + count);
             SpotInstanceRequest request = new SpotInstanceRequest().withSpotInstanceRequestId(id)

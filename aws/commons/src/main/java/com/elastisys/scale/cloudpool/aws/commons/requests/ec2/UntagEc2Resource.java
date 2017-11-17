@@ -12,7 +12,6 @@ import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.DeleteTagsRequest;
 import com.amazonaws.services.ec2.model.Tag;
-import com.google.common.collect.Lists;
 
 /**
  * A {@link Callable} task that, when executed, deletes {@link Tag}s from an EC2
@@ -25,19 +24,19 @@ public class UntagEc2Resource extends AmazonEc2Request<Void> {
     private final String resourceId;
 
     /** The tags to remove from the resource. */
-    private List<Tag> tags = Lists.newArrayList();
+    private List<Tag> tags = new ArrayList<>();
 
     public UntagEc2Resource(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig,
             String resourceId, Tag... tags) {
         this(awsCredentials, region, clientConfig, resourceId,
-                (tags == null ? new ArrayList<Tag>() : Arrays.asList(tags)));
+                tags == null ? new ArrayList<Tag>() : Arrays.asList(tags));
     }
 
     public UntagEc2Resource(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig,
             String resourceId, List<Tag> tags) {
         super(awsCredentials, region, clientConfig);
         this.resourceId = resourceId;
-        this.tags = Lists.newArrayList(tags);
+        this.tags = new ArrayList<>(tags);
     }
 
     @Override

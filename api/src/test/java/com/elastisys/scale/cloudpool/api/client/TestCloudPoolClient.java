@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.jetty.server.Server;
 import org.joda.time.DateTime;
@@ -33,7 +34,6 @@ import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.host.HostUtils;
 import com.elastisys.scale.commons.net.http.client.AuthenticatedHttpClient;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.base.Optional;
 import com.google.common.io.Resources;
 import com.google.gson.JsonObject;
 
@@ -126,7 +126,7 @@ public class TestCloudPoolClient {
 
     @Test
     public void getConfigWhenNoneIsSet() {
-        Optional<JsonObject> missingConfig = Optional.absent();
+        Optional<JsonObject> missingConfig = Optional.empty();
         when(cloudPool.getConfiguration()).thenReturn(missingConfig);
 
         assertThat(client.getConfiguration(), is(missingConfig));

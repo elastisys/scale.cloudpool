@@ -1,15 +1,14 @@
 package com.elastisys.scale.cloudpool.aws.spot.driver.config;
 
-import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.elastisys.scale.cloudpool.aws.spot.driver.SpotPoolDriver;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
-import com.google.common.base.Objects;
-import com.google.common.base.Optional;
 
 /**
  * Configuration for a {@link SpotPoolDriver}.
@@ -207,7 +206,7 @@ public class CloudApiSettings {
      * @return
      */
     public TimeInterval getBidReplacementPeriod() {
-        return Optional.fromNullable(this.bidReplacementPeriod).or(DEFAULT_BID_REPLACEMENT_PERIOD);
+        return Optional.ofNullable(this.bidReplacementPeriod).orElse(DEFAULT_BID_REPLACEMENT_PERIOD);
     }
 
     /**
@@ -217,7 +216,7 @@ public class CloudApiSettings {
      * @return
      */
     public TimeInterval getDanglingInstanceCleanupPeriod() {
-        return Optional.fromNullable(this.danglingInstanceCleanupPeriod).or(DEFAULT_DANGLING_INSTANCE_CLEANUP_PERIOD);
+        return Optional.ofNullable(this.danglingInstanceCleanupPeriod).orElse(DEFAULT_DANGLING_INSTANCE_CLEANUP_PERIOD);
     }
 
     /**
@@ -226,7 +225,7 @@ public class CloudApiSettings {
      * @return
      */
     public Integer getConnectionTimeout() {
-        return Optional.fromNullable(this.connectionTimeout).or(DEFAULT_CONNECTION_TIMEOUT);
+        return Optional.ofNullable(this.connectionTimeout).orElse(DEFAULT_CONNECTION_TIMEOUT);
     }
 
     /**
@@ -237,27 +236,28 @@ public class CloudApiSettings {
      * @return
      */
     public Integer getSocketTimeout() {
-        return Optional.fromNullable(this.socketTimeout).or(DEFAULT_SOCKET_TIMEOUT);
+        return Optional.ofNullable(this.socketTimeout).orElse(DEFAULT_SOCKET_TIMEOUT);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof CloudApiSettings) {
             CloudApiSettings that = (CloudApiSettings) obj;
-            return Objects.equal(this.awsAccessKeyId, that.awsAccessKeyId)
-                    && Objects.equal(this.awsSecretAccessKey, that.awsSecretAccessKey)
-                    && Objects.equal(this.region, that.region) && Objects.equal(this.bidPrice, that.bidPrice)
-                    && Objects.equal(getBidReplacementPeriod(), that.getBidReplacementPeriod())
-                    && Objects.equal(getDanglingInstanceCleanupPeriod(), that.getDanglingInstanceCleanupPeriod())
-                    && equal(getConnectionTimeout(), that.getConnectionTimeout())
-                    && equal(getSocketTimeout(), that.getSocketTimeout());
+            return Objects.equals(this.awsAccessKeyId, that.awsAccessKeyId) //
+                    && Objects.equals(this.awsSecretAccessKey, that.awsSecretAccessKey) //
+                    && Objects.equals(this.region, that.region) //
+                    && Objects.equals(this.bidPrice, that.bidPrice) //
+                    && Objects.equals(getBidReplacementPeriod(), that.getBidReplacementPeriod()) //
+                    && Objects.equals(getDanglingInstanceCleanupPeriod(), that.getDanglingInstanceCleanupPeriod()) //
+                    && Objects.equals(getConnectionTimeout(), that.getConnectionTimeout()) //
+                    && Objects.equals(getSocketTimeout(), that.getSocketTimeout());
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.awsAccessKeyId, this.awsSecretAccessKey, this.region, this.bidPrice,
+        return Objects.hash(this.awsAccessKeyId, this.awsSecretAccessKey, this.region, this.bidPrice,
                 getBidReplacementPeriod(), getDanglingInstanceCleanupPeriod(), getConnectionTimeout(),
                 getSocketTimeout());
     }

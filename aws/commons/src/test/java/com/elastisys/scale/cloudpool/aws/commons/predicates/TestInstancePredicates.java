@@ -6,6 +6,7 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +19,6 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.Tag;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 
 /**
  * Exercises the {@link InstancePredicates} class.
@@ -181,7 +181,7 @@ public class TestInstancePredicates {
     }
 
     private Instance makeInstance(String id, String state, Map<String, String> tags) {
-        List<Tag> tagList = Lists.newArrayList();
+        List<Tag> tagList = new ArrayList<>();
         for (Entry<String, String> tagEntry : tags.entrySet()) {
             tagList.add(new Tag().withKey(tagEntry.getKey()).withValue(tagEntry.getValue()));
         }
@@ -190,7 +190,7 @@ public class TestInstancePredicates {
     }
 
     private List<Instance> instances(String... states) {
-        List<Instance> instances = Lists.newArrayList();
+        List<Instance> instances = new ArrayList<>();
         int index = 1;
         for (String state : states) {
             instances.add(new Instance().withInstanceId("i-" + index++).withState(new InstanceState().withName(state)));

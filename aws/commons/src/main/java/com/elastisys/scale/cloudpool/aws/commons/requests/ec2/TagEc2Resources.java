@@ -13,7 +13,6 @@ import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.Tag;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
-import com.google.common.collect.Lists;
 
 /**
  * A {@link Callable} task that, when executed, applies {@link Tag}s to a
@@ -37,7 +36,7 @@ public class TagEc2Resources extends AmazonEc2Request<Void> {
     private final List<String> resourceIds;
 
     /** The tags to apply to the resource. */
-    private List<Tag> tags = Lists.newArrayList();
+    private List<Tag> tags = new ArrayList<>();
 
     public TagEc2Resources(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig,
             List<String> resourceIds, List<Tag> tags) {

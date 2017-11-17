@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -50,7 +51,6 @@ import com.elastisys.scale.commons.json.types.ErrorType;
 import com.elastisys.scale.commons.net.host.HostUtils;
 import com.elastisys.scale.commons.rest.client.RestClients;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.base.Optional;
 import com.google.gson.JsonObject;
 
 /**
@@ -235,7 +235,7 @@ public class TestRestApi {
     public void getConfigOnInstanceWithoutConfig() {
         CloudPoolInstance instance = mock(CloudPoolInstance.class);
         when(multiCloudPool.get("pool-1")).thenReturn(instance);
-        when(instance.getConfiguration()).thenReturn(Optional.absent());
+        when(instance.getConfiguration()).thenReturn(Optional.empty());
 
         Client client = RestClients.httpNoAuth();
         Response response = client.target(url("/cloudpools/pool-1/config")).request().get();

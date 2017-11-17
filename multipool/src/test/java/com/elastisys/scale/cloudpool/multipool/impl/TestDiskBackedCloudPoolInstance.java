@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -22,7 +23,6 @@ import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.multipool.api.CloudPoolInstance;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.file.FileUtils;
-import com.google.common.base.Optional;
 import com.google.common.io.Files;
 import com.google.gson.JsonObject;
 

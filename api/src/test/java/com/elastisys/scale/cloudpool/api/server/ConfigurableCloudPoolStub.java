@@ -1,5 +1,7 @@
 package com.elastisys.scale.cloudpool.api.server;
 
+import java.util.Optional;
+
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
 import com.elastisys.scale.cloudpool.api.NotFoundException;
@@ -8,7 +10,6 @@ import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
-import com.google.common.base.Optional;
 import com.google.gson.JsonObject;
 
 /**
@@ -27,7 +28,7 @@ class ConfigurableCloudPoolStub implements CloudPool {
 
     @Override
     public Optional<JsonObject> getConfiguration() {
-        return Optional.fromNullable(this.config);
+        return Optional.ofNullable(this.config);
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.elastisys.scale.cloudpool.api;
 
+import java.util.Optional;
+
 import com.elastisys.scale.cloudpool.api.restapi.CloudPoolRestApi;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.Machine;
@@ -8,7 +10,6 @@ import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
-import com.google.common.base.Optional;
 import com.google.gson.JsonObject;
 
 /**

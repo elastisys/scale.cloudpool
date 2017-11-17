@@ -2,9 +2,10 @@ package com.elastisys.scale.cloudpool.commons.basepool.config;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.Objects;
+
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
-import com.google.common.base.Objects;
 
 /**
  * Retry handling when fetching pool members from the cloud API fails.
@@ -57,15 +58,15 @@ public class RetriesConfig {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.maxRetries, this.initialBackoffDelay);
+        return Objects.hash(this.maxRetries, this.initialBackoffDelay);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof RetriesConfig) {
             RetriesConfig that = (RetriesConfig) obj;
-            return Objects.equal(this.maxRetries, that.maxRetries)
-                    && Objects.equal(this.initialBackoffDelay, that.initialBackoffDelay);
+            return Objects.equals(this.maxRetries, that.maxRetries) //
+                    && Objects.equals(this.initialBackoffDelay, that.initialBackoffDelay);
 
         }
         return false;

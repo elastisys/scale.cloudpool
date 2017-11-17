@@ -1,10 +1,9 @@
 package com.elastisys.scale.cloudpool.commons.basepool;
 
-import static com.google.common.base.Objects.equal;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
@@ -27,7 +26,7 @@ public class IsStartAlert extends TypeSafeMatcher<Alert> {
 
     @Override
     public boolean matchesSafely(Alert someAlert) {
-        if (!equal(AlertTopics.RESIZE.name(), someAlert.getTopic())) {
+        if (!Objects.equals(AlertTopics.RESIZE.name(), someAlert.getTopic())) {
             return false;
         }
         for (String machineId : this.machineIds) {

@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.amazonaws.ClientConfiguration;
@@ -23,7 +24,6 @@ import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTempl
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.base.Predicate;
 
 /**
  * A {@link Callable} task that, when executed, requests a number of AWS EC2

@@ -6,6 +6,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.joda.time.DateTime;
@@ -13,9 +14,6 @@ import org.joda.time.DateTime;
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 
 /**
@@ -49,7 +47,7 @@ public class MachinePool {
     public MachinePool(List<? extends Machine> machines, DateTime timestamp) {
         checkNotNull(machines, "machines cannot be null");
         checkNotNull(timestamp, "timestamp cannot be null");
-        this.machines = Lists.newArrayList(machines);
+        this.machines = new ArrayList<>(machines);
         this.timestamp = timestamp;
     }
 
@@ -66,7 +64,7 @@ public class MachinePool {
      * @return
      */
     public List<Machine> getMachines() {
-        return ImmutableList.copyOf(this.machines);
+        return new ArrayList<>(this.machines);
     }
 
     /**
@@ -123,7 +121,7 @@ public class MachinePool {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.timestamp, this.machines);
+        return Objects.hash(this.timestamp, this.machines);
     }
 
     @Override
@@ -138,7 +136,7 @@ public class MachinePool {
             } else {
                 timestampsEqual = false;
             }
-            return timestampsEqual && Objects.equal(this.machines, that.machines);
+            return timestampsEqual && Objects.equals(this.machines, that.machines);
         }
         return false;
     }

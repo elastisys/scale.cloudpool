@@ -1,9 +1,10 @@
 package com.elastisys.scale.cloudpool.api.restapi.types;
 
+import java.util.Objects;
+
 import com.elastisys.scale.cloudpool.api.restapi.CloudPoolRestApi;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Objects;
 
 /**
  * REST API request type that requests a certain membership status be set for a
@@ -34,15 +35,15 @@ public class SetMembershipStatusRequest {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.machineId, this.membershipStatus);
+        return Objects.hash(this.machineId, this.membershipStatus);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof SetMembershipStatusRequest) {
             SetMembershipStatusRequest that = (SetMembershipStatusRequest) obj;
-            return Objects.equal(this.machineId, that.machineId)
-                    && Objects.equal(this.membershipStatus, that.membershipStatus);
+            return Objects.equals(this.machineId, that.machineId) //
+                    && Objects.equals(this.membershipStatus, that.membershipStatus);
         }
         return false;
     }

@@ -5,6 +5,7 @@ import static java.lang.String.format;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.sshd.server.Command;
@@ -13,15 +14,10 @@ import org.apache.sshd.server.ExitCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
-
 /**
  * A {@link Command} that runs on the SSH server as an external {@link Process}.
- * 
+ *
  * @see PermissiveSshServer
- * 
- * 
- * 
  */
 public class ExternalProcessCommand implements Command {
     static Logger LOG = LoggerFactory.getLogger(ExternalProcessCommand.class);
@@ -58,7 +54,7 @@ public class ExternalProcessCommand implements Command {
 
     @Override
     public void start(Environment env) throws IOException {
-        List<String> commandParts = Lists.newArrayList(this.command.split("\\s+"));
+        List<String> commandParts = Arrays.asList(this.command.split("\\s+"));
         ProcessBuilder processBuilder = new ProcessBuilder(commandParts);
         processBuilder.environment().putAll(env.getEnv());
         LOG.debug("running command: " + processBuilder.command());
@@ -86,7 +82,7 @@ public class ExternalProcessCommand implements Command {
         byte[] buffer = new byte[1024];
 
         try (InputStream stdout = process.getInputStream(); InputStream stderr = process.getErrorStream()) {
-            while (!done(process) || (stdout.available() > 0) || (stderr.available() > 0)) {
+            while (!done(process) || stdout.available() > 0 || stderr.available() > 0) {
                 while (stdout.available() > 0) {
                     int bytesRead = stdout.read(buffer);
                     this.outStream.write(buffer, 0, bytesRead);

@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.commons.resizeplanner;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,7 +11,6 @@ import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.collect.Lists;
 
 /**
  * Test utilities for {@link ResizePlan} and {@link ResizePlanner} tests.
@@ -109,7 +109,7 @@ public class ResizePlanTestUtils {
      * @return
      */
     public static MachinePool makePool(List<DateTime> launchTimes) {
-        List<Machine> machines = Lists.newArrayList();
+        List<Machine> machines = new ArrayList<>();
         int id = 0;
         for (DateTime launchTime : launchTimes) {
             machines.add(makeMachine(id, launchTime));
@@ -123,7 +123,7 @@ public class ResizePlanTestUtils {
      * @return
      */
     public static MachinePool makePool() {
-        List<Machine> machines = Lists.newArrayList();
+        List<Machine> machines = new ArrayList<>();
         return new MachinePool(machines, UtcTime.now());
     }
 

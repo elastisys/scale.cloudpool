@@ -4,11 +4,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Objects;
-import com.google.common.base.Optional;
 
 /**
  * Captures actions required to resize a machine pool to a suitable size.
@@ -40,7 +40,7 @@ public class ResizePlan {
      */
     public ResizePlan(int toRequest, List<Machine> toTerminate) {
         this.toRequest = toRequest;
-        this.toTerminate = Optional.fromNullable(toTerminate).or(Collections.emptyList());
+        this.toTerminate = Optional.ofNullable(toTerminate).orElse(Collections.emptyList());
         validate();
     }
 
@@ -105,14 +105,15 @@ public class ResizePlan {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.toRequest, this.toTerminate);
+        return Objects.hash(this.toRequest, this.toTerminate);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof ResizePlan) {
             ResizePlan that = (ResizePlan) obj;
-            return Objects.equal(this.toRequest, that.toRequest) && Objects.equal(this.toTerminate, that.toTerminate);
+            return Objects.equals(this.toRequest, that.toRequest) //
+                    && Objects.equals(this.toTerminate, that.toTerminate);
         }
         return super.equals(obj);
     }

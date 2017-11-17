@@ -1,10 +1,9 @@
 package com.elastisys.scale.cloudpool.aws.spot.driver;
 
-import static com.google.common.base.Objects.equal;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
@@ -27,7 +26,7 @@ public class IsCancelAlert extends TypeSafeMatcher<Alert> {
 
     @Override
     public boolean matchesSafely(Alert someAlert) {
-        if (!equal(AlertTopics.SPOT_REQUEST_CANCELLATION.name(), someAlert.getTopic())) {
+        if (!Objects.equals(AlertTopics.SPOT_REQUEST_CANCELLATION.name(), someAlert.getTopic())) {
             return false;
         }
         for (String spotRequestId : this.spotRequestIds) {

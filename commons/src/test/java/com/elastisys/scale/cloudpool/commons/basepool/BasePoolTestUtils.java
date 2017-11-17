@@ -1,5 +1,6 @@
 package com.elastisys.scale.cloudpool.commons.basepool;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.joda.time.DateTime;
@@ -8,7 +9,6 @@ import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.collect.Lists;
 
 public class BasePoolTestUtils {
 
@@ -39,7 +39,7 @@ public class BasePoolTestUtils {
     }
 
     public static List<Machine> machines(Machine... machines) {
-        List<Machine> list = Lists.newArrayList();
+        List<Machine> list = new ArrayList<>();
         for (Machine machine : machines) {
             list.add(machine);
         }

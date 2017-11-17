@@ -2,12 +2,13 @@ package com.elastisys.scale.cloudpool.api.types;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.Objects;
+
 import org.joda.time.DateTime;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.base.Objects;
 
 /**
  * Response message of the {@link CloudPool#getPoolSize()} operation that
@@ -109,15 +110,17 @@ public class PoolSizeSummary {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.timestamp, this.desiredSize, this.allocated, this.active);
+        return Objects.hash(this.timestamp, this.desiredSize, this.allocated, this.active);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof PoolSizeSummary) {
             PoolSizeSummary that = (PoolSizeSummary) obj;
-            return Objects.equal(this.timestamp, that.timestamp) && Objects.equal(this.desiredSize, that.desiredSize)
-                    && Objects.equal(this.allocated, that.allocated) && Objects.equal(this.active, that.active);
+            return Objects.equals(this.timestamp, that.timestamp) //
+                    && Objects.equals(this.desiredSize, that.desiredSize) //
+                    && Objects.equals(this.allocated, that.allocated) //
+                    && Objects.equals(this.active, that.active);
         }
         return super.equals(obj);
     }

@@ -1,8 +1,9 @@
 package com.elastisys.scale.cloudpool.api.restapi.types;
 
+import java.util.Objects;
+
 import com.elastisys.scale.cloudpool.api.restapi.CloudPoolRestApi;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Objects;
 
 /**
  * REST API request type that requests that a machine be detached from the
@@ -41,15 +42,15 @@ public class DetachMachineRequest {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.machineId, this.decrementDesiredSize);
+        return Objects.hash(this.machineId, this.decrementDesiredSize);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof DetachMachineRequest) {
             DetachMachineRequest that = (DetachMachineRequest) obj;
-            return Objects.equal(this.machineId, that.machineId)
-                    && Objects.equal(this.decrementDesiredSize, that.decrementDesiredSize);
+            return Objects.equals(this.machineId, that.machineId) //
+                    && Objects.equals(this.decrementDesiredSize, that.decrementDesiredSize);
         }
         return false;
     }

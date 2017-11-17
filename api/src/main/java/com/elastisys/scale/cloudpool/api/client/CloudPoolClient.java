@@ -3,6 +3,8 @@ package com.elastisys.scale.cloudpool.api.client;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.String.format;
 
+import java.util.Optional;
+
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.http.client.HttpResponseException;
@@ -30,7 +32,6 @@ import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.http.HttpRequestResponse;
 import com.elastisys.scale.commons.net.http.client.AuthenticatedHttpClient;
-import com.google.common.base.Optional;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -97,7 +98,7 @@ public class CloudPoolClient implements CloudPool {
             return Optional.of(config);
         } catch (HttpResponseException e) {
             if (e.getStatusCode() == Status.NOT_FOUND.getStatusCode()) {
-                return Optional.absent();
+                return Optional.empty();
             }
             throw new CloudPoolException(format("failed to get cloud pool config: %s: %s", url, e.getMessage()), e);
         } catch (Exception e) {

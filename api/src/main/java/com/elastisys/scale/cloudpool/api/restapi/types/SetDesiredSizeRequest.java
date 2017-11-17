@@ -1,7 +1,8 @@
 package com.elastisys.scale.cloudpool.api.restapi.types;
 
+import java.util.Objects;
+
 import com.elastisys.scale.cloudpool.api.restapi.CloudPoolRestApi;
-import com.google.common.base.Objects;
 
 /**
  * REST API request type that requests a certain desired size of the machine
@@ -24,14 +25,14 @@ public class SetDesiredSizeRequest {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.desiredSize);
+        return Objects.hash(this.desiredSize);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof SetDesiredSizeRequest) {
             SetDesiredSizeRequest that = (SetDesiredSizeRequest) obj;
-            return Objects.equal(this.desiredSize, that.desiredSize);
+            return Objects.equals(this.desiredSize, that.desiredSize);
         }
         return false;
     }

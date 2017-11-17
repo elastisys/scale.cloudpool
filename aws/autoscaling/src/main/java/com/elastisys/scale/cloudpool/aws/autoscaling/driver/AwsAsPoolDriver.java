@@ -2,7 +2,6 @@ package com.elastisys.scale.cloudpool.aws.autoscaling.driver;
 
 import static com.elastisys.scale.commons.json.JsonUtils.toJson;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Lists.transform;
 import static java.lang.String.format;
 
 import java.util.ArrayList;
@@ -40,7 +39,6 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesExcept
 import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 
 /**
  * A {@link CloudPoolDriver} implementation that manages an AWS Auto Scaling
@@ -128,7 +126,8 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
 
             // fetch actual scaling group members
             List<Instance> groupInstances = this.client.getAutoScalingGroupMembers(scalingGroupName());
-            List<Machine> acquiredMachines = Lists.newArrayList(transform(groupInstances, new InstanceToMachine()));
+            List<Machine> acquiredMachines = groupInstances.stream().map(new InstanceToMachine())
+                    .collect(Collectors.toList());
             int actualCapacity = acquiredMachines.size();
 
             // requested, but not yet allocated, machines
@@ -136,7 +135,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
             LaunchConfiguration launchConfig = this.client.getLaunchConfiguration(group.getLaunchConfigurationName());
             List<Machine> requestedInstances = pseudoMachines(missingInstances, launchConfig);
 
-            List<Machine> pool = Lists.newArrayList();
+            List<Machine> pool = new ArrayList<>();
             pool.addAll(acquiredMachines);
             pool.addAll(requestedInstances);
             return pool;
@@ -160,7 +159,7 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
      * @return
      */
     private List<Machine> pseudoMachines(int missingInstances, LaunchConfiguration launchConfig) {
-        List<Machine> requestedInstances = Lists.newArrayList();
+        List<Machine> requestedInstances = new ArrayList<>();
         for (int i = 0; i < missingInstances; i++) {
             String pseudoId = String.format("%s%d", REQUESTED_ID_PREFIX, i + 1);
             requestedInstances.add(pseudoMachine(pseudoId, launchConfig));

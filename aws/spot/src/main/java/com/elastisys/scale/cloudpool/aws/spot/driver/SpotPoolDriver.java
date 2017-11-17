@@ -61,8 +61,6 @@ import com.elastisys.scale.commons.net.alerter.AlertSeverity;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonElement;
 
@@ -224,13 +222,13 @@ public class SpotPoolDriver implements CloudPoolDriver {
         checkState(isConfigured(), "attempt to use unconfigured driver");
 
         List<InstancePairedSpotRequest> requestInstancePairs = getAlivePoolSpotRequests();
-        return Lists.transform(requestInstancePairs, new InstancePairedSpotRequestToMachine());
+        return requestInstancePairs.stream().map(new InstancePairedSpotRequestToMachine()).collect(Collectors.toList());
     }
 
     @Override
     public List<Machine> startMachines(int count) throws StartMachinesException, CloudPoolDriverException {
         checkState(isConfigured(), "attempt to use unconfigured driver");
-        List<Machine> startedMachines = Lists.newArrayList();
+        List<Machine> startedMachines = new ArrayList<>();
         try {
             Ec2ProvisioningTemplate template = provisioningTemplate();
             // add pool tag to recognize spot requests as pool members
@@ -440,7 +438,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
      * @return
      */
     private List<InstancePairedSpotRequest> pairUpWithInstances(List<SpotInstanceRequest> spotRequests) {
-        List<InstancePairedSpotRequest> pairs = Lists.newArrayList();
+        List<InstancePairedSpotRequest> pairs = new ArrayList<>();
 
         for (SpotInstanceRequest spotRequest : spotRequests) {
             String assignedInstanceId = spotRequest.getInstanceId();
@@ -503,7 +501,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
         if (matchingRequests.isEmpty()) {
             throw new NotFoundException(String.format("spot instance request %s does not exist", spotRequestId));
         }
-        return Iterables.getOnlyElement(matchingRequests);
+        return matchingRequests.get(0);
     }
 
     /**

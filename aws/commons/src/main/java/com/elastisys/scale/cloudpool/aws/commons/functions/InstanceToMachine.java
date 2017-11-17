@@ -1,6 +1,9 @@
 package com.elastisys.scale.cloudpool.aws.commons.functions;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -9,17 +12,14 @@ import org.slf4j.LoggerFactory;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 
 /**
@@ -55,8 +55,8 @@ public class InstanceToMachine implements Function<Instance, Machine> {
         String id = instance.getInstanceId();
         MachineState machineState = new InstanceStateToMachineState().apply(instance.getState());
         DateTime launchtime = new DateTime(instance.getLaunchTime(), DateTimeZone.UTC);
-        List<String> publicIps = Lists.newArrayList();
-        List<String> privateIps = Lists.newArrayList();
+        List<String> publicIps = new ArrayList<>();
+        List<String> privateIps = new ArrayList<>();
         String publicIp = instance.getPublicIpAddress();
         if (publicIp != null) {
             publicIps.add(publicIp);
@@ -128,6 +128,6 @@ public class InstanceToMachine implements Function<Instance, Machine> {
                 return Optional.of(tag.getValue());
             }
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 }

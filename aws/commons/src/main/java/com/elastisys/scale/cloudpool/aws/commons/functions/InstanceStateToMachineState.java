@@ -1,16 +1,14 @@
 package com.elastisys.scale.cloudpool.aws.commons.functions;
 
+import java.util.function.Function;
+
 import com.amazonaws.services.ec2.model.InstanceState;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
-import com.google.common.base.Function;
 
 /**
  * {@link Function} that translates an EC2 API instance state representation to
  * its corresponding {@link Machine} state representation.
- *
- *
- *
  */
 public class InstanceStateToMachineState implements Function<InstanceState, MachineState> {
 

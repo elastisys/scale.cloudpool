@@ -1,11 +1,11 @@
 package com.elastisys.scale.cloudpool.commons.basepool.driver;
 
-import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkArgument;
+
+import java.util.Objects;
 
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Objects;
 import com.google.gson.JsonObject;
 
 /**
@@ -153,16 +153,16 @@ public class DriverConfig {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.poolName, this.cloudApiSettings, this.provisioningTemplate);
+        return Objects.hash(this.poolName, this.cloudApiSettings, this.provisioningTemplate);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof DriverConfig) {
             DriverConfig that = (DriverConfig) obj;
-            return equal(this.poolName, that.poolName) //
-                    && equal(this.cloudApiSettings, that.cloudApiSettings) //
-                    && equal(this.provisioningTemplate, that.provisioningTemplate);
+            return Objects.equals(this.poolName, that.poolName) //
+                    && Objects.equals(this.cloudApiSettings, that.cloudApiSettings) //
+                    && Objects.equals(this.provisioningTemplate, that.provisioningTemplate);
         }
         return false;
     }

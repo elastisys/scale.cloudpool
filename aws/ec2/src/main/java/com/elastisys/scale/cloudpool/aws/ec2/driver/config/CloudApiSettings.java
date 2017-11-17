@@ -1,12 +1,12 @@
 package com.elastisys.scale.cloudpool.aws.ec2.driver.config;
 
-import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkArgument;
+
+import java.util.Objects;
+import java.util.Optional;
 
 import com.elastisys.scale.cloudpool.aws.ec2.driver.Ec2PoolDriver;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Objects;
-import com.google.common.base.Optional;
 
 /**
  * Configuration object for an {@link Ec2PoolDriver}.
@@ -120,7 +120,7 @@ public class CloudApiSettings {
      * @return
      */
     public Integer getConnectionTimeout() {
-        return Optional.fromNullable(this.connectionTimeout).or(DEFAULT_CONNECTION_TIMEOUT);
+        return Optional.ofNullable(this.connectionTimeout).orElse(DEFAULT_CONNECTION_TIMEOUT);
     }
 
     /**
@@ -131,7 +131,7 @@ public class CloudApiSettings {
      * @return
      */
     public Integer getSocketTimeout() {
-        return Optional.fromNullable(this.socketTimeout).or(DEFAULT_SOCKET_TIMEOUT);
+        return Optional.ofNullable(this.socketTimeout).orElse(DEFAULT_SOCKET_TIMEOUT);
     }
 
     /**
@@ -149,7 +149,7 @@ public class CloudApiSettings {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.awsAccessKeyId, this.awsSecretAccessKey, this.region, getConnectionTimeout(),
+        return Objects.hash(this.awsAccessKeyId, this.awsSecretAccessKey, this.region, getConnectionTimeout(),
                 getSocketTimeout());
     }
 
@@ -157,10 +157,11 @@ public class CloudApiSettings {
     public boolean equals(Object obj) {
         if (obj instanceof CloudApiSettings) {
             CloudApiSettings that = (CloudApiSettings) obj;
-            return equal(this.awsAccessKeyId, that.awsAccessKeyId)
-                    && equal(this.awsSecretAccessKey, that.awsSecretAccessKey) && equal(this.region, that.region)
-                    && equal(getConnectionTimeout(), that.getConnectionTimeout())
-                    && equal(getSocketTimeout(), that.getSocketTimeout());
+            return Objects.equals(this.awsAccessKeyId, that.awsAccessKeyId) //
+                    && Objects.equals(this.awsSecretAccessKey, that.awsSecretAccessKey) //
+                    && Objects.equals(this.region, that.region) //
+                    && Objects.equals(getConnectionTimeout(), that.getConnectionTimeout()) //
+                    && Objects.equals(getSocketTimeout(), that.getSocketTimeout());
         }
         return false;
     }

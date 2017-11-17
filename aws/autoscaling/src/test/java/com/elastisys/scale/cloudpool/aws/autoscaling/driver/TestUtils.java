@@ -1,5 +1,7 @@
 package com.elastisys.scale.cloudpool.aws.autoscaling.driver;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -14,7 +16,6 @@ import com.elastisys.scale.cloudpool.aws.autoscaling.driver.config.CloudApiSetti
 import com.elastisys.scale.cloudpool.aws.autoscaling.driver.config.ProvisioningTemplate;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.collect.Lists;
 
 public class TestUtils {
 
@@ -43,21 +44,21 @@ public class TestUtils {
     }
 
     public static Collection<Instance> asInstances(Instance... instances) {
-        return Lists.newArrayList(instances);
+        return new ArrayList<>(Arrays.asList(instances));
     }
 
     public static List<com.amazonaws.services.ec2.model.Instance> ec2Instances(
             com.amazonaws.services.ec2.model.Instance... instances) {
-        return Lists.newArrayList(instances);
+        return new ArrayList<>(Arrays.asList(instances));
     }
 
     public static Collection<Machine> machines(Machine... machines) {
-        return Lists.newArrayList(machines);
+        return new ArrayList<>(Arrays.asList(machines));
     }
 
     public static Collection<Instance> toAsInstances(
             Collection<com.amazonaws.services.ec2.model.Instance> ec2Instances) {
-        List<Instance> asInstances = Lists.newArrayList();
+        List<Instance> asInstances = new ArrayList<>();
         for (com.amazonaws.services.ec2.model.Instance ec2Instance : ec2Instances) {
             Instance asInstance = new Instance().withInstanceId(ec2Instance.getInstanceId())
                     .withLifecycleState(ec2StateToLifecycleState(ec2Instance.getState()));

@@ -1,5 +1,7 @@
 package com.elastisys.scale.cloudpool.commons.basepool;
 
+import java.util.Objects;
+
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
@@ -7,7 +9,6 @@ import org.hamcrest.TypeSafeMatcher;
 
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.net.alerter.AlertSeverity;
-import com.google.common.base.Objects;
 
 public class IsAlert extends TypeSafeMatcher<Alert> {
 
@@ -21,7 +22,8 @@ public class IsAlert extends TypeSafeMatcher<Alert> {
 
     @Override
     public boolean matchesSafely(Alert someAlert) {
-        return Objects.equal(this.topic, someAlert.getTopic()) && Objects.equal(this.severity, someAlert.getSeverity());
+        return Objects.equals(this.topic, someAlert.getTopic())
+                && Objects.equals(this.severity, someAlert.getSeverity());
     }
 
     @Override

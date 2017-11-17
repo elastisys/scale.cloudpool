@@ -2,6 +2,7 @@ package com.elastisys.scale.cloudpool.multipool.server.lab;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -28,7 +29,6 @@ import com.elastisys.scale.cloudpool.multipool.impl.DiskBackedMultiCloudPool;
 import com.elastisys.scale.cloudpool.multipool.server.MultiCloudPoolOptions;
 import com.elastisys.scale.cloudpool.multipool.server.MultiCloudPoolServer;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.base.Optional;
 import com.google.gson.JsonObject;
 
 /**
@@ -81,7 +81,7 @@ public class Main {
 
         @Override
         public Optional<JsonObject> getConfiguration() {
-            return Optional.fromNullable(this.config);
+            return Optional.ofNullable(this.config);
         }
 
         @Override

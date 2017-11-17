@@ -2,7 +2,9 @@ package com.elastisys.scale.cloudpool.aws.commons.predicates;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -11,8 +13,6 @@ import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.amazonaws.services.ec2.model.Tag;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 
 /**
  * {@link Predicate}s that apply to EC2 {@link Instance}s.
@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableSet;
 public class InstancePredicates {
 
     /** The range of permissible states an {@link Instance} can be in. */
-    private static final ImmutableList<String> VALID_STATES = ImmutableList.of(InstanceStateName.Pending.toString(),
+    private static final List<String> VALID_STATES = Arrays.asList(InstanceStateName.Pending.toString(),
             InstanceStateName.Running.toString(), InstanceStateName.ShuttingDown.toString(),
             InstanceStateName.Stopping.toString(), InstanceStateName.Stopped.toString(),
             InstanceStateName.Terminated.toString());
@@ -93,7 +93,7 @@ public class InstancePredicates {
             Preconditions.checkArgument(VALID_STATES.contains(state), "unrecognized spot instance request state '%s'",
                     state);
         }
-        final List<String> expectedStates = ImmutableList.copyOf(states);
+        List<String> expectedStates = Arrays.asList(states);
         return instances -> {
             for (Instance instance : instances) {
                 if (!expectedStates.contains(instance.getState().getName())) {
@@ -159,7 +159,7 @@ public class InstancePredicates {
         /**
          * The set of instance identifiers that are expected to be present.
          */
-        private final ImmutableSet<String> expectedIds;
+        private final Set<String> expectedIds;
 
         /**
          * Creates a new instance.
@@ -167,8 +167,8 @@ public class InstancePredicates {
          * @param acceptableStates
          *            The instance identifiers that are expected.
          */
-        public InstancesPresentPredicate(final Collection<String> expectedInstancesIds) {
-            this.expectedIds = ImmutableSet.copyOf(expectedInstancesIds);
+        public InstancesPresentPredicate(Collection<String> expectedInstancesIds) {
+            this.expectedIds = new HashSet<>(expectedInstancesIds);
         }
 
         @Override

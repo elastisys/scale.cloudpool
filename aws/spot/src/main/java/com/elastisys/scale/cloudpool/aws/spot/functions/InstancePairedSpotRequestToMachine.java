@@ -3,7 +3,10 @@ package com.elastisys.scale.cloudpool.aws.spot.functions;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.joda.time.DateTimeZone.UTC;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -12,17 +15,14 @@ import org.slf4j.LoggerFactory;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.Tag;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
-import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.spot.metadata.InstancePairedSpotRequest;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 
 /**
@@ -53,8 +53,8 @@ public class InstancePairedSpotRequestToMachine implements Function<InstancePair
         MachineState machineState = spotInstanceRequest.getMachineState();
         final DateTime requestTime = new DateTime(spotInstanceRequest.getRequest().getCreateTime(), UTC);
         DateTime launchTime = null;
-        List<String> publicIps = Lists.newArrayList();
-        List<String> privateIps = Lists.newArrayList();
+        List<String> publicIps = new ArrayList<>();
+        List<String> privateIps = new ArrayList<>();
         if (spotInstanceRequest.hasInstance()) {
             Instance instance = spotInstanceRequest.getInstance();
             launchTime = new DateTime(instance.getLaunchTime(), UTC);
@@ -84,10 +84,10 @@ public class InstancePairedSpotRequestToMachine implements Function<InstancePair
         String region = extractRegion(spotInstanceRequest);
 
         JsonObject metadata = JsonUtils.toJson(spotInstanceRequest).getAsJsonObject();
-        return Machine.builder().id(id).machineState(machineState).cloudProvider(CloudProviders.AWS_SPOT)
-                .region(region).machineSize(request.getLaunchSpecification().getInstanceType())
-                .membershipStatus(membershipStatus).serviceState(serviceState).requestTime(requestTime)
-                .launchTime(launchTime).publicIps(publicIps).privateIps(privateIps).metadata(metadata).build();
+        return Machine.builder().id(id).machineState(machineState).cloudProvider(CloudProviders.AWS_SPOT).region(region)
+                .machineSize(request.getLaunchSpecification().getInstanceType()).membershipStatus(membershipStatus)
+                .serviceState(serviceState).requestTime(requestTime).launchTime(launchTime).publicIps(publicIps)
+                .privateIps(privateIps).metadata(metadata).build();
     }
 
     /**
@@ -124,6 +124,6 @@ public class InstancePairedSpotRequestToMachine implements Function<InstancePair
                 return Optional.of(tag.getValue());
             }
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 }

@@ -1,23 +1,22 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling;
 
+import static com.elastisys.scale.cloudpool.aws.commons.predicates.InstancePredicates.instancesPresent;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
-import com.elastisys.scale.cloudpool.aws.commons.functions.AwsAutoScalingFunctions;
-import com.elastisys.scale.cloudpool.aws.commons.predicates.InstancePredicates;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.GetInstances;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Lists;
 
 /**
  * A {@link Callable} task that, when executed, requests details about all
@@ -59,8 +58,8 @@ public class GetAutoScalingGroupInstances extends AmazonAutoScalingRequest<List<
     }
 
     private List<Instance> listGroupInstances(AutoScalingGroup autoScalingGroup) throws Exception {
-        List<String> instanceIds = Lists.transform(autoScalingGroup.getInstances(),
-                AwsAutoScalingFunctions.toAutoScalingInstanceId());
+        List<String> instanceIds = autoScalingGroup.getInstances().stream()
+                .map(com.amazonaws.services.autoscaling.model.Instance::getInstanceId).collect(Collectors.toList());
         if (instanceIds.isEmpty()) {
             // note: we don't want to call get instances with an emtpy list
             // since this causes DescribeInstances to get *all* instances in the
@@ -81,9 +80,4 @@ public class GetAutoScalingGroupInstances extends AmazonAutoScalingRequest<List<
 
         return retryer.call();
     }
-
-    private Predicate<List<Instance>> instancesPresent(List<String> instanceIds) {
-        return instances -> InstancePredicates.instancesPresent(instanceIds).test(instances);
-    }
-
 }

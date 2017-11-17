@@ -3,11 +3,11 @@ package com.elastisys.scale.cloudpool.commons.scaledown;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import com.elastisys.scale.cloudpool.api.types.Machine;
-import com.google.common.collect.Lists;
 
 /**
  * Selects a number of victim machines to terminate from a set of candidates by
@@ -52,9 +52,9 @@ public class VictimSelector {
         checkArgument(candidates.size() >= numVictims, "more victims than termination candidates");
 
         // defensive copy
-        List<Machine> terminationCandidates = Lists.newArrayList(candidates);
+        List<Machine> terminationCandidates = new ArrayList<>(candidates);
 
-        List<Machine> victims = Lists.newArrayList();
+        List<Machine> victims = new ArrayList<>();
         for (int i = 0; i < numVictims; i++) {
             // use victim selection strategy to pick a victim
             Machine victim = this.victimSelectionStrategy.selectVictim(terminationCandidates);

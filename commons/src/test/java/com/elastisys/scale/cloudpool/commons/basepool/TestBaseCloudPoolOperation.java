@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -81,7 +82,6 @@ import com.elastisys.scale.commons.util.file.FileUtils;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
@@ -120,7 +120,7 @@ public class TestBaseCloudPoolOperation {
     @Test
     public void configureStoppedCloudPool() {
         assertThat(this.cloudPool.getStatus().isStarted(), is(false));
-        Optional<JsonObject> absent = Optional.absent();
+        Optional<JsonObject> absent = Optional.empty();
         assertThat(this.cloudPool.getConfiguration(), is(absent));
 
         JsonObject config = poolConfig(OLDEST);

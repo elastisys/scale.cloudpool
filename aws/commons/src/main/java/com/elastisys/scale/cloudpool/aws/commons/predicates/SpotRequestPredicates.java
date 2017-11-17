@@ -2,12 +2,11 @@ package com.elastisys.scale.cloudpool.aws.commons.predicates;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.SpotInstanceState;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
 
 /**
  * {@link Predicate}s relating to AWS EC2 spot instance requests.
@@ -17,7 +16,7 @@ public class SpotRequestPredicates {
     /**
      * The range of permissible states a {@link SpotInstanceRequest} can be in.
      */
-    private static final ImmutableList<String> VALID_STATES = ImmutableList.of(SpotInstanceState.Active.toString(),
+    private static final List<String> VALID_STATES = Arrays.asList(SpotInstanceState.Active.toString(),
             SpotInstanceState.Cancelled.toString(), SpotInstanceState.Closed.toString(),
             SpotInstanceState.Failed.toString(), SpotInstanceState.Open.toString());
 
@@ -35,12 +34,7 @@ public class SpotRequestPredicates {
             Preconditions.checkArgument(VALID_STATES.contains(state), "unrecognized spot instance request state '%s'",
                     state);
         }
-        return new Predicate<SpotInstanceRequest>() {
-            @Override
-            public boolean apply(SpotInstanceRequest spotRequest) {
-                return Arrays.asList(states).contains(spotRequest.getState());
-            }
-        };
+        return spotRequest -> Arrays.asList(states).contains(spotRequest.getState());
     }
 
     /**
@@ -58,17 +52,14 @@ public class SpotRequestPredicates {
             Preconditions.checkArgument(VALID_STATES.contains(state), "unrecognized spot instance request state '%s'",
                     state);
         }
-        final List<String> expectedStates = ImmutableList.copyOf(states);
-        return new Predicate<List<SpotInstanceRequest>>() {
-            @Override
-            public boolean apply(List<SpotInstanceRequest> spotRequests) {
-                for (SpotInstanceRequest request : spotRequests) {
-                    if (!expectedStates.contains(request.getState())) {
-                        return false;
-                    }
+        List<String> expectedStates = Arrays.asList(states);
+        return spotRequests -> {
+            for (SpotInstanceRequest request : spotRequests) {
+                if (!expectedStates.contains(request.getState())) {
+                    return false;
                 }
-                return true;
             }
+            return true;
         };
     }
 }

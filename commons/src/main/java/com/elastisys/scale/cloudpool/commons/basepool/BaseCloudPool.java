@@ -3,7 +3,9 @@ package com.elastisys.scale.cloudpool.commons.basepool;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.lang.management.ManagementFactory;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.slf4j.Logger;
@@ -31,9 +33,7 @@ import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.net.alerter.Alerter;
 import com.elastisys.scale.commons.net.alerter.multiplexing.MultiplexingAlerter;
-import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
 import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -299,7 +299,7 @@ public class BaseCloudPool implements CloudPool {
             configuration.validate();
             return configuration;
         } catch (Exception e) {
-            Throwables.propagateIfInstanceOf(e, IllegalArgumentException.class);
+            Throwables.throwIfInstanceOf(e, IllegalArgumentException.class);
             throw new IllegalArgumentException("failed to validate cloud pool configuration: " + e.getMessage(), e);
         }
     }
@@ -307,7 +307,7 @@ public class BaseCloudPool implements CloudPool {
     @Override
     public Optional<JsonObject> getConfiguration() {
         if (this.config == null) {
-            return Optional.absent();
+            return Optional.empty();
         }
         return Optional.of(JsonUtils.toJson(this.config).getAsJsonObject());
     }
@@ -447,7 +447,7 @@ public class BaseCloudPool implements CloudPool {
      * @return
      */
     private Map<String, JsonElement> standardAlertMetadata() {
-        Map<String, JsonElement> standardTags = Maps.newHashMap();
+        Map<String, JsonElement> standardTags = new HashMap<>();
         standardTags.put("cloudPoolName", JsonUtils.toJson(config().getName()));
         // typically a string of form: pid@hostname
         standardTags.put("jvmId", JsonUtils.toJson(jvmId()));
@@ -457,7 +457,7 @@ public class BaseCloudPool implements CloudPool {
     /**
      * Returns a (platform-dependent) identifier for the JVM. Typically of form
      * {@code pid@hostname}.
-     * 
+     *
      * @return
      */
     private String jvmId() {
@@ -471,5 +471,4 @@ public class BaseCloudPool implements CloudPool {
     void updateMachinePool() {
         this.poolUpdater.resize(config());
     }
-
 }
