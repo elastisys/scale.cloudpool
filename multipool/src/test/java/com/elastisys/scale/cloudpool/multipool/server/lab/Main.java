@@ -3,7 +3,9 @@ package com.elastisys.scale.cloudpool.multipool.server.lab;
 import java.io.File;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
@@ -119,9 +121,10 @@ public class Main {
         }
 
         @Override
-        public void setDesiredSize(int desiredSize)
+        public Future<?> setDesiredSize(int desiredSize)
                 throws IllegalArgumentException, CloudPoolException, NotStartedException {
             LOG.debug("setting desired size: {}", desiredSize);
+            return CompletableFuture.completedFuture(null);
         }
 
         @Override

@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
@@ -314,27 +315,31 @@ public class KubernetesCloudPool implements CloudPool {
     }
 
     @Override
-    public void setDesiredSize(int desiredSize)
+    public Future<?> setDesiredSize(int desiredSize)
             throws IllegalArgumentException, CloudPoolException, NotStartedException {
         ensureStarted();
         checkArgument(desiredSize >= 0, "desiredSize cannot be negative");
 
-        try {
-            Integer priorSize = this.desiredSize;
-            this.desiredSize = desiredSize;
-            this.podPool.setDesiredSize(desiredSize);
+        Integer priorSize = this.desiredSize;
+        this.desiredSize = desiredSize;
 
-            if (priorSize == null || priorSize != desiredSize) {
-                // size change alert
-                String message = String.format("desired size changed from %s to %d",
-                        priorSize != null ? priorSize : "unset", desiredSize);
-                postAlert(RESIZE, INFO, message);
-            }
-        } catch (Exception e) {
-            String message = "failed to set desired size: " + e.getMessage();
-            postAlert(RESIZE, WARN, message);
-            throw new CloudPoolException(message, e);
+        if (priorSize == null || priorSize != desiredSize) {
+            // size change alert
+            String message = String.format("desired size changed from %s to %d",
+                    priorSize != null ? priorSize : "unset", desiredSize);
+            postAlert(RESIZE, INFO, message);
         }
+
+        // asynchronously apply size change
+        return this.executor.submit(() -> {
+            try {
+                this.podPool.setDesiredSize(desiredSize);
+            } catch (Exception e) {
+                String message = "failed to set desired size: " + e.getMessage();
+                postAlert(RESIZE, WARN, message);
+                throw new CloudPoolException(message, e);
+            }
+        });
     }
 
     @Override

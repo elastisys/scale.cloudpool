@@ -1,6 +1,7 @@
 package com.elastisys.scale.cloudpool.api;
 
 import java.util.Optional;
+import java.util.concurrent.Future;
 
 import com.elastisys.scale.cloudpool.api.restapi.CloudPoolRestApi;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
@@ -147,7 +148,8 @@ public interface CloudPool {
      * Sets the desired number of machines in the machine pool. This method is
      * asynchronous and returns immediately after updating the desired size.
      * There may be a delay before the changes take effect and are reflected in
-     * the machine pool.
+     * the machine pool. The method returns a {@link Future} that the caller can
+     * use if it needs to wait for the size update to be applied to the pool.
      * <p/>
      * Note: the {@link CloudPool} implementation should take measures to ensure
      * that requested machines are recognized as pool members. The specific
@@ -157,6 +159,8 @@ public interface CloudPool {
      *
      * @param desiredSize
      *            The desired number of machines in the pool.
+     * @return A {@link Future} that the caller can use to wait for the size
+     *         update to be applied to the pool.
      *
      * @throws IllegalArgumentException
      *             If the desired size is illegal.
@@ -165,7 +169,7 @@ public interface CloudPool {
      * @throws NotStartedException
      *             If the {@link CloudPool} is not started.
      */
-    void setDesiredSize(int desiredSize) throws IllegalArgumentException, CloudPoolException, NotStartedException;
+    Future<?> setDesiredSize(int desiredSize) throws IllegalArgumentException, CloudPoolException, NotStartedException;
 
     /**
      * Terminates a particular machine pool member. The caller can control if a

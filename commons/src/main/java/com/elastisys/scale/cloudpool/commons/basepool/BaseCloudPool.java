@@ -6,6 +6,7 @@ import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.slf4j.Logger;
@@ -396,10 +397,12 @@ public class BaseCloudPool implements CloudPool {
     }
 
     @Override
-    public void setDesiredSize(int desiredSize) throws IllegalArgumentException, CloudPoolException {
+    public Future<?> setDesiredSize(int desiredSize) throws IllegalArgumentException, CloudPoolException {
         ensureStarted();
 
         this.poolUpdater.setDesiredSize(desiredSize);
+        // (asynchronously) run a pool update as soon as possible
+        return this.executor.submit(() -> this.poolUpdater.resize(config()));
     }
 
     @Override
@@ -468,6 +471,10 @@ public class BaseCloudPool implements CloudPool {
         return this.config;
     }
 
+    /**
+     * Forces the {@link PoolUpdater} to run a resize iteration (reconciliating
+     * the pool size with the set desired size).
+     */
     void updateMachinePool() {
         this.poolUpdater.resize(config());
     }

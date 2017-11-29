@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.String.format;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 import javax.ws.rs.core.Response.Status;
 
@@ -173,7 +175,7 @@ public class CloudPoolClient implements CloudPool {
     }
 
     @Override
-    public void setDesiredSize(int desiredSize)
+    public Future<?> setDesiredSize(int desiredSize)
             throws IllegalArgumentException, CloudPoolException, NotStartedException {
         String url = fullUrl("/pool/size");
         try {
@@ -193,6 +195,7 @@ public class CloudPoolClient implements CloudPool {
             throw new CloudPoolException(
                     format("failed to set desired size for cloud pool %s: %s", url, e.getMessage()), e);
         }
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override

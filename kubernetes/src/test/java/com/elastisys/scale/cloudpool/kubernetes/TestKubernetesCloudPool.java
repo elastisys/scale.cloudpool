@@ -1,8 +1,10 @@
 package com.elastisys.scale.cloudpool.kubernetes;
 
 import static org.hamcrest.CoreMatchers.any;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -12,6 +14,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import org.apache.http.client.HttpResponseException;
@@ -355,7 +359,10 @@ public class TestKubernetesCloudPool {
         this.cloudpool.configure(asJson(config(RC_POD_POOL)));
         this.cloudpool.start();
 
-        this.cloudpool.setDesiredSize(10);
+        Future<?> update = this.cloudpool.setDesiredSize(10);
+
+        // wait for update to complete
+        update.get();
 
         // expected patch
         ReplicationController patch = new ReplicationController();
@@ -376,7 +383,10 @@ public class TestKubernetesCloudPool {
         this.cloudpool.configure(asJson(config(DEPLOYMENT_POD_POOL)));
         this.cloudpool.start();
 
-        this.cloudpool.setDesiredSize(10);
+        Future<?> update = this.cloudpool.setDesiredSize(10);
+
+        // wait for update to complete
+        update.get();
 
         // expected patch
         Deployment patch = new Deployment();
@@ -397,7 +407,9 @@ public class TestKubernetesCloudPool {
         this.cloudpool.configure(asJson(config(RS_POD_POOL)));
         this.cloudpool.start();
 
-        this.cloudpool.setDesiredSize(10);
+        Future<?> update = this.cloudpool.setDesiredSize(10);
+        // wait for update to complete
+        update.get();
 
         // expected patch
         ReplicaSet patch = new ReplicaSet();
@@ -413,7 +425,7 @@ public class TestKubernetesCloudPool {
      * On failure to set the desired size, a {@link CloudPoolException} should
      * be thrown.
      */
-    @Test(expected = CloudPoolException.class)
+    @Test
     public void setDesiredSizeOnError() throws Exception {
         Status status = FakeKubeErrors.errorStatus(404, String.format("replicasets \"%s\" not found", RS_NAME));
         when(this.mockApiServer.patch(argThat(is(replicaSetPath(NAMESPACE, RS_NAME))),
@@ -422,7 +434,15 @@ public class TestKubernetesCloudPool {
         this.cloudpool.configure(asJson(config(RS_POD_POOL)));
         this.cloudpool.start();
 
-        this.cloudpool.setDesiredSize(10);
+        Future<?> update = this.cloudpool.setDesiredSize(10);
+
+        try {
+            // wait for update to complete
+            update.get();
+            fail("expected to fail");
+        } catch (ExecutionException e) {
+            assertThat(e.getCause(), instanceOf(CloudPoolException.class));
+        }
     }
 
     @Test(expected = NotStartedException.class)

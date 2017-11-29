@@ -22,6 +22,7 @@ import static com.elastisys.scale.commons.net.alerter.AlertSeverity.ERROR;
 import static com.elastisys.scale.commons.net.alerter.AlertSeverity.INFO;
 import static com.elastisys.scale.commons.net.alerter.AlertSeverity.WARN;
 import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -40,12 +41,18 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -281,7 +288,7 @@ public class TestBaseCloudPoolOperation {
     }
 
     @Test
-    public void singleMachineScaleUpOfMachinePool() throws CloudPoolException {
+    public void singleMachineScaleUpOfMachinePool() throws Exception {
         // set up initial pool
         Machine booting = machine("i-1", MachineState.PENDING);
         Machine active = machine("i-2", MachineState.RUNNING);
@@ -297,11 +304,11 @@ public class TestBaseCloudPoolOperation {
         this.cloudPool.start();
         // effective size: 3 => ask for 4 machines
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(3));
-        this.cloudPool.setDesiredSize(4);
+        Future<?> update = this.cloudPool.setDesiredSize(4);
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(4));
 
-        // force a pool resize run
-        this.cloudPool.updateMachinePool();
+        // wait for pool update to complete
+        update.get();
 
         // verify that cloud driver was asked to start one additional machine
         verify(this.driverMock).startMachines(1);
@@ -311,7 +318,7 @@ public class TestBaseCloudPoolOperation {
     }
 
     @Test
-    public void multiMachineScaleUpOfMachinePool() throws CloudPoolException {
+    public void multiMachineScaleUpOfMachinePool() throws Exception {
         // set up initial pool
         Machine booting = machine("i-1", MachineState.PENDING);
         Machine active1 = machine("i-2", MachineState.RUNNING);
@@ -329,11 +336,11 @@ public class TestBaseCloudPoolOperation {
 
         // effective size: 3 => ask for 5 machines
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(3));
-        this.cloudPool.setDesiredSize(5);
+        Future<?> update = this.cloudPool.setDesiredSize(5);
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(5));
 
-        // force a pool resize run
-        this.cloudPool.updateMachinePool();
+        // wait for update to complete
+        update.get();
 
         // verify that cloud driver was asked to start two additional machines
         verify(this.driverMock).startMachines(2);
@@ -370,11 +377,11 @@ public class TestBaseCloudPoolOperation {
 
         // effective size: 3 => ask for 4 machines
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(3));
-        this.cloudPool.setDesiredSize(4);
+        Future<?> update = this.cloudPool.setDesiredSize(4);
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(4));
 
-        // force a pool resize run
-        this.cloudPool.updateMachinePool();
+        // wait for pool update to complete
+        update.get();
 
         // verify that cloud driver was asked to start two additional machines
         verify(this.driverMock).startMachines(1);
@@ -388,7 +395,7 @@ public class TestBaseCloudPoolOperation {
      * fails completely without starting any new machine(s).
      */
     @Test
-    public void completelyFailedScaleUpOfMachinePool() throws CloudPoolException {
+    public void completelyFailedScaleUpOfMachinePool() throws Exception {
         // set up initial pool
         Machine booting = machine("i-1", MachineState.PENDING);
         Machine active1 = machine("i-2", MachineState.RUNNING);
@@ -405,16 +412,17 @@ public class TestBaseCloudPoolOperation {
 
         // effective size: 3 => ask for 5 machines
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(3));
-        this.cloudPool.setDesiredSize(5);
+        Future<?> update = this.cloudPool.setDesiredSize(5);
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(5));
 
         try {
-            // force a pool resize run
-            this.cloudPool.updateMachinePool();
+            update.get();
             fail("cloud pool expected to fail when startMachines fail");
-        } catch (CloudPoolException e) {
+        } catch (ExecutionException e) {
             // expected
-            assertThat(e.getCause(), is(fault));
+            Throwable cause = e.getCause();
+            assertThat(cause.getClass().getName(), is(CloudPoolException.class.getName()));
+            assertThat(cause.getCause(), is(fault));
         }
 
         // verify that cloud driver was asked to start two additional machines
@@ -428,11 +436,9 @@ public class TestBaseCloudPoolOperation {
      * Verify cloud pool behavior when {@link CloudPoolDriver#startMachines}
      * fails part-way in to the operation, after it has started a subset of the
      * requested machines.
-     *
-     * @throws CloudPoolException
      */
     @Test
-    public void partiallyFailedScaleUpOfMachinePool() throws CloudPoolException {
+    public void partiallyFailedScaleUpOfMachinePool() throws Exception {
         // set up initial pool
         Machine booting = machine("i-1", MachineState.PENDING);
         Machine active1 = machine("i-2", MachineState.RUNNING);
@@ -453,13 +459,13 @@ public class TestBaseCloudPoolOperation {
         // effective size: 3 => ask for 5 machines
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(3));
         try {
-            this.cloudPool.setDesiredSize(5);
-            // force a pool resize run
-            this.cloudPool.updateMachinePool();
+            Future<?> update = this.cloudPool.setDesiredSize(5);
+            // wait for pool update to complete
+            update.get();
             fail("cloud pool expected to fail when startMachines fail");
-        } catch (CloudPoolException e) {
+        } catch (ExecutionException e) {
             // expected
-            assertThat(e.getCause(), is(partialFault));
+            assertThat(e.getCause().getCause(), is(partialFault));
         }
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(5));
 
@@ -658,7 +664,7 @@ public class TestBaseCloudPoolOperation {
      * all machines. In such case, a resize alert should not be sent.
      */
     @Test
-    public void completelyFailedScaleDownOfMachinePool() throws CloudPoolException {
+    public void completelyFailedScaleDownOfMachinePool() throws Exception {
         // set up initial pool
         DateTime now = UtcTime.now();
         Machine active1 = machine("i-1", PENDING, now.minus(1));
@@ -672,10 +678,10 @@ public class TestBaseCloudPoolOperation {
         this.cloudPool.configure(poolConfig(OLDEST));
         this.cloudPool.start();
 
-        this.cloudPool.setDesiredSize(0);
+        Future<?> update = this.cloudPool.setDesiredSize(0);
 
-        // force a pool resize run
-        this.cloudPool.updateMachinePool();
+        // wait for pool update to complete
+        update.get();
 
         // verify that cloud driver was asked to terminate
         verify(this.driverMock).terminateMachines(asList("i-1"));
@@ -1313,6 +1319,12 @@ public class TestBaseCloudPoolOperation {
      */
     @Test
     public void terminateWithoutReplacementAfterDesiredSizeSetToZero() {
+        // use an executor that works normally until cloudpool has been started
+        // and then halt its progress to simulate a slow pool update operation
+        HaltableScheduledExecutorService haltableExecutor = new HaltableScheduledExecutorService(this.executor);
+        this.cloudPool = new BaseCloudPool(STATE_STORAGE, this.driverMock, haltableExecutor, this.eventBusMock);
+        reset(this.eventBusMock);
+
         // set up initial pool
         DateTime now = UtcTime.now();
         Machine running1 = machine("i-1", RUNNING, MembershipStatus.defaultStatus(), now.minus(1));
@@ -1321,8 +1333,10 @@ public class TestBaseCloudPoolOperation {
         this.cloudPool.start();
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(1));
 
+        haltableExecutor.haltProgress();
+
         // desired size gets set to 0
-        this.cloudPool.setDesiredSize(0);
+        Future<?> update = this.cloudPool.setDesiredSize(0);
         // ... but before the pool has been updated to the new desired size a
         // terminate is requested
         doNothing().when(this.driverMock).terminateMachines(asList("i-1"));
@@ -1666,4 +1680,121 @@ public class TestBaseCloudPoolOperation {
             return null;
         }
     }
+
+    /**
+     * A {@link ScheduledExecutorService} that simply delegates all actions to a
+     * {@link ScheduledExecutorService} instance given on creation until its
+     * {@link #haltProgress()} method is called, after which it will never
+     * complete any tasks given (to simulate long running operations).
+     */
+    private static class HaltableScheduledExecutorService implements ScheduledExecutorService {
+
+        private ScheduledExecutorService delegate;
+
+        public HaltableScheduledExecutorService(ScheduledExecutorService executor) {
+            this.delegate = executor;
+        }
+
+        /**
+         * Halt all progress of the {@link ScheduledExecutorService} by
+         * switching it with a mock {@link ScheduledExecutorService} to simulate
+         * all tasks being slow to complete.
+         */
+        public void haltProgress() {
+            this.delegate = mock(ScheduledExecutorService.class);
+            Future mockFuture = mock(Future.class);
+            when(this.delegate.submit(argThat(any(Runnable.class)))).thenReturn(mockFuture);
+        }
+
+        @Override
+        public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
+            return this.delegate.schedule(command, delay, unit);
+        }
+
+        @Override
+        public void execute(Runnable command) {
+            this.delegate.execute(command);
+        }
+
+        @Override
+        public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
+            return this.delegate.schedule(callable, delay, unit);
+        }
+
+        @Override
+        public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
+            return this.delegate.scheduleAtFixedRate(command, initialDelay, period, unit);
+        }
+
+        @Override
+        public void shutdown() {
+            this.delegate.shutdown();
+        }
+
+        @Override
+        public List<Runnable> shutdownNow() {
+            return this.delegate.shutdownNow();
+        }
+
+        @Override
+        public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay,
+                TimeUnit unit) {
+            return this.delegate.scheduleWithFixedDelay(command, initialDelay, delay, unit);
+        }
+
+        @Override
+        public boolean isShutdown() {
+            return this.delegate.isShutdown();
+        }
+
+        @Override
+        public boolean isTerminated() {
+            return this.delegate.isTerminated();
+        }
+
+        @Override
+        public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+            return this.delegate.awaitTermination(timeout, unit);
+        }
+
+        @Override
+        public <T> Future<T> submit(Callable<T> task) {
+            return this.delegate.submit(task);
+        }
+
+        @Override
+        public <T> Future<T> submit(Runnable task, T result) {
+            return this.delegate.submit(task, result);
+        }
+
+        @Override
+        public Future<?> submit(Runnable task) {
+            return this.delegate.submit(task);
+        }
+
+        @Override
+        public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
+            return this.delegate.invokeAll(tasks);
+        }
+
+        @Override
+        public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
+                throws InterruptedException {
+            return this.delegate.invokeAll(tasks, timeout, unit);
+        }
+
+        @Override
+        public <T> T invokeAny(Collection<? extends Callable<T>> tasks)
+                throws InterruptedException, ExecutionException {
+            return this.delegate.invokeAny(tasks);
+        }
+
+        @Override
+        public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
+                throws InterruptedException, ExecutionException, TimeoutException {
+            return this.delegate.invokeAny(tasks, timeout, unit);
+        }
+
+    }
+
 }

@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -370,7 +371,7 @@ public class TestRestApi {
     @Test
     public void testSetDesiredSize() {
         // set up expected call on mock
-        doNothing().when(cloudPool).setDesiredSize(15);
+        when(cloudPool.setDesiredSize(15)).thenReturn(CompletableFuture.completedFuture(null));
 
         // run test
         Client client = RestClients.httpsNoAuth();

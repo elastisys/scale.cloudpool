@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -165,9 +166,9 @@ class DiskBackedCloudPoolInstance implements CloudPoolInstance {
     }
 
     @Override
-    public void setDesiredSize(int desiredSize)
+    public Future<?> setDesiredSize(int desiredSize)
             throws IllegalArgumentException, CloudPoolException, NotStartedException {
-        this.cloudPool.setDesiredSize(desiredSize);
+        return this.cloudPool.setDesiredSize(desiredSize);
     }
 
     @Override

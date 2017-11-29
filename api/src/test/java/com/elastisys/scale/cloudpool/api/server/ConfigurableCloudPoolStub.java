@@ -1,6 +1,7 @@
 package com.elastisys.scale.cloudpool.api.server;
 
 import java.util.Optional;
+import java.util.concurrent.Future;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
@@ -58,7 +59,7 @@ class ConfigurableCloudPoolStub implements CloudPool {
     }
 
     @Override
-    public void setDesiredSize(int desiredSize) throws IllegalArgumentException, CloudPoolException {
+    public Future<?> setDesiredSize(int desiredSize) throws IllegalArgumentException, CloudPoolException {
         throw new UnsupportedOperationException("not implemented");
     }
 

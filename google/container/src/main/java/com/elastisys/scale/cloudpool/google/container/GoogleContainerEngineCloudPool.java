@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
@@ -214,12 +215,12 @@ public class GoogleContainerEngineCloudPool implements CloudPool {
     }
 
     @Override
-    public void setDesiredSize(int desiredSize)
+    public Future<?> setDesiredSize(int desiredSize)
             throws IllegalArgumentException, CloudPoolException, NotStartedException {
         ensureStarted();
         this.desiredSize = desiredSize;
         // asynchronously run pool update
-        this.executor.submit(() -> updateCluster());
+        return this.executor.submit(() -> updateCluster());
     }
 
     @Override

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import org.junit.Before;
@@ -98,7 +99,10 @@ public class TestKubernetesCloudPoolAlerting {
                 .thenThrow(new KubernetesApiException("api error"));
 
         try {
-            this.cloudpool.setDesiredSize(10);
+            Future<?> update = this.cloudpool.setDesiredSize(10);
+            // wait for update to complete
+            update.get();
+
             fail("expected to fail");
         } catch (Exception e) {
             // expected
