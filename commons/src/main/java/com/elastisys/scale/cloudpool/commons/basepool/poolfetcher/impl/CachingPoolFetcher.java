@@ -209,12 +209,13 @@ public class CachingPoolFetcher implements PoolFetcher {
             this.cachedMachinePool.update(this.delegate.get(FetchOption.FORCE_REFRESH));
         } catch (Throwable e) {
             this.lastFetchError = e;
-            String message = format("machine pool refresh failed: %s", e.getMessage());
+            String message = format("machine pool refresh failed");
+            String detail = format("%s: %s", message, e.getMessage());
             Alert alert = AlertBuilder.create().topic(POOL_FETCH.name()).severity(AlertSeverity.WARN).message(message)
-                    .build();
+                    .details(detail).build();
             this.eventBus.post(alert);
-            LOG.warn(message, e);
-            throw new CloudPoolException(message, e);
+            LOG.warn(detail, e);
+            throw new CloudPoolException(detail, e);
         } finally {
             this.firstFetchComplete.countDown();
         }

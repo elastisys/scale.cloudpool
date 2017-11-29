@@ -125,12 +125,13 @@ public class StandardPoolUpdater implements PoolUpdater {
         try {
             updateMachinePool(config);
         } catch (Throwable e) {
-            String message = format("failed to resize machine pool %s: %s", config.getName(), e.getMessage());
+            String message = format("failed to resize machine pool %s", config.getName());
+            String details = format("%s: %s", message, e.getMessage());
             Alert alert = AlertBuilder.create().topic(RESIZE.name()).severity(AlertSeverity.WARN).message(message)
-                    .build();
+                    .details(details).build();
             this.eventBus.post(alert);
-            LOG.warn(message, e);
-            throw new CloudPoolException(message, e);
+            LOG.warn(details, e);
+            throw new CloudPoolException(details, e);
         }
     }
 
@@ -441,14 +442,15 @@ public class StandardPoolUpdater implements PoolUpdater {
             int numFailed = e.getTerminationErrors().size();
             String message = format("%d out of %d machine terminations failed", numFailed, victims.size());
             Alert alert = AlertBuilder.create().topic(RESIZE.name()).severity(AlertSeverity.WARN).message(message) //
-                    .addMetadata("terminated", e.getTerminatedMachines()) //
+                    .details(e.getMessage()).addMetadata("terminated", e.getTerminatedMachines()) //
                     .addMetadata("terminationErrors", JsonUtils.toJson(e.getTerminationErrorMessages())).build();
             this.eventBus.post(alert);
         } catch (Exception e) {
-            String errorMsg = format("failed to terminate machines %s: %s", victimIds, e.getMessage());
-            LOG.error(errorMsg);
-            Alert alert = AlertBuilder.create().topic(RESIZE.name()).severity(AlertSeverity.ERROR).message(errorMsg)
-                    .build();
+            String message = format("failed to terminate machines %s", victimIds);
+            String detail = format("%s: %s", message, e.getMessage());
+            LOG.error(detail, e);
+            Alert alert = AlertBuilder.create().topic(RESIZE.name()).severity(AlertSeverity.ERROR).message(message)
+                    .details(detail).build();
             this.eventBus.post(alert);
         }
 
