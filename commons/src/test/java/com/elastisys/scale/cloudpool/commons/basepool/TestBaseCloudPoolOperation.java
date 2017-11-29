@@ -114,7 +114,13 @@ public class TestBaseCloudPoolOperation {
 
     @Before
     public void onSetup() throws IOException {
-        FileUtils.deleteRecursively(STATE_STORAGE_DIR);
+        try {
+            FileUtils.deleteRecursively(STATE_STORAGE_DIR);
+        } catch (Exception e) {
+            // has been known to fail (because directory is not empty).
+            // try one more time.
+            FileUtils.deleteRecursively(STATE_STORAGE_DIR);
+        }
         FrozenTime.setFixed(UtcTime.parse("2014-04-17T12:00:00.000Z"));
         this.cloudPool = new BaseCloudPool(STATE_STORAGE, this.driverMock, this.executor, this.eventBusMock);
         reset(this.eventBusMock);
@@ -484,7 +490,7 @@ public class TestBaseCloudPoolOperation {
      * machine.
      */
     @Test
-    public void singleMachineScaleDownOfMachinePool() throws CloudPoolException {
+    public void singleMachineScaleDownOfMachinePool() throws Exception {
         // set up initial pool
         DateTime now = UtcTime.now();
         Machine booting = machine("i-1", PENDING, now.minus(1));
@@ -499,10 +505,10 @@ public class TestBaseCloudPoolOperation {
 
         // effective size: 3 => ask for 2 machines
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(3));
-        this.cloudPool.setDesiredSize(2);
+        Future<?> update = this.cloudPool.setDesiredSize(2);
 
-        // force a pool resize run
-        this.cloudPool.updateMachinePool();
+        // wait for pool update to complete
+        update.get();
 
         // verify that cloud driver was asked to terminate the oldest active
         // machine
@@ -517,7 +523,7 @@ public class TestBaseCloudPoolOperation {
      * Verify that cloud pool enforces the chosen {@link VictimSelectionPolicy}.
      */
     @Test
-    public void victimSelectionPolicyEnforcementOnScaleDown() throws CloudPoolException {
+    public void victimSelectionPolicyEnforcementOnScaleDown() throws Exception {
         // set up initial pool
         DateTime now = UtcTime.now();
         Machine booting = machine("i-1", PENDING, now.minus(1));
@@ -532,10 +538,10 @@ public class TestBaseCloudPoolOperation {
 
         // effective size: 3 => ask for 2 machines
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(3));
-        this.cloudPool.setDesiredSize(2);
+        Future<?> update = this.cloudPool.setDesiredSize(2);
 
-        // force a pool resize run
-        this.cloudPool.updateMachinePool();
+        // wait for pool update to complete
+        update.get();
 
         // verify that cloud driver was asked to terminate the _newest_ active
         // machine
@@ -551,7 +557,7 @@ public class TestBaseCloudPoolOperation {
      * several machines.
      */
     @Test
-    public void multiMachineScaleDownOfMachinePool() throws CloudPoolException {
+    public void multiMachineScaleDownOfMachinePool() throws Exception {
         // set up initial pool
         DateTime now = UtcTime.now();
         Machine booting = machine("i-1", PENDING, now.minus(1));
@@ -566,10 +572,10 @@ public class TestBaseCloudPoolOperation {
 
         // effective size: 3 => ask for 1 machines
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(3));
-        this.cloudPool.setDesiredSize(1);
+        Future<?> update = this.cloudPool.setDesiredSize(1);
 
-        // force a pool resize run
-        this.cloudPool.updateMachinePool();
+        // wait for pool update to complete
+        update.get();
 
         // verify that cloud driver was asked to terminate the two oldest
         // active machines
@@ -586,7 +592,7 @@ public class TestBaseCloudPoolOperation {
      */
     @SuppressWarnings("unchecked")
     @Test
-    public void scaleDownOfMachinePoolOnDriverError() throws CloudPoolException {
+    public void scaleDownOfMachinePoolOnDriverError() throws Exception {
         // set up initial pool
         DateTime now = UtcTime.now();
         Machine booting = machine("i-1", PENDING, now.minus(1));
@@ -604,10 +610,10 @@ public class TestBaseCloudPoolOperation {
 
         // effective size: 3 => ask for 2 machines
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(3));
-        this.cloudPool.setDesiredSize(2);
+        Future<?> update = this.cloudPool.setDesiredSize(2);
 
-        // force a pool resize run
-        this.cloudPool.updateMachinePool();
+        // wait for pool update to complete
+        update.get();
 
         // verify that cloud driver was asked to terminate the oldest active
         // machine
@@ -624,7 +630,7 @@ public class TestBaseCloudPoolOperation {
      * throwing a {@link TerminateMachinesException}.
      */
     @Test
-    public void partiallyFailedScaleDownOfMachinePool() throws CloudPoolException {
+    public void partiallyFailedScaleDownOfMachinePool() throws Exception {
         // set up initial pool
         DateTime now = UtcTime.now();
         Machine booting = machine("i-1", PENDING, now.minus(1));
@@ -643,10 +649,10 @@ public class TestBaseCloudPoolOperation {
 
         // effective size: 3 => ask for 1 machines
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(3));
-        this.cloudPool.setDesiredSize(1);
+        Future<?> update = this.cloudPool.setDesiredSize(1);
 
-        // force a pool resize run
-        this.cloudPool.updateMachinePool();
+        // wait for pool update to complete
+        update.get();
 
         // verify that cloud driver was asked to terminate the two oldest
         // active machines
@@ -879,9 +885,10 @@ public class TestBaseCloudPoolOperation {
         assertThat(this.cloudPool.getPoolSize().getDesiredSize(), is(2));
 
         // order scale-in
-        this.cloudPool.setDesiredSize(1);
-        // run pool update => scale-in expected
-        this.cloudPool.updateMachinePool();
+        Future<?> update = this.cloudPool.setDesiredSize(1);
+
+        // wait for pool update to complete
+        update.get();
 
         // verify that the out-of-service machine, despite being the oldest,
         // was not selected for termination
