@@ -101,10 +101,12 @@ public class TestStandardApiServerClientCertAuth {
         if (cause instanceof SSLHandshakeException) {
             return;
         }
-        // in some cases it seems that a "connection reset" error can also be
-        // seen on the client side on failure to authenticate with a cert.
+        // in some cases it seems that a "connection reset" or "broken pipe"
+        // error can also be seen on the client side on failure to authenticate
+        // with a cert.
         if (cause instanceof SocketException) {
-            assertTrue(cause.getMessage().contains("Connection reset"));
+            assertTrue(cause.getMessage().contains("Connection reset")
+                    || cause.getMessage().contains("Broken pipe (Write failed)"));
         }
     }
 
