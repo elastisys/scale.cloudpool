@@ -26,10 +26,10 @@ import com.elastisys.scale.cloudpool.aws.commons.poolclient.SpotClient;
 import com.elastisys.scale.cloudpool.aws.spot.driver.config.CloudApiSettings;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
+import com.elastisys.scale.commons.eventbus.EventBus;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.eventbus.EventBus;
+import com.elastisys.scale.commons.util.collection.Maps;
 
 /**
  * Verifies the behavior of the {@link SpotPoolDriver} with respect to
@@ -70,7 +70,7 @@ public class TestSpotPoolDriverConfiguration {
                 asList("subnet-44b5786b", "subnet-dcd15f97"), true, "instancekey",
                 "arn:aws:iam::123456789012:instance-profile/my-iam-profile", asList("sg-12345678"),
                 "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg==",
-                true, ImmutableMap.of("Cluster", "my-cluster"));
+                true, Maps.of("Cluster", "my-cluster"));
         assertThat(this.driver.provisioningTemplate(), is(expectedTemplate));
 
         // verify that driver calls through to configure spot client

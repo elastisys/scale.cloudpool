@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudpool.google.container;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -29,6 +29,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
+import com.elastisys.scale.commons.eventbus.EventBus;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.http.HttpAlerterConfig;
@@ -40,7 +41,6 @@ import com.elastisys.scale.commons.net.smtp.SmtpClientAuthentication;
 import com.elastisys.scale.commons.net.ssl.BasicCredentials;
 import com.elastisys.scale.commons.net.ssl.CertificateCredentials;
 import com.elastisys.scale.commons.util.file.FileUtils;
-import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonObject;
 
 /**

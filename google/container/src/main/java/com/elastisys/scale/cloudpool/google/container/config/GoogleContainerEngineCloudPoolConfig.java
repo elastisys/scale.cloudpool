@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudpool.google.container.config;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -96,7 +96,7 @@ public class GoogleContainerEngineCloudPoolConfig {
 
     /**
      * Specifies which container cluster to manage.
-     * 
+     *
      * @return
      */
     public ContainerCluster getCluster() {

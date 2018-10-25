@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.api.server;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import org.eclipse.jetty.server.Server;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -19,7 +20,6 @@ import com.elastisys.scale.commons.rest.server.JaxRsApplication;
 import com.elastisys.scale.commons.server.ServletDefinition;
 import com.elastisys.scale.commons.server.ServletServerBuilder;
 import com.elastisys.scale.commons.server.SslKeyStoreType;
-import com.google.common.base.Optional;
 import com.google.gson.JsonObject;
 
 /**
@@ -170,7 +170,7 @@ public class CloudPoolServer {
         if (!cloudPoolConfig.isFile()) {
             LOG.info("no cloud pool configuration found at {}. " + "starting without config ...",
                     cloudPoolConfig.getAbsolutePath());
-            return Optional.absent();
+            return Optional.empty();
         }
 
         return Optional.of(parseJsonConfig(cloudPoolConfig.getAbsolutePath()));

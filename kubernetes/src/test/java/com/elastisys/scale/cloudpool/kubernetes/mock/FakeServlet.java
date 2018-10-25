@@ -1,6 +1,7 @@
 package com.elastisys.scale.cloudpool.kubernetes.mock;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -19,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.commons.util.io.IoUtils;
-import com.google.common.base.Charsets;
 
 /**
  * A fake {@link Servlet}, intended for testing purposes, which registers all
@@ -37,7 +37,7 @@ public class FakeServlet extends HttpServlet {
     /**
      * Create a {@link FakeServlet} that will always respond with the given
      * response.
-     * 
+     *
      * @param preparedResponse
      */
     public FakeServlet(HttpResponse preparedResponse) {
@@ -77,7 +77,7 @@ public class FakeServlet extends HttpServlet {
     }
 
     private void registerRequest(HttpServletRequest req) throws IOException {
-        String body = IoUtils.toString(req.getInputStream(), Charsets.UTF_8);
+        String body = IoUtils.toString(req.getInputStream(), StandardCharsets.UTF_8);
         Map<String, String> headers = headerMap(req);
         HttpRequest request = new HttpRequest(req.getRequestURI(), req.getMethod(), body, headers);
         this.requests.add(request);

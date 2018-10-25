@@ -2,7 +2,7 @@ package com.elastisys.scale.cloudpool.kubernetes.types;
 
 import static com.elastisys.scale.cloudpool.kubernetes.types.Operator.DoesNotExist;
 import static com.elastisys.scale.cloudpool.kubernetes.types.Operator.Exists;
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 import static java.util.Arrays.asList;
 
 import java.util.Arrays;

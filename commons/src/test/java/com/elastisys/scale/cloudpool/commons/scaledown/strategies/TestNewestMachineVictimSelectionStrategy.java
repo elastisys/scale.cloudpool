@@ -1,6 +1,5 @@
 package com.elastisys.scale.cloudpool.commons.scaledown.strategies;
 
-import static com.google.common.collect.Iterables.getOnlyElement;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -36,7 +35,7 @@ public class TestNewestMachineVictimSelectionStrategy extends AbstractScaledownT
     public void onSingletonCandidateSet() {
         List<Machine> set = Arrays.asList(instance("i-1", "2012-06-01T12:00:00"));
         Machine victim = this.strategy.selectVictim(set);
-        assertThat(victim, is(getOnlyElement(set)));
+        assertThat(victim, is(set.get(0)));
     }
 
     @Test

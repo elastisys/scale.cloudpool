@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -41,17 +42,15 @@ import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.FetchOption;
 import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.PoolFetcher;
+import com.elastisys.scale.commons.eventbus.EventBus;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.net.retryable.Retryers;
+import com.elastisys.scale.commons.util.concurrent.Sleep;
 import com.elastisys.scale.commons.util.file.FileUtils;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.base.Charsets;
-import com.google.common.eventbus.EventBus;
-import com.google.common.io.Files;
-import com.google.common.util.concurrent.Uninterruptibles;
 
 /**
  * Exercise the {@link CachingPoolFetcher}.
@@ -156,7 +155,7 @@ public class TestCachingPoolFetcher {
         // the delegate PoolFetch is slow to respond
         when(this.delegate.get(FORCE_REFRESH)).thenAnswer(invocation -> {
             LOG.debug("slow responding PoolFetcher called. delaying ...");
-            Uninterruptibles.sleepUninterruptibly(500, TimeUnit.MILLISECONDS);
+            Sleep.forTime(500, TimeUnit.MILLISECONDS);
             return pool(machines("i-1", "i-2"));
         });
 
@@ -361,8 +360,8 @@ public class TestCachingPoolFetcher {
     }
 
     private void save(MachinePool pool, File destination) throws IOException {
-        Files.createParentDirs(destination);
-        Files.write(JsonUtils.toPrettyString(JsonUtils.toJson(pool)), destination, Charsets.UTF_8);
+        Files.createDirectories(destination.getParentFile().toPath());
+        Files.write(destination.toPath(), JsonUtils.toPrettyString(JsonUtils.toJson(pool)).getBytes());
     }
 
     /**

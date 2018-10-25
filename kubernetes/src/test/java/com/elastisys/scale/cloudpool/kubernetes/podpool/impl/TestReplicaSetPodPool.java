@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,6 @@ import com.elastisys.scale.cloudpool.kubernetes.types.ReplicaSetSpec;
 import com.elastisys.scale.cloudpool.kubernetes.types.Status;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.base.Charsets;
 import com.google.gson.JsonObject;
 
 /**
@@ -218,7 +218,7 @@ public class TestReplicaSetPodPool {
     }
 
     private static String podsQueryPath(String namespace, String labelSelector) throws UnsupportedEncodingException {
-        String encodedSelector = URLEncoder.encode(labelSelector, Charsets.UTF_8.name());
+        String encodedSelector = URLEncoder.encode(labelSelector, StandardCharsets.UTF_8.name());
         return MessageFormat.format("/api/v1/namespaces/{0}/pods?labelSelector={1}", namespace, encodedSelector);
     }
 

@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.google.commons.utils;
 
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkState;
 import static com.google.api.client.util.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 
 import java.text.MessageFormat;
 import java.util.Objects;

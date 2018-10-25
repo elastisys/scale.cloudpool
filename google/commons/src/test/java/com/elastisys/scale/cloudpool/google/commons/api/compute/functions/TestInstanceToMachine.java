@@ -18,16 +18,15 @@ import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
-import com.elastisys.scale.cloudpool.google.commons.api.compute.functions.InstanceToMachine;
 import com.elastisys.scale.cloudpool.google.commons.api.compute.metadata.MetadataKeys;
 import com.elastisys.scale.cloudpool.google.commons.utils.MetadataUtil;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.util.io.Resources;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonParser;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.compute.model.Instance;
-import com.google.common.io.Resources;
 
 /**
  * Verifies that {@link Instance} are correctly translated into {@link Machine}

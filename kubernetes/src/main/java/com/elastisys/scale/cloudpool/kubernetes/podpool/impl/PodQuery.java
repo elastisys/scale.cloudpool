@@ -1,9 +1,10 @@
 package com.elastisys.scale.cloudpool.kubernetes.podpool.impl;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.concurrent.Callable;
@@ -13,7 +14,6 @@ import com.elastisys.scale.cloudpool.kubernetes.apiserver.KubernetesApiException
 import com.elastisys.scale.cloudpool.kubernetes.types.Pod;
 import com.elastisys.scale.cloudpool.kubernetes.types.PodList;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Charsets;
 
 /**
  * A callable task that, when called, lists {@link Pod}s in a given namespace,
@@ -77,7 +77,7 @@ public class PodQuery implements Callable<PodList> {
 
     private String listPodsPath(String labelSelectorExpression) {
         try {
-            String encodedSelector = URLEncoder.encode(labelSelectorExpression, Charsets.UTF_8.name());
+            String encodedSelector = URLEncoder.encode(labelSelectorExpression, StandardCharsets.UTF_8.name());
             return MessageFormat.format(LIST_PODS_PATH, this.namespace, encodedSelector);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("failed to produce URL path to list pods: " + e.getMessage(), e);

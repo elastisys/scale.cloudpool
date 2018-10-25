@@ -10,7 +10,7 @@ import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.ec2.model.Instance;
 import com.elastisys.scale.cloudpool.aws.commons.poolclient.Ec2ProvisioningTemplate;
 import com.elastisys.scale.cloudpool.aws.commons.requests.ec2.CreateInstances;
-import com.google.common.collect.ImmutableMap;
+import com.elastisys.scale.commons.util.collection.Maps;
 
 public class CreateInstanceMain extends AbstractClient {
 
@@ -42,7 +42,7 @@ public class CreateInstanceMain extends AbstractClient {
     private static final boolean ebsOptimized = false;
 
     // TODO: set instance tags
-    private static final Map<String, String> tags = ImmutableMap.of("cluster", "mycluster");
+    private static final Map<String, String> tags = Maps.of("cluster", "mycluster");
 
     public static void main(String[] args) throws Exception {
         logger.info(format("Starting instance in region %s ...", region));

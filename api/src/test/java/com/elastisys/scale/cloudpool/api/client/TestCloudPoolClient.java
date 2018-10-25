@@ -33,8 +33,8 @@ import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.host.HostUtils;
 import com.elastisys.scale.commons.net.http.client.AuthenticatedHttpClient;
+import com.elastisys.scale.commons.util.io.Resources;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.io.Resources;
 import com.google.gson.JsonObject;
 
 /**

@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.commons.util.cli;
 
 import static com.elastisys.scale.commons.json.JsonUtils.toPrettyString;
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 import static java.util.Arrays.asList;
 
 import java.io.File;
@@ -15,7 +15,6 @@ import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Joiner;
 
 /**
  * A utility class that can be used to exercise a given {@link CloudPool} from
@@ -59,7 +58,7 @@ public class CloudPoolCommandLineDriver {
                 "terminate <id> <size--?>                        -- terminate a pool member",
                 "exit                                            -- quit");
         System.err.println("Commands:");
-        System.err.println(Joiner.on("\n").join(commands));
+        System.err.println(String.join("\n", commands));
         System.err.print(">> ");
     }
 
@@ -129,7 +128,7 @@ public class CloudPoolCommandLineDriver {
             boolean verbose = !args.isEmpty() && Boolean.valueOf(args.get(0));
             List<Machine> machines = this.cloudPool.getMachinePool().getMachines();
             if (verbose) {
-                System.out.println(Joiner.on("\n").join(machines));
+                System.out.println(String.join("\n", machines.toArray(new String[0])));
             } else {
                 // exclude metadata
 

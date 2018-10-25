@@ -3,7 +3,7 @@ package com.elastisys.scale.cloudpool.multipool.impl;
 import static com.elastisys.scale.commons.json.JsonUtils.parseJsonFile;
 import static com.elastisys.scale.commons.json.JsonUtils.toObject;
 import static com.elastisys.scale.commons.json.JsonUtils.toPrettyString;
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 
 import java.io.File;
 import java.io.IOException;

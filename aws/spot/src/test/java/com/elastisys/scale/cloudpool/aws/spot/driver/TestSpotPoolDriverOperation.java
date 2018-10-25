@@ -54,12 +54,12 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverExce
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
+import com.elastisys.scale.commons.eventbus.EventBus;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.eventbus.EventBus;
+import com.elastisys.scale.commons.util.collection.Maps;
 
 /**
  * Exercises the {@link SpotPoolDriver}.
@@ -104,7 +104,7 @@ public class TestSpotPoolDriverOperation {
     private static final String USER_DATA = Base64Utils
             .toBase64(Arrays.asList("#!/bin/bash", "apt-get update -qy && apt-get isntall apache2 -qy"));
     private static final boolean EBS_OPTIMIZED = true;
-    private static final Map<String, String> TAGS = ImmutableMap.of("Cluster", "mycluster");
+    private static final Map<String, String> TAGS = Maps.of("Cluster", "mycluster");
 
     /** Fake stubbed {@link SpotClient}. */
     private FakeSpotClient fakeClient;

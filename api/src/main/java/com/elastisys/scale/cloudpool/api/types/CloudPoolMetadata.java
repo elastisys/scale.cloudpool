@@ -1,12 +1,13 @@
 package com.elastisys.scale.cloudpool.api.types;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
+import com.elastisys.scale.commons.util.precond.Preconditions;
 
 /**
  * Describes static properties about the cloud pool itself and the cloud it
@@ -43,8 +44,8 @@ public class CloudPoolMetadata {
      *            List of supported API versions.
      */
     public CloudPoolMetadata(String poolIdentifier, List<String> supportedApiVersions) {
-        Preconditions.checkNotNull(poolIdentifier, "poolIdentifier cannot be null");
-        Preconditions.checkNotNull(supportedApiVersions, "supportedApiVersions cannot be null");
+        Objects.requireNonNull(poolIdentifier, "poolIdentifier cannot be null");
+        Objects.requireNonNull(supportedApiVersions, "supportedApiVersions cannot be null");
         Preconditions.checkState(!supportedApiVersions.isEmpty(), "supportedApiVersion cannot be empty");
         for (String apiVersion : supportedApiVersions) {
             Preconditions.checkState(apiVersionPattern.matcher(apiVersion).matches(),
@@ -52,7 +53,7 @@ public class CloudPoolMetadata {
         }
 
         this.poolIdentifier = poolIdentifier;
-        this.supportedApiVersions = ImmutableList.copyOf(supportedApiVersions);
+        this.supportedApiVersions = Collections.unmodifiableList(new ArrayList<>(supportedApiVersions));
     }
 
     /**

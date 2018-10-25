@@ -23,13 +23,13 @@ import com.elastisys.scale.cloudpool.kubernetes.config.AuthConfig;
 import com.elastisys.scale.cloudpool.kubernetes.config.KubernetesCloudPoolConfig;
 import com.elastisys.scale.cloudpool.kubernetes.config.PodPoolConfig;
 import com.elastisys.scale.cloudpool.kubernetes.podpool.PodPool;
+import com.elastisys.scale.commons.eventbus.EventBus;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.net.alerter.AlertSeverity;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonObject;
 
 /**

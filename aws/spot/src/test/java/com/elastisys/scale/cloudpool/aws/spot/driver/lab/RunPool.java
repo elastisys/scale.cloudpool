@@ -15,8 +15,9 @@ import com.elastisys.scale.cloudpool.aws.spot.driver.SpotPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.BaseCloudPool;
 import com.elastisys.scale.cloudpool.commons.basepool.StateStorage;
 import com.elastisys.scale.cloudpool.commons.util.cli.CloudPoolCommandLineDriver;
+import com.elastisys.scale.commons.eventbus.EventBus;
+import com.elastisys.scale.commons.eventbus.impl.SynchronousEventBus;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonObject;
 
 /**
@@ -32,7 +33,7 @@ public class RunPool {
 
     public static void main(String[] args) throws Exception {
         StateStorage stateStorage = StateStorage.builder(new File("target/state")).build();
-        EventBus eventBus = new EventBus();
+        EventBus eventBus = new SynchronousEventBus(LOG);
         CloudPool pool = new BaseCloudPool(stateStorage, new SpotPoolDriver(new AwsSpotClient(), executor, eventBus),
                 executor, eventBus);
 

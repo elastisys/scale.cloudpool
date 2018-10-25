@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 
 import org.eclipse.jetty.server.Server;
 import org.junit.After;
@@ -17,8 +18,7 @@ import com.elastisys.scale.cloudpool.kubernetes.mock.HttpResponse;
 import com.elastisys.scale.commons.net.host.HostUtils;
 import com.elastisys.scale.commons.server.ServletDefinition;
 import com.elastisys.scale.commons.server.ServletServerBuilder;
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
+import com.elastisys.scale.commons.util.io.IoUtils;
 
 /**
  * Verifies proper behavior of {@link StandardApiServerClient} when told to
@@ -58,7 +58,7 @@ public class TestStandardApiServerClientTokenAuth {
      */
     @Test
     public void useTokenAuth() throws Exception {
-        String token = Files.toString(new File(CLIENT_TOKEN_PATH), Charsets.UTF_8);
+        String token = IoUtils.toString(new File(CLIENT_TOKEN_PATH), StandardCharsets.UTF_8);
 
         // should
         this.apiServerClient = new StandardApiServerClient().configure(apiServerUrl(), tokenAuth(token));

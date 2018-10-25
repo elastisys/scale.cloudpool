@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudpool.commons.basepool;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
@@ -30,12 +30,12 @@ import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.impl.CachingPo
 import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.impl.RetryingPoolFetcher;
 import com.elastisys.scale.cloudpool.commons.basepool.poolupdater.PoolUpdater;
 import com.elastisys.scale.cloudpool.commons.basepool.poolupdater.impl.StandardPoolUpdater;
+import com.elastisys.scale.commons.eventbus.EventBus;
+import com.elastisys.scale.commons.eventbus.impl.SynchronousEventBus;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.net.alerter.Alerter;
 import com.elastisys.scale.commons.net.alerter.multiplexing.MultiplexingAlerter;
-import com.google.common.base.Throwables;
-import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -229,7 +229,7 @@ public class BaseCloudPool implements CloudPool {
      *            Used to perform any periodical tasks or background jobs.
      */
     public BaseCloudPool(StateStorage stateStorage, CloudPoolDriver cloudDriver, ScheduledExecutorService executor) {
-        this(stateStorage, cloudDriver, executor, new EventBus());
+        this(stateStorage, cloudDriver, executor, new SynchronousEventBus(LOG));
     }
 
     /**
@@ -300,7 +300,9 @@ public class BaseCloudPool implements CloudPool {
             configuration.validate();
             return configuration;
         } catch (Exception e) {
-            Throwables.throwIfInstanceOf(e, IllegalArgumentException.class);
+            if (e instanceof IllegalArgumentException) {
+                throw e;
+            }
             throw new IllegalArgumentException("failed to validate cloud pool configuration: " + e.getMessage(), e);
         }
     }

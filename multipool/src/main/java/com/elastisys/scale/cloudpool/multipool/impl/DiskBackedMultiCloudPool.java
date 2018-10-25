@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudpool.multipool.impl;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +17,7 @@ import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +28,6 @@ import com.elastisys.scale.cloudpool.multipool.api.CloudPoolDeleteException;
 import com.elastisys.scale.cloudpool.multipool.api.CloudPoolInstance;
 import com.elastisys.scale.cloudpool.multipool.api.MultiCloudPool;
 import com.elastisys.scale.commons.util.file.FileUtils;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * A {@link MultiCloudPool} that stores the state of its
@@ -149,7 +149,7 @@ public class DiskBackedMultiCloudPool implements MultiCloudPool {
         // restore instances in parallel to speed up the process in case there
         // are many instances to recover
         ExecutorService executor = Executors.newFixedThreadPool(20,
-                new ThreadFactoryBuilder().setNameFormat("restore-instances-%d").build());
+                new BasicThreadFactory.Builder().namingPattern("restore-instances-%d").build());
         try {
             List<File> instanceDirs = FileUtils.listDirectories(this.storageDir);
 

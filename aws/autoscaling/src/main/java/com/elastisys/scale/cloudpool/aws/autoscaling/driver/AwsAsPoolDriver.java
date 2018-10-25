@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.aws.autoscaling.driver;
 
 import static com.elastisys.scale.commons.json.JsonUtils.toJson;
-import static com.google.common.base.Preconditions.checkState;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkState;
 import static java.lang.String.format;
 
 import java.util.ArrayList;
@@ -38,7 +38,6 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Throwables;
 
 /**
  * A {@link CloudPoolDriver} implementation that manages an AWS Auto Scaling
@@ -283,7 +282,9 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
         try {
             this.client.attachInstance(scalingGroupName(), machineId);
         } catch (Exception e) {
-            Throwables.throwIfInstanceOf(e, NotFoundException.class);
+            if (e instanceof NotFoundException) {
+                throw e;
+            }
             String message = format("failed to attach instance \"%s\": %s", machineId, e.getMessage());
             throw new CloudPoolDriverException(message, e);
         }
@@ -316,7 +317,9 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
             Tag tag = new Tag().withKey(ScalingTags.SERVICE_STATE_TAG).withValue(serviceState.name());
             this.client.tagInstance(machineId, Arrays.asList(tag));
         } catch (Exception e) {
-            Throwables.throwIfInstanceOf(e, CloudPoolDriverException.class);
+            if (e instanceof NotFoundException) {
+                throw e;
+            }
             String message = format("failed to tag service state on server \"%s\": %s", machineId, e.getMessage());
             throw new CloudPoolDriverException(message, e);
         }
@@ -335,7 +338,9 @@ public class AwsAsPoolDriver implements CloudPoolDriver {
                     .withValue(JsonUtils.toString(toJson(membershipStatus)));
             this.client.tagInstance(machineId, Arrays.asList(tag));
         } catch (Exception e) {
-            Throwables.throwIfInstanceOf(e, CloudPoolDriverException.class);
+            if (e instanceof NotFoundException) {
+                throw e;
+            }
             String message = format("failed to tag membership status on server \"%s\": %s", machineId, e.getMessage());
             throw new CloudPoolDriverException(message, e);
         }

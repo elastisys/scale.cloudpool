@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.commons.scaledown.strategies;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -21,7 +21,7 @@ public enum OldestMachineVictimSelectionStrategy implements VictimSelectionStrat
 
     @Override
     public Machine selectVictim(Collection<Machine> candidates) throws IllegalArgumentException {
-        checkNotNull(candidates, "null candidate set");
+        requireNonNull(candidates, "null candidate set");
         checkArgument(!candidates.isEmpty(), "empty candidate set");
 
         return Machine.sort(candidates, new OldestFirstOrder()).get(0);

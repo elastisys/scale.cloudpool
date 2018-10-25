@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.commons.basepool.poolupdater.impl;
 
 import static com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertTopics.RESIZE;
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 import static java.lang.Math.max;
 import static java.lang.String.format;
 
@@ -35,15 +35,15 @@ import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.PoolFetcher;
 import com.elastisys.scale.cloudpool.commons.basepool.poolupdater.PoolUpdater;
 import com.elastisys.scale.cloudpool.commons.resizeplanner.ResizePlan;
 import com.elastisys.scale.cloudpool.commons.resizeplanner.ResizePlanner;
+import com.elastisys.scale.commons.eventbus.EventBus;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.net.alerter.AlertBuilder;
 import com.elastisys.scale.commons.net.alerter.AlertSeverity;
 import com.elastisys.scale.commons.net.alerter.Alerter;
+import com.elastisys.scale.commons.util.collection.Maps;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonElement;
 
 public class StandardPoolUpdater implements PoolUpdater {
@@ -542,7 +542,7 @@ public class StandardPoolUpdater implements PoolUpdater {
      * @param machineId
      */
     void attachAlert(String machineId) {
-        Map<String, JsonElement> tags = ImmutableMap.of("attachedMachines", JsonUtils.toJson(Arrays.asList(machineId)));
+        Map<String, JsonElement> tags = Maps.of("attachedMachines", JsonUtils.toJson(Arrays.asList(machineId)));
         String message = String.format("Attached machine %s to pool.", machineId);
         this.eventBus
                 .post(new Alert(AlertTopics.RESIZE.name(), AlertSeverity.INFO, UtcTime.now(), message, null, tags));
@@ -554,7 +554,7 @@ public class StandardPoolUpdater implements PoolUpdater {
      * @param machineId
      */
     void detachAlert(String machineId) {
-        Map<String, JsonElement> tags = ImmutableMap.of("detachedMachines", JsonUtils.toJson(Arrays.asList(machineId)));
+        Map<String, JsonElement> tags = Maps.of("detachedMachines", JsonUtils.toJson(Arrays.asList(machineId)));
         String message = String.format("Detached machine %s from pool.", machineId);
         this.eventBus
                 .post(new Alert(AlertTopics.RESIZE.name(), AlertSeverity.INFO, UtcTime.now(), message, null, tags));
@@ -568,7 +568,7 @@ public class StandardPoolUpdater implements PoolUpdater {
      * @param state
      */
     void serviceStateAlert(String machineId, ServiceState state) {
-        Map<String, JsonElement> tags = ImmutableMap.of();
+        Map<String, JsonElement> tags = Maps.of();
         String message = String.format("Service state set to %s for machine %s.", state.name(), machineId);
         this.eventBus.post(
                 new Alert(AlertTopics.SERVICE_STATE.name(), AlertSeverity.DEBUG, UtcTime.now(), message, null, tags));
@@ -582,7 +582,7 @@ public class StandardPoolUpdater implements PoolUpdater {
      * @param membershipStatus
      */
     void membershipStatusAlert(String machineId, MembershipStatus membershipStatus) {
-        Map<String, JsonElement> tags = ImmutableMap.of();
+        Map<String, JsonElement> tags = Maps.of();
         String message = String.format("Membership status set to %s for machine %s.", membershipStatus, machineId);
         this.eventBus.post(new Alert(AlertTopics.MEMBERSHIP_STATUS.name(), AlertSeverity.DEBUG, UtcTime.now(), message,
                 null, tags));

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.cert.Certificate;
@@ -15,7 +16,6 @@ import java.security.interfaces.RSAPrivateKey;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.apache.commons.codec.Charsets;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,7 +30,7 @@ import com.elastisys.scale.cloudpool.kubernetes.testutils.AuthUtils;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.security.pem.PemUtils;
-import com.google.common.io.Files;
+import com.elastisys.scale.commons.util.io.IoUtils;
 import com.google.gson.JsonObject;
 
 /**
@@ -266,7 +266,7 @@ public class TestKubernetesCloudPoolConfiguration {
     }
 
     private String loadToken(String tokenFileName) throws Exception {
-        return Files.toString(sslFile(tokenFileName), Charsets.UTF_8);
+        return IoUtils.toString(sslFile(tokenFileName), StandardCharsets.UTF_8);
     }
 
     /**

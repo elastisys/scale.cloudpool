@@ -1,5 +1,7 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.ec2;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -14,7 +16,6 @@ import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 import com.elastisys.scale.cloudpool.aws.commons.predicates.InstancePredicates;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
-import com.google.common.collect.ImmutableList;
 
 /**
  * A {@link Callable} task that, when executed, terminates a collection of EC2
@@ -35,13 +36,13 @@ public class TerminateInstances extends AmazonEc2Request<TerminateInstancesResul
 
     public TerminateInstances(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig,
             String... instanceIds) {
-        this(awsCredentials, region, clientConfig, ImmutableList.copyOf(instanceIds));
+        this(awsCredentials, region, clientConfig, Arrays.asList(instanceIds));
     }
 
     public TerminateInstances(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig,
             Collection<String> instanceIds) {
         super(awsCredentials, region, clientConfig);
-        this.instanceIds = ImmutableList.copyOf(instanceIds);
+        this.instanceIds = new ArrayList<>(instanceIds);
     }
 
     @Override

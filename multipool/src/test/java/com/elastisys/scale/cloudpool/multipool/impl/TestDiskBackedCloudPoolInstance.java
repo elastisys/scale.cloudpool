@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.util.Optional;
 
 import org.junit.Before;
@@ -23,7 +24,6 @@ import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.multipool.api.CloudPoolInstance;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.file.FileUtils;
-import com.google.common.io.Files;
 import com.google.gson.JsonObject;
 
 /**
@@ -124,8 +124,8 @@ public class TestDiskBackedCloudPoolInstance {
         when(this.mockedCloudPool.getStatus()).thenReturn(status);
 
         // write some existing content and make sure it gets overwritten
-        Files.write("{}".getBytes(), INSTANCE_CONFIG_FILE);
-        Files.write("{}".getBytes(), INSTANCE_STATUS_FILE);
+        Files.write(INSTANCE_CONFIG_FILE.toPath(), "{}".getBytes());
+        Files.write(INSTANCE_STATUS_FILE.toPath(), "{}".getBytes());
 
         this.cloudPoolInstance.start();
 
@@ -150,8 +150,8 @@ public class TestDiskBackedCloudPoolInstance {
         when(this.mockedCloudPool.getStatus()).thenReturn(status);
 
         // write some existing content and make sure it gets overwritten
-        Files.write("{}".getBytes(), INSTANCE_CONFIG_FILE);
-        Files.write("{}".getBytes(), INSTANCE_STATUS_FILE);
+        Files.write(INSTANCE_CONFIG_FILE.toPath(), "{}".getBytes());
+        Files.write(INSTANCE_STATUS_FILE.toPath(), "{}".getBytes());
 
         this.cloudPoolInstance.stop();
 
@@ -174,8 +174,8 @@ public class TestDiskBackedCloudPoolInstance {
         CloudPoolStatus status = new CloudPoolStatus(true, true);
 
         // write some existing content and make sure it gets overwritten
-        Files.write(JsonUtils.toString(config).getBytes(), INSTANCE_CONFIG_FILE);
-        Files.write(JsonUtils.toString(JsonUtils.toJson(status)).getBytes(), INSTANCE_STATUS_FILE);
+        Files.write(INSTANCE_CONFIG_FILE.toPath(), JsonUtils.toString(config).getBytes());
+        Files.write(INSTANCE_STATUS_FILE.toPath(), JsonUtils.toString(JsonUtils.toJson(status)).getBytes());
 
         this.cloudPoolInstance.restore();
 
@@ -195,8 +195,8 @@ public class TestDiskBackedCloudPoolInstance {
         CloudPoolStatus status = new CloudPoolStatus(false, true);
 
         // write some existing content and make sure it gets overwritten
-        Files.write(JsonUtils.toString(config).getBytes(), INSTANCE_CONFIG_FILE);
-        Files.write(JsonUtils.toString(JsonUtils.toJson(status)).getBytes(), INSTANCE_STATUS_FILE);
+        Files.write(INSTANCE_CONFIG_FILE.toPath(), JsonUtils.toString(config).getBytes());
+        Files.write(INSTANCE_STATUS_FILE.toPath(), JsonUtils.toString(JsonUtils.toJson(status)).getBytes());
 
         this.cloudPoolInstance.restore();
 

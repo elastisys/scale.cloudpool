@@ -1,10 +1,12 @@
 package com.elastisys.scale.cloudpool.kubernetes.podpool.impl;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkState;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +20,6 @@ import com.elastisys.scale.cloudpool.kubernetes.types.PodList;
 import com.elastisys.scale.cloudpool.kubernetes.types.ReplicationController;
 import com.elastisys.scale.cloudpool.kubernetes.types.ReplicationControllerSpec;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Joiner;
 import com.google.gson.JsonObject;
 
 /**
@@ -140,7 +141,12 @@ public class ReplicationControllerPodPool implements PodPool {
         // value of '.spec.template.metadata.labels'.
         // https://kubernetes.io/docs/api-reference/v1.5/#replicationcontrollerspec-v1
         checkArgument(rc.spec.selector != null, "ReplicationController missing .spec.selector field");
-        return Joiner.on(",").join(rc.spec.selector.entrySet());
+
+        List<String> selectors = new ArrayList<>();
+        for (Entry<String, String> selector : rc.spec.selector.entrySet()) {
+            selectors.add(String.format("%s=%s", selector.getKey(), selector.getValue()));
+        }
+        return String.join(",", selectors);
     }
 
     /**

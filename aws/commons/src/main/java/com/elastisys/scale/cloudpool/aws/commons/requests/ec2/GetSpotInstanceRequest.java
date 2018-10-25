@@ -8,7 +8,6 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.ec2.model.DescribeSpotInstanceRequestsRequest;
 import com.amazonaws.services.ec2.model.DescribeSpotInstanceRequestsResult;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
-import com.google.common.collect.Iterables;
 
 /**
  * A {@link Callable} task that, when executed, requests meta data for a
@@ -44,6 +43,6 @@ public class GetSpotInstanceRequest extends AmazonEc2Request<SpotInstanceRequest
         DescribeSpotInstanceRequestsRequest request = new DescribeSpotInstanceRequestsRequest();
         request.withSpotInstanceRequestIds(this.spotInstanceRequestId);
         DescribeSpotInstanceRequestsResult result = getClient().getApi().describeSpotInstanceRequests(request);
-        return Iterables.getOnlyElement(result.getSpotInstanceRequests());
+        return result.getSpotInstanceRequests().get(0);
     }
 }

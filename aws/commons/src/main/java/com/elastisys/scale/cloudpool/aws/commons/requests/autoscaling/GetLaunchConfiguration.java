@@ -1,6 +1,5 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling;
 
-import static com.google.common.collect.Iterables.getOnlyElement;
 import static java.lang.String.format;
 
 import java.util.List;
@@ -46,7 +45,7 @@ public class GetLaunchConfiguration extends AmazonAutoScalingRequest<LaunchConfi
             throw new IllegalArgumentException(format("Launch Configuration '%s' doesn't exist in region '%s'.",
                     this.launchConfigurationName, getClient().getRegion()));
         }
-        return getOnlyElement(launchConfigurations);
+        return launchConfigurations.get(0);
     }
 
 }

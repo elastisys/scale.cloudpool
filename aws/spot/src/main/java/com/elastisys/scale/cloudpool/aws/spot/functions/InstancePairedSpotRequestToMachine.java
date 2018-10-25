@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.spot.functions;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.ArrayList;
@@ -23,6 +23,7 @@ import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.cloudpool.aws.spot.metadata.InstancePairedSpotRequest;
 import com.elastisys.scale.commons.json.JsonUtils;
+import com.elastisys.scale.commons.util.precond.Preconditions;
 import com.google.gson.JsonObject;
 
 /**

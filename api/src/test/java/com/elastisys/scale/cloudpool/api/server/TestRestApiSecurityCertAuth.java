@@ -28,8 +28,8 @@ import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.commons.net.host.HostUtils;
 import com.elastisys.scale.commons.net.ssl.KeyStoreType;
 import com.elastisys.scale.commons.rest.client.RestClients;
+import com.elastisys.scale.commons.util.io.Resources;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.io.Resources;
 import com.google.gson.JsonObject;
 
 /**

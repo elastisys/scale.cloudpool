@@ -1,11 +1,12 @@
 package com.elastisys.scale.cloudpool.google.container.client;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.joda.time.DateTime;
 
@@ -14,7 +15,6 @@ import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.api.services.compute.model.Instance;
 import com.google.api.services.container.model.Cluster;
 import com.google.api.services.container.model.NodePool;
-import com.google.common.base.Optional;
 
 /**
  * Represents a snapshot of a container {@link Cluster}, the {@link NodePool}s
@@ -68,8 +68,8 @@ public class ClusterSnapshot {
     public ClusterSnapshot(Cluster metadata, List<NodePoolSnapshot> nodePools, DateTime timestamp) {
         checkArgument(metadata != null, "ClusterSnapshot: metadata cannot be null");
         this.metadata = metadata;
-        this.nodePools = Optional.fromNullable(nodePools).or(Collections.emptyList());
-        this.timestamp = Optional.fromNullable(timestamp).or(UtcTime.now());
+        this.nodePools = Optional.ofNullable(nodePools).orElse(Collections.emptyList());
+        this.timestamp = Optional.ofNullable(timestamp).orElse(UtcTime.now());
     }
 
     /**

@@ -1,6 +1,5 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.ec2;
 
-import static com.google.common.collect.Iterables.getOnlyElement;
 import static java.lang.String.format;
 
 import java.util.concurrent.Callable;
@@ -52,8 +51,8 @@ public class GetInstance extends AmazonEc2Request<Instance> {
         if (result.getReservations().isEmpty()) {
             throw new NotFoundException(format("DescribeInstances: no such instance exists: '%s'", this.instanceId));
         }
-        Reservation reservation = getOnlyElement(result.getReservations());
-        Instance instance = getOnlyElement(reservation.getInstances());
+        Reservation reservation = result.getReservations().get(0);
+        Instance instance = reservation.getInstances().get(0);
         return instance;
     }
 

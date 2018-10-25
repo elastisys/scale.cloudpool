@@ -18,7 +18,6 @@ import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.SpotInstanceType;
 import com.amazonaws.services.ec2.model.SpotPlacement;
 import com.elastisys.scale.cloudpool.aws.commons.client.AmazonApiUtils;
-import com.google.common.base.Joiner;
 
 public class PlaceMultiInstanceRequest extends BaseClient {
     private static final Logger LOG = LoggerFactory.getLogger(PlaceMultiInstanceRequest.class);
@@ -38,8 +37,8 @@ public class PlaceMultiInstanceRequest extends BaseClient {
         List<String> securityGroups = Arrays.asList("webserver");
         String keyPair = "instancekey";
 
-        String bootScript = Joiner.on("\n")
-                .join(Arrays.asList("#!/bin/bash", "sudo apt-get update -qy", "sudo apt-get install -qy apache2"));
+        String bootScript = String.join("\n",
+                Arrays.asList("#!/bin/bash", "sudo apt-get update -qy", "sudo apt-get install -qy apache2"));
         int instanceCount = 50;
         String bidPrice = "0.001";
 

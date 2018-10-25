@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudpool.api.client;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 import static java.lang.String.format;
 
 import java.util.Optional;

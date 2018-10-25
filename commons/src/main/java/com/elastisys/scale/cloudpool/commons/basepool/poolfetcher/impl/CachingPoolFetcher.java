@@ -20,6 +20,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.StateStorage;
 import com.elastisys.scale.cloudpool.commons.basepool.config.PoolFetchConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.FetchOption;
 import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.PoolFetcher;
+import com.elastisys.scale.commons.eventbus.EventBus;
 import com.elastisys.scale.commons.json.persistence.PersistentState;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.Alert;
@@ -27,7 +28,6 @@ import com.elastisys.scale.commons.net.alerter.AlertBuilder;
 import com.elastisys.scale.commons.net.alerter.AlertSeverity;
 import com.elastisys.scale.commons.net.alerter.Alerter;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.eventbus.EventBus;
 
 /**
  * A {@link PoolFetcher} that caches {@link MachinePool}s retrieved by a wrapped

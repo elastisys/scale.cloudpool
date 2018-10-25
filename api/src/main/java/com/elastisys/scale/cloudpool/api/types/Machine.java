@@ -1,8 +1,8 @@
 package com.elastisys.scale.cloudpool.api.types;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 import static java.util.Arrays.asList;
+import static java.util.Objects.requireNonNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -72,8 +72,8 @@ public class Machine {
 
     /**
      * The membership status indicates if this pool member needs to be given
-     * special treatment. This includes protecting it from termination and/or
-     * marking it in need of a replacement.
+     * special treatment. ThischeckNot includes protecting it from termination
+     * and/or marking it in need of a replacement.
      */
     private final MembershipStatus membershipStatus;
 
@@ -181,13 +181,13 @@ public class Machine {
     protected Machine(String id, MachineState machineState, MembershipStatus membershipStatus,
             ServiceState serviceState, String cloudProvider, String region, String machineSize, DateTime requestTime,
             DateTime launchTime, List<String> publicIps, List<String> privateIps, JsonElement metadata) {
-        checkNotNull(id, "missing id");
-        checkNotNull(machineState, "missing machineState");
-        checkNotNull(membershipStatus, "missing membershipStatus");
-        checkNotNull(serviceState, "missing serviceState");
-        checkNotNull(cloudProvider, "missing cloudProvider");
-        checkNotNull(region, "missing region");
-        checkNotNull(machineSize, "missing machineSize");
+        requireNonNull(id, "missing id");
+        requireNonNull(machineState, "missing machineState");
+        requireNonNull(membershipStatus, "missing membershipStatus");
+        requireNonNull(serviceState, "missing serviceState");
+        requireNonNull(cloudProvider, "missing cloudProvider");
+        requireNonNull(region, "missing region");
+        requireNonNull(machineSize, "missing machineSize");
 
         this.id = id;
         this.machineState = machineState;
@@ -454,7 +454,7 @@ public class Machine {
         private final MachineState state;
 
         public MachineWithState(MachineState state) {
-            checkNotNull(state);
+            requireNonNull(state);
             this.state = state;
         }
 

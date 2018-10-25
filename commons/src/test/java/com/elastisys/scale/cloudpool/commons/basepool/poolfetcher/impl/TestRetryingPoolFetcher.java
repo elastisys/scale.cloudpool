@@ -13,21 +13,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.time.StopWatch;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.api.CloudPoolException;
+import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.MachineState;
-import com.elastisys.scale.cloudpool.api.types.CloudProviders;
 import com.elastisys.scale.cloudpool.commons.basepool.config.RetriesConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriver;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverException;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.base.Stopwatch;
 
 /**
  * Exercise the {@link RetryingPoolFetcher}.
@@ -74,7 +74,7 @@ public class TestRetryingPoolFetcher {
         when(this.mockDriver.listMachines()).thenThrow(new CloudPoolDriverException("api outage"))
                 .thenThrow(new CloudPoolDriverException("api outage")).thenReturn(machines("i-1", "i-2"));
 
-        Stopwatch stopwatch = Stopwatch.createStarted();
+        StopWatch stopwatch = StopWatch.createStarted();
         MachinePool pool = this.fetcher.get();
         assertThat(pool.getTimestamp(), is(UtcTime.now()));
         assertThat(pool.getMachines(), is(machines("i-1", "i-2")));
@@ -83,7 +83,7 @@ public class TestRetryingPoolFetcher {
         // verify that cloud pool driver was called repeatedly
         verify(this.mockDriver, times(3)).listMachines();
         // verify that some back-off delay was introduced
-        assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= RETRIES_CONFIG.getInitialBackoffDelay().getTime() * 2);
+        assertTrue(stopwatch.getTime(TimeUnit.MILLISECONDS) >= RETRIES_CONFIG.getInitialBackoffDelay().getTime() * 2);
     }
 
     /**
@@ -94,7 +94,7 @@ public class TestRetryingPoolFetcher {
         // never succeeds
         when(this.mockDriver.listMachines()).thenThrow(new CloudPoolDriverException("api outage"));
 
-        Stopwatch stopwatch = Stopwatch.createStarted();
+        StopWatch stopwatch = StopWatch.createStarted();
         try {
             this.fetcher.get();
             fail("should not succeed");
@@ -107,7 +107,7 @@ public class TestRetryingPoolFetcher {
         // retries
         verify(this.mockDriver, times(1 + RETRIES_CONFIG.getMaxRetries())).listMachines();
         // verify that some back-off delay was introduced
-        assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= RETRIES_CONFIG.getInitialBackoffDelay().getTime() * 3);
+        assertTrue(stopwatch.getTime(TimeUnit.MILLISECONDS) >= RETRIES_CONFIG.getInitialBackoffDelay().getTime() * 3);
     }
 
     /**

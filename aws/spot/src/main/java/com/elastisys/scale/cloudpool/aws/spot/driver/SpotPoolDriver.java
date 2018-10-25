@@ -12,7 +12,7 @@ import static com.elastisys.scale.cloudpool.aws.commons.ScalingFilters.SPOT_REQU
 import static com.elastisys.scale.cloudpool.aws.commons.ScalingFilters.SPOT_REQUEST_STATE_FILTER;
 import static com.elastisys.scale.cloudpool.aws.commons.ScalingTags.MEMBERSHIP_STATUS_TAG;
 import static com.elastisys.scale.cloudpool.aws.commons.ScalingTags.SERVICE_STATE_TAG;
-import static com.google.common.base.Preconditions.checkState;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkState;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
@@ -54,14 +54,14 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverExce
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
+import com.elastisys.scale.commons.eventbus.EventBus;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.net.alerter.AlertSeverity;
+import com.elastisys.scale.commons.util.collection.Maps;
+import com.elastisys.scale.commons.util.exception.Stacktrace;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonElement;
 
 /**
@@ -308,7 +308,9 @@ public class SpotPoolDriver implements CloudPoolDriver {
 
             setPoolMembershipTag(spotRequest);
         } catch (Exception e) {
-            Throwables.throwIfInstanceOf(e, NotFoundException.class);
+            if (e instanceof NotFoundException) {
+                throw e;
+            }
             throw new CloudPoolDriverException(
                     String.format("failed to attach '%s' to cloud pool: %s", spotRequestId, e.getMessage()), e);
         }
@@ -323,7 +325,9 @@ public class SpotPoolDriver implements CloudPoolDriver {
 
             this.client.untagResource(spotRequestId, asList(poolMembershipTag()));
         } catch (Exception e) {
-            Throwables.throwIfInstanceOf(e, NotFoundException.class);
+            if (e instanceof NotFoundException) {
+                throw e;
+            }
             throw new CloudPoolDriverException(
                     String.format("failed to attach '%s' to cloud pool: %s", spotRequestId, e.getMessage()), e);
         }
@@ -340,7 +344,9 @@ public class SpotPoolDriver implements CloudPoolDriver {
             Tag serviceStateTag = new Tag().withKey(SERVICE_STATE_TAG).withValue(serviceState.name());
             this.client.tagResource(spotRequestId, asList(serviceStateTag));
         } catch (Exception e) {
-            Throwables.throwIfInstanceOf(e, NotFoundException.class);
+            if (e instanceof NotFoundException) {
+                throw e;
+            }
             throw new CloudPoolDriverException(
                     String.format("failed to set service state for %s: %s", spotRequestId, e.getMessage()), e);
         }
@@ -357,7 +363,9 @@ public class SpotPoolDriver implements CloudPoolDriver {
             Tag membershipStatusTag = new Tag().withKey(MEMBERSHIP_STATUS_TAG).withValue(membershipStatus.toString());
             this.client.tagResource(spotRequestId, asList(membershipStatusTag));
         } catch (Exception e) {
-            Throwables.throwIfInstanceOf(e, NotFoundException.class);
+            if (e instanceof NotFoundException) {
+                throw e;
+            }
             throw new CloudPoolDriverException(
                     String.format("failed to set membership status for %s: %s", spotRequestId, e.getMessage()), e);
         }
@@ -609,7 +617,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
         String message = String.format(
                 "cancelled %d unfulfilled spot instance request(s) " + "with an out-dated bid price",
                 cancelledRequests.size());
-        Map<String, JsonElement> metadata = ImmutableMap.of("cancelledRequests", JsonUtils.toJson(cancelledRequests));
+        Map<String, JsonElement> metadata = Maps.of("cancelledRequests", JsonUtils.toJson(cancelledRequests));
         this.eventBus.post(new Alert(AlertTopics.SPOT_REQUEST_CANCELLATION.name(), AlertSeverity.INFO, UtcTime.now(),
                 message, null, metadata));
     }
@@ -651,8 +659,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
             } catch (Exception e) {
                 // need to catch exceptions since periodic exeuction will stop
                 // on uncaught exceptions
-                LOG.error("failed to clean up dangling instances: {}\n{}", e.getMessage(),
-                        Throwables.getStackTraceAsString(e));
+                LOG.error("failed to clean up dangling instances: {}\n{}", e.getMessage(), Stacktrace.toString(e));
             }
         }
     }
@@ -674,8 +681,7 @@ public class SpotPoolDriver implements CloudPoolDriver {
             } catch (Exception e) {
                 // need to catch exceptions since periodic exeuction will stop
                 // on uncaught exceptions
-                LOG.error("failed to replace wrong bid price requests: {}\n{}", e.getMessage(),
-                        Throwables.getStackTraceAsString(e));
+                LOG.error("failed to replace wrong bid price requests: {}\n{}", e.getMessage(), Stacktrace.toString(e));
             }
         }
     }

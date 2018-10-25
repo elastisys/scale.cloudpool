@@ -22,7 +22,7 @@ import com.elastisys.scale.cloudpool.aws.ec2.driver.config.CloudApiSettings;
 import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.collect.ImmutableMap;
+import com.elastisys.scale.commons.util.collection.Maps;
 
 /**
  * Verifies the behavior of the {@link Ec2PoolDriver} with respect to
@@ -49,7 +49,7 @@ public class TestEc2PoolDriverConfiguration {
                 asList("subnet-44b5786b", "subnet-dcd15f97"), true, "instancekey",
                 "arn:aws:iam::123456789012:instance-profile/my-iam-profile", asList("sg-12345678"),
                 "IyEvYmluL2Jhc2gKCnN1ZG8gYXB0LWdldCB1cGRhdGUgLXF5CnN1ZG8gYXB0LWdldCBpbnN0YWxsIC1xeSBhcGFjaGUyCg==",
-                true, ImmutableMap.of("Cluster", "my-cluster"));
+                true, Maps.of("Cluster", "my-cluster"));
 
         assertTrue(this.driver.isConfigured());
         assertThat(this.driver.cloudApiSettings(), is(expectedApiSettings));

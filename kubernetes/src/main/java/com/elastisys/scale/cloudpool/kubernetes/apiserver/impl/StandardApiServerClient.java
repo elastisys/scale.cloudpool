@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.kubernetes.apiserver.impl;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkState;
 
 import java.io.IOException;
 import java.security.KeyStore;

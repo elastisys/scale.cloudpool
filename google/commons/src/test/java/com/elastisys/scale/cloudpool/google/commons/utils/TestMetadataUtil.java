@@ -11,9 +11,9 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import com.elastisys.scale.commons.util.collection.Maps;
 import com.google.api.services.compute.model.Metadata;
 import com.google.api.services.compute.model.Metadata.Items;
-import com.google.common.collect.ImmutableMap;
 
 /**
  * Exercises {@link MetadataUtil}.
@@ -67,7 +67,7 @@ public class TestMetadataUtil {
      */
     @Test
     public void toItems() {
-        Map<String, String> map = ImmutableMap.of(//
+        Map<String, String> map = Maps.of(//
                 "startup-script", "#!/bin/bash\napt update -qy && apt install -qy apache2", //
                 "ssh-keys", "foo:ssh-rsa XXXXXXXX foo@bar");
 
@@ -75,10 +75,9 @@ public class TestMetadataUtil {
         List<Items> items = MetadataUtil.toItems(map);
 
         // verify
-        assertThat(items,
-                is(items(//
-                        item("startup-script", "#!/bin/bash\napt update -qy && apt install -qy apache2"), //
-                        item("ssh-keys", "foo:ssh-rsa XXXXXXXX foo@bar"))));
+        assertThat(items, is(items(//
+                item("startup-script", "#!/bin/bash\napt update -qy && apt install -qy apache2"), //
+                item("ssh-keys", "foo:ssh-rsa XXXXXXXX foo@bar"))));
     }
 
     @Test

@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 
 import javax.ws.rs.client.Client;
@@ -26,9 +27,7 @@ import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.host.HostUtils;
 import com.elastisys.scale.commons.rest.client.RestClients;
 import com.elastisys.scale.commons.util.file.FileUtils;
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
-import com.google.common.io.Resources;
+import com.elastisys.scale.commons.util.io.Resources;
 import com.google.gson.JsonObject;
 
 /**
@@ -272,7 +271,7 @@ public class TestCloudPoolServerStartup {
 
     private void saveConfig(String jsonConfig, File destination) throws IOException {
         destination.getParentFile().mkdirs();
-        Files.write(jsonConfig, destination, Charsets.UTF_8);
+        Files.write(destination.toPath(), jsonConfig.getBytes());
     }
 
     /**

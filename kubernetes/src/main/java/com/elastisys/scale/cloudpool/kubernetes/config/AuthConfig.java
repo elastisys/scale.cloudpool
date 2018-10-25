@@ -1,10 +1,11 @@
 package com.elastisys.scale.cloudpool.kubernetes.config;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
@@ -13,12 +14,13 @@ import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Objects;
 
+import org.apache.commons.codec.Charsets;
+
 import com.elastisys.scale.cloudpool.kubernetes.KubernetesCloudPool;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.security.pem.PemUtils;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
+import com.elastisys.scale.commons.util.io.IoUtils;
 
 /**
  * Authentication configuration for a {@link KubernetesCloudPoolConfig}.
@@ -164,7 +166,7 @@ public class AuthConfig {
         // client token is *either* given as value or as path
         String token = this.clientToken;
         if (this.clientTokenPath != null) {
-            token = Files.toString(new File(this.clientTokenPath), Charsets.UTF_8);
+            token = IoUtils.toString(new File(this.clientTokenPath), StandardCharsets.UTF_8);
         }
         return token;
     }
@@ -185,10 +187,10 @@ public class AuthConfig {
         // client cert is *either* given as value or as path
         String pemEncodedCert = null;
         if (this.clientCertPath != null) {
-            pemEncodedCert = Files.toString(new File(this.clientCertPath), Charsets.UTF_8);
+            pemEncodedCert = IoUtils.toString(new File(this.clientCertPath), StandardCharsets.UTF_8);
         } else {
             // read base64-encoded cert
-            pemEncodedCert = Base64Utils.fromBase64(this.clientCert, Charsets.UTF_8);
+            pemEncodedCert = Base64Utils.fromBase64(this.clientCert, StandardCharsets.UTF_8);
         }
 
         return PemUtils.parseX509Cert(new StringReader(pemEncodedCert));
@@ -213,7 +215,7 @@ public class AuthConfig {
         // client key is *either* given as value or as path
         String pemEncodedKey = null;
         if (this.clientKeyPath != null) {
-            pemEncodedKey = Files.toString(new File(this.clientKeyPath), Charsets.UTF_8);
+            pemEncodedKey = IoUtils.toString(new File(this.clientKeyPath), Charsets.UTF_8);
         } else {
             // read base64-encoded key
             pemEncodedKey = Base64Utils.fromBase64(this.clientKey, Charsets.UTF_8);
@@ -238,10 +240,10 @@ public class AuthConfig {
         // server cert is *either* given as value or as path
         String pemEncodedCert = null;
         if (this.serverCertPath != null) {
-            pemEncodedCert = Files.toString(new File(this.serverCertPath), Charsets.UTF_8);
+            pemEncodedCert = IoUtils.toString(new File(this.serverCertPath), StandardCharsets.UTF_8);
         } else {
             // read base64-encoded cert
-            pemEncodedCert = Base64Utils.fromBase64(this.serverCert, Charsets.UTF_8);
+            pemEncodedCert = Base64Utils.fromBase64(this.serverCert, StandardCharsets.UTF_8);
         }
 
         return PemUtils.parseX509Cert(new StringReader(pemEncodedCert));

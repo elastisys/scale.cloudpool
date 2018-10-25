@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
@@ -56,8 +57,6 @@ import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.gson.JsonObject;
 
 /**
@@ -517,7 +516,7 @@ public class TestKubernetesCloudPool {
     }
 
     private static String podsQueryPath(String namespace, String labelSelector) throws UnsupportedEncodingException {
-        String encodedSelector = URLEncoder.encode(labelSelector, Charsets.UTF_8.name());
+        String encodedSelector = URLEncoder.encode(labelSelector, StandardCharsets.UTF_8.name());
         return MessageFormat.format("/api/v1/namespaces/{0}/pods?labelSelector={1}", namespace, encodedSelector);
     }
 
@@ -535,7 +534,7 @@ public class TestKubernetesCloudPool {
         when(this.mockApiServer.get(replicationControllerPath(rc.metadata.namespace, rc.metadata.name)))
                 .thenReturn(asJson(rc));
         int numPods = rc.status.replicas;
-        String labelSelector = Joiner.on(",").join(rc.spec.selector.entrySet());
+        String labelSelector = rc.spec.getLabelSelectorExpression();
         when(this.mockApiServer.get(podsQueryPath(NAMESPACE, labelSelector)))
                 .thenReturn(asJson(podList(numPods, rc.metadata.name)));
     }
@@ -554,7 +553,7 @@ public class TestKubernetesCloudPool {
         when(this.mockApiServer.get(deploymentPath(deployment.metadata.namespace, deployment.metadata.name)))
                 .thenReturn(asJson(deployment));
         int numPods = deployment.status.replicas;
-        String labelSelector = Joiner.on(",").join(deployment.spec.selector.matchLabels.entrySet());
+        String labelSelector = deployment.spec.selector.toLabelSelectorExpression();
         when(this.mockApiServer.get(podsQueryPath(NAMESPACE, labelSelector)))
                 .thenReturn(asJson(podList(numPods, deployment.metadata.name)));
     }
@@ -572,7 +571,7 @@ public class TestKubernetesCloudPool {
     private void prepareMockApiServer(ReplicaSet rs) throws Exception {
         when(this.mockApiServer.get(replicaSetPath(rs.metadata.namespace, rs.metadata.name))).thenReturn(asJson(rs));
         int numPods = rs.status.replicas;
-        String labelSelector = Joiner.on(",").join(rs.spec.selector.matchLabels.entrySet());
+        String labelSelector = rs.spec.selector.toLabelSelectorExpression();
         when(this.mockApiServer.get(podsQueryPath(NAMESPACE, labelSelector)))
                 .thenReturn(asJson(podList(numPods, rs.metadata.name)));
     }

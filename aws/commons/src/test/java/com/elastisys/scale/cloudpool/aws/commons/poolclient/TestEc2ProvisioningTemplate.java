@@ -15,7 +15,7 @@ import org.junit.Test;
 
 import com.amazonaws.services.ec2.model.InstanceType;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
-import com.google.common.collect.ImmutableMap;
+import com.elastisys.scale.commons.util.collection.Maps;
 
 /**
  * Exercises {@link Ec2ProvisioningTemplate}.
@@ -41,7 +41,7 @@ public class TestEc2ProvisioningTemplate {
     private static final String USER_DATA = Base64Utils
             .toBase64(Arrays.asList("#!/bin/bash", "apt-get update -qy && apt-get isntall apache2 -qy"));
     private static final boolean EBS_OPTIMIZED = false;
-    private static final Map<String, String> TAGS = ImmutableMap.of("k", "v");
+    private static final Map<String, String> TAGS = Maps.of("k", "v");
 
     @Test
     public void basicSanity() {

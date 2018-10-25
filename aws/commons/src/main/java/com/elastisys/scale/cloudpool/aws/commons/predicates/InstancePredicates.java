@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -12,7 +13,7 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.InstanceStateName;
 import com.amazonaws.services.ec2.model.Tag;
-import com.google.common.base.Preconditions;
+import com.elastisys.scale.commons.util.precond.Preconditions;
 
 /**
  * {@link Predicate}s that apply to EC2 {@link Instance}s.
@@ -53,7 +54,7 @@ public class InstancePredicates {
          *            Tag that needs to be set on matching {@link Instance}s.
          */
         public HasTag(Tag requiredTag) {
-            Preconditions.checkNotNull(requiredTag, "requiredTag is null");
+            Objects.requireNonNull(requiredTag, "requiredTag is null");
             this.requiredTag = requiredTag;
         }
 

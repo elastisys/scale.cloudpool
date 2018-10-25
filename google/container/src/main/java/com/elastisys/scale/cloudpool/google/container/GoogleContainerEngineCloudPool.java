@@ -3,8 +3,8 @@ package com.elastisys.scale.cloudpool.google.container;
 import static com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertTopics.RESIZE;
 import static com.elastisys.scale.commons.net.alerter.AlertSeverity.ERROR;
 import static com.elastisys.scale.commons.net.alerter.AlertSeverity.INFO;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkState;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.net.URL;
@@ -40,6 +40,8 @@ import com.elastisys.scale.cloudpool.google.container.client.NodePoolSnapshot;
 import com.elastisys.scale.cloudpool.google.container.config.GoogleContainerEngineCloudPoolConfig;
 import com.elastisys.scale.cloudpool.google.container.scalingstrategy.ResizePlan;
 import com.elastisys.scale.cloudpool.google.container.scalingstrategy.ScalingStrategy;
+import com.elastisys.scale.commons.eventbus.EventBus;
+import com.elastisys.scale.commons.eventbus.impl.AsynchronousEventBus;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.Alert;
@@ -48,8 +50,6 @@ import com.elastisys.scale.commons.net.alerter.multiplexing.MultiplexingAlerter;
 import com.elastisys.scale.commons.net.retryable.Retryers;
 import com.elastisys.scale.commons.net.url.UrlUtils;
 import com.google.api.services.container.model.Cluster;
-import com.google.common.eventbus.AsyncEventBus;
-import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -111,7 +111,7 @@ public class GoogleContainerEngineCloudPool implements CloudPool {
             ScheduledExecutorService executor) {
         this.client = gkeClient;
         this.executor = executor;
-        this.eventBus = Optional.ofNullable(eventBus).orElse(new AsyncEventBus(this.executor));
+        this.eventBus = Optional.ofNullable(eventBus).orElse(new AsynchronousEventBus(this.executor, LOG));
 
         this.alerter = new MultiplexingAlerter();
         this.eventBus.register(this.alerter);

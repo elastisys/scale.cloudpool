@@ -1,10 +1,11 @@
 package com.elastisys.scale.cloudpool.google.container.scalingstrategy.impl;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,8 +22,6 @@ import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.url.UrlUtils;
 import com.google.api.services.compute.model.InstanceGroup;
 import com.google.api.services.container.model.NodePool;
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.Iterables;
 
 /**
  * A {@link ScalingStrategy} that strives to always keep an equal number of
@@ -125,7 +124,7 @@ public enum BalancedScalingStrategy implements ScalingStrategy {
         }
 
         public NodePoolLayout largestNodePool() {
-            return Iterables.getLast(sorted(this.nodePools));
+            return sorted(this.nodePools).get(this.nodePools.size() - 1);
         }
 
         public Map<URL, Integer> instanceGroupSizes() {
@@ -164,10 +163,14 @@ public enum BalancedScalingStrategy implements ScalingStrategy {
             return totalSize;
         }
 
+        public String getUrl() {
+            return this.url.toString();
+        }
+
         @Override
         public int compareTo(NodePoolLayout other) {
-            return ComparisonChain.start().compare(totalSize(), other.totalSize())
-                    .compare(this.url.toString(), other.url.toString()).result();
+            return Comparator.comparing(NodePoolLayout::totalSize).thenComparing(NodePoolLayout::getUrl).compare(this,
+                    other);
         }
 
         public InstanceGroupLayout smallestInstanceGroup() {
@@ -175,7 +178,7 @@ public enum BalancedScalingStrategy implements ScalingStrategy {
         }
 
         public InstanceGroupLayout largestInstanceGroup() {
-            return Iterables.getLast(sorted(this.instanceGroups));
+            return sorted(this.instanceGroups).get(this.instanceGroups.size() - 1);
         }
 
         @Override
@@ -205,10 +208,18 @@ public enum BalancedScalingStrategy implements ScalingStrategy {
             this.size--;
         }
 
+        public String getUrl() {
+            return this.url.toString();
+        }
+
+        public int getSize() {
+            return this.size;
+        }
+
         @Override
         public int compareTo(InstanceGroupLayout other) {
-            return ComparisonChain.start().compare(this.size, other.size)
-                    .compare(this.url.toString(), other.url.toString()).result();
+            return Comparator.comparing(InstanceGroupLayout::getSize).thenComparing(InstanceGroupLayout::getUrl)
+                    .compare(this, other);
         }
 
         @Override

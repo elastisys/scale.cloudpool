@@ -1,6 +1,5 @@
 package com.elastisys.scale.cloudpool.aws.commons.requests.autoscaling;
 
-import static com.google.common.collect.Iterables.getOnlyElement;
 import static java.lang.String.format;
 
 import java.util.List;
@@ -46,7 +45,7 @@ public class GetAutoScalingGroup extends AmazonAutoScalingRequest<AutoScalingGro
             throw new IllegalArgumentException(format("Auto Scaling Group '%s' doesn't exist in region '%s'.",
                     this.groupName, getClient().getRegion()));
         }
-        return getOnlyElement(autoScalingGroups);
+        return autoScalingGroups.get(0);
     }
 
 }

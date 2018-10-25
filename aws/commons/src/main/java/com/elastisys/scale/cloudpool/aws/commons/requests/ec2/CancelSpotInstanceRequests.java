@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.aws.commons.requests.ec2;
 import static com.amazonaws.services.ec2.model.SpotInstanceState.Cancelled;
 import static com.elastisys.scale.cloudpool.aws.commons.predicates.SpotRequestPredicates.allInAnyOfStates;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -15,7 +16,6 @@ import com.amazonaws.services.ec2.model.CancelSpotInstanceRequestsResult;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.elastisys.scale.commons.net.retryable.Retryable;
 import com.elastisys.scale.commons.net.retryable.Retryers;
-import com.google.common.collect.ImmutableList;
 
 /**
  * A {@link Callable} task that, when executed, requests a collection of spot
@@ -37,7 +37,7 @@ public class CancelSpotInstanceRequests extends AmazonEc2Request<CancelSpotInsta
     public CancelSpotInstanceRequests(AWSCredentials awsCredentials, String region, ClientConfiguration clientConfig,
             List<String> spotInstanceRequestIds) {
         super(awsCredentials, region, clientConfig);
-        this.spotRequestIds = ImmutableList.copyOf(spotInstanceRequestIds);
+        this.spotRequestIds = Collections.unmodifiableList(spotInstanceRequestIds);
     }
 
     @Override

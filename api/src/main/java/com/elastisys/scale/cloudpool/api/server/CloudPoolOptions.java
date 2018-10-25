@@ -1,12 +1,13 @@
 package com.elastisys.scale.cloudpool.api.server;
 
+import java.nio.charset.StandardCharsets;
+
 import org.kohsuke.args4j.Option;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.commons.cli.server.BaseServerCliOptions;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.io.IoUtils;
-import com.google.common.base.Charsets;
 
 /**
  * Captures (command-line) options accepted by a {@link CloudPoolServer}.
@@ -40,7 +41,7 @@ public class CloudPoolOptions extends BaseServerCliOptions {
 
     @Override
     public String getVersion() {
-        return IoUtils.toString("VERSION.txt", Charsets.UTF_8);
+        return IoUtils.toString("VERSION.txt", StandardCharsets.UTF_8);
     }
 
     @Override

@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.commons.scaledown;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
+import static java.util.Objects.requireNonNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,7 +31,7 @@ public class VictimSelector {
      *            from the candidate set.
      */
     public VictimSelector(VictimSelectionStrategy victimSelectionStrategy) {
-        checkNotNull(victimSelectionStrategy, "null victimSelectionStrategy");
+        requireNonNull(victimSelectionStrategy, "null victimSelectionStrategy");
         this.victimSelectionStrategy = victimSelectionStrategy;
     }
 
@@ -47,7 +47,7 @@ public class VictimSelector {
      */
     public List<Machine> selectVictims(Collection<Machine> candidates, long numVictims)
             throws IllegalArgumentException {
-        checkNotNull(candidates, "null candidates");
+        requireNonNull(candidates, "null candidates");
         checkArgument(numVictims >= 0, "negative number of victims");
         checkArgument(candidates.size() >= numVictims, "more victims than termination candidates");
 

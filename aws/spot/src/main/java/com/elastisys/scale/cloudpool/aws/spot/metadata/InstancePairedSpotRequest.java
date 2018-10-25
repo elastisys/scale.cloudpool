@@ -1,6 +1,6 @@
 package com.elastisys.scale.cloudpool.aws.spot.metadata;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;

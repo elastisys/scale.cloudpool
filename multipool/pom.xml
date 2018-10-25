@@ -18,7 +18,11 @@
       <artifactId>cloudpool.api</artifactId>
       <version>${project.version}</version>
     </dependency>
-
+    <dependency>
+      <groupId>com.elastisys.scale</groupId>
+      <artifactId>commons.util</artifactId>
+    </dependency>
+    
     <!-- Test dependencies -->
     <dependency>
       <groupId>junit</groupId>

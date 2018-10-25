@@ -1,14 +1,10 @@
 package com.elastisys.scale.cloudpool.commons.basepool;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
 
 import com.elastisys.scale.cloudpool.commons.basepool.poolfetcher.impl.CachingPoolFetcher;
-import com.google.common.collect.ImmutableSet;
 
 /**
  * Declares where runtime state is stored during execution, and where runtime
@@ -65,11 +61,6 @@ public class StateStorage {
         }
 
         public StateStorage build() {
-            List<String> allFileNames = Arrays.asList(this.cachedMachinePoolFileName);
-            Set<String> uniqueFileNames = ImmutableSet.copyOf(allFileNames);
-            checkArgument(allFileNames.size() == uniqueFileNames.size(),
-                    "all StateStorage file names need to be unique");
-
             File cachedMachinePoolFile = new File(this.storageDir, this.cachedMachinePoolFileName);
             return new StateStorage(cachedMachinePoolFile);
         }

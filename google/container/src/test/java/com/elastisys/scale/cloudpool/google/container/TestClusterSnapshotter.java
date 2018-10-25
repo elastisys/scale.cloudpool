@@ -19,12 +19,12 @@ import com.elastisys.scale.cloudpool.google.container.client.ContainerClusterCli
 import com.elastisys.scale.cloudpool.google.container.client.InstanceGroupSnapshot;
 import com.elastisys.scale.cloudpool.google.container.client.NodePoolSnapshot;
 import com.elastisys.scale.cloudpool.google.container.config.ContainerCluster;
+import com.elastisys.scale.commons.util.collection.Maps;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
 import com.google.api.services.compute.model.InstanceGroupManager;
 import com.google.api.services.container.model.Cluster;
 import com.google.api.services.container.model.NodePool;
-import com.google.common.collect.ImmutableMap;
 
 /**
  * Exercises {@link ClusterSnapshotter}.
@@ -106,7 +106,7 @@ public class TestClusterSnapshotter {
     public void snapshotNonEmptyCluster() {
         // set up a simulated container cluster
         SimulatedCluster fakeCluster = new SimulatedCluster(new ContainerCluster(CLUSTER_NAME, PROJECT, ZONE1),
-                ImmutableMap.of(NODEPOOL_NAME, 1));
+                Maps.of(NODEPOOL_NAME, 1));
 
         // prepare mocked api calls to respond with the simulated cluster
         fakeCluster.prepareMock(this.mockedClient);

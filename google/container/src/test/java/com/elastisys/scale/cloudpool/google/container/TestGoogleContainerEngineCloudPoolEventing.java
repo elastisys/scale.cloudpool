@@ -22,15 +22,15 @@ import com.elastisys.scale.cloudpool.google.container.client.ContainerClusterCli
 import com.elastisys.scale.cloudpool.google.container.config.ContainerCluster;
 import com.elastisys.scale.cloudpool.google.container.config.GoogleContainerEngineCloudPoolConfig;
 import com.elastisys.scale.cloudpool.google.container.config.ScalingPolicy;
+import com.elastisys.scale.commons.eventbus.EventBus;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.Alert;
 import com.elastisys.scale.commons.net.alerter.AlertBuilder;
 import com.elastisys.scale.commons.net.alerter.multiplexing.AlertersConfig;
+import com.elastisys.scale.commons.util.collection.Maps;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonObject;
 
 /**
@@ -73,7 +73,7 @@ public class TestGoogleContainerEngineCloudPoolEventing {
         GoogleContainerEngineCloudPoolConfig config = this.cloudPool.config();
 
         // prepare client to return a given cluster snapshot
-        SimulatedCluster fakeCluster = new SimulatedCluster(config.getCluster(), ImmutableMap.of("nodePool1", 2));
+        SimulatedCluster fakeCluster = new SimulatedCluster(config.getCluster(), Maps.of("nodePool1", 2));
         fakeCluster.prepareMock(this.mockedApiClient);
 
         // hack to set desiredSize without forking off updateCluster in a
@@ -100,7 +100,7 @@ public class TestGoogleContainerEngineCloudPoolEventing {
         GoogleContainerEngineCloudPoolConfig config = this.cloudPool.config();
 
         // prepare client to return a given cluster snapshot
-        SimulatedCluster fakeCluster = new SimulatedCluster(config.getCluster(), ImmutableMap.of("nodePool1", 2));
+        SimulatedCluster fakeCluster = new SimulatedCluster(config.getCluster(), Maps.of("nodePool1", 2));
         fakeCluster.prepareMock(this.mockedApiClient);
         String groupUrl = fakeCluster.instanceGroups().get(0).getSelfLink();
 

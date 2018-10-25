@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.aws.autoscaling.driver;
 
 import static com.elastisys.scale.cloudpool.aws.autoscaling.driver.TestUtils.group;
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 
 import java.util.ArrayList;
 import java.util.List;

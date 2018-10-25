@@ -41,9 +41,11 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -82,16 +84,14 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.CloudPoolDriverExce
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.cloudpool.commons.scaledown.VictimSelectionPolicy;
+import com.elastisys.scale.commons.eventbus.EventBus;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.Alert;
+import com.elastisys.scale.commons.util.collection.Maps;
 import com.elastisys.scale.commons.util.file.FileUtils;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.eventbus.EventBus;
-import com.google.common.io.Files;
 import com.google.gson.JsonObject;
 
 /**
@@ -639,7 +639,7 @@ public class TestBaseCloudPoolOperation {
         when(this.driverMock.listMachines()).thenReturn(machines(booting, active1, active2));
         // driver will succeed with terminating i-3 but fail on i-2
         List<String> terminated = asList("i-3");
-        ImmutableMap<String, Throwable> terminationErrors = ImmutableMap.of("i-2", new RuntimeException("api error"));
+        Map<String, Throwable> terminationErrors = Maps.of("i-2", new RuntimeException("api error"));
         TerminateMachinesException fault = new TerminateMachinesException(terminated, terminationErrors);
         doThrow(fault).when(this.driverMock).terminateMachines(asList("i-3", "i-2"));
 
@@ -677,7 +677,7 @@ public class TestBaseCloudPoolOperation {
         when(this.driverMock.listMachines()).thenReturn(machines(active1));
         // driver will fail to terminate i-1
         List<String> terminated = Collections.emptyList();
-        ImmutableMap<String, Throwable> terminationErrors = ImmutableMap.of("i-1", new RuntimeException("api error"));
+        Map<String, Throwable> terminationErrors = Maps.of("i-1", new RuntimeException("api error"));
         TerminateMachinesException fault = new TerminateMachinesException(terminated, terminationErrors);
         doThrow(fault).when(this.driverMock).terminateMachines(asList("i-1"));
 
@@ -1668,8 +1668,8 @@ public class TestBaseCloudPoolOperation {
     }
 
     private void save(MachinePool pool, File destination) throws IOException {
-        Files.createParentDirs(destination);
-        Files.write(JsonUtils.toPrettyString(JsonUtils.toJson(pool)), destination, Charsets.UTF_8);
+        Files.createDirectories(destination.getParentFile().toPath());
+        Files.write(destination.toPath(), JsonUtils.toPrettyString(JsonUtils.toJson(pool)).getBytes());
     }
 
     /**

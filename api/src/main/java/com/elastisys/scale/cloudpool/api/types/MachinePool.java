@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.api.types;
 
 import static com.elastisys.scale.cloudpool.api.types.Machine.toShortString;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,7 +13,6 @@ import org.joda.time.DateTime;
 
 import com.elastisys.scale.cloudpool.api.CloudPool;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.MoreObjects;
 import com.google.gson.JsonObject;
 
 /**
@@ -45,8 +44,8 @@ public class MachinePool {
      *            The time when this snapshot of the resource pool was taken.
      */
     public MachinePool(List<? extends Machine> machines, DateTime timestamp) {
-        checkNotNull(machines, "machines cannot be null");
-        checkNotNull(timestamp, "timestamp cannot be null");
+        requireNonNull(machines, "machines cannot be null");
+        requireNonNull(timestamp, "timestamp cannot be null");
         this.machines = new ArrayList<>(machines);
         this.timestamp = timestamp;
     }
@@ -144,7 +143,8 @@ public class MachinePool {
     @Override
     public String toString() {
         List<String> shortPool = this.machines.stream().map(toShortString()).collect(Collectors.toList());
-        return MoreObjects.toStringHelper(this).add("timestamp", this.timestamp).add("machines", shortPool).toString();
+        return new StringBuilder(this.getClass().getSimpleName()).append("{").append("timestamp=" + this.timestamp)
+                .append("machines=" + shortPool).toString();
     }
 
     /**
@@ -158,11 +158,11 @@ public class MachinePool {
      */
     public static MachinePool fromJson(String machinePoolAsJson) throws IOException {
         MachinePool machinePool = JsonUtils.toObject(JsonUtils.parseJsonString(machinePoolAsJson), MachinePool.class);
-        checkNotNull(machinePool.timestamp, "machine pool missing timestamp");
-        checkNotNull(machinePool.machines, "machine pool missing instances");
+        requireNonNull(machinePool.timestamp, "machine pool missing timestamp");
+        requireNonNull(machinePool.machines, "machine pool missing instances");
         for (Machine machine : machinePool.machines) {
-            checkNotNull(machine.getId(), "machine missing id");
-            checkNotNull(machine.getMachineState(), "machine missing state");
+            requireNonNull(machine.getId(), "machine missing id");
+            requireNonNull(machine.getMachineState(), "machine missing state");
         }
         return machinePool;
     }

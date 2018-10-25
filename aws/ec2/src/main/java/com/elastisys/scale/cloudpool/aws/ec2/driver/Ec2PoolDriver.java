@@ -1,7 +1,7 @@
 package com.elastisys.scale.cloudpool.aws.ec2.driver;
 
 import static com.elastisys.scale.commons.json.JsonUtils.toJson;
-import static com.google.common.base.Preconditions.checkState;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkState;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
@@ -37,7 +37,6 @@ import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.StartMachinesException;
 import com.elastisys.scale.cloudpool.commons.basepool.driver.TerminateMachinesException;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Throwables;
 
 /**
  * A {@link CloudPoolDriver} implementation that operates against the AWS EC2
@@ -195,7 +194,9 @@ public class Ec2PoolDriver implements CloudPoolDriver {
             Tag tag = new Tag(ScalingTags.CLOUD_POOL_TAG, getPoolName());
             tagInstance(machineId, tag);
         } catch (Exception e) {
-            Throwables.throwIfInstanceOf(e, NotFoundException.class);
+            if (e instanceof NotFoundException) {
+                throw e;
+            }
             throw new CloudPoolDriverException(
                     String.format("failed to attach '%s' to cloud pool: %s", machineId, e.getMessage()), e);
         }
@@ -229,7 +230,9 @@ public class Ec2PoolDriver implements CloudPoolDriver {
             Tag tag = new Tag(ScalingTags.SERVICE_STATE_TAG, serviceState.name());
             tagInstance(machineId, tag);
         } catch (Exception e) {
-            Throwables.throwIfInstanceOf(e, NotFoundException.class);
+            if (e instanceof NotFoundException) {
+                throw e;
+            }
             throw new CloudPoolDriverException(
                     String.format("failed to set service state for instance %s: %s", machineId, e.getMessage()), e);
         }
@@ -247,7 +250,9 @@ public class Ec2PoolDriver implements CloudPoolDriver {
             Tag tag = new Tag(ScalingTags.MEMBERSHIP_STATUS_TAG, JsonUtils.toString(toJson(membershipStatus)));
             tagInstance(machineId, tag);
         } catch (Exception e) {
-            Throwables.throwIfInstanceOf(e, NotFoundException.class);
+            if (e instanceof NotFoundException) {
+                throw e;
+            }
             throw new CloudPoolDriverException(
                     String.format("failed to set membership status for instance %s: %s", machineId, e.getMessage()), e);
         }

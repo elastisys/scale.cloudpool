@@ -18,7 +18,7 @@ import org.junit.Test;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.Tag;
-import com.google.common.collect.ImmutableMap;
+import com.elastisys.scale.commons.util.collection.Maps;
 
 /**
  * Exercises the {@link InstancePredicates} class.
@@ -30,11 +30,11 @@ public class TestInstancePredicates {
         Predicate<Instance> hasTag = InstancePredicates
                 .hasTag(new Tag().withKey("expectedKey").withValue("expectedValue"));
 
-        Map<String, String> noTags = ImmutableMap.of();
+        Map<String, String> noTags = Maps.of();
         Instance i0 = makeInstance("i-0", "running", noTags);
-        Instance i1 = makeInstance("i-1", "running", ImmutableMap.of("k1", "v1"));
-        Instance i2 = makeInstance("i-2", "running", ImmutableMap.of("expectedKey", "expectedValue"));
-        Instance i3 = makeInstance("i-3", "running", ImmutableMap.of("k1", "v1", //
+        Instance i1 = makeInstance("i-1", "running", Maps.of("k1", "v1"));
+        Instance i2 = makeInstance("i-2", "running", Maps.of("expectedKey", "expectedValue"));
+        Instance i3 = makeInstance("i-3", "running", Maps.of("k1", "v1", //
                 "expectedKey", "expectedValue"));
 
         assertFalse(hasTag.test(i0));
@@ -50,7 +50,7 @@ public class TestInstancePredicates {
         Predicate<Instance> active = inAnyOfStates("pending", "running");
         Predicate<Instance> terminal = inAnyOfStates("shutting-down", "terminated");
 
-        Map<String, String> noTags = ImmutableMap.of();
+        Map<String, String> noTags = Maps.of();
         Instance pending = makeInstance("i-0", "pending", noTags);
         Instance running = makeInstance("i-1", "running", noTags);
         Instance stopping = makeInstance("i-2", "stopping", noTags);
@@ -152,7 +152,7 @@ public class TestInstancePredicates {
 
     @Test
     public void testInstancesPresent() {
-        Map<String, String> noTags = ImmutableMap.of();
+        Map<String, String> noTags = Maps.of();
         Instance i0 = makeInstance("i-0", "pending", noTags);
         Instance i1 = makeInstance("i-1", "running", noTags);
         Instance i2 = makeInstance("i-2", "running", noTags);

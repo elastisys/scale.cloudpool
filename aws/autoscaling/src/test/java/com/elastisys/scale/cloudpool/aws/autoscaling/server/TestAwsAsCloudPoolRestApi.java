@@ -29,7 +29,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.StateStorage;
 import com.elastisys.scale.commons.net.host.HostUtils;
 import com.elastisys.scale.commons.rest.client.RestClients;
 import com.elastisys.scale.commons.util.file.FileUtils;
-import com.google.common.io.Resources;
+import com.elastisys.scale.commons.util.io.Resources;
 import com.google.gson.JsonObject;
 
 /**

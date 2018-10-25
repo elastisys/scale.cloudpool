@@ -19,7 +19,7 @@ import com.elastisys.scale.cloudpool.api.types.MembershipStatus;
 import com.elastisys.scale.cloudpool.api.types.ServiceState;
 import com.elastisys.scale.cloudpool.aws.commons.ScalingTags;
 import com.elastisys.scale.commons.json.JsonUtils;
-import com.google.common.base.Preconditions;
+import com.elastisys.scale.commons.util.precond.Preconditions;
 import com.google.gson.JsonObject;
 
 /**

@@ -4,7 +4,7 @@ import static com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertTopics.
 import static com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertTopics.RESIZE;
 import static com.elastisys.scale.commons.net.alerter.AlertSeverity.INFO;
 import static com.elastisys.scale.commons.net.alerter.AlertSeverity.WARN;
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +42,8 @@ import com.elastisys.scale.cloudpool.kubernetes.podpool.impl.DeploymentPodPool;
 import com.elastisys.scale.cloudpool.kubernetes.podpool.impl.ReplicaSetPodPool;
 import com.elastisys.scale.cloudpool.kubernetes.podpool.impl.ReplicationControllerPodPool;
 import com.elastisys.scale.cloudpool.kubernetes.types.Pod;
+import com.elastisys.scale.commons.eventbus.EventBus;
+import com.elastisys.scale.commons.eventbus.impl.AsynchronousEventBus;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.Alert;
@@ -50,8 +52,6 @@ import com.elastisys.scale.commons.net.alerter.AlertSeverity;
 import com.elastisys.scale.commons.net.alerter.Alerter;
 import com.elastisys.scale.commons.net.alerter.multiplexing.MultiplexingAlerter;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.eventbus.AsyncEventBus;
-import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -139,7 +139,7 @@ public class KubernetesCloudPool implements CloudPool {
 
         this.apiServerClient = apiServerClient;
         this.executor = executor;
-        this.eventBus = eventBus != null ? eventBus : new AsyncEventBus(executor);
+        this.eventBus = eventBus != null ? eventBus : new AsynchronousEventBus(executor, LOG);
 
         this.alerter = new MultiplexingAlerter();
         this.eventBus.register(this.alerter);

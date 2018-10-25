@@ -17,7 +17,7 @@ import com.elastisys.scale.cloudpool.commons.basepool.config.BaseCloudPoolConfig
 import com.elastisys.scale.cloudpool.commons.basepool.driver.DriverConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.util.base64.Base64Utils;
-import com.google.common.collect.ImmutableMap;
+import com.elastisys.scale.commons.util.collection.Maps;
 
 public class TestUtils {
     /** Sample AWS access key id. */
@@ -42,7 +42,7 @@ public class TestUtils {
     private static final String USER_DATA = Base64Utils
             .toBase64(Arrays.asList("#!/bin/bash", "apt-get update -qy && apt-get isntall apache2 -qy"));
     private static final boolean EBS_OPTIMIZED = true;
-    private static final Map<String, String> TAGS = ImmutableMap.of("Cluster", "mycluster");
+    private static final Map<String, String> TAGS = Maps.of("Cluster", "mycluster");
 
     /**
      * Creates a {@link DriverConfig} from a {@link BaseCloudPoolConfig}

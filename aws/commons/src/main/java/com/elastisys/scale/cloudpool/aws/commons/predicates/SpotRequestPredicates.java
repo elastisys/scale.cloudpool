@@ -6,7 +6,7 @@ import java.util.function.Predicate;
 
 import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.SpotInstanceState;
-import com.google.common.base.Preconditions;
+import com.elastisys.scale.commons.util.precond.Preconditions;
 
 /**
  * {@link Predicate}s relating to AWS EC2 spot instance requests.

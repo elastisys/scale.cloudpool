@@ -1,6 +1,5 @@
 package com.elastisys.scale.cloudpool.google.container;
 
-import static com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertTopics.RESIZE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
@@ -20,21 +19,22 @@ import org.slf4j.LoggerFactory;
 import com.elastisys.scale.cloudpool.api.types.CloudPoolStatus;
 import com.elastisys.scale.cloudpool.api.types.Machine;
 import com.elastisys.scale.cloudpool.api.types.MachinePool;
+import com.elastisys.scale.cloudpool.commons.basepool.alerts.AlertTopics;
 import com.elastisys.scale.cloudpool.google.commons.api.CloudApiSettings;
 import com.elastisys.scale.cloudpool.google.container.client.ClusterSnapshot;
 import com.elastisys.scale.cloudpool.google.container.client.ContainerClusterClient;
 import com.elastisys.scale.cloudpool.google.container.config.ContainerCluster;
 import com.elastisys.scale.cloudpool.google.container.config.GoogleContainerEngineCloudPoolConfig;
 import com.elastisys.scale.cloudpool.google.container.config.ScalingPolicy;
+import com.elastisys.scale.commons.eventbus.EventBus;
+import com.elastisys.scale.commons.eventbus.impl.AsynchronousEventBus;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.AlertWaiter;
 import com.elastisys.scale.commons.net.alerter.multiplexing.AlertersConfig;
+import com.elastisys.scale.commons.util.collection.Maps;
 import com.elastisys.scale.commons.util.time.FrozenTime;
 import com.elastisys.scale.commons.util.time.UtcTime;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.eventbus.AsyncEventBus;
-import com.google.common.eventbus.EventBus;
 import com.google.gson.JsonObject;
 
 public class TestGoogleContainerEngineCloudPool {
@@ -45,7 +45,7 @@ public class TestGoogleContainerEngineCloudPool {
 
     // Mock objects
     private ContainerClusterClient mockedApiClient;
-    private EventBus eventBus = new AsyncEventBus(this.executor);
+    private EventBus eventBus = new AsynchronousEventBus(this.executor, LOG);
 
     /** Object under test. */
     private GoogleContainerEngineCloudPool cloudPool;
@@ -238,7 +238,7 @@ public class TestGoogleContainerEngineCloudPool {
 
         // prepare client to return a given cluster snapshot
         SimulatedCluster fakeCluster = new SimulatedCluster(config.getCluster(), //
-                ImmutableMap.of(//
+                Maps.of(//
                         "nodePool1", 1, //
                         "nodePool2", 2));
         fakeCluster.prepareMock(this.mockedApiClient);
@@ -264,7 +264,7 @@ public class TestGoogleContainerEngineCloudPool {
 
         // prepare client to return a given cluster snapshot
         SimulatedCluster fakeCluster = new SimulatedCluster(config.getCluster(), //
-                ImmutableMap.of("nodePool1", 4));
+                Maps.of("nodePool1", 4));
         fakeCluster.prepareMock(this.mockedApiClient);
 
         this.cloudPool.refreshClusterSnapshot();
@@ -285,7 +285,7 @@ public class TestGoogleContainerEngineCloudPool {
 
         // prepare client to return a given cluster snapshot
         SimulatedCluster fakeCluster = new SimulatedCluster(config.getCluster(), //
-                ImmutableMap.of("nodePool1", 4));
+                Maps.of("nodePool1", 4));
         fakeCluster.prepareMock(this.mockedApiClient);
 
         // explicitly set desired size
@@ -307,17 +307,16 @@ public class TestGoogleContainerEngineCloudPool {
     public void updatePool() throws InterruptedException {
         // listens on the eventbus and waits for the resize operation to
         // complete
-        AlertWaiter resizeAwaiter = new AlertWaiter(this.eventBus, a -> a.getTopic().equals(RESIZE.name()));
+        AlertWaiter resizeAwaiter = new AlertWaiter(this.eventBus, a -> a.getTopic().equals(AlertTopics.RESIZE.name()));
 
         GoogleContainerEngineCloudPoolConfig config = validConfig();
         this.cloudPool.configure(asJson(config));
         this.cloudPool.start();
 
         // prepare client to return a given cluster snapshot
-        SimulatedCluster fakeCluster = new SimulatedCluster(config.getCluster(),
-                ImmutableMap.of(//
-                        "nodePool1", 4, //
-                        "nodePool2", 4));
+        SimulatedCluster fakeCluster = new SimulatedCluster(config.getCluster(), Maps.of(//
+                "nodePool1", 4, //
+                "nodePool2", 4));
         fakeCluster.prepareMock(this.mockedApiClient);
 
         this.cloudPool.setDesiredSize(10);

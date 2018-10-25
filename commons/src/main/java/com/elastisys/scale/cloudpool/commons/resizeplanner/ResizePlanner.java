@@ -4,7 +4,7 @@ import static com.elastisys.scale.cloudpool.api.types.Machine.inState;
 import static com.elastisys.scale.cloudpool.api.types.Machine.isActiveMember;
 import static com.elastisys.scale.cloudpool.api.types.Machine.isEvictable;
 import static com.elastisys.scale.cloudpool.api.types.MachineState.REQUESTED;
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 
 import java.util.ArrayList;
 import java.util.Collection;

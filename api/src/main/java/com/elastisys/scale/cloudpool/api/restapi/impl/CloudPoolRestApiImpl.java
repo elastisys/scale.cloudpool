@@ -1,9 +1,10 @@
 package com.elastisys.scale.cloudpool.api.restapi.impl;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
 
@@ -31,8 +32,6 @@ import com.elastisys.scale.cloudpool.api.types.MachinePool;
 import com.elastisys.scale.cloudpool.api.types.PoolSizeSummary;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.ErrorType;
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
 import com.google.gson.JsonObject;
 
 /**
@@ -209,7 +208,7 @@ public class CloudPoolRestApiImpl implements CloudPoolRestApi {
      *             If the configuration could not be stored.
      */
     public void storeConfig(JsonObject configuration) throws IOException {
-        Files.write(JsonUtils.toPrettyString(configuration), getCloudPoolConfigPath().toFile(), Charsets.UTF_8);
+        Files.write(getCloudPoolConfigPath(), JsonUtils.toPrettyString(configuration).getBytes());
     }
 
     /**
