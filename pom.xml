@@ -9,8 +9,8 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.elastisys</groupId>
-    <artifactId>elastisys-public</artifactId>
-    <version>1.4</version>
+    <artifactId>elastisys-pom-public</artifactId>
+    <version>1.0.0</version>
   </parent>
   <groupId>com.elastisys.scale</groupId>
   <artifactId>cloudpool.root</artifactId>
