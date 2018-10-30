@@ -128,7 +128,8 @@ public class CloudPoolCommandLineDriver {
             boolean verbose = !args.isEmpty() && Boolean.valueOf(args.get(0));
             List<Machine> machines = this.cloudPool.getMachinePool().getMachines();
             if (verbose) {
-                System.out.println(String.join("\n", machines.toArray(new String[0])));
+                System.out.println(
+                        String.join("\n", machines.stream().map(Machine::toString).collect(Collectors.toList())));
             } else {
                 // exclude metadata
 
