@@ -15,7 +15,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.kubernetes.apiserver.ApiServerClient;
-import com.elastisys.scale.cloudpool.kubernetes.config.AuthConfig;
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.ClientConfig;
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.ClientCredentials;
 import com.elastisys.scale.cloudpool.kubernetes.mock.FakeServlet;
 import com.elastisys.scale.cloudpool.kubernetes.mock.HttpResponse;
 import com.elastisys.scale.commons.net.host.HostUtils;
@@ -64,7 +65,7 @@ public class TestStandardApiServerClientServerAuth {
      */
     @Test
     public void verifyServerCertOnTrustedServer() throws Exception {
-        this.apiServerClient = new StandardApiServerClient().configure(apiServerUrl(), serverCertAuth());
+        this.apiServerClient = new StandardApiServerClient().configure(serverCertAuth());
         this.apiServerClient.get("/some/path");
 
         // verify that the call was made
@@ -82,7 +83,7 @@ public class TestStandardApiServerClientServerAuth {
         stopServer();
         startServer(UNTRUSTED_SERVER_KEYSTORE_PATH, UNTRUSTED_SERVER_KEYSTORE_PASSWORD);
 
-        this.apiServerClient = new StandardApiServerClient().configure(apiServerUrl(), serverCertAuth());
+        this.apiServerClient = new StandardApiServerClient().configure(serverCertAuth());
         try {
             this.apiServerClient.get("/some/path");
             fail("remote server should not be authenticated");
@@ -94,8 +95,10 @@ public class TestStandardApiServerClientServerAuth {
         assertThat(this.fakeApiServer.getRequests().size(), is(0));
     }
 
-    private AuthConfig serverCertAuth() {
-        return AuthConfig.builder().serverCertPath(TRUSTED_SERVER_CERT_PATH).tokenPath(AUTH_TOKEN_PATH).build();
+    private ClientConfig serverCertAuth() throws Exception {
+        ClientConfig clientConfig = new ClientConfig(apiServerUrl(), ClientCredentials.builder()
+                .serverCertPath(TRUSTED_SERVER_CERT_PATH).tokenPath(AUTH_TOKEN_PATH).build());
+        return clientConfig;
     }
 
     private String apiServerUrl() {

@@ -1,13 +1,17 @@
 package com.elastisys.scale.cloudpool.kubernetes.config;
 
+import static com.elastisys.scale.cloudpool.kubernetes.config.kubeconfig.TestCluster.CA_CERT_PATH;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 
 import org.junit.Test;
 
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.ClientConfig;
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.ClientCredentials;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.json.types.TimeInterval;
 import com.elastisys.scale.commons.net.alerter.multiplexing.AlertersConfig;
@@ -24,6 +28,9 @@ public class TestKubernetesCloudPoolConfig {
     private static final String CLIENT_CERT_PATH = "src/test/resources/ssl/admin.pem";
     /** Path to client key. */
     private static final String CLIENT_KEY_PATH = "src/test/resources/ssl/admin-key.pem";
+
+    /** Sample kubeconfig */
+    private static final String KUBECONFIG_PATH = "src/test/resources/kubeconfig/kubeconfig.yaml";
 
     /** Sample API server URL. */
     private static final String API_SERVER_URL = "https://server:1234";
@@ -43,11 +50,39 @@ public class TestKubernetesCloudPoolConfig {
     private static final AlertersConfig ALERTS = alertSettings();
 
     /**
-     * Should be possible to give explicit values for all parameters.
+     * {@link KubernetesCloudPoolConfig} client settings can be created either
+     * from a {@code kubeconfig} file or from a {@code apiServerUrl} and
+     * {@code auth}. Here we test with {@code kubeconfig}.
      */
     @Test
-    public void complete() {
-        KubernetesCloudPoolConfig config = new KubernetesCloudPoolConfig(API_SERVER_URL, AUTH, POD_POOL,
+    public void buildFromKubeConfig() throws Exception {
+        KubernetesCloudPoolConfig config = new KubernetesCloudPoolConfig(KUBECONFIG_PATH, null, null, POD_POOL,
+                UPDATE_INTERVAL, ALERTS);
+        config.validate();
+
+        assertThat(config.getKubeConfigPath(), is(KUBECONFIG_PATH));
+        assertThat(config.getApiServerUrl(), is(nullValue()));
+        assertThat(config.getAuth(), is(nullValue()));
+        assertThat(config.getPodPool(), is(POD_POOL));
+        assertThat(config.getUpdateInterval(), is(UPDATE_INTERVAL));
+        assertThat(config.getAlerts(), is(ALERTS));
+
+        // verify that an expected ClientConfig is produced
+        ClientConfig expectedClientConfig = new ClientConfig("https://192.168.99.104:8443", ClientCredentials.builder()
+                .certPath(CLIENT_CERT_PATH).keyPath(CLIENT_KEY_PATH).serverCertPath(CA_CERT_PATH).build());
+        ClientConfig clientConfig = config.getClientConfig();
+        assertThat(clientConfig, is(expectedClientConfig));
+    }
+
+    /**
+     * {@link KubernetesCloudPoolConfig} client settings can be created either
+     * from a {@code kubeconfig} file or from a {@code apiServerUrl} and
+     * {@code auth}. Here we test building from {@code apiServerUrl} and
+     * {@code auth}.
+     */
+    @Test
+    public void buildFromApiServerUrlAndAuth() throws Exception {
+        KubernetesCloudPoolConfig config = new KubernetesCloudPoolConfig(null, API_SERVER_URL, AUTH, POD_POOL,
                 UPDATE_INTERVAL, ALERTS);
         config.validate();
 
@@ -56,6 +91,12 @@ public class TestKubernetesCloudPoolConfig {
         assertThat(config.getPodPool(), is(POD_POOL));
         assertThat(config.getUpdateInterval(), is(UPDATE_INTERVAL));
         assertThat(config.getAlerts(), is(ALERTS));
+
+        // verify that an expected ClientConfig is produced
+        ClientConfig expectedClientConfig = new ClientConfig(API_SERVER_URL,
+                ClientCredentials.builder().certPath(CLIENT_CERT_PATH).keyPath(CLIENT_KEY_PATH).build());
+        ClientConfig clientConfig = config.getClientConfig();
+        assertThat(clientConfig, is(expectedClientConfig));
     }
 
     /**
@@ -67,7 +108,7 @@ public class TestKubernetesCloudPoolConfig {
         String nullNamespace = null;
         TimeInterval nullUpdateInterval = null;
         AlertersConfig nullAlerts = null;
-        KubernetesCloudPoolConfig config = new KubernetesCloudPoolConfig(API_SERVER_URL, AUTH,
+        KubernetesCloudPoolConfig config = new KubernetesCloudPoolConfig(null, API_SERVER_URL, AUTH,
                 new PodPoolConfig(nullNamespace, null, null, DEPLOYMENT), nullUpdateInterval, nullAlerts);
         config.validate();
 
@@ -76,20 +117,26 @@ public class TestKubernetesCloudPoolConfig {
         assertThat(config.getAlerts(), is(nullValue()));
     }
 
+    /**
+     * Missing {@code kubeconfig} and no {@code apiServerUrl} specified.
+     */
     @Test(expected = IllegalArgumentException.class)
     public void withMissingApiServerUrl() {
-        new KubernetesCloudPoolConfig(null, AUTH, POD_POOL, UPDATE_INTERVAL, ALERTS).validate();
+        new KubernetesCloudPoolConfig(null, null, AUTH, POD_POOL, UPDATE_INTERVAL, ALERTS).validate();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void withMalformedApiServerUrl() {
         String invalidApiServerUrl = "tcp://host:443";
-        new KubernetesCloudPoolConfig(invalidApiServerUrl, AUTH, POD_POOL, UPDATE_INTERVAL, ALERTS).validate();
+        new KubernetesCloudPoolConfig(null, invalidApiServerUrl, AUTH, POD_POOL, UPDATE_INTERVAL, ALERTS).validate();
     }
 
+    /**
+     * Missing {@code kubeconfig} and no {@code auth} specified.
+     */
     @Test(expected = IllegalArgumentException.class)
     public void withMissingAuth() {
-        new KubernetesCloudPoolConfig(API_SERVER_URL, null, POD_POOL, UPDATE_INTERVAL, ALERTS).validate();
+        new KubernetesCloudPoolConfig(null, API_SERVER_URL, null, POD_POOL, UPDATE_INTERVAL, ALERTS).validate();
     }
 
     /**
@@ -98,14 +145,14 @@ public class TestKubernetesCloudPoolConfig {
      */
     @Test(expected = IllegalArgumentException.class)
     public void withInvalidAuth() {
-        AuthConfig authMissingClientKey = AuthConfig.builder().cert(CLIENT_CERT_PATH).build();
-        new KubernetesCloudPoolConfig(API_SERVER_URL, authMissingClientKey, POD_POOL, UPDATE_INTERVAL, ALERTS)
+        AuthConfig authMissingClientKey = AuthConfig.builder().certData(CLIENT_CERT_PATH).build();
+        new KubernetesCloudPoolConfig(null, API_SERVER_URL, authMissingClientKey, POD_POOL, UPDATE_INTERVAL, ALERTS)
                 .validate();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void withMissingPodPool() {
-        new KubernetesCloudPoolConfig(API_SERVER_URL, AUTH, null, UPDATE_INTERVAL, ALERTS).validate();
+        new KubernetesCloudPoolConfig(null, API_SERVER_URL, AUTH, null, UPDATE_INTERVAL, ALERTS).validate();
     }
 
     /**
@@ -116,13 +163,14 @@ public class TestKubernetesCloudPoolConfig {
     public void withInvalidPodPool() {
         // no replicationController/replicaSet/deployment specified
         PodPoolConfig noApiObjectSpecified = new PodPoolConfig(NAMESPACE, null, null, null);
-        new KubernetesCloudPoolConfig(API_SERVER_URL, AUTH, noApiObjectSpecified, UPDATE_INTERVAL, ALERTS).validate();
+        new KubernetesCloudPoolConfig(null, API_SERVER_URL, AUTH, noApiObjectSpecified, UPDATE_INTERVAL, ALERTS)
+                .validate();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void withInvalidUpdateInterval() {
         TimeInterval invalidUpdateInterval = TimeInterval.seconds(0);
-        new KubernetesCloudPoolConfig(API_SERVER_URL, AUTH, POD_POOL, invalidUpdateInterval, ALERTS).validate();
+        new KubernetesCloudPoolConfig(null, API_SERVER_URL, AUTH, POD_POOL, invalidUpdateInterval, ALERTS).validate();
     }
 
     /**
@@ -131,8 +179,36 @@ public class TestKubernetesCloudPoolConfig {
      */
     @Test(expected = IllegalArgumentException.class)
     public void withIllegalAlerts() {
-        new KubernetesCloudPoolConfig(API_SERVER_URL, AUTH, POD_POOL, UPDATE_INTERVAL, invalidAlertSettings())
+        new KubernetesCloudPoolConfig(null, API_SERVER_URL, AUTH, POD_POOL, UPDATE_INTERVAL, invalidAlertSettings())
                 .validate();
+    }
+
+    /**
+     * It is ambiguous to specify both a {@code kubeconfig} file and
+     * {@code apiServerUrl} settings.
+     */
+    @Test
+    public void kubeconfigMutuallyExclusiveWithApiServerUrl() {
+        try {
+            new KubernetesCloudPoolConfig(KUBECONFIG_PATH, API_SERVER_URL, null, POD_POOL, null, null).validate();
+            fail("expected to fail");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is("config: kubeConfigPath is mutually exclusive with apiServerUrl"));
+        }
+    }
+
+    /**
+     * It is ambiguous to specify both a {@code kubeconfig} file and
+     * {@code auth} settings.
+     */
+    @Test
+    public void kubeconfigMutuallyExclusiveWithAuth() {
+        try {
+            new KubernetesCloudPoolConfig(KUBECONFIG_PATH, null, AUTH, POD_POOL, null, null).validate();
+            fail("expected to fail");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is("config: kubeConfigPath is mutually exclusive with auth"));
+        }
     }
 
     private static AlertersConfig alertSettings() {

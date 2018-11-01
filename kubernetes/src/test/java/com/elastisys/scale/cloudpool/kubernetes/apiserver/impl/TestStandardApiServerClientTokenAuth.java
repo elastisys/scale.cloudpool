@@ -12,7 +12,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.kubernetes.apiserver.ApiServerClient;
-import com.elastisys.scale.cloudpool.kubernetes.config.AuthConfig;
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.ClientConfig;
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.ClientCredentials;
 import com.elastisys.scale.cloudpool.kubernetes.mock.FakeServlet;
 import com.elastisys.scale.cloudpool.kubernetes.mock.HttpResponse;
 import com.elastisys.scale.commons.net.host.HostUtils;
@@ -61,7 +62,7 @@ public class TestStandardApiServerClientTokenAuth {
         String token = IoUtils.toString(new File(CLIENT_TOKEN_PATH), StandardCharsets.UTF_8);
 
         // should
-        this.apiServerClient = new StandardApiServerClient().configure(apiServerUrl(), tokenAuth(token));
+        this.apiServerClient = new StandardApiServerClient().configure(tokenAuth(token));
         this.apiServerClient.get("/some/path");
 
         // verify that the expected auth header was included in request
@@ -69,8 +70,8 @@ public class TestStandardApiServerClientTokenAuth {
         assertThat(this.fakeApiServer.getRequests().get(0).getHeaders().get("Authorization"), is("Bearer " + token));
     }
 
-    private AuthConfig tokenAuth(String token) {
-        return AuthConfig.builder().token(token).build();
+    private ClientConfig tokenAuth(String token) throws Exception {
+        return new ClientConfig(apiServerUrl(), ClientCredentials.builder().tokenData(token).build());
     }
 
     private String apiServerUrl() {

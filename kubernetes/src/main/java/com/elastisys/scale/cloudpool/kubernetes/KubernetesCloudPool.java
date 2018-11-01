@@ -167,7 +167,12 @@ public class KubernetesCloudPool implements CloudPool {
 
         KubernetesCloudPoolConfig oldConfig = this.config;
         this.config = newConfig;
-        this.apiServerClient.configure(newConfig.getApiServerUrl(), newConfig.getAuth());
+        try {
+            this.apiServerClient.configure(newConfig.getClientConfig());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("failed to apply kubernetes client settings: " + e.getMessage(), e);
+        }
+
         // if podPool is different, instantiate a new podPool
         if (oldConfig == null || podPoolChanged(oldConfig, newConfig)) {
             this.podPool = newPodPool(newConfig.getPodPool());
@@ -434,7 +439,8 @@ public class KubernetesCloudPool implements CloudPool {
      */
     private Map<String, JsonElement> standardAlertMetadata() {
         Map<String, JsonElement> standardTags = new HashMap<>();
-        standardTags.put("apiServer", JsonUtils.toJson(config().getApiServerUrl()));
+
+        standardTags.put("apiServer", JsonUtils.toJson(config().getClientConfig().getApiServerUrl()));
         standardTags.put("namespace", JsonUtils.toJson(config().getPodPool().getNamespace()));
         standardTags.put("apiObject", JsonUtils.toJson(config().getPodPool().getApiObject()));
         return standardTags;

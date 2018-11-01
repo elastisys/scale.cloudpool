@@ -20,6 +20,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.kubernetes.apiserver.ApiServerClient;
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.ClientConfig;
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.ClientCredentials;
 import com.elastisys.scale.cloudpool.kubernetes.config.AuthConfig;
 import com.elastisys.scale.cloudpool.kubernetes.config.KubernetesCloudPoolConfig;
 import com.elastisys.scale.cloudpool.kubernetes.config.PodPoolConfig;
@@ -49,17 +51,21 @@ public class TestKubernetesCloudPoolConfiguration {
     private static final String CLIENT_TOKEN_PATH = "src/test/resources/ssl/auth-token";
     /** Path to server/CA cert. */
     private static final String SERVER_CERT_PATH = "src/test/resources/ssl/ca.pem";
+    /** Path to a kubeconfig.yaml with cert/key paths. */
+    private static final String KUBECONFIG_PATH = "src/test/resources/kubeconfig/kubeconfig.yaml";
+    /** Path to a kubeconfig.yaml with embedded cert/keys. */
+    private static final String KUBECONFIG_EMBEDDED_PATH = "src/test/resources/kubeconfig/kubeconfig-embedded.yaml";
 
     private static final String API_SERVER_URL = "https://kube.api:443";
 
     private static final AuthConfig CERT_AUTH_BY_PATH = AuthConfig.builder().certPath(CLIENT_CERT_PATH)
             .keyPath(CLIENT_KEY_PATH).build();
     private static final AuthConfig CERT_AUTH_BY_CONTENT = AuthConfig.builder()
-            .cert(AuthUtils.loadBase64(CLIENT_CERT_PATH)).key(AuthUtils.loadBase64(CLIENT_KEY_PATH)).build();
+            .certData(AuthUtils.loadBase64(CLIENT_CERT_PATH)).keyData(AuthUtils.loadBase64(CLIENT_KEY_PATH)).build();
     private static final AuthConfig TOKEN_AUTH_BY_PATH = AuthConfig.builder().tokenPath(CLIENT_TOKEN_PATH)
-            .serverCert(AuthUtils.loadBase64(SERVER_CERT_PATH)).build();
+            .serverCertData(AuthUtils.loadBase64(SERVER_CERT_PATH)).build();
     private static final AuthConfig TOKEN_AUTH_BY_CONTENT = AuthConfig.builder()
-            .token(AuthUtils.loadString(CLIENT_TOKEN_PATH)).serverCertPath(SERVER_CERT_PATH).build();
+            .tokenData(AuthUtils.loadString(CLIENT_TOKEN_PATH)).serverCertPath(SERVER_CERT_PATH).build();
 
     /** Sample {@link PodPoolConfig} for a ReplicationController. */
     private static final PodPoolConfig RC_POD_POOL = new PodPoolConfig(NAMESPACE, "nginx-rc", null, null);
@@ -97,15 +103,17 @@ public class TestKubernetesCloudPoolConfiguration {
      * {@link ReplicationControllerPodPool} should be created.
      */
     @Test
-    public void configureToManageReplicationController() {
-        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(API_SERVER_URL, CERT_AUTH_BY_PATH, RC_POD_POOL,
-                UPDATE_INTERVAL, null);
+    public void configureToManageReplicationController() throws Exception {
+        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(null, API_SERVER_URL, CERT_AUTH_BY_PATH,
+                RC_POD_POOL, UPDATE_INTERVAL, null);
         JsonObject config = JsonUtils.toJson(conf).getAsJsonObject();
         this.cloudPool.configure(config);
         assertThat(this.cloudPool.getConfiguration().get(), is(config));
 
         // verify that config gets passed along to ApiServerClient
-        verify(this.mockApiServerClient).configure(API_SERVER_URL, CERT_AUTH_BY_PATH);
+        ClientConfig expectedClientConfig = new ClientConfig(API_SERVER_URL,
+                ClientCredentials.builder().certPath(CLIENT_CERT_PATH).keyPath(CLIENT_KEY_PATH).build());
+        verify(this.mockApiServerClient).configure(expectedClientConfig);
         // verify that a ReplicationController PodPool gets created.
         assertThat(this.cloudPool.podPool(), is(instanceOf(ReplicationControllerPodPool.class)));
     }
@@ -115,15 +123,18 @@ public class TestKubernetesCloudPoolConfiguration {
      * should be created.
      */
     @Test
-    public void configureToManageReplicaSet() {
-        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(API_SERVER_URL, CERT_AUTH_BY_CONTENT,
+    public void configureToManageReplicaSet() throws Exception {
+        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(null, API_SERVER_URL, CERT_AUTH_BY_CONTENT,
                 RS_POD_POOL, null, null);
         JsonObject config = JsonUtils.toJson(conf).getAsJsonObject();
         this.cloudPool.configure(config);
         assertThat(this.cloudPool.getConfiguration().get(), is(config));
 
         // verify that config gets passed along to ApiServerClient
-        verify(this.mockApiServerClient).configure(API_SERVER_URL, CERT_AUTH_BY_CONTENT);
+        ClientConfig expectedClientConfig = new ClientConfig(API_SERVER_URL,
+                ClientCredentials.builder().certData(AuthUtils.loadBase64(CLIENT_CERT_PATH))
+                        .keyData(AuthUtils.loadBase64(CLIENT_KEY_PATH)).build());
+        verify(this.mockApiServerClient).configure(expectedClientConfig);
         // verify that a ReplicaSet PodPool gets created.
         assertThat(this.cloudPool.podPool(), is(instanceOf(ReplicaSetPodPool.class)));
     }
@@ -133,15 +144,17 @@ public class TestKubernetesCloudPoolConfiguration {
      * should be created.
      */
     @Test
-    public void configureToManageDeployment() {
-        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(API_SERVER_URL, TOKEN_AUTH_BY_CONTENT,
+    public void configureToManageDeployment() throws Exception {
+        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(null, API_SERVER_URL, TOKEN_AUTH_BY_CONTENT,
                 DEP_POD_POOL, null, null);
         JsonObject config = JsonUtils.toJson(conf).getAsJsonObject();
         this.cloudPool.configure(config);
         assertThat(this.cloudPool.getConfiguration().get(), is(config));
 
         // verify that config gets passed along to ApiServerClient
-        verify(this.mockApiServerClient).configure(API_SERVER_URL, TOKEN_AUTH_BY_CONTENT);
+        ClientConfig expectedClientConfig = new ClientConfig(API_SERVER_URL, ClientCredentials.builder()
+                .tokenData(AuthUtils.loadString(CLIENT_TOKEN_PATH)).serverCertPath(SERVER_CERT_PATH).build());
+        verify(this.mockApiServerClient).configure(expectedClientConfig);
         // verify that a DeploymentPodPool PodPool gets created.
         assertThat(this.cloudPool.podPool(), is(instanceOf(DeploymentPodPool.class)));
     }
@@ -153,7 +166,7 @@ public class TestKubernetesCloudPoolConfiguration {
     @Test
     public void configureWithDefaults() throws Exception {
         String nullNamespace = null;
-        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(API_SERVER_URL, TOKEN_AUTH_BY_CONTENT,
+        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(null, API_SERVER_URL, TOKEN_AUTH_BY_CONTENT,
                 new PodPoolConfig(nullNamespace, "my-rc", null, null), null, null);
         JsonObject config = JsonUtils.toJson(conf).getAsJsonObject();
         this.cloudPool.configure(config);
@@ -169,18 +182,19 @@ public class TestKubernetesCloudPoolConfiguration {
      */
     @Test
     public void configureWithCertAuthByPath() throws Exception {
-        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(API_SERVER_URL, CERT_AUTH_BY_PATH, RC_POD_POOL,
-                null, null);
+        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(null, API_SERVER_URL, CERT_AUTH_BY_PATH,
+                RC_POD_POOL, null, null);
         JsonObject config = JsonUtils.toJson(conf).getAsJsonObject();
         this.cloudPool.configure(config);
         assertThat(this.cloudPool.getConfiguration().get(), is(config));
 
-        assertThat(this.cloudPool.config().getAuth().hasClientCert(), is(true));
-        assertThat(this.cloudPool.config().getAuth().hasClientKey(), is(true));
-        assertThat(this.cloudPool.config().getAuth().hasClientToken(), is(false));
-        assertThat(this.cloudPool.config().getAuth().hasServerCert(), is(false));
-        assertThat(this.cloudPool.config().getAuth().getClientCert(), is(loadCert("admin.pem")));
-        assertThat(this.cloudPool.config().getAuth().getClientKey(), is(loadKey("admin-key.pem")));
+        ClientCredentials credentials = this.cloudPool.config().getClientConfig().getCredentials();
+        assertThat(credentials.hasCert(), is(true));
+        assertThat(credentials.hasKey(), is(true));
+        assertThat(credentials.hasToken(), is(false));
+        assertThat(credentials.hasServerCert(), is(false));
+        assertThat(credentials.getCert(), is(loadCert("admin.pem")));
+        assertThat(credentials.getKey(), is(loadKey("admin-key.pem")));
     }
 
     /**
@@ -189,19 +203,20 @@ public class TestKubernetesCloudPoolConfiguration {
      */
     @Test
     public void configureWithCertAuthByContent() throws Exception {
-        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(API_SERVER_URL, CERT_AUTH_BY_CONTENT,
+        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(null, API_SERVER_URL, CERT_AUTH_BY_CONTENT,
                 RC_POD_POOL, null, null);
         JsonObject config = JsonUtils.toJson(conf).getAsJsonObject();
         this.cloudPool.configure(config);
 
         assertThat(this.cloudPool.getConfiguration().get(), is(config));
 
-        assertThat(this.cloudPool.config().getAuth().hasClientCert(), is(true));
-        assertThat(this.cloudPool.config().getAuth().hasClientKey(), is(true));
-        assertThat(this.cloudPool.config().getAuth().hasClientToken(), is(false));
-        assertThat(this.cloudPool.config().getAuth().hasServerCert(), is(false));
-        assertThat(this.cloudPool.config().getAuth().getClientCert(), is(loadCert("admin.pem")));
-        assertThat(this.cloudPool.config().getAuth().getClientKey(), is(loadKey("admin-key.pem")));
+        ClientCredentials credentials = this.cloudPool.config().getClientConfig().getCredentials();
+        assertThat(credentials.hasCert(), is(true));
+        assertThat(credentials.hasKey(), is(true));
+        assertThat(credentials.hasToken(), is(false));
+        assertThat(credentials.hasServerCert(), is(false));
+        assertThat(credentials.getCert(), is(loadCert("admin.pem")));
+        assertThat(credentials.getKey(), is(loadKey("admin-key.pem")));
     }
 
     /**
@@ -209,19 +224,19 @@ public class TestKubernetesCloudPoolConfiguration {
      */
     @Test
     public void configureTokenAuthByPath() throws Exception {
-        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(API_SERVER_URL, TOKEN_AUTH_BY_PATH, RC_POD_POOL,
-                null, null);
+        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(null, API_SERVER_URL, TOKEN_AUTH_BY_PATH,
+                RC_POD_POOL, null, null);
         JsonObject config = JsonUtils.toJson(conf).getAsJsonObject();
         this.cloudPool.configure(config);
         assertThat(this.cloudPool.getConfiguration().get(), is(config));
 
-        assertThat(this.cloudPool.config().getAuth().hasClientCert(), is(false));
-        assertThat(this.cloudPool.config().getAuth().hasClientKey(), is(false));
-        assertThat(this.cloudPool.config().getAuth().hasClientToken(), is(true));
-        assertThat(this.cloudPool.config().getAuth().hasServerCert(), is(true));
-
-        assertThat(this.cloudPool.config().getAuth().getClientToken(), is(loadToken("auth-token")));
-        assertThat(this.cloudPool.config().getAuth().getServerCert(), is(loadCert("ca.pem")));
+        ClientCredentials credentials = this.cloudPool.config().getClientConfig().getCredentials();
+        assertThat(credentials.hasCert(), is(false));
+        assertThat(credentials.hasKey(), is(false));
+        assertThat(credentials.hasToken(), is(true));
+        assertThat(credentials.hasServerCert(), is(true));
+        assertThat(credentials.getToken(), is(loadToken("auth-token")));
+        assertThat(credentials.getServerCert(), is(loadCert("ca.pem")));
     }
 
     /**
@@ -229,19 +244,68 @@ public class TestKubernetesCloudPoolConfiguration {
      */
     @Test
     public void configureTokenAuthByContent() throws Exception {
-        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(API_SERVER_URL, TOKEN_AUTH_BY_CONTENT,
+        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(null, API_SERVER_URL, TOKEN_AUTH_BY_CONTENT,
                 RC_POD_POOL, null, null);
         JsonObject config = JsonUtils.toJson(conf).getAsJsonObject();
         this.cloudPool.configure(config);
         assertThat(this.cloudPool.getConfiguration().get(), is(config));
 
-        assertThat(this.cloudPool.config().getAuth().hasClientCert(), is(false));
-        assertThat(this.cloudPool.config().getAuth().hasClientKey(), is(false));
-        assertThat(this.cloudPool.config().getAuth().hasClientToken(), is(true));
-        assertThat(this.cloudPool.config().getAuth().hasServerCert(), is(true));
+        ClientCredentials credentials = this.cloudPool.config().getClientConfig().getCredentials();
+        assertThat(credentials.hasCert(), is(false));
+        assertThat(credentials.hasKey(), is(false));
+        assertThat(credentials.hasToken(), is(true));
+        assertThat(credentials.hasServerCert(), is(true));
+        assertThat(credentials.getToken(), is(loadToken("auth-token")));
+        assertThat(credentials.getServerCert(), is(loadCert("ca.pem")));
+    }
 
-        assertThat(this.cloudPool.config().getAuth().getClientToken(), is(loadToken("auth-token")));
-        assertThat(this.cloudPool.config().getAuth().getServerCert(), is(loadCert("ca.pem")));
+    /**
+     * Configure client authentication from a {@code kubeconfig} file with
+     * cert/key path references (i.e. cert/keys are not embedded into the
+     * kubeconfig file).
+     */
+    @Test
+    public void configureWithKubeconfigWithPathReferences() throws Exception {
+        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(KUBECONFIG_PATH, null, null, RC_POD_POOL, null,
+                null);
+        JsonObject config = JsonUtils.toJson(conf).getAsJsonObject();
+        this.cloudPool.configure(config);
+        assertThat(this.cloudPool.getConfiguration().get(), is(config));
+
+        ClientConfig clientConfig = this.cloudPool.config().getClientConfig();
+        assertThat(clientConfig.getApiServerUrl(), is("https://192.168.99.104:8443"));
+        ClientCredentials credentials = clientConfig.getCredentials();
+        assertThat(credentials.hasCert(), is(true));
+        assertThat(credentials.hasKey(), is(true));
+        assertThat(credentials.hasToken(), is(false));
+        assertThat(credentials.hasServerCert(), is(true));
+        assertThat(credentials.getCert(), is(loadCert("admin.pem")));
+        assertThat(credentials.getKey(), is(loadKey("admin-key.pem")));
+        assertThat(credentials.getServerCert(), is(loadCert("ca.pem")));
+    }
+
+    /**
+     * Configure client authentication from a {@code kubeconfig} file with
+     * embedded cert/keys.
+     */
+    @Test
+    public void configureWithKubeconfigWithEmbeddedCerts() throws Exception {
+        KubernetesCloudPoolConfig conf = new KubernetesCloudPoolConfig(KUBECONFIG_EMBEDDED_PATH, null, null,
+                RC_POD_POOL, null, null);
+        JsonObject config = JsonUtils.toJson(conf).getAsJsonObject();
+        this.cloudPool.configure(config);
+        assertThat(this.cloudPool.getConfiguration().get(), is(config));
+
+        ClientConfig clientConfig = this.cloudPool.config().getClientConfig();
+        assertThat(clientConfig.getApiServerUrl(), is("https://192.168.99.104:8443"));
+        ClientCredentials credentials = clientConfig.getCredentials();
+        assertThat(credentials.hasCert(), is(true));
+        assertThat(credentials.hasKey(), is(true));
+        assertThat(credentials.hasToken(), is(false));
+        assertThat(credentials.hasServerCert(), is(true));
+        assertThat(credentials.getCert(), is(loadCert("admin.pem")));
+        assertThat(credentials.getKey(), is(loadKey("admin-key.pem")));
+        assertThat(credentials.getServerCert(), is(loadCert("ca.pem")));
     }
 
     /**

@@ -7,8 +7,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.kubernetes.apiserver.ApiServerClient;
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.ClientConfig;
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.ClientCredentials;
 import com.elastisys.scale.cloudpool.kubernetes.apiserver.impl.StandardApiServerClient;
-import com.elastisys.scale.cloudpool.kubernetes.config.AuthConfig;
 import com.elastisys.scale.cloudpool.kubernetes.podpool.impl.DeploymentPodPool;
 import com.elastisys.scale.cloudpool.kubernetes.types.Pod;
 
@@ -30,10 +31,11 @@ public class DeploymentPodPoolLab {
     /** TODO: set to name of Deployment */
     private static String name = "nginx-deployment";
 
-    public static void main(String[] args) {
-        AuthConfig auth = AuthConfig.builder().certPath(clientCertPath).keyPath(clientKeyPath).build();
+    public static void main(String[] args) throws Exception {
+        ClientConfig clientConfig = new ClientConfig(apiServerUrl,
+                ClientCredentials.builder().certPath(clientCertPath).keyPath(clientKeyPath).build());
         ApiServerClient apiServerClient = new StandardApiServerClient();
-        apiServerClient.configure(apiServerUrl, auth);
+        apiServerClient.configure(clientConfig);
 
         DeploymentPodPool podPool = new DeploymentPodPool();
         podPool.configure(apiServerClient, namespace, name);

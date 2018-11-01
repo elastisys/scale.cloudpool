@@ -14,8 +14,6 @@ import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Objects;
 
-import org.apache.commons.codec.Charsets;
-
 import com.elastisys.scale.cloudpool.kubernetes.KubernetesCloudPool;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.security.pem.PemUtils;
@@ -45,47 +43,47 @@ import com.elastisys.scale.commons.util.io.IoUtils;
  */
 public class AuthConfig {
     /**
-     * The JWT auth token at the specified file system path will be used to
-     * authenticate the client.
+     * A JWT auth token at the specified file system path to use when
+     * authenticating the client. May be null.
      */
     private final String clientTokenPath;
 
     /**
-     * The (base64-encoded) JWT auth token that will be used to authenticate the
-     * client.
+     * A (base64-encoded) JWT auth token to use when authenticating the client.
+     * May be null.
      */
     private final String clientToken;
 
     /**
-     * The PEM-encoded certificate at the specified file system path will be
-     * used to authenticate the client. Requires a {@link #clientKey} or
+     * A PEM-encoded certificate at the specified file system path to use when
+     * authenticating the client. May be null. Requires a {@link #clientKey} or
      * {@link #clientKeyPath}.
      */
     private final String clientCertPath;
     /**
-     * The (base64-encoded) PEM-encoded certificate that will be used to
-     * authenticate the client. Requires a {@link #clientKey} or
+     * A (base64-encoded) PEM-encoded certificate to use when authenticating the
+     * client. May be null. Requires a {@link #clientKey} or
      * {@link #clientKeyPath}.
      */
     private final String clientCert;
 
     /**
-     * The PEM-encoded private key at the specified file system path will be
-     * used to authenticate the client. Requires a {@link #clientCert} or
+     * A PEM-encoded private key at the specified file system path to use when
+     * authenticating the client. May be null. Requires a {@link #clientCert} or
      * {@link #clientCertPath}.
      */
     private final String clientKeyPath;
 
     /**
-     * The (base64-encoded) PEM-encoded private key that will be used to
-     * authenticate the client. Requires a {@link #clientCert} or
+     * A (base64-encoded) PEM-encoded private key to use when authenticating the
+     * client. May be null. Requires a {@link #clientCert} or
      * {@link #clientCertPath}.
      */
     private final String clientKey;
 
     /**
-     * The PEM-encoded server/CA certificate at the specified file system path
-     * will be used to authenticate the server. Optional. If neither
+     * A PEM-encoded server/CA certificate at the specified file system path to
+     * use when authenticating the server. May be null. If neither
      * {@link #serverCertPath} nor {@link #serverCert} is given, no validation
      * of the server will be performed, similar to using {@code curl} with the
      * {@code --insecure} flag.
@@ -93,11 +91,11 @@ public class AuthConfig {
     private final String serverCertPath;
 
     /**
-     * The (base64-encoded) PEM-encoded server/CA certificate that will be used
-     * to authenticate the server. Optional. If neither {@link #serverCertPath}
-     * nor {@link #serverCert} is given, no validation of the server will be
-     * performed, similar to using {@code curl} with the {@code --insecure}
-     * flag.
+     * A (base64-encoded) PEM-encoded server/CA certificate to use when
+     * authenticating the server. May be null. If neither
+     * {@link #serverCertPath} nor {@link #serverCert} is given, no validation
+     * of the server will be performed, similar to using {@code curl} with the
+     * {@code --insecure} flag.
      */
     private final String serverCert;
 
@@ -105,50 +103,141 @@ public class AuthConfig {
      * Creates an {@link AuthConfig}.
      *
      * @param clientTokenPath
-     *            The JWT auth token at the specified file system path will be
-     *            used to authenticate the client.
-     * @param clientToken
-     *            The (base64-encoded) JWT auth token that will be used to
-     *            authenticate the client.
+     *            A JWT auth token at the specified file system path to use when
+     *            authenticating the client. May be null.
+     * @param clientTokenData
+     *            A (base64-encoded) JWT auth token to use when authenticating
+     *            the client. May be null.
      * @param clientCertPath
-     *            The PEM-encoded certificate at the specified file system path
-     *            will be used to authenticate the client. Requires a
+     *            A PEM-encoded certificate at the specified file system path to
+     *            use when authenticating the client. May be null. Requires a
      *            {@link #clientKey} or {@link #clientKeyPath}.
-     * @param clientCert
-     *            The (base64-encoded) PEM-encoded certificate that will be used
-     *            to authenticate the client. Requires a {@link #clientKey} or
-     *            {@link #clientKeyPath}.
+     * @param clientCertData
+     *            A (base64-encoded) PEM-encoded certificate to use when
+     *            authenticating the client. May be null. Requires a
+     *            {@link #clientKey} or {@link #clientKeyPath}.
      * @param clientKeyPath
-     *            The PEM-encoded private key at the specified file system path
-     *            will be used to authenticate the client. Requires a
+     *            A PEM-encoded private key at the specified file system path to
+     *            use when authenticating the client. May be null. Requires a
      *            {@link #clientCert} or {@link #clientCertPath}.
-     * @param clientKey
-     *            The (base64-encoded) PEM-encoded private key that will be used
-     *            to authenticate the client. Requires a {@link #clientCert} or
-     *            {@link #clientCertPath}.
+     * @param clientKeyData
+     *            A (base64-encoded) PEM-encoded private key to use when
+     *            authenticating the client. May be null. Requires a
+     *            {@link #clientCert} or {@link #clientCertPath}.
      * @param serverCertPath
-     *            The PEM-encoded server/CA certificate at the specified file
-     *            system path will be used to authenticate the server. If
-     *            neither {@link #serverCertPath} nor {@link #serverCert} is
-     *            given, no validation of the server will be performed, similar
-     *            to using {@code curl} with the {@code --insecure} flag.
-     * @param serverCert
-     *            The (base64-encoded) PEM-encoded server/CA certificate that
-     *            will be used to authenticate the server. If neither
+     *            A PEM-encoded server/CA certificate at the specified file
+     *            system path to use when authenticating the server. May be
+     *            null. If neither {@link #serverCertPath} nor
+     *            {@link #serverCert} is given, no validation of the server will
+     *            be performed, similar to using {@code curl} with the
+     *            {@code --insecure} flag.
+     * @param serverCertData
+     *            A (base64-encoded) PEM-encoded server/CA certificate to use
+     *            when authenticating the server. May be null. If neither
      *            {@link #serverCertPath} nor {@link #serverCert} is given, no
      *            validation of the server will be performed, similar to using
      *            {@code curl} with the {@code --insecure} flag.
      */
-    public AuthConfig(String clientTokenPath, String clientToken, String clientCertPath, String clientCert,
-            String clientKeyPath, String clientKey, String serverCertPath, String serverCert) {
+    public AuthConfig(String clientTokenPath, String clientTokenData, String clientCertPath, String clientCertData,
+            String clientKeyPath, String clientKeyData, String serverCertPath, String serverCertData) {
         this.clientTokenPath = clientTokenPath;
-        this.clientToken = clientToken;
+        this.clientToken = clientTokenData;
         this.clientCertPath = clientCertPath;
-        this.clientCert = clientCert;
+        this.clientCert = clientCertData;
         this.clientKeyPath = clientKeyPath;
-        this.clientKey = clientKey;
+        this.clientKey = clientKeyData;
         this.serverCertPath = serverCertPath;
-        this.serverCert = serverCert;
+        this.serverCert = serverCertData;
+    }
+
+    /**
+     * A JWT auth token at the specified file system path to use when
+     * authenticating the client. May be null.
+     *
+     * @return
+     */
+    public String getClientTokenPath() {
+        return this.clientTokenPath;
+    }
+
+    /**
+     * A (base64-encoded) JWT auth token to use when authenticating the client.
+     * May be null.
+     *
+     * @return
+     */
+    public String getClientToken() {
+        return this.clientToken;
+    }
+
+    /**
+     * A PEM-encoded certificate at the specified file system path to use when
+     * authenticating the client. May be null. Requires a {@link #clientKey} or
+     * {@link #clientKeyPath}.
+     *
+     * @return
+     */
+    public String getClientCertPath() {
+        return this.clientCertPath;
+    }
+
+    /**
+     * A (base64-encoded) PEM-encoded certificate to use when authenticating the
+     * client. May be null. Requires a {@link #clientKey} or
+     * {@link #clientKeyPath}.
+     *
+     * @return
+     */
+    public String getClientCert() {
+        return this.clientCert;
+    }
+
+    /**
+     * A PEM-encoded private key at the specified file system path to use when
+     * authenticating the client. May be null. Requires a {@link #clientCert} or
+     * {@link #clientCertPath}.
+     *
+     * @return
+     */
+    public String getClientKeyPath() {
+        return this.clientKeyPath;
+    }
+
+    /**
+     * A (base64-encoded) PEM-encoded private key to use when authenticating the
+     * client. May be null. Requires a {@link #clientCert} or
+     * {@link #clientCertPath}.
+     *
+     * @return
+     */
+    public String getClientKey() {
+        return this.clientKey;
+    }
+
+    /**
+     * A PEM-encoded server/CA certificate at the specified file system path to
+     * use when authenticating the server. May be null. If neither
+     * {@link #serverCertPath} nor {@link #serverCert} is given, no validation
+     * of the server will be performed, similar to using {@code curl} with the
+     * {@code --insecure} flag.
+     *
+     * @return
+     */
+    public String getServerCertPath() {
+        return this.serverCertPath;
+    }
+
+    /**
+     * A (base64-encoded) PEM-encoded server/CA certificate to use when
+     * authenticating the server. May be null. If neither
+     * {@link #serverCertPath} nor {@link #serverCert} is given, no validation
+     * of the server will be performed, similar to using {@code curl} with the
+     * {@code --insecure} flag.
+     *
+     * @return
+     */
+    public String getServerCert() {
+        return this.serverCert;
     }
 
     /**
@@ -158,7 +247,7 @@ public class AuthConfig {
      * @return
      * @throws IOException
      */
-    public String getClientToken() throws IOException {
+    private String loadClientToken() throws IOException {
         if (!hasClientToken()) {
             return null;
         }
@@ -179,7 +268,7 @@ public class AuthConfig {
      * @throws IOException
      * @throws CertificateException
      */
-    public Certificate getClientCert() throws IOException, CertificateException {
+    private Certificate loadClientCert() throws IOException, CertificateException {
         if (!hasClientCert()) {
             return null;
         }
@@ -206,7 +295,7 @@ public class AuthConfig {
      * @throws NoSuchProviderException
      * @throws NoSuchAlgorithmException
      */
-    public PrivateKey getClientKey()
+    private PrivateKey loadClientKey()
             throws IOException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException {
         if (!hasClientKey()) {
             return null;
@@ -215,10 +304,10 @@ public class AuthConfig {
         // client key is *either* given as value or as path
         String pemEncodedKey = null;
         if (this.clientKeyPath != null) {
-            pemEncodedKey = IoUtils.toString(new File(this.clientKeyPath), Charsets.UTF_8);
+            pemEncodedKey = IoUtils.toString(new File(this.clientKeyPath), StandardCharsets.UTF_8);
         } else {
             // read base64-encoded key
-            pemEncodedKey = Base64Utils.fromBase64(this.clientKey, Charsets.UTF_8);
+            pemEncodedKey = Base64Utils.fromBase64(this.clientKey, StandardCharsets.UTF_8);
         }
 
         return PemUtils.parseRsaPrivateKey(new StringReader(pemEncodedKey));
@@ -232,7 +321,7 @@ public class AuthConfig {
      * @throws IOException
      * @throws CertificateException
      */
-    public Certificate getServerCert() throws IOException, CertificateException {
+    public Certificate loadServerCert() throws IOException, CertificateException {
         if (!hasServerCert()) {
             return null;
         }
@@ -294,7 +383,7 @@ public class AuthConfig {
                     "auth: specify either serverCert or serverCertPath, not both");
             // makes sure that the server cert can be loaded/parsed.
             try {
-                getServerCert();
+                loadServerCert();
             } catch (Exception e) {
                 throw new IllegalArgumentException(String.format("failed to parse server cert: %s", e.getMessage()), e);
             }
@@ -308,7 +397,7 @@ public class AuthConfig {
             checkArgument(hasClientCert(), "auth: client auth key specified without a cert");
             // makes sure that the client key can be loaded/parsed.
             try {
-                getClientKey();
+                loadClientKey();
             } catch (Exception e) {
                 throw new IllegalArgumentException(String.format("failed to parse client key: %s", e.getMessage()), e);
             }
@@ -322,7 +411,7 @@ public class AuthConfig {
             checkArgument(hasClientKey(), "auth: client certificate auth specified without a key");
             // makes sure that the client cert can be loaded/parsed.
             try {
-                getClientCert();
+                loadClientCert();
             } catch (Exception e) {
                 throw new IllegalArgumentException(String.format("failed to parse client cert: %s", e.getMessage()), e);
             }
@@ -335,7 +424,7 @@ public class AuthConfig {
                     "auth: specify either clientToken or clientTokenPath, not both");
             // makes sure that the client token can be loaded/parsed.
             try {
-                getClientToken();
+                loadClientToken();
             } catch (Exception e) {
                 throw new IllegalArgumentException(String.format("failed to parse client token: %s", e.getMessage()),
                         e);
@@ -403,7 +492,7 @@ public class AuthConfig {
             return this;
         }
 
-        public Builder token(String tokenContent) {
+        public Builder tokenData(String tokenContent) {
             this.clientToken = tokenContent;
             return this;
         }
@@ -413,7 +502,7 @@ public class AuthConfig {
             return this;
         }
 
-        public Builder cert(String certContent) {
+        public Builder certData(String certContent) {
             this.clientCert = certContent;
             return this;
         }
@@ -423,7 +512,7 @@ public class AuthConfig {
             return this;
         }
 
-        public Builder key(String keyContent) {
+        public Builder keyData(String keyContent) {
             this.clientKey = keyContent;
             return this;
         }
@@ -433,7 +522,7 @@ public class AuthConfig {
             return this;
         }
 
-        public Builder serverCert(String certContent) {
+        public Builder serverCertData(String certContent) {
             this.serverCert = certContent;
             return this;
         }

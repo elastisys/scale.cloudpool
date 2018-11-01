@@ -13,7 +13,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.kubernetes.apiserver.ApiServerClient;
-import com.elastisys.scale.cloudpool.kubernetes.config.AuthConfig;
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.ClientConfig;
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.ClientCredentials;
 import com.elastisys.scale.cloudpool.kubernetes.mock.FakeServlet;
 import com.elastisys.scale.cloudpool.kubernetes.mock.HttpResponse;
 import com.elastisys.scale.commons.net.host.HostUtils;
@@ -76,14 +77,13 @@ public class TestStandardApiServerClientCertAuth {
      */
     @Test
     public void useCertAuth() throws Exception {
-        // should
-        this.apiServerClient = new StandardApiServerClient().configure(apiServerUrl(), trustedClientAuth());
+        this.apiServerClient = new StandardApiServerClient().configure(trustedClientAuth());
         this.apiServerClient.get("/some/path");
 
         // verify that it is NOT possible, when using an untrusted client cert
         // (otherwise, our test server is incorrectly set up)
         try {
-            this.apiServerClient = new StandardApiServerClient().configure(apiServerUrl(), untrustedClientAuth());
+            this.apiServerClient = new StandardApiServerClient().configure(untrustedClientAuth());
             this.apiServerClient.get("/some/path");
             fail("should NOT be possible to authenticate with an untrusted client cert");
         } catch (Exception e) {
@@ -110,12 +110,16 @@ public class TestStandardApiServerClientCertAuth {
         }
     }
 
-    private AuthConfig trustedClientAuth() {
-        return AuthConfig.builder().certPath(TRUSTED_CLIENT_CERT_PATH).keyPath(TRUSTED_CLIENT_KEY_PATH).build();
+    private ClientConfig trustedClientAuth() throws Exception {
+        ClientConfig clientConfig = new ClientConfig(apiServerUrl(), ClientCredentials.builder()
+                .certPath(TRUSTED_CLIENT_CERT_PATH).keyPath(TRUSTED_CLIENT_KEY_PATH).build());
+        return clientConfig;
     }
 
-    private AuthConfig untrustedClientAuth() {
-        return AuthConfig.builder().certPath(UNTRUSTED_CLIENT_CERT_PATH).keyPath(UNTRUSTED_CLIENT_KEY_PATH).build();
+    private ClientConfig untrustedClientAuth() throws Exception {
+        ClientConfig clientConfig = new ClientConfig(apiServerUrl(), ClientCredentials.builder()
+                .certPath(UNTRUSTED_CLIENT_CERT_PATH).keyPath(UNTRUSTED_CLIENT_KEY_PATH).build());
+        return clientConfig;
     }
 
     private String apiServerUrl() {

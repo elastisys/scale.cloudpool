@@ -44,7 +44,7 @@ below.
     "apiServerUrl": "https://kubernetes.host:443",
 
     "auth": {
-		"clientCertPath": "/path/to/admin.pem",
+        "clientCertPath": "/path/to/admin.pem",
         "clientKeyPath": "/path/to/admin-key.pem",
      },
 
@@ -53,44 +53,50 @@ below.
         "replicationController": "nginx-rc"
      },
      
-	 "updateInterval": { "time": 15, "unit": "seconds" }
-     },
-	 
-	 "alerts": {
-	    ...
-	 }
+     "updateInterval": { "time": 15, "unit": "seconds" },
+
+     "alerts": {
+        ...
+     }
 }
 ```
 
 The configuration keys carry the following semantics:
 
-  - `apiServerUrl`:  (**required**): The base URL of the Kubernetes API server.
-	  
-  - `auth` (**required**): API access credentials. Either certificate-based or
-    token-based authentication can be used. Credentials can either
-	be passed as file references or as base64-encoded values.  
-	Refer to the [Authentication section](#authentication) for details.
-	- Certificate-based client authentication (both cert and key must be specified):
+  - `kubeConfigPath`: A path to a kubeconfig file, from which Kubernetes client
+    settings will be loaded. This option is mutually exclusive with
+    `apiServerUrl` and `auth`. Note that the kubeconfig file must specify a
+    `current-context`.
+
+  - `apiServerUrl`: The base URL of the Kubernetes API server. This option is
+    mutually exclusive with `kubeConfigPath`.
+
+  - `auth`: API access credentials. This option is mutually exclusive with
+    `kubeConfigPath`. Either certificate-based or token-based authentication can be
+    used. Credentials can either be passed as file references or as
+    base64-encoded values.  
+    Refer to the [Authentication section](#authentication) for details.
+    - Certificate-based client authentication (both cert and key must be specified):
       - `clientCert`: A base64-encoded PEM-encoded certificate.
       - `clientCertPath`: A path to a PEM-encoded certificate.
       - `clientKey`: A base64-encoded PEM-encoded key.
       - `clientKeyPath`: A path to a PEM-encoded key.
     - Token-based client authentication:
-	  - `clientToken`: A base64-encoded JSON Web Token.
-	  - `clientTokenPath`: A path to a base64-encoded JSON Web Token.
+      - `clientToken`: A base64-encoded JSON Web Token.
+      - `clientTokenPath`: A path to a base64-encoded JSON Web Token.
     - Server authentication (**optional**), if the API server's certificate
-	  is to be verified:
-	  - `serverCert`: A base64-encoded PEM-encoded server/CA certificate.
-	  - `serverCertPath`: A path to a PEM-encoded server/CA certificate.
+      is to be verified:
+      - `serverCert`: A base64-encoded PEM-encoded server/CA certificate.
+      - `serverCertPath`: A path to a PEM-encoded server/CA certificate.
   - `podPool` (**required**): Declares the API construct (`ReplicationController`,
     `ReplicaSet`, `Deployment`) whose pod set is to be managed. The configuration
-	must specify one and only one of the `replicationController`, `replicaSet`, 
-	`deployment` fields.
+    must specify one and only one of the `replicationController`, `replicaSet`, 
+    `deployment` fields.
     - `namespace` (**required**): The [namespace](http://kubernetes.io/docs/user-guide/namespaces/)
-	  that the managed API construct exists in.
-	- `replicationController`: The name of the `ReplicationController` to manage.
-	- `replicaSet`: The name of the `ReplicaSet` to manage.
-	- `deployment`: The name of the `Deployment` to manage.
+      that the managed API construct exists in.
+    - `replicationController`: The name of the `ReplicationController` to manage.
+    - `replicaSet`: The name of the `ReplicaSet` to manage.
+    - `deployment`: The name of the `Deployment` to manage.
 
   - `updateInterval` (*optional*): The delay between attempts to synchronize 
     the pool size with the desired size set with the `kubernetespool`.  
@@ -98,7 +104,7 @@ The configuration keys carry the following semantics:
 
   - `alerts` (*optional*): Configuration that describes how to send alerts 
     via email or HTTP(S) webhooks. These settings are described in great 
-	detail in the [root-level README.md](../README.md#configuration)
+    detail in the [root-level README.md](../README.md#configuration)
 
 
 
@@ -126,9 +132,27 @@ ending in `Path` are used to pass file system references.
 
 #### Running kubernetespool outside Kubernetes
 
-When running the `kubernetespool` _outside_ Kubernetes one could either use
-token-based or certificate-based authentication. Certificate-based authentication
-is probably the more natural option:
+The `kubernetespool` can be configured with a regular `kubectl`
+[kubeconfig](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/) 
+file. The kubeconfig contains all connection details and auth credentials needed
+to communicate with a certain cluster. Note that you need to have a
+`current-context` set in the kubeconfig.
+
+```javascript
+{
+    "kubeConfigPath": "/home/me/.kube/config",
+
+    "podPool": {
+        "namespace": "default",
+        "replicationController": "nginx"
+    }
+}
+```
+
+For those cases where no kubeconfig file is available, one can specify the
+`apiServerUrl` and an `auth` field. One can either make use of token-based or
+certificate-based authentication. Using cert-based authentication (which is
+probably easier when running outside Kubernetes) could look something like:
 
 ```javascript
 {
@@ -164,7 +188,7 @@ something like:
         "clientCert": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM3ekNDQWRlZ0F3SUJBZ0lKQVBjQWZWbE0rdGk4TUEwR0NTcUdTSWIzRFFFQkN3VUFNQkl4RURBT0JnTlYKQkFNTUIydDFZbVV0WTJFd0hoY05NVFl3TXpJeU1UTXlNREE1V2hjTk1UY3dNekl5TVRNeU1EQTVXakFWTVJNdwpFUVlEVlFRRERBcHJkV0psTFdGa2JXbHVNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDCkFRRUFvV2xpZmY0dE5zb2hDWnVGajlrSDMySmFpVXpRbE02cFJiM0cwMW5KRWh1dnZPYld2d1R6UW9XNXN0Tm8KNE44K0pFMm96VFBqREN6cjRsN1hnZ0lhS3dOeFdwaGplVU04bW96NklRQjdMQTc4N2U1eXJOUkJvMTN6R0txZQp0bTNFWFAzK0NrODVvZWtTZTB4QkhKYjNrd1NudmVXL2s0eEJic0h0RXVtSmNQYk1URys5aHc5SzNGMGUyTDJwCmRWd0U5RzVZRCt5UE5nVjJGVE9OKzFjR3hNbW02bzF6Zk1Ec3lSL3QwN1JpT0xCOVVqYWxvdThDSVcxYnVBY2MKWGhadVYwaXdoaVdrSERxRnplSTBiaUVTNzdocEtSYWVjSVN3N1FsQlpjYjBjMjBQQk4zbUROS0RZYXRDZU1YaApuem1QU0oySGJ3Ny9DUm1sd0ViQXRpaWhhUUlEQVFBQm8wVXdRekFKQmdOVkhSTUVBakFBTUFzR0ExVWREd1FFCkF3SUY0REFwQmdOVkhSRUVJakFnZ2dwcmRXSmxjbTVsZEdWemdoSnJkV0psY201bGRHVnpMbVJsWm1GMWJIUXcKRFFZSktvWklodmNOQVFFTEJRQURnZ0VCQUlzWFZwVERxSS9qZEUzM2tvK1ZqY21Dd1gyNDNLR0s0V3ExNGd3dwpEYVFKNXZIZTl5TXk5bkpOSnBPMDRpSnhrczdiTlZvcEZVQjI3SFBuUjRsdExKNDJpV1FtdU8rcU5FUnd1azlMCk9IYUYxcGF6RW1UeGxmajNvZzNQRmppNHBESkc3NlVvRmdvTEw0VmJRRlMrSVRhNTR2VjRnaEVxMFVrUDk2ckUKOE1xaEZ1dXlUejlFcmdhcWVnSjJtc2xvR0N3WHAvdlBtR0tPRzdlRS9Yb2FUZzR6ckJiN1RQbEpXZ0ZUa1NzMwp6V2lsZFRlRzRrU3JGMFBHWDk5MUtxRklhNVNTN295UnJEN3VZc1plcTc5cVhWVW8vTEh6MStvNE9CWVlGNGl5Ck5MeEpaZ1pyUzIrQ1FEaFdQcElHMDMzNm9zaGJWcDhGOXpGYVBsbkxMUjFwLzNVPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==",
         "clientKey": "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBb1dsaWZmNHROc29oQ1p1Rmo5a0gzMkphaVV6UWxNNnBSYjNHMDFuSkVodXZ2T2JXCnZ3VHpRb1c1c3RObzROOCtKRTJvelRQakRDenI0bDdYZ2dJYUt3TnhXcGhqZVVNOG1vejZJUUI3TEE3ODdlNXkKck5SQm8xM3pHS3FldG0zRVhQMytDazg1b2VrU2UweEJISmIza3dTbnZlVy9rNHhCYnNIdEV1bUpjUGJNVEcrOQpodzlLM0YwZTJMMnBkVndFOUc1WUQreVBOZ1YyRlRPTisxY0d4TW1tNm8xemZNRHN5Ui90MDdSaU9MQjlVamFsCm91OENJVzFidUFjY1hoWnVWMGl3aGlXa0hEcUZ6ZUkwYmlFUzc3aHBLUmFlY0lTdzdRbEJaY2IwYzIwUEJOM20KRE5LRFlhdENlTVhobnptUFNKMkhidzcvQ1JtbHdFYkF0aWloYVFJREFRQUJBb0lCQUhUandIUEZjakRQU0FXUgpIclFCVTNZdDM2cTJlZ2FKY29RUzNyMkhzOWp0TytMc3VHODB3b1ZXR2hpcWlMVHdkaXdNSVVZWllUOGIrT2JDCkVBY1NScWtIb1RzZVNFczBxZHF5WlNFcEhBbllBTXE5ZDBZNW9COFNsazB5b2lVeWNKVjNTbFZrOGpPU2VkUFkKY1A2blJUcXVrRnN3MmYrYi9uYWE4WGhVcnplaUc2QVVXdXlsKzhUOCtGSThYTlRLdXJ6ZUJDbWRLbGZYZDhsYQp3cGhRRjVkZHJVbGFqNndEVEtzSmxYWDFEbHFKckI2VWZXVTFlYTV6OVNDelU0MjBaczhYZjJ4UENrZXBwa1o5CkFxdWdEWDEvMXdsNHdFOTNXOUp4V09LMFlWQmRGZGZ0dU9HYWpGRmcxM3BwUlpKbDdKYnNVbUkzUlBZQ09HSXcKTUxLM050RUNnWUVBMWFzUThvUnBhSHhWa08rdGJUQ0xGNFlGSVRrQWg5LytUQU9XN0VMWjZNVTlPTnlWWFNaeApzSHVPakdDb0loay9zV3NxYkMxS0JUOEVIamdYSDYwWkI3czhHZnZtZDNmckh6SUNDNC9iSjFyRkFFeHAyVU51CncxdXdQazBTS0FNWk9QN0lOYU11UzlwemhoUTFmejQxM0VsQVZCTnlPUG1KanVKaHJFZ3B1RmNDZ1lFQXdXUHgKZm5tQmNLYzUvZnNUWS92dlBvODVYK0VUd0J1bnE3Ri9rYXhPS3czL1o3enVJcG1jWGNiRkk1SmMyMkxvcUtWWQphTi9rSUJqUkxLVXlaWmF3V1pTU1NBYVpFV0J1cDNHNFIrUW1FV1YwYVBaN0lycVB5eDlsOEpWKzBLOXNyZ1FxCnN5Z05waFdYaDIxNGl2Y2ZNVXlaK1N6VG1sYytNZnhWNkRSalhEOENnWUVBdG9vSDEzaGg2UjdYcHhQc0VLMTUKRnVhck9UL09nVVpPcFRnbjFyNGlGaWR6YjBHYjVWR3pyUGRSeUFISGdpSVo5UU85NFY4cnJxR3diZlN6Wko5bwpFOS9VcjhveGtYMEVoTWtmVUN0ZEtoajAxcFZ4bEdoMGx6ZWNzUXo4NXV3R3YxZURTYmVZRkx1VEdFZnBrRVJnCmxVcUxSNGk1ZTQxTUJLTEltUHVwa004Q2dZQjNISVNJUG5SQUcyOTNoQ1lNUmdhMEJHajFLZDhOU3JzNTM2aFAKNDgxOWJUQ3JCMDJ3MStYY1NHbnhuOXM3Y0s4VitFajh4ekZ0cDN0bVFSVktSc2ExVmZISEZQRkFKNkhmMWdZSAptWGpzN0EwSC9SQVljc25QOUxYSHVYd1RNb2tBb1NaZmxFTGIwWjZ6MWZRUnUyVmw2dVZHK0pvWURMWU0rWHM3Cit0QmI1d0tCZ0FGZWhIcG1WMG4xK3cwc2sxRDFzREZ1U3Z2WmlBMGlIVzFoMlVURVgyTE54RDcrQ0xzZFBvdzMKTnQ1RkM3RURzVVNiblpNblRzMlpMZndlSEg5a0k4VFFvL2NFcEE2TVcxaEc2MmJrYlA4Z0lDaWQrUE56TEZqdQpQckRZMHZITW9ERGR0WkFzKzNrbHh2UTZtK1JkWEhySHMzamQyTmhlSFpzVUR3SnFTRnIzCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg=="
     },
-	 
+     
     "podPool": {
         "namespace": "default",
         "replicationController": "nginx"
@@ -279,18 +303,18 @@ HTTP/HTTPS configuration:
 
   - `HTTPS_PORT`: Enables a HTTPS port on the server.  
     *Note: when specified, a `${SSL_KEYSTORE}` must be specified to identify to clients.*
-	
+    
   - `SSL_KEYSTORE`: The location of the server's SSL key store (PKCS12 format).  
      You typically combine this with mounting a volume that holds the key store.  
-	 *Note: when specified, an `${SSL_KEYSTORE_PASSWORD}` must is required.*
-	 
+     *Note: when specified, an `${SSL_KEYSTORE_PASSWORD}` must is required.*
+     
   - `SSL_KEYSTORE_PASSWORD`: The password that protects the key store.  
 
 Runtime configuration:
 
   - `STORAGE_DIR`: destination folder for runtime state.  
     *Note: to persist across container recreation, this directory should be 
-	mapped via a volume to a directory on the host.*  
+    mapped via a volume to a directory on the host.*  
     Default: `/var/lib/elastisys/kubernetespool`.
 
 
@@ -313,13 +337,13 @@ Client authentication:
   - `REQUIRE_BASIC_AUTH`: If `true`, require clients to provide username/password
     credentials according to the HTTP BASIC authentication scheme.  
     *Note: when specified, `${BASIC_AUTH_REALM_FILE}` and `${BASIC_AUTH_ROLE}` must be specified to identify trusted clients.*  
-	Default: `false`.
+    Default: `false`.
   - `BASIC_AUTH_ROLE`: The role that an authenticated user must be assigned to be granted access to the server.  
   - `BASIC_AUTH_REALM_FILE`: A credentials store with users, passwords, and
     roles according to the format prescribed by the [Jetty HashLoginService](http://www.eclipse.org/jetty/documentation/9.2.6.v20141205/configuring-security-authentication.html#configuring-login-service).  
   - `REQUIRE_CERT_AUTH`: Require SSL clients to authenticate with a certificate,
     which must be included in the server's trust store.  
-    *Note: when specified, `${CERT_AUTH_TRUSTSTORE}` and `${CERT_AUTH_TRUSTSTORE_PASSWORD}` must be specified to identify trusted clients.*  	
+    *Note: when specified, `${CERT_AUTH_TRUSTSTORE}` and `${CERT_AUTH_TRUSTSTORE_PASSWORD}` must be specified to identify trusted clients.*     
   - `CERT_AUTH_TRUSTSTORE`. The location of a SSL trust store (JKS format), containing trusted client certificates.
   - `CERT_AUTH_TRUSTSTORE_PASSWORD`: The password that protects the SSL trust store.
 

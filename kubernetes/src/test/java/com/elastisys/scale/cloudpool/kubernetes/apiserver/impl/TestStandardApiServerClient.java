@@ -13,7 +13,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.elastisys.scale.cloudpool.kubernetes.apiserver.ApiServerClient;
-import com.elastisys.scale.cloudpool.kubernetes.config.AuthConfig;
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.ClientConfig;
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.ClientCredentials;
 import com.elastisys.scale.cloudpool.kubernetes.mock.FakeServlet;
 import com.elastisys.scale.cloudpool.kubernetes.mock.HttpResponse;
 import com.elastisys.scale.commons.json.JsonUtils;
@@ -46,7 +47,9 @@ public class TestStandardApiServerClient {
         this.server = ServletServerBuilder.create().httpPort(this.port).addServlet(servletDef).build();
         this.server.start();
 
-        this.apiServerClient = new StandardApiServerClient().configure(apiServerUrl(), tokenAuth());
+        ClientConfig clientConfig = new ClientConfig(apiServerUrl(),
+                ClientCredentials.builder().tokenPath(AUTH_TOKEN_PATH).build());
+        this.apiServerClient = new StandardApiServerClient().configure(clientConfig);
     }
 
     @After
@@ -168,16 +171,6 @@ public class TestStandardApiServerClient {
 
     private static JsonObject asJson(String jsonString) {
         return JsonUtils.parseJsonString(jsonString).getAsJsonObject();
-    }
-
-    /**
-     * Creates an {@link AuthConfig} with token credentials.
-     *
-     * @return
-     */
-    private AuthConfig tokenAuth() {
-        AuthConfig noAuthConfig = AuthConfig.builder().tokenPath(AUTH_TOKEN_PATH).build();
-        return noAuthConfig;
     }
 
 }

@@ -613,6 +613,6 @@ public class TestKubernetesCloudPool {
      * @return
      */
     private static KubernetesCloudPoolConfig config(PodPoolConfig podPoolConfig) {
-        return new KubernetesCloudPoolConfig(API_SERVER_URL, CERT_AUTH, podPoolConfig, UPDATE_INTERVAL, null);
+        return new KubernetesCloudPoolConfig(null, API_SERVER_URL, CERT_AUTH, podPoolConfig, UPDATE_INTERVAL, null);
     }
 }

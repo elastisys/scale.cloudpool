@@ -19,8 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.elastisys.scale.cloudpool.kubernetes.apiserver.ApiServerClient;
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.ClientConfig;
+import com.elastisys.scale.cloudpool.kubernetes.apiserver.ClientCredentials;
 import com.elastisys.scale.cloudpool.kubernetes.apiserver.KubernetesApiException;
-import com.elastisys.scale.cloudpool.kubernetes.config.AuthConfig;
 import com.elastisys.scale.commons.json.JsonUtils;
 import com.elastisys.scale.commons.net.http.Http;
 import com.elastisys.scale.commons.net.http.HttpBuilder;
@@ -29,20 +30,15 @@ import com.elastisys.scale.commons.security.pem.PemUtils;
 import com.google.gson.JsonObject;
 
 public class StandardApiServerClient implements ApiServerClient {
-    private static final Logger LOG = LoggerFactory.getLogger(StandardApiServerClient.class);
+    static final Logger LOG = LoggerFactory.getLogger(StandardApiServerClient.class);
 
-    /** The URL of the API server. For example, {@code https://host:443}. */
-    private String apiServerUrl;
-    /** Authentication credentials to access the API server. */
-    private AuthConfig auth;
+    /** Connection and authentication credentials for the apiserver. */
+    private ClientConfig clientConfig;
 
     @Override
-    public ApiServerClient configure(String apiServerUrl, AuthConfig auth) {
-        checkArgument(apiServerUrl != null, "apiServerUrl cannot be null");
-        checkArgument(auth != null, "auth cannot be null");
-        auth.validate();
-        this.apiServerUrl = apiServerUrl;
-        this.auth = auth;
+    public ApiServerClient configure(ClientConfig clientConfig) {
+        checkArgument(clientConfig != null, "clientConfig cannot be null");
+        this.clientConfig = clientConfig;
         return this;
     }
 
@@ -92,8 +88,7 @@ public class StandardApiServerClient implements ApiServerClient {
     }
 
     private void ensureConfigured() throws IllegalStateException {
-        checkState(this.apiServerUrl != null && this.auth != null,
-                "attempt to use http client before being configured");
+        checkState(this.clientConfig != null, "attempt to use http client before being configured");
     }
 
     /**
@@ -109,25 +104,31 @@ public class StandardApiServerClient implements ApiServerClient {
         clientBuilder.verifyHostname(false);
 
         try {
+            ClientCredentials credentials = this.clientConfig.getCredentials();
             // client cert auth
-            if (this.auth.hasClientCert()) {
+            if (credentials.hasCert()) {
                 // password doesn't matter, only used here
                 String keyPassword = "secret";
-                KeyStore clientCertKeystore = PemUtils.keyStoreFromCertAndKey(this.auth.getClientCert(),
-                        this.auth.getClientKey(), keyPassword);
+                KeyStore clientCertKeystore = PemUtils.keyStoreFromCertAndKey(credentials.getCert(),
+                        credentials.getKey(), keyPassword);
                 clientBuilder.clientCertAuth(clientCertKeystore, keyPassword);
             }
 
             // client token auth
-            if (this.auth.hasClientToken()) {
-                clientBuilder.clientJwtAuth(this.auth.getClientToken());
+            if (credentials.hasToken()) {
+                clientBuilder.clientJwtAuth(credentials.getToken());
             }
 
             // server cert auth
-            if (this.auth.hasServerCert()) {
+            if (credentials.hasServerCert()) {
                 clientBuilder.verifyHostCert(true);
-                KeyStore trustStore = PemUtils.keyStoreFromCert(this.auth.getServerCert());
+                KeyStore trustStore = PemUtils.keyStoreFromCert(credentials.getServerCert());
                 clientBuilder.serverAuthTrustStore(trustStore);
+            }
+
+            // basic auth
+            if (credentials.hasBasicAuth()) {
+                clientBuilder.clientBasicAuth(credentials.getBasicAuth());
             }
         } catch (Exception e) {
             throw new KubernetesApiException(String.format("failed to set up auth: %s", e.getMessage()), e);
@@ -139,7 +140,7 @@ public class StandardApiServerClient implements ApiServerClient {
     }
 
     private String url(String path) {
-        return this.apiServerUrl + path.replaceAll("//", "/");
+        return this.clientConfig.getApiServerUrl() + path.replaceAll("//", "/");
     }
 
     /**

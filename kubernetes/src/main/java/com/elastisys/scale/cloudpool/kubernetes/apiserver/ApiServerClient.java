@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import org.apache.http.client.HttpResponseException;
 
-import com.elastisys.scale.cloudpool.kubernetes.config.AuthConfig;
 import com.google.gson.JsonObject;
 
 /**
@@ -17,14 +16,12 @@ public interface ApiServerClient {
      * Configures this {@link ApiServerClient} to operate against a certain API
      * server with given credentials.
      *
-     * @param apiServerUrl
-     *            The URL of the API server. For example,
-     *            {@code https://host:443}
-     * @param auth
-     *            Authentication credentials to access the API server.
+     * @param clientConfig
+     *            Specifies how to connect to the targeted Kubernetes apiserver.
+     *
      * @return The object itself (to allow method chaining).
      */
-    public ApiServerClient configure(String apiServerUrl, AuthConfig auth);
+    public ApiServerClient configure(ClientConfig clientConfig);
 
     /**
      * Performs a {@code GET} for a particular apiserver path. Returns the
