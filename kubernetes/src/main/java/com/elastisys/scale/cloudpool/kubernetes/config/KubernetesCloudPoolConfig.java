@@ -3,6 +3,7 @@ package com.elastisys.scale.cloudpool.kubernetes.config;
 import static com.elastisys.scale.commons.util.precond.Preconditions.checkArgument;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -102,48 +103,55 @@ public class KubernetesCloudPoolConfig {
     }
 
     public ClientConfig getClientConfig() throws IllegalArgumentException {
-        Builder builder = ClientCredentials.builder();
-        // TODO: refactor
-        String apiServer = null;
+        validate();
 
         try {
-            // TODO: assume that the config is validated. if so, either
-            // kubeConfigPath or apiServerUrl+auth should have been specified.
+            // Assume that the config is validated. Hence, either kubeConfigPath
+            // or apiServerUrl+auth should have been specified.
             if (this.kubeConfigPath != null) {
-                KubeConfig kubeConfig = KubeConfig.load(new File(this.kubeConfigPath));
-                Triple<Cluster, User, String> context = kubeConfig.loadCurrentContext();
-                Cluster cluster = context.getLeft();
-                User user = context.getMiddle();
-                if (!cluster.getInsecureSkipTlsVerify()) {
-                    builder.serverCertPath(cluster.getCertificateAuthorityPath());
-                    builder.serverCertData(cluster.getCertificateAuthorityData());
-                }
-                apiServer = cluster.getServer();
-
-                builder.certData(user.getClientCertificateData());
-                builder.certPath(user.getClientCertificatePath());
-                builder.keyData(user.getClientKeyData());
-                builder.keyPath(user.getClientKeyPath());
-                builder.tokenData(user.getTokenData());
-                builder.tokenPath(user.getTokenPath());
-                builder.username(user.getUsername());
-                builder.password(user.getPassword());
+                return clientConfigFromKubeConfig(this.kubeConfigPath);
             } else {
-                apiServer = this.apiServerUrl;
-                builder.certData(this.auth.getClientCert());
-                builder.certPath(this.auth.getClientCertPath());
-                builder.keyData(this.auth.getClientKey());
-                builder.keyPath(this.auth.getClientKeyPath());
-                builder.tokenData(this.auth.getClientToken());
-                builder.tokenPath(this.auth.getClientTokenPath());
-                builder.serverCertData(this.auth.getServerCert());
-                builder.serverCertPath(this.auth.getServerCertPath());
+                return new ClientConfig(this.apiServerUrl, credentialsFromAuth(this.auth));
             }
-            return new ClientConfig(apiServer, builder.build());
         } catch (Exception e) {
             throw new IllegalArgumentException(
                     "failed to extract a client configuration from cloudpool config: " + e.getMessage(), e);
         }
+    }
+
+    private ClientCredentials credentialsFromAuth(AuthConfig authConfig) {
+        Builder builder = ClientCredentials.builder();
+        builder.certData(authConfig.getClientCert());
+        builder.certPath(authConfig.getClientCertPath());
+        builder.keyData(authConfig.getClientKey());
+        builder.keyPath(authConfig.getClientKeyPath());
+        builder.tokenData(authConfig.getClientToken());
+        builder.tokenPath(authConfig.getClientTokenPath());
+        builder.serverCertData(authConfig.getServerCert());
+        builder.serverCertPath(authConfig.getServerCertPath());
+        return builder.build();
+    }
+
+    private ClientConfig clientConfigFromKubeConfig(String kubeconfigPath) throws IOException {
+        Builder builder = ClientCredentials.builder();
+        KubeConfig kubeConfig = KubeConfig.load(new File(kubeconfigPath));
+        Triple<Cluster, User, String> context = kubeConfig.loadCurrentContext();
+        Cluster cluster = context.getLeft();
+        User user = context.getMiddle();
+        if (!cluster.getInsecureSkipTlsVerify()) {
+            builder.serverCertPath(cluster.getCertificateAuthorityPath());
+            builder.serverCertData(cluster.getCertificateAuthorityData());
+        }
+
+        builder.certData(user.getClientCertificateData());
+        builder.certPath(user.getClientCertificatePath());
+        builder.keyData(user.getClientKeyData());
+        builder.keyPath(user.getClientKeyPath());
+        builder.tokenData(user.getTokenData());
+        builder.tokenPath(user.getTokenPath());
+        builder.username(user.getUsername());
+        builder.password(user.getPassword());
+        return new ClientConfig(cluster.getServer(), builder.build());
     }
 
     /**
