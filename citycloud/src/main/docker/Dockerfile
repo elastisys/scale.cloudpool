@@ -1,4 +1,4 @@
-FROM docker.elastisys.com:5000/elastisys/openjdk-public-dist:1.0
+FROM elastisys/openjdk-public-dist:1.0
 MAINTAINER Elastisys <techteam@elastisys.com>
 
 # install bash shell in alpine linux
