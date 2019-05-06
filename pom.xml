@@ -41,7 +41,7 @@
 
   <properties>
     <!-- scale.commons version to use -->
-    <commons.version>2.3.2-SNAPSHOT</commons.version>
+    <commons.version>2.3.3</commons.version>
   </properties>
 
   <dependencyManagement>
