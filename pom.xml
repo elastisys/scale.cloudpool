@@ -34,7 +34,7 @@
 
   <!-- Location of Git repository. Used to tag releases. -->
   <scm>
-    <developerConnection>scm:git:https://github.com/elastisys/scale.cloudpool.git</developerConnection>
+    <developerConnection>scm:git:git@github.com:elastisys/scale.cloudpool.git</developerConnection>
     <tag>HEAD</tag>
     <url>https://github.com/elastisys/scale.cloudpool</url>
   </scm>
